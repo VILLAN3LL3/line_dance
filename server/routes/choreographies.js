@@ -8,11 +8,17 @@ export async function createChoreography(req, res) {
       return res.status(400).json({ error: 'Name and level are required' });
     }
 
+    // Get level ID
+    const levelRecord = await getQuery('SELECT id FROM levels WHERE name = ?', [level]);
+    if (!levelRecord) {
+      return res.status(400).json({ error: 'Invalid level. Must be one of: Beginner, Intermediate, Advanced, Experienced' });
+    }
+
     // Insert choreography
     const choreoResult = await runQuery(
-      `INSERT INTO choreographies (name, step_sheet_link, count, wall_count, level, creation_year)
+      `INSERT INTO choreographies (name, step_sheet_link, count, wall_count, level_id, creation_year)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [name, step_sheet_link || null, count || null, wall_count || null, level, creation_year || null]
+      [name, step_sheet_link || null, count || null, wall_count || null, levelRecord.id, creation_year || null]
     );
 
     const choreography_id = choreoResult.id;
@@ -76,7 +82,9 @@ export async function getChoreographies(req, res) {
     const offset = (page - 1) * limit;
 
     const choreographies = await allQuery(
-      `SELECT * FROM choreographies ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      `SELECT c.*, l.name as level FROM choreographies c
+       LEFT JOIN levels l ON c.level_id = l.id
+       ORDER BY c.created_at DESC LIMIT ? OFFSET ?`,
       [limit, offset]
     );
 
@@ -103,7 +111,7 @@ export async function getChoreographies(req, res) {
 export async function getChoreographyById(req, res) {
   try {
     const choreography = await getQuery(
-      'SELECT * FROM choreographies WHERE id = ?',
+      'SELECT c.*, l.name as level FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id WHERE c.id = ?',
       [req.params.id]
     );
 
@@ -130,13 +138,29 @@ export async function updateChoreography(req, res) {
       return res.status(404).json({ error: 'Choreography not found' });
     }
 
+    let levelId = null;
+    if (level) {
+      const levelRecord = await getQuery('SELECT id FROM levels WHERE name = ?', [level]);
+      if (!levelRecord) {
+        return res.status(400).json({ error: 'Invalid level. Must be one of: Beginner, Intermediate, Advanced, Experienced' });
+      }
+      levelId = levelRecord.id;
+    }
+
     // Update main choreography
-    await runQuery(
-      `UPDATE choreographies 
-       SET name = ?, step_sheet_link = ?, count = ?, wall_count = ?, level = ?, creation_year = ?, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
-      [name, step_sheet_link || null, count || null, wall_count || null, level, creation_year || null, choreography_id]
-    );
+    const updateQuery = levelId
+      ? `UPDATE choreographies 
+         SET name = ?, step_sheet_link = ?, count = ?, wall_count = ?, level_id = ?, creation_year = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`
+      : `UPDATE choreographies 
+         SET name = ?, step_sheet_link = ?, count = ?, wall_count = ?, creation_year = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`;
+
+    const updateParams = levelId
+      ? [name, step_sheet_link || null, count || null, wall_count || null, levelId, creation_year || null, choreography_id]
+      : [name, step_sheet_link || null, count || null, wall_count || null, creation_year || null, choreography_id];
+
+    await runQuery(updateQuery, updateParams);
 
     // Delete and re-insert authors
     if (authors !== undefined) {
@@ -217,23 +241,20 @@ export async function searchChoreographies(req, res) {
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
 
-    let query = 'SELECT DISTINCT c.* FROM choreographies c';
+    let query = 'SELECT DISTINCT c.*, l.name as level FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id';
     let params = [];
     let joins = [];
+    let conditions = [];
 
     // Add search by name or other fields
     if (search) {
-      query += ' WHERE c.name LIKE ?';
+      conditions.push('c.name LIKE ?');
       params.push(`%${search}%`);
     }
 
     // Filter by level
     if (level) {
-      if (params.length > 0) {
-        query += ' AND c.level = ?';
-      } else {
-        query += ' WHERE c.level = ?';
-      }
+      conditions.push('l.name = ?');
       params.push(level);
     }
 
@@ -245,11 +266,7 @@ export async function searchChoreographies(req, res) {
         INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
       `);
       const placeholders = figures.map(() => '?').join(',');
-      if (params.length > 0) {
-        query += ` AND sf.name IN (${placeholders})`;
-      } else {
-        query += ` WHERE sf.name IN (${placeholders})`;
-      }
+      conditions.push(`sf.name IN (${placeholders})`);
       params.push(...figures);
     }
 
@@ -261,18 +278,17 @@ export async function searchChoreographies(req, res) {
         INNER JOIN tags t ON ct.tag_id = t.id
       `);
       const placeholders = tagList.map(() => '?').join(',');
-      if (params.length > 0) {
-        query += ` AND t.name IN (${placeholders})`;
-      } else {
-        query += ` WHERE t.name IN (${placeholders})`;
-      }
+      conditions.push(`t.name IN (${placeholders})`);
       params.push(...tagList);
     }
 
-    // Add joins before WHERE
+    // Build final query
     if (joins.length > 0) {
-      query = query.replace(' WHERE', joins.join('') + ' WHERE');
-      query = query.replace(' AND', joins.join('') + ' AND');
+      query += joins.join('');
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
     }
 
     query += ` ORDER BY c.created_at DESC LIMIT ? OFFSET ?`;
@@ -282,22 +298,44 @@ export async function searchChoreographies(req, res) {
     const enriched = await Promise.all(choreographies.map(c => enrichChoreography(c)));
 
     // Get total count
-    let countQuery = 'SELECT COUNT(DISTINCT c.id) as count FROM choreographies c';
+    let countQuery = 'SELECT COUNT(DISTINCT c.id) as count FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id';
     let countParams = [];
+    let countConditions = [];
 
     if (search) {
-      countQuery += ' WHERE c.name LIKE ?';
+      countConditions.push('c.name LIKE ?');
       countParams.push(`%${search}%`);
     }
 
     if (level) {
-      countQuery += params.length > 0 ? ' AND c.level = ?' : ' WHERE c.level = ?';
+      countConditions.push('l.name = ?');
       countParams.push(level);
     }
 
-    if (joins.length > 0) {
-      countQuery = countQuery.replace(' WHERE', joins.join('') + ' WHERE');
-      countQuery = countQuery.replace(' AND', joins.join('') + ' AND');
+    if (step_figures) {
+      const figures = Array.isArray(step_figures) ? step_figures : [step_figures];
+      countQuery += `
+        INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
+        INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+      `;
+      const placeholders = figures.map(() => '?').join(',');
+      countConditions.push(`sf.name IN (${placeholders})`);
+      countParams.push(...figures);
+    }
+
+    if (tags) {
+      const tagList = Array.isArray(tags) ? tags : [tags];
+      countQuery += `
+        INNER JOIN choreography_tags ct ON c.id = ct.choreography_id
+        INNER JOIN tags t ON ct.tag_id = t.id
+      `;
+      const placeholders = tagList.map(() => '?').join(',');
+      countConditions.push(`t.name IN (${placeholders})`);
+      countParams.push(...tagList);
+    }
+
+    if (countConditions.length > 0) {
+      countQuery += ' WHERE ' + countConditions.join(' AND ');
     }
 
     const countResult = await getQuery(countQuery, countParams);
@@ -361,4 +399,37 @@ async function getStepFigureId(name) {
 async function getTagId(name) {
   const result = await getQuery('SELECT id FROM tags WHERE name = ?', [name]);
   return result ? result.id : null;
+}
+
+export async function getLevels(req, res) {
+  try {
+    const levels = await allQuery('SELECT id, name FROM levels ORDER BY id');
+    res.json(levels);
+  } catch (error) {
+    console.error('Error fetching levels:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function addLevel(req, res) {
+  try {
+    const { name } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Level name is required' });
+    }
+
+    const result = await runQuery(
+      'INSERT INTO levels (name) VALUES (?)',
+      [name.trim()]
+    );
+
+    res.status(201).json({ id: result.id, name: name.trim() });
+  } catch (error) {
+    if (error.message.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'This level already exists' });
+    }
+    console.error('Error adding level:', error);
+    res.status(500).json({ error: error.message });
+  }
 }

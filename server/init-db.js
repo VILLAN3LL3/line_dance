@@ -16,7 +16,7 @@ function initializeDatabase() {
   });
 
   let completedQueries = 0;
-  const totalQueries = 7;
+  const totalQueries = 8;
 
   const checkComplete = () => {
     completedQueries++;
@@ -29,6 +29,23 @@ function initializeDatabase() {
     }
   };
 
+  // Create levels table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS levels (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE
+    )
+  `, (err) => {
+    if (err) console.error('Error creating levels table:', err);
+    else {
+      // Insert default levels
+      db.run(`INSERT OR IGNORE INTO levels (name) VALUES ('Beginner')`, checkComplete);
+      db.run(`INSERT OR IGNORE INTO levels (name) VALUES ('Intermediate')`, checkComplete);
+      db.run(`INSERT OR IGNORE INTO levels (name) VALUES ('Advanced')`, checkComplete);
+      db.run(`INSERT OR IGNORE INTO levels (name) VALUES ('Experienced')`, checkComplete);
+    }
+  });
+
   // Create choreographies table
   db.run(`
     CREATE TABLE IF NOT EXISTS choreographies (
@@ -37,10 +54,11 @@ function initializeDatabase() {
       step_sheet_link TEXT,
       count INTEGER,
       wall_count INTEGER,
-      level TEXT NOT NULL,
+      level_id INTEGER NOT NULL,
       creation_year INTEGER,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (level_id) REFERENCES levels(id)
     )
   `, (err) => {
     if (err) console.error('Error creating choreographies table:', err);

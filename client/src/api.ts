@@ -58,3 +58,20 @@ export async function deleteChoreography(id: number): Promise<{ message: string 
   const response = await api.delete(`/choreographies/${id}`);
   return response.data;
 }
+
+export async function getLevels(): Promise<{ id: number; name: string }[]> {
+  const response = await api.get('/levels');
+  return response.data;
+}
+
+export async function addLevel(name: string): Promise<{ id: number; name: string }> {
+  try {
+    const response = await api.post('/levels', { name });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    }
+    throw error;
+  }
+}

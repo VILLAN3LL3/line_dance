@@ -1,8 +1,9 @@
 import "../styles/ChoreographyForm.css";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import { ChoreographyFormData, Level } from "../types";
+import { getLevels, addLevel as apiAddLevel } from "../api";
 
 interface ChoreographyFormProps {
   initialData?: ChoreographyFormData;
@@ -10,8 +11,6 @@ interface ChoreographyFormProps {
   isLoading?: boolean;
   onCancel?: () => void;
 }
-
-const LEVELS: Level[] = ['Beginner', 'Intermediate', 'Advanced', 'Experienced'];
 
 export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   initialData,
@@ -22,7 +21,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const [formData, setFormData] = useState<ChoreographyFormData>(
     initialData || {
       name: '',
-      level: 'Beginner',
+      level: '',
       authors: [],
       tags: [],
       step_figures: [],
@@ -32,6 +31,46 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const [currentAuthor, setCurrentAuthor] = useState('');
   const [currentTag, setCurrentTag] = useState('');
   const [currentFigure, setCurrentFigure] = useState('');
+  const [levels, setLevels] = useState<{ id: number; name: string }[]>([]);
+  const [newLevelName, setNewLevelName] = useState('');
+  const [showAddLevel, setShowAddLevel] = useState(false);
+  const [levelError, setLevelError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadLevels();
+  }, []);
+
+  const loadLevels = async () => {
+    try {
+      const fetchedLevels = await getLevels();
+      setLevels(fetchedLevels);
+      // Set default level if not set
+      if (!formData.level && fetchedLevels.length > 0) {
+        setFormData(prev => ({ ...prev, level: fetchedLevels[0].name }));
+      }
+    } catch (error) {
+      console.error('Error loading levels:', error);
+    }
+  };
+
+  const handleAddLevel = async () => {
+    if (!newLevelName.trim()) {
+      setLevelError('Level name cannot be empty');
+      return;
+    }
+
+    try {
+      setLevelError(null);
+      const newLevel = await apiAddLevel(newLevelName.trim());
+      setLevels([...levels, newLevel]);
+      setNewLevelName('');
+      setShowAddLevel(false);
+      // Automatically select the new level
+      setFormData(prev => ({ ...prev, level: newLevel.name }));
+    } catch (error) {
+      setLevelError(error instanceof Error ? error.message : 'Failed to add level');
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -125,13 +164,58 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
         <div className="form-group">
           <label htmlFor="level">Level *</label>
-          <select id="level" name="level" value={formData.level} onChange={handleChange} required>
-            {LEVELS.map(level => (
-              <option key={level} value={level}>
-                {level}
-              </option>
-            ))}
-          </select>
+          <div className="level-group">
+            <select id="level" name="level" value={formData.level} onChange={handleChange} required>
+              <option value="">Select a level</option>
+              {levels.map(level => (
+                <option key={level.id} value={level.name}>
+                  {level.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setShowAddLevel(!showAddLevel)}
+              className="btn-small btn-secondary"
+              title="Add new level"
+            >
+              +
+            </button>
+          </div>
+          {showAddLevel && (
+            <div className="add-level-form">
+              <input
+                type="text"
+                value={newLevelName}
+                onChange={e => {
+                  setNewLevelName(e.target.value);
+                  setLevelError(null);
+                }}
+                onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), handleAddLevel())}
+                placeholder="New level name"
+                className="input-new-level"
+              />
+              <button
+                type="button"
+                onClick={handleAddLevel}
+                className="btn-small btn-add"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddLevel(false);
+                  setNewLevelName('');
+                  setLevelError(null);
+                }}
+                className="btn-small btn-secondary"
+              >
+                Cancel
+              </button>
+              {levelError && <span className="error-text">{levelError}</span>}
+            </div>
+          )}
         </div>
 
         <div className="form-row">
