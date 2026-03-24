@@ -105,14 +105,37 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     }
   };
 
-  const addAuthor = () => {
-    if (currentAuthor.trim()) {
+  const addAuthor = (authorValue?: string) => {
+    const author = (authorValue ?? currentAuthor).trim();
+    if (author && !formData.authors.includes(author)) {
       setFormData(prev => ({
         ...prev,
-        authors: [...prev.authors, currentAuthor.trim()],
+        authors: [...prev.authors, author],
       }));
-      setCurrentAuthor('');
     }
+    setCurrentAuthor('');
+  };
+
+  const addTag = (tagValue?: string) => {
+    const tag = (tagValue ?? currentTag).trim();
+    if (tag && !formData.tags.includes(tag)) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, tag],
+      }));
+    }
+    setCurrentTag('');
+  };
+
+  const addFigure = (figureValue?: string) => {
+    const figure = (figureValue ?? currentFigure).trim();
+    if (figure && !formData.step_figures.includes(figure)) {
+      setFormData(prev => ({
+        ...prev,
+        step_figures: [...prev.step_figures, figure],
+      }));
+    }
+    setCurrentFigure('');
   };
 
   const removeAuthor = (index: number) => {
@@ -122,16 +145,6 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     }));
   };
 
-  const addTag = () => {
-    if (currentTag.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, currentTag.trim()],
-      }));
-      setCurrentTag('');
-    }
-  };
-
   const removeTag = (index: number) => {
     setFormData(prev => ({
       ...prev,
@@ -139,21 +152,79 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     }));
   };
 
-  const addFigure = () => {
-    if (currentFigure.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        step_figures: [...prev.step_figures, currentFigure.trim()],
-      }));
-      setCurrentFigure('');
-    }
-  };
-
   const removeFigure = (index: number) => {
     setFormData(prev => ({
       ...prev,
       step_figures: prev.step_figures.filter((_, i) => i !== index),
     }));
+  };
+
+  const isDatalistSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputType = (e.nativeEvent as InputEvent).inputType;
+    return inputType === 'insertReplacementText' || inputType === 'insertFromDrop';
+  };
+
+  const handleAuthorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCurrentAuthor(value);
+
+    if (
+      value.trim() &&
+      authorsFromDb.includes(value.trim()) &&
+      !formData.authors.includes(value.trim()) &&
+      isDatalistSelection(e)
+    ) {
+      addAuthor(value.trim());
+    }
+  };
+
+  const handleFigureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCurrentFigure(value);
+
+    if (
+      value.trim() &&
+      figuresFromDb.includes(value.trim()) &&
+      !formData.step_figures.includes(value.trim()) &&
+      isDatalistSelection(e)
+    ) {
+      addFigure(value.trim());
+    }
+  };
+
+  const handleTagChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCurrentTag(value);
+
+    if (
+      value.trim() &&
+      tagsFromDb.includes(value.trim()) &&
+      !formData.tags.includes(value.trim()) &&
+      isDatalistSelection(e)
+    ) {
+      addTag(value.trim());
+    }
+  };
+
+  const handleAuthorBlur = () => {
+    const normalized = currentAuthor.trim();
+    if (normalized && authorsFromDb.includes(normalized) && !formData.authors.includes(normalized)) {
+      addAuthor(normalized);
+    }
+  };
+
+  const handleFigureBlur = () => {
+    const normalized = currentFigure.trim();
+    if (normalized && figuresFromDb.includes(normalized) && !formData.step_figures.includes(normalized)) {
+      addFigure(normalized);
+    }
+  };
+
+  const handleTagBlur = () => {
+    const normalized = currentTag.trim();
+    if (normalized && tagsFromDb.includes(normalized) && !formData.tags.includes(normalized)) {
+      addTag(normalized);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -355,9 +426,10 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           <input
             type="text"
             value={currentAuthor}
-            onChange={e => setCurrentAuthor(e.target.value)}
+            onChange={handleAuthorChange}
+            onBlur={handleAuthorBlur}
             onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addAuthor())}
-            placeholder="Author name"
+            placeholder={currentAuthor ? '' : 'Author name'}
             list="authors-list"
           />
           <datalist id="authors-list">
@@ -365,7 +437,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
               <option key={index} value={author} />
             ))}
           </datalist>
-          <button type="button" onClick={addAuthor} className="btn-add">
+          <button type="button" onClick={() => addAuthor()} className="btn-add">
             Add Author
           </button>
         </div>
@@ -391,9 +463,10 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           <input
             type="text"
             value={currentFigure}
-            onChange={e => setCurrentFigure(e.target.value)}
+            onChange={handleFigureChange}
+            onBlur={handleFigureBlur}
             onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addFigure())}
-            placeholder="Step figure name (e.g., Vine, Shuffle, Grapevine)"
+            placeholder={currentFigure ? '' : 'Step figure name (e.g., Vine, Shuffle, Grapevine)'}
             list="figures-list"
           />
           <datalist id="figures-list">
@@ -401,7 +474,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
               <option key={index} value={figure} />
             ))}
           </datalist>
-          <button type="button" onClick={addFigure} className="btn-add">
+          <button type="button" onClick={() => addFigure()} className="btn-add">
             Add Figure
           </button>
         </div>
@@ -427,9 +500,10 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           <input
             type="text"
             value={currentTag}
-            onChange={e => setCurrentTag(e.target.value)}
+            onChange={handleTagChange}
+            onBlur={handleTagBlur}
             onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
-            placeholder="Tag (e.g., Country, Western, Urban)"
+            placeholder={currentTag ? '' : 'Tag (e.g., Country, Western, Urban)'}
             list="tags-list"
           />
           <datalist id="tags-list">
@@ -437,7 +511,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
               <option key={index} value={tag} />
             ))}
           </datalist>
-          <button type="button" onClick={addTag} className="btn-add">
+          <button type="button" onClick={() => addTag()} className="btn-add">
             Add Tag
           </button>
         </div>
