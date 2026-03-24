@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { ChoreographyFormData, Level } from '../types';
-import '../styles/ChoreographyForm.css';
+import "../styles/ChoreographyForm.css";
+
+import React, { useState } from "react";
+
+import { ChoreographyFormData, Level } from "../types";
 
 interface ChoreographyFormProps {
   initialData?: ChoreographyFormData;

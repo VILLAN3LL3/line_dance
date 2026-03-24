@@ -1,5 +1,6 @@
-import axios from 'axios';
-import { Choreography, ChoreographyFormData, PaginatedResponse } from './types';
+import axios from "axios";
+
+import { Choreography, ChoreographyFormData, PaginatedResponse } from "./types";
 
 const API_URL = 'http://localhost:3001/api';
 

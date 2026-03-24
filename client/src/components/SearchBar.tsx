@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Level } from '../types';
-import '../styles/SearchBar.css';
+import "../styles/SearchBar.css";
+
+import React, { useEffect, useState } from "react";
+
+import { Level } from "../types";
 
 interface SearchBarProps {
   onSearch: (filters: {

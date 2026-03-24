@@ -1,6 +1,8 @@
-import React from 'react';
-import { Choreography } from '../types';
-import '../styles/ChoreographyCard.css';
+import "../styles/ChoreographyCard.css";
+
+import React from "react";
+
+import { Choreography } from "../types";
 
 interface ChoreographyCardProps {
   choreography: Choreography;

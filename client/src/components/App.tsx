@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Choreography, PaginatedResponse } from '../types';
-import { fetchChoreographies, searchChoreographies, createChoreography, updateChoreography, deleteChoreography } from '../api';
-import { ChoreographyCard } from './ChoreographyCard';
-import { ChoreographyForm } from './ChoreographyForm';
-import { SearchBar } from './SearchBar';
-import '../styles/App.css';
+import "../styles/App.css";
+
+import React, { useEffect, useState } from "react";
+
+import { createChoreography, deleteChoreography, fetchChoreographies, searchChoreographies, updateChoreography } from "../api";
+import { Choreography, PaginatedResponse } from "../types";
+import { ChoreographyCard } from "./ChoreographyCard";
+import { ChoreographyForm } from "./ChoreographyForm";
+import { SearchBar } from "./SearchBar";
 
 type View = 'list' | 'create' | 'edit' | 'detail';
 
