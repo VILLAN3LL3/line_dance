@@ -2,7 +2,7 @@ import "../styles/ChoreographyForm.css";
 
 import React, { useEffect, useState } from "react";
 
-import { addLevel as apiAddLevel, getLevels, getAuthors, getTags, getStepFigures } from "../api";
+import { addLevel as apiAddLevel, getAuthors, getLevels, getStepFigures, getTags } from "../api";
 import { ChoreographyFormData } from "../types";
 
 interface ChoreographyFormProps {
