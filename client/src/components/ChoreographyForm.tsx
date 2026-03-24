@@ -2,7 +2,7 @@ import "../styles/ChoreographyForm.css";
 
 import React, { useEffect, useState } from "react";
 
-import { addLevel as apiAddLevel, getLevels } from "../api";
+import { addLevel as apiAddLevel, getLevels, getAuthors, getTags, getStepFigures } from "../api";
 import { ChoreographyFormData } from "../types";
 
 interface ChoreographyFormProps {
@@ -32,24 +32,37 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const [currentTag, setCurrentTag] = useState('');
   const [currentFigure, setCurrentFigure] = useState('');
   const [levels, setLevels] = useState<{ id: number; name: string }[]>([]);
+  const [authorsFromDb, setAuthorsFromDb] = useState<string[]>([]);
+  const [tagsFromDb, setTagsFromDb] = useState<string[]>([]);
+  const [figuresFromDb, setFiguresFromDb] = useState<string[]>([]);
   const [newLevelName, setNewLevelName] = useState('');
   const [showAddLevel, setShowAddLevel] = useState(false);
   const [levelError, setLevelError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadLevels();
+    loadReferenceData();
   }, []);
 
-  const loadLevels = async () => {
+  const loadReferenceData = async () => {
     try {
-      const fetchedLevels = await getLevels();
+      const [fetchedLevels, fetchedAuthors, fetchedTags, fetchedFigures] = await Promise.all([
+        getLevels(),
+        getAuthors(),
+        getTags(),
+        getStepFigures(),
+      ]);
+
       setLevels(fetchedLevels);
+      setAuthorsFromDb(fetchedAuthors);
+      setTagsFromDb(fetchedTags);
+      setFiguresFromDb(fetchedFigures);
+
       // Set default level if not set
       if (!formData.level && fetchedLevels.length > 0) {
         setFormData(prev => ({ ...prev, level: fetchedLevels[0].name }));
       }
     } catch (error) {
-      console.error('Error loading levels:', error);
+      console.error('Error loading reference data:', error);
     }
   };
 
@@ -345,7 +358,13 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
             onChange={e => setCurrentAuthor(e.target.value)}
             onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addAuthor())}
             placeholder="Author name"
+            list="authors-list"
           />
+          <datalist id="authors-list">
+            {authorsFromDb.map((author, index) => (
+              <option key={index} value={author} />
+            ))}
+          </datalist>
           <button type="button" onClick={addAuthor} className="btn-add">
             Add Author
           </button>
@@ -375,7 +394,13 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
             onChange={e => setCurrentFigure(e.target.value)}
             onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addFigure())}
             placeholder="Step figure name (e.g., Vine, Shuffle, Grapevine)"
+            list="figures-list"
           />
+          <datalist id="figures-list">
+            {figuresFromDb.map((figure, index) => (
+              <option key={index} value={figure} />
+            ))}
+          </datalist>
           <button type="button" onClick={addFigure} className="btn-add">
             Add Figure
           </button>
@@ -405,7 +430,13 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
             onChange={e => setCurrentTag(e.target.value)}
             onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
             placeholder="Tag (e.g., Country, Western, Urban)"
+            list="tags-list"
           />
+          <datalist id="tags-list">
+            {tagsFromDb.map((tag, index) => (
+              <option key={index} value={tag} />
+            ))}
+          </datalist>
           <button type="button" onClick={addTag} className="btn-add">
             Add Tag
           </button>

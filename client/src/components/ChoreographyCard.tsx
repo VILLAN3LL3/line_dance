@@ -30,7 +30,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
         {choreography.count && <p><strong>Count:</strong> {choreography.count}</p>}
         {choreography.wall_count && <p><strong>Wall:</strong> {choreography.wall_count}</p>}
         {choreography.creation_year && <p><strong>Year:</strong> {choreography.creation_year}</p>}
-        {choreography.isPhrased && <p className="phrased-badge">✓ Phrased</p>}
+        {Boolean(choreography.isPhrased) && <p className="phrased-badge">✓ Phrased</p>}
 
         {choreography.authors.length > 0 && (
           <div className="authors">

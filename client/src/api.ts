@@ -69,6 +69,11 @@ export async function getTags(): Promise<string[]> {
   return response.data;
 }
 
+export async function getAuthors(): Promise<string[]> {
+  const response = await api.get('/authors');
+  return response.data;
+}
+
 export async function addLevel(name: string): Promise<{ id: number; name: string }> {
   try {
     const response = await api.post('/levels', { name });

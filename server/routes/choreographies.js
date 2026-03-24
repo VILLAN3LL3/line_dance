@@ -421,6 +421,16 @@ export async function getTags(req, res) {
   }
 }
 
+export async function getAuthors(req, res) {
+  try {
+    const authors = await allQuery('SELECT name FROM authors ORDER BY name');
+    res.json(authors.map(a => a.name));
+  } catch (error) {
+    console.error('Error fetching authors:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
 export async function addLevel(req, res) {
   try {
     const { name } = req.body;
