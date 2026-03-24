@@ -2,7 +2,7 @@ import "../styles/SearchBar.css";
 
 import React, { useEffect, useState } from "react";
 
-import { Level } from "../types";
+import { getLevels, getStepFigures, getTags } from "../api";
 
 interface SearchBarProps {
   onSearch: (filters: {
@@ -14,19 +14,15 @@ interface SearchBarProps {
   isLoading?: boolean;
 }
 
-const LEVELS: Level[] = ['Beginner', 'Intermediate', 'Advanced', 'Experienced'];
-const COMMON_FIGURES = [
-  'Vine', 'Shuffle', 'Grapevine', 'Rock Step', 'Slide', 'Jazz Box',
-  'Triple Step', 'Pivot', 'Scuff', 'Kick', 'Heel', 'Touch',
-];
-
 export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('');
   const [selectedFigures, setSelectedFigures] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [customFigure, setCustomFigure] = useState('');
+  const [levelOptions, setLevelOptions] = useState<string[]>([]);
+  const [figureOptions, setFigureOptions] = useState<string[]>([]);
+  const [tagOptions, setTagOptions] = useState<string[]>([]);
 
   const handleSearch = async () => {
     await onSearch({
@@ -38,21 +34,40 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
   };
 
   useEffect(() => {
-    const timer = setTimeout(handleSearch, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm, selectedLevel, selectedFigures, selectedTags]);
+    // Only auto-search on text input changes, not filter selections
+    if (searchTerm !== undefined) {
+      const timer = setTimeout(handleSearch, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [searchTerm]);
+
+  useEffect(() => {
+    const loadFilters = async () => {
+      try {
+        const [levels, figures, tags] = await Promise.all([
+          getLevels(),
+          getStepFigures(),
+          getTags(),
+        ]);
+
+        setLevelOptions(levels.map(l => l.name));
+        setFigureOptions(figures);
+        setTagOptions(tags);
+      } catch (error) {
+        console.error('Error loading search filters:', error);
+        setLevelOptions([]);
+        setFigureOptions([]);
+        setTagOptions([]);
+      }
+    };
+
+    loadFilters();
+  }, []);
 
   const toggleFigure = (figure: string) => {
     setSelectedFigures(prev =>
       prev.includes(figure) ? prev.filter(f => f !== figure) : [...prev, figure]
     );
-  };
-
-  const addCustomFigure = () => {
-    if (customFigure.trim() && !selectedFigures.includes(customFigure.trim())) {
-      setSelectedFigures(prev => [...prev, customFigure.trim()]);
-      setCustomFigure('');
-    }
   };
 
   const toggleTag = (tag: string) => {
@@ -87,7 +102,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
           <div className="filter-group">
             <label>Level:</label>
             <div className="filter-options">
-              {LEVELS.map(level => (
+              {levelOptions.map(level => (
                 <label key={level} className="checkbox-label">
                   <input
                     type="checkbox"
@@ -104,7 +119,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
           <div className="filter-group">
             <label>Step Figures:</label>
             <div className="filter-options">
-              {COMMON_FIGURES.map(figure => (
+              {figureOptions.map(figure => (
                 <label key={figure} className="checkbox-label">
                   <input
                     type="checkbox"
@@ -116,70 +131,37 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
                 </label>
               ))}
             </div>
-            <div className="custom-input">
-              <input
-                type="text"
-                placeholder="Add custom figure..."
-                value={customFigure}
-                onChange={e => setCustomFigure(e.target.value)}
-                onKeyPress={e => e.key === 'Enter' && addCustomFigure()}
-              />
-              <button type="button" onClick={addCustomFigure} className="btn-small">
-                Add
-              </button>
-            </div>
-            {selectedFigures.length > 0 && (
-              <div className="selected-items">
-                {selectedFigures.map((figure, idx) => (
-                  <span key={idx} className="selected-tag">
-                    {figure}
-                    <button
-                      type="button"
-                      onClick={() => toggleFigure(figure)}
-                      className="btn-remove-small"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="filter-group">
             <label>Tags:</label>
-            <div className="custom-input">
-              <input
-                type="text"
-                placeholder="Enter tag name..."
-                onKeyPress={e => {
-                  if (e.key === 'Enter') {
-                    const tag = (e.target as HTMLInputElement).value.trim();
-                    if (tag && !selectedTags.includes(tag)) {
-                      setSelectedTags([...selectedTags, tag]);
-                      (e.target as HTMLInputElement).value = '';
-                    }
-                  }
-                }}
-              />
+            <div className="filter-options">
+              {tagOptions.map(tag => (
+                <label key={tag} className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={selectedTags.includes(tag)}
+                    onChange={() => toggleTag(tag)}
+                    disabled={isLoading}
+                  />
+                  {tag}
+                </label>
+              ))}
             </div>
-            {selectedTags.length > 0 && (
-              <div className="selected-items">
-                {selectedTags.map((tag, idx) => (
-                  <span key={idx} className="selected-tag">
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => toggleTag(tag)}
-                      className="btn-remove-small"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
+        </div>
+      )}
+
+      {showAdvanced && (
+        <div className="search-actions">
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="btn-primary"
+            disabled={isLoading}
+          >
+            Apply Filters
+          </button>
         </div>
       )}
     </div>

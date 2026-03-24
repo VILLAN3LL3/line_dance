@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { getDatabase, closeDatabase } from './db.js';
-import { createChoreography, getChoreographies, getChoreographyById, updateChoreography, deleteChoreography, searchChoreographies, getLevels, addLevel } from './routes/choreographies.js';
+import { createChoreography, getChoreographies, getChoreographyById, updateChoreography, deleteChoreography, searchChoreographies, getLevels, addLevel, getTags, getStepFigures } from './routes/choreographies.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,6 +24,8 @@ app.put('/api/choreographies/:id', updateChoreography);
 app.delete('/api/choreographies/:id', deleteChoreography);
 app.get('/api/levels', getLevels);
 app.post('/api/levels', addLevel);
+app.get('/api/tags', getTags);
+app.get('/api/step_figures', getStepFigures);
 
 // Health check
 app.get('/api/health', (req, res) => {

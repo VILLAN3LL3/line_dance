@@ -1,9 +1,9 @@
 import "../styles/ChoreographyForm.css";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
-import { ChoreographyFormData, Level } from "../types";
-import { getLevels, addLevel as apiAddLevel } from "../api";
+import { addLevel as apiAddLevel, getLevels } from "../api";
+import { ChoreographyFormData } from "../types";
 
 interface ChoreographyFormProps {
   initialData?: ChoreographyFormData;
@@ -75,13 +75,21 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'count' || name === 'wall_count' || name === 'creation_year' 
-        ? value ? parseInt(value) : undefined
-        : value,
-    }));
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      const isChecked = (e.target as HTMLInputElement).checked;
+      setFormData(prev => ({
+        ...prev,
+        [name]: isChecked,
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: name === 'count' || name === 'wall_count' || name === 'creation_year' 
+          ? value ? parseInt(value) : undefined
+          : value,
+      }));
+    }
   };
 
   const addAuthor = () => {
@@ -218,6 +226,19 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           )}
         </div>
 
+        <div className="form-group">
+          <label htmlFor="isPhrased">
+            <input
+              type="checkbox"
+              id="isPhrased"
+              name="isPhrased"
+              checked={formData.isPhrased || false}
+              onChange={handleChange}
+            />
+            Is Phrased
+          </label>
+        </div>
+
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="count">Count</label>
@@ -265,6 +286,52 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
             value={formData.step_sheet_link || ''}
             onChange={handleChange}
             placeholder="https://example.com/stepsheet"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="demo_video_url">Demo Video URL</label>
+          <input
+            type="url"
+            id="demo_video_url"
+            name="demo_video_url"
+            value={formData.demo_video_url || ''}
+            onChange={handleChange}
+            placeholder="https://youtube.com/..."
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="tutorial_video_url">Tutorial Video URL</label>
+          <input
+            type="url"
+            id="tutorial_video_url"
+            name="tutorial_video_url"
+            value={formData.tutorial_video_url || ''}
+            onChange={handleChange}
+            placeholder="https://youtube.com/..."
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="tag_information">Tag Information</label>
+          <textarea
+            id="tag_information"
+            name="tag_information"
+            value={formData.tag_information || ''}
+            onChange={handleChange}
+            placeholder="Additional information about tags used in this choreography"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="restart_information">Restart Information</label>
+          <textarea
+            id="restart_information"
+            name="restart_information"
+            value={formData.restart_information || ''}
+            onChange={handleChange}
+            placeholder="Instructions for restarting or resetting the choreography"
           />
         </div>
       </div>

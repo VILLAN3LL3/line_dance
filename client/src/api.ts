@@ -64,6 +64,11 @@ export async function getLevels(): Promise<{ id: number; name: string }[]> {
   return response.data;
 }
 
+export async function getTags(): Promise<string[]> {
+  const response = await api.get('/tags');
+  return response.data;
+}
+
 export async function addLevel(name: string): Promise<{ id: number; name: string }> {
   try {
     const response = await api.post('/levels', { name });
@@ -74,4 +79,9 @@ export async function addLevel(name: string): Promise<{ id: number; name: string
     }
     throw error;
   }
+}
+
+export async function getStepFigures(): Promise<string[]> {
+  const response = await api.get('/step_figures');
+  return response.data;
 }

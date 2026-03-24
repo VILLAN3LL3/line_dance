@@ -2,10 +2,15 @@ export interface Choreography {
   id: number;
   name: string;
   step_sheet_link?: string;
+  demo_video_url?: string;
+  tutorial_video_url?: string;
   count?: number;
   wall_count?: number;
   level: string;
   creation_year?: number;
+  tag_information?: string;
+  restart_information?: string;
+  isPhrased: boolean;
   authors: string[];
   tags: string[];
   step_figures: string[];
@@ -16,10 +21,15 @@ export interface Choreography {
 export interface ChoreographyFormData {
   name: string;
   step_sheet_link?: string;
+  demo_video_url?: string;
+  tutorial_video_url?: string;
   count?: number;
   wall_count?: number;
   level: string;
   creation_year?: number;
+  tag_information?: string;
+  restart_information?: string;
+  isPhrased?: boolean;
   authors: string[];
   tags: string[];
   step_figures: string[];

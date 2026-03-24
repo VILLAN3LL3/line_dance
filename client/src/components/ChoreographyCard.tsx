@@ -28,8 +28,9 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
 
       <div className="card-content">
         {choreography.count && <p><strong>Count:</strong> {choreography.count}</p>}
-        {choreography.wall_count && <p><strong>Wall Count:</strong> {choreography.wall_count}</p>}
+        {choreography.wall_count && <p><strong>Wall:</strong> {choreography.wall_count}</p>}
         {choreography.creation_year && <p><strong>Year:</strong> {choreography.creation_year}</p>}
+        {choreography.isPhrased && <p className="phrased-badge">✓ Phrased</p>}
 
         {choreography.authors.length > 0 && (
           <div className="authors">
@@ -67,6 +68,30 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
           <a href={choreography.step_sheet_link} target="_blank" rel="noopener noreferrer" className="step-sheet-link">
             📄 View Step Sheet
           </a>
+        )}
+
+        {choreography.demo_video_url && (
+          <a href={choreography.demo_video_url} target="_blank" rel="noopener noreferrer" className="step-sheet-link">
+            🎬 Watch Demo
+          </a>
+        )}
+
+        {choreography.tutorial_video_url && (
+          <a href={choreography.tutorial_video_url} target="_blank" rel="noopener noreferrer" className="step-sheet-link">
+            🎓 Watch Tutorial
+          </a>
+        )}
+
+        {choreography.tag_information && (
+          <div className="info-section">
+            <strong>Tag Info:</strong> {choreography.tag_information}
+          </div>
+        )}
+
+        {choreography.restart_information && (
+          <div className="info-section">
+            <strong>Restart Info:</strong> {choreography.restart_information}
+          </div>
         )}
       </div>
 
