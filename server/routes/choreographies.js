@@ -211,9 +211,50 @@ export async function updateChoreography(req, res) {
     }
 
     res.json({ id: choreography_id, message: 'Choreography updated successfully' });
+    await cleanupOrphanedRecords();
   } catch (error) {
     console.error('Error updating choreography:', error);
     res.status(500).json({ error: error.message });
+  }
+}
+
+// Helper function to clean up orphaned records
+async function cleanupOrphanedRecords() {
+  try {
+    // Delete orphaned authors (not used by any choreography)
+    await runQuery(
+      `DELETE FROM authors 
+       WHERE id NOT IN (
+         SELECT DISTINCT author_id FROM choreography_authors WHERE author_id IS NOT NULL
+       )`
+    );
+
+    // Delete orphaned tags (not used by any choreography)
+    await runQuery(
+      `DELETE FROM tags 
+       WHERE id NOT IN (
+         SELECT DISTINCT tag_id FROM choreography_tags WHERE tag_id IS NOT NULL
+       )`
+    );
+
+    // Delete orphaned step_figures (not used by any choreography)
+    await runQuery(
+      `DELETE FROM step_figures 
+       WHERE id NOT IN (
+         SELECT DISTINCT step_figure_id FROM choreography_step_figures WHERE step_figure_id IS NOT NULL
+       )`
+    );
+
+    // Delete orphaned levels (not used by any choreography)
+    await runQuery(
+      `DELETE FROM levels 
+       WHERE id NOT IN (
+         SELECT DISTINCT level_id FROM choreographies WHERE level_id IS NOT NULL
+       )`
+    );
+  } catch (error) {
+    console.error('Error cleaning up orphaned records:', error);
+    // Don't throw - this is a cleanup operation and shouldn't break the main operation
   }
 }
 
@@ -226,6 +267,9 @@ export async function deleteChoreography(req, res) {
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Choreography not found' });
     }
+
+    // Clean up orphaned records
+    await cleanupOrphanedRecords();
 
     res.json({ message: 'Choreography deleted successfully' });
   } catch (error) {
