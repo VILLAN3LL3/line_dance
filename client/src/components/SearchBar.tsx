@@ -9,6 +9,7 @@ interface SearchBarProps {
     search?: string;
     level?: string;
     step_figures?: string[];
+    step_figures_match_mode?: 'all' | 'any';
     tags?: string[];
     authors?: string[];
   }) => Promise<void>;
@@ -21,17 +22,25 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
   const [selectedFigures, setSelectedFigures] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
+  const [stepFiguresMatchMode, setStepFiguresMatchMode] = useState<'all' | 'any'>('all');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [levelOptions, setLevelOptions] = useState<string[]>([]);
   const [figureOptions, setFigureOptions] = useState<string[]>([]);
   const [tagOptions, setTagOptions] = useState<string[]>([]);
   const [authorOptions, setAuthorOptions] = useState<string[]>([]);
+  
+  // Input states for autocomplete
+  const [inputLevel, setInputLevel] = useState('');
+  const [inputFigure, setInputFigure] = useState('');
+  const [inputTag, setInputTag] = useState('');
+  const [inputAuthor, setInputAuthor] = useState('');
 
   const handleSearch = async () => {
     await onSearch({
       search: searchTerm || undefined,
       level: selectedLevel || undefined,
       step_figures: selectedFigures.length > 0 ? selectedFigures : undefined,
+      step_figures_match_mode: selectedFigures.length > 0 ? stepFiguresMatchMode : undefined,
       tags: selectedTags.length > 0 ? selectedTags : undefined,
       authors: selectedAuthors.length > 0 ? selectedAuthors : undefined,
     });
@@ -89,6 +98,99 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
     );
   };
 
+  const addFigureFromInput = (figureValue?: string) => {
+    const value = figureValue ?? inputFigure;
+    const trimmed = value.trim();
+    if (trimmed && !selectedFigures.includes(trimmed)) {
+      setSelectedFigures([...selectedFigures, trimmed]);
+      setInputFigure('');
+    }
+  };
+
+  const addTagFromInput = (tagValue?: string) => {
+    const value = tagValue ?? inputTag;
+    const trimmed = value.trim();
+    if (trimmed && !selectedTags.includes(trimmed)) {
+      setSelectedTags([...selectedTags, trimmed]);
+      setInputTag('');
+    }
+  };
+
+  const addAuthorFromInput = (authorValue?: string) => {
+    const value = authorValue ?? inputAuthor;
+    const trimmed = value.trim();
+    if (trimmed && !selectedAuthors.includes(trimmed)) {
+      setSelectedAuthors([...selectedAuthors, trimmed]);
+      setInputAuthor('');
+    }
+  };
+
+  const selectLevel = (level: string) => {
+    setSelectedLevel(selectedLevel === level ? '' : level);
+    setInputLevel('');
+  };
+
+  const isDatalistSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputType = (e.nativeEvent as InputEvent).inputType;
+    return inputType === 'insertReplacementText' || inputType === 'insertFromDrop';
+  };
+
+  const handleLevelInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputLevel(value);
+
+    if (
+      value.trim() &&
+      levelOptions.includes(value.trim()) &&
+      selectedLevel !== value.trim() &&
+      isDatalistSelection(e)
+    ) {
+      selectLevel(value.trim());
+    }
+  };
+
+  const handleFigureInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputFigure(value);
+
+    if (
+      value.trim() &&
+      figureOptions.includes(value.trim()) &&
+      !selectedFigures.includes(value.trim()) &&
+      isDatalistSelection(e)
+    ) {
+      addFigureFromInput(value);
+    }
+  };
+
+  const handleTagInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputTag(value);
+
+    if (
+      value.trim() &&
+      tagOptions.includes(value.trim()) &&
+      !selectedTags.includes(value.trim()) &&
+      isDatalistSelection(e)
+    ) {
+      addTagFromInput(value);
+    }
+  };
+
+  const handleAuthorInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputAuthor(value);
+
+    if (
+      value.trim() &&
+      authorOptions.includes(value.trim()) &&
+      !selectedAuthors.includes(value.trim()) &&
+      isDatalistSelection(e)
+    ) {
+      addAuthorFromInput(value);
+    }
+  };
+
   return (
     <div className="search-bar">
       <div className="search-main">
@@ -114,68 +216,178 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
         <div className="advanced-filters">
           <div className="filter-group">
             <label>Level:</label>
-            <div className="filter-options">
-              {levelOptions.map(level => (
-                <label key={level} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={selectedLevel === level}
-                    onChange={() => setSelectedLevel(selectedLevel === level ? '' : level)}
-                    disabled={isLoading}
-                  />
-                  {level}
-                </label>
-              ))}
+            <div className="filter-input-container">
+              <input
+                type="text"
+                value={inputLevel}
+                onChange={handleLevelInput}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), selectLevel(inputLevel.trim()))}
+                placeholder={selectedLevel ? `Selected: ${selectedLevel}` : 'Filter by level...'}
+                list="levels-list"
+                disabled={isLoading}
+              />
+              <datalist id="levels-list">
+                {levelOptions.map((level, index) => (
+                  <option key={index} value={level} />
+                ))}
+              </datalist>
+              {selectedLevel && (
+                <button 
+                  type="button" 
+                  onClick={() => setSelectedLevel('')}
+                  className="btn-remove-filter"
+                  disabled={isLoading}
+                  title="Clear level selection"
+                >
+                  ×
+                </button>
+              )}
             </div>
+            {selectedLevel && (
+              <div className="filter-selection-display">
+                Selected: <strong>{selectedLevel}</strong>
+              </div>
+            )}
           </div>
 
           <div className="filter-group">
             <label>Step Figures:</label>
-            <div className="filter-options">
-              {figureOptions.map(figure => (
-                <label key={figure} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={selectedFigures.includes(figure)}
-                    onChange={() => toggleFigure(figure)}
-                    disabled={isLoading}
-                  />
+            <div className="filter-input-container">
+              <input
+                type="text"
+                value={inputFigure}
+                onChange={handleFigureInput}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFigureFromInput())}
+                placeholder="Add step figure..."
+                list="figures-list"
+                disabled={isLoading}
+              />
+              <datalist id="figures-list">
+                {figureOptions.map((figure, index) => (
+                  <option key={index} value={figure} />
+                ))}
+              </datalist>
+              <button 
+                type="button" 
+                onClick={addFigureFromInput}
+                className="btn-add-filter"
+                disabled={isLoading}
+              >
+                +
+              </button>
+            </div>
+            {selectedFigures.length > 0 && (
+              <div className="filter-mode-toggle">
+                <label>Match Mode:</label>
+                <button
+                  type="button"
+                  onClick={() => setStepFiguresMatchMode(stepFiguresMatchMode === 'all' ? 'any' : 'all')}
+                  className={`toggle-btn mode-${stepFiguresMatchMode}`}
+                  disabled={isLoading}
+                >
+                  {stepFiguresMatchMode === 'all' ? 'AND (all selected)' : 'OR (any selected)'}
+                </button>
+              </div>
+            )}
+            <div className="filter-tags">
+              {selectedFigures.map((figure, index) => (
+                <span key={index} className="filter-tag">
                   {figure}
-                </label>
+                  <button
+                    type="button"
+                    onClick={() => toggleFigure(figure)}
+                    className="btn-remove-tag"
+                    disabled={isLoading}
+                  >
+                    ×
+                  </button>
+                </span>
               ))}
             </div>
           </div>
 
           <div className="filter-group">
             <label>Tags:</label>
-            <div className="filter-options">
-              {tagOptions.map(tag => (
-                <label key={tag} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={selectedTags.includes(tag)}
-                    onChange={() => toggleTag(tag)}
-                    disabled={isLoading}
-                  />
+            <div className="filter-input-container">
+              <input
+                type="text"
+                value={inputTag}
+                onChange={handleTagInput}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTagFromInput())}
+                placeholder="Add tag..."
+                list="tags-list"
+                disabled={isLoading}
+              />
+              <datalist id="tags-list">
+                {tagOptions.map((tag, index) => (
+                  <option key={index} value={tag} />
+                ))}
+              </datalist>
+              <button 
+                type="button" 
+                onClick={addTagFromInput}
+                className="btn-add-filter"
+                disabled={isLoading}
+              >
+                +
+              </button>
+            </div>
+            <div className="filter-tags">
+              {selectedTags.map((tag, index) => (
+                <span key={index} className="filter-tag">
                   {tag}
-                </label>
+                  <button
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className="btn-remove-tag"
+                    disabled={isLoading}
+                  >
+                    ×
+                  </button>
+                </span>
               ))}
             </div>
           </div>
 
           <div className="filter-group">
             <label>Authors:</label>
-            <div className="filter-options">
-              {authorOptions.map(author => (
-                <label key={author} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={selectedAuthors.includes(author)}
-                    onChange={() => toggleAuthor(author)}
-                    disabled={isLoading}
-                  />
+            <div className="filter-input-container">
+              <input
+                type="text"
+                value={inputAuthor}
+                onChange={handleAuthorInput}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAuthorFromInput())}
+                placeholder="Add author..."
+                list="authors-list"
+                disabled={isLoading}
+              />
+              <datalist id="authors-list">
+                {authorOptions.map((author, index) => (
+                  <option key={index} value={author} />
+                ))}
+              </datalist>
+              <button 
+                type="button" 
+                onClick={addAuthorFromInput}
+                className="btn-add-filter"
+                disabled={isLoading}
+              >
+                +
+              </button>
+            </div>
+            <div className="filter-tags">
+              {selectedAuthors.map((author, index) => (
+                <span key={index} className="filter-tag">
                   {author}
-                </label>
+                  <button
+                    type="button"
+                    onClick={() => toggleAuthor(author)}
+                    className="btn-remove-tag"
+                    disabled={isLoading}
+                  >
+                    ×
+                  </button>
+                </span>
               ))}
             </div>
           </div>

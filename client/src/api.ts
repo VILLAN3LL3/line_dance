@@ -28,6 +28,7 @@ export async function searchChoreographies(
     search?: string;
     level?: string;
     step_figures?: string[];
+    step_figures_match_mode?: 'all' | 'any';
     tags?: string[];
     authors?: string[];
     page?: number;

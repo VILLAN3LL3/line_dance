@@ -236,15 +236,18 @@ export async function deleteChoreography(req, res) {
 
 export async function searchChoreographies(req, res) {
   try {
-    const { level, step_figures, tags, authors, search } = req.query;
+    const { level, step_figures, step_figures_match_mode, tags, authors, search } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
+    const matchMode = step_figures_match_mode || 'all';
 
     let query = 'SELECT DISTINCT c.*, l.name as level FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id';
     let params = [];
     let joins = [];
     let conditions = [];
+    let groupBy = '';
+    let having = '';
 
     // Add search by name or other fields
     if (search) {
@@ -268,6 +271,12 @@ export async function searchChoreographies(req, res) {
       const placeholders = figures.map(() => '?').join(',');
       conditions.push(`sf.name IN (${placeholders})`);
       params.push(...figures);
+
+      // If matching ALL figures, use GROUP BY and HAVING
+      if (matchMode === 'all' && figures.length > 1) {
+        groupBy = ' GROUP BY c.id';
+        having = ` HAVING COUNT(DISTINCT sf.id) = ${figures.length}`;
+      }
     }
 
     // Filter by tags
@@ -301,6 +310,14 @@ export async function searchChoreographies(req, res) {
 
     if (conditions.length > 0) {
       query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    if (groupBy) {
+      query += groupBy;
+    }
+
+    if (having) {
+      query += having;
     }
 
     query += ` ORDER BY c.created_at DESC LIMIT ? OFFSET ?`;
@@ -359,6 +376,19 @@ export async function searchChoreographies(req, res) {
 
     if (countConditions.length > 0) {
       countQuery += ' WHERE ' + countConditions.join(' AND ');
+    }
+
+    if (groupBy) {
+      countQuery += groupBy;
+    }
+
+    if (having) {
+      countQuery += having;
+    }
+
+    // Wrap in subquery to properly count with GROUP BY
+    if (groupBy || having) {
+      countQuery = `SELECT COUNT(*) as count FROM (${countQuery})`;
     }
 
     const countResult = await getQuery(countQuery, countParams);
