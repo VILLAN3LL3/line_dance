@@ -22,6 +22,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
   const [selectedFigures, setSelectedFigures] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
+  const [withoutStepFigures, setWithoutStepFigures] = useState(false);
   const [stepFiguresMatchMode, setStepFiguresMatchMode] = useState<'all' | 'any'>('all');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [levelOptions, setLevelOptions] = useState<string[]>([]);
@@ -39,8 +40,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
     await onSearch({
       search: searchTerm || undefined,
       level: selectedLevel || undefined,
-      step_figures: selectedFigures.length > 0 ? selectedFigures : undefined,
-      step_figures_match_mode: selectedFigures.length > 0 ? stepFiguresMatchMode : undefined,
+      step_figures: !withoutStepFigures && selectedFigures.length > 0 ? selectedFigures : undefined,
+      step_figures_match_mode: !withoutStepFigures && selectedFigures.length > 0 ? stepFiguresMatchMode : undefined,
+      without_step_figures: withoutStepFigures || undefined,
       tags: selectedTags.length > 0 ? selectedTags : undefined,
       authors: selectedAuthors.length > 0 ? selectedAuthors : undefined,
     });
@@ -81,6 +83,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
   }, []);
 
   const toggleFigure = (figure: string) => {
+    if (withoutStepFigures) {
+      return;
+    }
     setSelectedFigures(prev =>
       prev.includes(figure) ? prev.filter(f => f !== figure) : [...prev, figure]
     );
@@ -99,6 +104,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
   };
 
   const addFigureFromInput = (figureValue?: string) => {
+    if (withoutStepFigures) {
+      return;
+    }
     const value = figureValue ?? inputFigure;
     const trimmed = value.trim();
     if (trimmed && !selectedFigures.includes(trimmed)) {
@@ -150,6 +158,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
   };
 
   const handleFigureInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (withoutStepFigures) {
+      return;
+    }
     const value = e.target.value;
     setInputFigure(value);
 
@@ -252,15 +263,34 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
 
           <div className="filter-group">
             <label>Step Figures:</label>
+            <div className="filter-checkbox">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={withoutStepFigures}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setWithoutStepFigures(checked);
+                    if (checked) {
+                      setSelectedFigures([]);
+                      setInputFigure('');
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+                Search choreographies without step figures
+              </label>
+            </div>
             <div className="filter-input-container">
               <input
                 type="text"
                 value={inputFigure}
                 onChange={handleFigureInput}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFigureFromInput())}
-                placeholder="Add step figure..."
+                placeholder={withoutStepFigures ? 'Readonly: using without-step-figures filter' : 'Add step figure...'}
                 list="figures-list"
-                disabled={isLoading}
+                readOnly={withoutStepFigures}
+                disabled={isLoading || withoutStepFigures}
               />
               <datalist id="figures-list">
                 {figureOptions.map((figure, index) => (
@@ -271,7 +301,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
                 type="button" 
                 onClick={addFigureFromInput}
                 className="btn-add-filter"
-                disabled={isLoading}
+                disabled={isLoading || withoutStepFigures}
               >
                 +
               </button>
