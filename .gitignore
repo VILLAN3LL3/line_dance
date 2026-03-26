@@ -7,3 +7,5 @@ build/
 .env.local
 line_dance.db
 *.db-journal
+raw_data/
+src/**/*.js
