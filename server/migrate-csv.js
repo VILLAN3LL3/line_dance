@@ -83,28 +83,34 @@ async function migrateCSV(csvFilename) {
       // Add choreographers into choreography_authors (if present in CSV)
       const choreographerText = row.Choreographer || row.Choreographers || '';
       if (choreographerText.trim()) {
-        const rawChoreographers = choreographerText
-          .replace(/\band\b/gi, ',')
-          .replace(/&/g, ',')
-          .replace(/;/g, ',')
-          .replace(/\//g, ',')
-          .split(',')
-          .map(name => name.trim())
-          .filter(Boolean);
-
-        // Keep country codes with preceding choreographer, reject standalone country tags
+        // Extract all "Name (CountryCode)" pairs using regex
+        const choreographerRegex = /([A-Za-z\s.'-]+?)\s*\(([A-Z]{2,3}(?:\.[A-Z]{2,3})?)\)/g;
         const choreographers = [];
-        for (let i = 0; i < rawChoreographers.length; i++) {
-          const name = rawChoreographers[i];
-          if (/^\(?[A-Za-z]{2,3}\)?$/.test(name)) {
-            // Standalone country code, attach to previous choreographer if exists
-            if (choreographers.length > 0) {
-              choreographers[choreographers.length - 1] = `${choreographers[choreographers.length - 1]} (${name.replace(/[()]/g, '')})`;
+        let match;
+
+        while ((match = choreographerRegex.exec(choreographerText)) !== null) {
+          const name = match[1].trim();
+          const countryCode = match[2];
+          choreographers.push(`${name} (${countryCode})`);
+        }
+
+        // If no regex matches found, fall back to the old parsing logic
+        if (choreographers.length === 0) {
+          const rawChoreographers = choreographerText
+            .replace(/\band\b/gi, ',')
+            .replace(/&/g, ',')
+            .replace(/;/g, ',')
+            .replace(/\//g, ',')
+            .split(',')
+            .map(name => name.trim())
+            .filter(Boolean);
+
+          for (let j = 0; j < rawChoreographers.length; j++) {
+            const name = rawChoreographers[j];
+            if (!/^\(?[A-Za-z]{2,3}\)?$/.test(name)) {
+              choreographers.push(name);
             }
-            continue;
           }
-          // Already may contain a country code, keep as-is
-          choreographers.push(name);
         }
 
         for (const choreographer of Array.from(new Set(choreographers)).filter(Boolean)) {

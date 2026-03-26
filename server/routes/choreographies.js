@@ -236,7 +236,7 @@ export async function deleteChoreography(req, res) {
 
 export async function searchChoreographies(req, res) {
   try {
-    const { level, step_figures, tags, search } = req.query;
+    const { level, step_figures, tags, authors, search } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
@@ -280,6 +280,18 @@ export async function searchChoreographies(req, res) {
       const placeholders = tagList.map(() => '?').join(',');
       conditions.push(`t.name IN (${placeholders})`);
       params.push(...tagList);
+    }
+
+    // Filter by authors
+    if (authors) {
+      const authorList = Array.isArray(authors) ? authors : [authors];
+      joins.push(`
+        INNER JOIN choreography_authors ca ON c.id = ca.choreography_id
+        INNER JOIN authors a ON ca.author_id = a.id
+      `);
+      const placeholders = authorList.map(() => '?').join(',');
+      conditions.push(`a.name IN (${placeholders})`);
+      params.push(...authorList);
     }
 
     // Build final query
@@ -332,6 +344,17 @@ export async function searchChoreographies(req, res) {
       const placeholders = tagList.map(() => '?').join(',');
       countConditions.push(`t.name IN (${placeholders})`);
       countParams.push(...tagList);
+    }
+
+    if (authors) {
+      const authorList = Array.isArray(authors) ? authors : [authors];
+      countQuery += `
+        INNER JOIN choreography_authors ca ON c.id = ca.choreography_id
+        INNER JOIN authors a ON ca.author_id = a.id
+      `;
+      const placeholders = authorList.map(() => '?').join(',');
+      countConditions.push(`a.name IN (${placeholders})`);
+      countParams.push(...authorList);
     }
 
     if (countConditions.length > 0) {
