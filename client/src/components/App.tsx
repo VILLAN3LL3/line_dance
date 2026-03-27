@@ -202,7 +202,6 @@ export const App: React.FC = () => {
               creation_year: selectedChoreography.creation_year,
               tag_information: selectedChoreography.tag_information,
               restart_information: selectedChoreography.restart_information,
-              isPhrased: selectedChoreography.isPhrased,
               authors: selectedChoreography.authors,
               tags: selectedChoreography.tags,
               step_figures: selectedChoreography.step_figures,

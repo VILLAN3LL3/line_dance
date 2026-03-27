@@ -310,19 +310,6 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           )}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="isPhrased">
-            <input
-              type="checkbox"
-              id="isPhrased"
-              name="isPhrased"
-              checked={formData.isPhrased || false}
-              onChange={handleChange}
-            />
-            Is Phrased
-          </label>
-        </div>
-
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="count">Count</label>

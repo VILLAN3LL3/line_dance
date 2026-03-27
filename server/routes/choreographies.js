@@ -2,7 +2,7 @@ import { runQuery, getQuery, allQuery } from '../db.js';
 
 export async function createChoreography(req, res) {
   try {
-    const { name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level, creation_year, tag_information, restart_information, isPhrased, authors, tags, step_figures } = req.body;
+    const { name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level, creation_year, tag_information, restart_information, authors, tags, step_figures } = req.body;
 
     if (!name || !level) {
       return res.status(400).json({ error: 'Name and level are required' });
@@ -16,9 +16,9 @@ export async function createChoreography(req, res) {
 
     // Insert choreography
     const choreoResult = await runQuery(
-      `INSERT INTO choreographies (name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level_id, creation_year, tag_information, restart_information, isPhrased)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, step_sheet_link || null, demo_video_url || null, tutorial_video_url || null, count || null, wall_count || null, levelRecord.id, creation_year || null, tag_information || null, restart_information || null, isPhrased ? 1 : 0]
+      `INSERT INTO choreographies (name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level_id, creation_year, tag_information, restart_information)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, step_sheet_link || null, demo_video_url || null, tutorial_video_url || null, count || null, wall_count || null, levelRecord.id, creation_year || null, tag_information || null, restart_information || null]
     );
 
     const choreography_id = choreoResult.id;
@@ -129,7 +129,7 @@ export async function getChoreographyById(req, res) {
 
 export async function updateChoreography(req, res) {
   try {
-    const { name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level, creation_year, tag_information, restart_information, isPhrased, authors, tags, step_figures } = req.body;
+    const { name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level, creation_year, tag_information, restart_information, authors, tags, step_figures } = req.body;
     const choreography_id = req.params.id;
 
     // Check if choreography exists
@@ -150,15 +150,15 @@ export async function updateChoreography(req, res) {
     // Update main choreography
     const updateQuery = levelId
       ? `UPDATE choreographies 
-         SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, level_id = ?, creation_year = ?, tag_information = ?, restart_information = ?, isPhrased = ?, updated_at = CURRENT_TIMESTAMP
+         SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, level_id = ?, creation_year = ?, tag_information = ?, restart_information = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`
       : `UPDATE choreographies 
-         SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, creation_year = ?, tag_information = ?, restart_information = ?, isPhrased = ?, updated_at = CURRENT_TIMESTAMP
+         SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, creation_year = ?, tag_information = ?, restart_information = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`;
 
     const updateParams = levelId
-      ? [name, step_sheet_link || null, demo_video_url || null, tutorial_video_url || null, count || null, wall_count || null, levelId, creation_year || null, tag_information || null, restart_information || null, isPhrased ? 1 : 0, choreography_id]
-      : [name, step_sheet_link || null, demo_video_url || null, tutorial_video_url || null, count || null, wall_count || null, creation_year || null, tag_information || null, restart_information || null, isPhrased ? 1 : 0, choreography_id];
+      ? [name, step_sheet_link || null, demo_video_url || null, tutorial_video_url || null, count || null, wall_count || null, levelId, creation_year || null, tag_information || null, restart_information || null, choreography_id]
+      : [name, step_sheet_link || null, demo_video_url || null, tutorial_video_url || null, count || null, wall_count || null, creation_year || null, tag_information || null, restart_information || null, choreography_id];
 
     await runQuery(updateQuery, updateParams);
 

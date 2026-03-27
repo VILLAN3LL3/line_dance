@@ -60,7 +60,6 @@ function initializeDatabase() {
       creation_year INTEGER,
       tag_information TEXT,
       restart_information TEXT,
-      isPhrased INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (level_id) REFERENCES levels(id)
