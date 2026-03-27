@@ -223,7 +223,7 @@ async function cleanupOrphanedRecords() {
   try {
     // Delete orphaned authors (not used by any choreography)
     await runQuery(
-      `DELETE FROM authors 
+      `DELETE FROM authors
        WHERE id NOT IN (
          SELECT DISTINCT author_id FROM choreography_authors WHERE author_id IS NOT NULL
        )`
@@ -231,7 +231,7 @@ async function cleanupOrphanedRecords() {
 
     // Delete orphaned tags (not used by any choreography)
     await runQuery(
-      `DELETE FROM tags 
+      `DELETE FROM tags
        WHERE id NOT IN (
          SELECT DISTINCT tag_id FROM choreography_tags WHERE tag_id IS NOT NULL
        )`
@@ -239,7 +239,7 @@ async function cleanupOrphanedRecords() {
 
     // Delete orphaned step_figures (not used by any choreography)
     await runQuery(
-      `DELETE FROM step_figures 
+      `DELETE FROM step_figures
        WHERE id NOT IN (
          SELECT DISTINCT step_figure_id FROM choreography_step_figures WHERE step_figure_id IS NOT NULL
        )`
@@ -247,10 +247,21 @@ async function cleanupOrphanedRecords() {
 
     // Delete orphaned levels (not used by any choreography)
     await runQuery(
-      `DELETE FROM levels 
+      `DELETE FROM levels
        WHERE id NOT IN (
          SELECT DISTINCT level_id FROM choreographies WHERE level_id IS NOT NULL
        )`
+    );
+
+    // Also clean up any dangling join table entries for non-existent choreographies
+    await runQuery(
+      `DELETE FROM choreography_authors WHERE choreography_id NOT IN (SELECT id FROM choreographies)`
+    );
+    await runQuery(
+      `DELETE FROM choreography_tags WHERE choreography_id NOT IN (SELECT id FROM choreographies)`
+    );
+    await runQuery(
+      `DELETE FROM choreography_step_figures WHERE choreography_id NOT IN (SELECT id FROM choreographies)`
     );
   } catch (error) {
     console.error('Error cleaning up orphaned records:', error);
@@ -261,6 +272,11 @@ async function cleanupOrphanedRecords() {
 export async function deleteChoreography(req, res) {
   try {
     const choreography_id = req.params.id;
+
+    // Remove join table entries first
+    await runQuery('DELETE FROM choreography_authors WHERE choreography_id = ?', [choreography_id]);
+    await runQuery('DELETE FROM choreography_tags WHERE choreography_id = ?', [choreography_id]);
+    await runQuery('DELETE FROM choreography_step_figures WHERE choreography_id = ?', [choreography_id]);
 
     const result = await runQuery('DELETE FROM choreographies WHERE id = ?', [choreography_id]);
 
@@ -280,11 +296,12 @@ export async function deleteChoreography(req, res) {
 
 export async function searchChoreographies(req, res) {
   try {
-    const { level, step_figures, step_figures_match_mode, tags, authors, search } = req.query;
+    const { level, step_figures, step_figures_match_mode, without_step_figures, tags, authors, search } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
     const matchMode = step_figures_match_mode || 'all';
+    const noStepFigures = without_step_figures === 'true' || without_step_figures === true;
 
     let query = 'SELECT DISTINCT c.*, l.name as level FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id';
     let params = [];
@@ -301,12 +318,19 @@ export async function searchChoreographies(req, res) {
 
     // Filter by level
     if (level) {
-      conditions.push('l.name = ?');
-      params.push(level);
+      const levelList = Array.isArray(level) ? level : [level];
+      const placeholders = levelList.map(() => '?').join(',');
+      conditions.push(`l.name IN (${placeholders})`);
+      params.push(...levelList);
     }
 
     // Filter by step figures
-    if (step_figures) {
+    if (noStepFigures) {
+      joins.push(`
+        LEFT JOIN choreography_step_figures csfNo ON c.id = csfNo.choreography_id
+      `);
+      conditions.push('csfNo.choreography_id IS NULL');
+    } else if (step_figures) {
       const figures = Array.isArray(step_figures) ? step_figures : [step_figures];
       joins.push(`
         INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
@@ -381,11 +405,18 @@ export async function searchChoreographies(req, res) {
     }
 
     if (level) {
-      countConditions.push('l.name = ?');
-      countParams.push(level);
+      const levelList = Array.isArray(level) ? level : [level];
+      const placeholders = levelList.map(() => '?').join(',');
+      countConditions.push(`l.name IN (${placeholders})`);
+      countParams.push(...levelList);
     }
 
-    if (step_figures) {
+    if (noStepFigures) {
+      countQuery += `
+        LEFT JOIN choreography_step_figures csfNo ON c.id = csfNo.choreography_id
+      `;
+      countConditions.push('csfNo.choreography_id IS NULL');
+    } else if (step_figures) {
       const figures = Array.isArray(step_figures) ? step_figures : [step_figures];
       countQuery += `
         INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id

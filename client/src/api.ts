@@ -26,7 +26,7 @@ export async function fetchChoreography(id: number): Promise<Choreography> {
 export async function searchChoreographies(
   filters: {
     search?: string;
-    level?: string;
+    level?: string[];
     step_figures?: string[];
     step_figures_match_mode?: 'all' | 'any';
     without_step_figures?: boolean;

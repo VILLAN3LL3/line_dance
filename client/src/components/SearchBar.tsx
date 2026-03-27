@@ -1,24 +1,34 @@
 import "../styles/SearchBar.css";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 import { getAuthors, getLevels, getStepFigures, getTags } from "../api";
 
 interface SearchBarProps {
   onSearch: (filters: {
     search?: string;
-    level?: string;
+    level?: string[];
     step_figures?: string[];
     step_figures_match_mode?: 'all' | 'any';
+    without_step_figures?: boolean;
     tags?: string[];
     authors?: string[];
   }) => Promise<void>;
+  filters?: {
+    search?: string;
+    level?: string[];
+    step_figures?: string[];
+    step_figures_match_mode?: 'all' | 'any';
+    without_step_figures?: boolean;
+    tags?: string[];
+    authors?: string[];
+  };
   isLoading?: boolean;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = false }) => {
+export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, isLoading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLevel, setSelectedLevel] = useState<string>('');
+  const [selectedLevel, setSelectedLevel] = useState<string[]>([]);
   const [selectedFigures, setSelectedFigures] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
@@ -29,6 +39,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
   const [figureOptions, setFigureOptions] = useState<string[]>([]);
   const [tagOptions, setTagOptions] = useState<string[]>([]);
   const [authorOptions, setAuthorOptions] = useState<string[]>([]);
+  const filterSyncRef = useRef(false);
   
   // Input states for autocomplete
   const [inputLevel, setInputLevel] = useState('');
@@ -39,7 +50,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
   const handleSearch = async () => {
     await onSearch({
       search: searchTerm || undefined,
-      level: selectedLevel || undefined,
+      level: selectedLevel.length > 0 ? selectedLevel : undefined,
       step_figures: !withoutStepFigures && selectedFigures.length > 0 ? selectedFigures : undefined,
       step_figures_match_mode: !withoutStepFigures && selectedFigures.length > 0 ? stepFiguresMatchMode : undefined,
       without_step_figures: withoutStepFigures || undefined,
@@ -49,7 +60,31 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
   };
 
   useEffect(() => {
+    // Sync filter values from parent state when changing views
+    if (filters) {
+      filterSyncRef.current = true;
+      setSearchTerm(filters.search || '');
+      setSelectedLevel(Array.isArray(filters.level) ? filters.level : (filters.level ? [filters.level] : []));
+      setSelectedFigures(filters.step_figures || []);
+      setStepFiguresMatchMode(filters.step_figures_match_mode || 'all');
+      setWithoutStepFigures(!!filters.without_step_figures);
+      setSelectedTags(filters.tags || []);
+      setSelectedAuthors(filters.authors || []);
+
+      const reset = setTimeout(() => {
+        filterSyncRef.current = false;
+      }, 0);
+
+      return () => clearTimeout(reset);
+    }
+  }, [filters]);
+
+  useEffect(() => {
     // Only auto-search on text input changes, not filter selections
+    if (filterSyncRef.current) {
+      return;
+    }
+
     if (searchTerm !== undefined) {
       const timer = setTimeout(handleSearch, 300);
       return () => clearTimeout(timer);
@@ -133,14 +168,24 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
     }
   };
 
-  const selectLevel = (level: string) => {
-    setSelectedLevel(selectedLevel === level ? '' : level);
-    setInputLevel('');
+  const toggleLevel = (level: string) => {
+    setSelectedLevel(prev =>
+      prev.includes(level) ? prev.filter(l => l !== level) : [...prev, level]
+    );
   };
 
   const isDatalistSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputType = (e.nativeEvent as InputEvent).inputType;
     return inputType === 'insertReplacementText' || inputType === 'insertFromDrop';
+  };
+
+  const addLevelFromInput = (levelValue?: string) => {
+    const value = levelValue ?? inputLevel;
+    const trimmed = value.trim();
+    if (trimmed && !selectedLevel.includes(trimmed)) {
+      setSelectedLevel([...selectedLevel, trimmed]);
+      setInputLevel('');
+    }
   };
 
   const handleLevelInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,10 +195,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
     if (
       value.trim() &&
       levelOptions.includes(value.trim()) &&
-      selectedLevel !== value.trim() &&
+      !selectedLevel.includes(value.trim()) &&
       isDatalistSelection(e)
     ) {
-      selectLevel(value.trim());
+      addLevelFromInput(value);
     }
   };
 
@@ -232,8 +277,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
                 type="text"
                 value={inputLevel}
                 onChange={handleLevelInput}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), selectLevel(inputLevel.trim()))}
-                placeholder={selectedLevel ? `Selected: ${selectedLevel}` : 'Filter by level...'}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLevelFromInput())}
+                placeholder="Add level..."
                 list="levels-list"
                 disabled={isLoading}
               />
@@ -242,23 +287,30 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
                   <option key={index} value={level} />
                 ))}
               </datalist>
-              {selectedLevel && (
-                <button 
-                  type="button" 
-                  onClick={() => setSelectedLevel('')}
-                  className="btn-remove-filter"
-                  disabled={isLoading}
-                  title="Clear level selection"
-                >
-                  ×
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => addLevelFromInput()}
+                className="btn-add-filter"
+                disabled={isLoading}
+              >
+                +
+              </button>
             </div>
-            {selectedLevel && (
-              <div className="filter-selection-display">
-                Selected: <strong>{selectedLevel}</strong>
-              </div>
-            )}
+            <div className="filter-tags">
+              {selectedLevel.map((level, index) => (
+                <span key={index} className="filter-tag">
+                  {level}
+                  <button
+                    type="button"
+                    onClick={() => toggleLevel(level)}
+                    className="btn-remove-tag"
+                    disabled={isLoading}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
           </div>
 
           <div className="filter-group">
@@ -299,7 +351,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
               </datalist>
               <button 
                 type="button" 
-                onClick={addFigureFromInput}
+                onClick={() => addFigureFromInput()}
                 className="btn-add-filter"
                 disabled={isLoading || withoutStepFigures}
               >
@@ -355,7 +407,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
               </datalist>
               <button 
                 type="button" 
-                onClick={addTagFromInput}
+                onClick={() => addTagFromInput()}
                 className="btn-add-filter"
                 disabled={isLoading}
               >
@@ -398,7 +450,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
               </datalist>
               <button 
                 type="button" 
-                onClick={addAuthorFromInput}
+                onClick={() => addAuthorFromInput()}
                 className="btn-add-filter"
                 disabled={isLoading}
               >

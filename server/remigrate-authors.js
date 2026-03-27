@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getQuery, runQuery } from './db.js';
+import { getQuery, runQuery, allQuery } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,14 +35,14 @@ async function remigrateAuthors(csvFilename) {
 
       if (!row.Name) continue;
 
-      // Find choreography by name
-      const choreography = await getQuery('SELECT id FROM choreographies WHERE name = ?', [row.Name]);
-      if (!choreography) {
+      // Find choreography records by name (may be duplicates from prior imports)
+      const choreographies = await allQuery('SELECT id FROM choreographies WHERE name = ?', [row.Name]);
+      if (!choreographies || choreographies.length === 0) {
         console.log(`⚠ Choreography not found: ${row.Name}`);
         continue;
       }
 
-      const choreographyId = choreography.id;
+      const choreographyIds = choreographies.map(c => c.id);
 
       // Process choreographers
       const choreographerText = row.Choreographer || row.Choreographers || '';
@@ -87,7 +87,9 @@ async function remigrateAuthors(csvFilename) {
             authorId = authorResult.id;
           }
 
-          await runQuery('INSERT INTO choreography_authors (choreography_id, author_id) VALUES (?, ?)', [choreographyId, authorId]);
+          for (const choreographyId of choreographyIds) {
+            await runQuery('INSERT OR IGNORE INTO choreography_authors (choreography_id, author_id) VALUES (?, ?)', [choreographyId, authorId]);
+          }
         }
       }
 

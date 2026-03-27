@@ -47,6 +47,11 @@ export const App: React.FC = () => {
     }
   };
 
+  const returnToList = async (filters = currentFilters, page = pagination.page) => {
+    setView('list');
+    await loadChoreographies(filters, page);
+  };
+
   const handleSearch = async (filters: any) => {
     await loadChoreographies(filters, 1);
   };
@@ -55,8 +60,7 @@ export const App: React.FC = () => {
     setIsLoading(true);
     try {
       await createChoreography(formData);
-      setView('list');
-      await loadChoreographies(currentFilters);
+      await returnToList();
     } catch (err) {
       setError('Failed to create choreography');
       console.error(err);
@@ -78,8 +82,7 @@ export const App: React.FC = () => {
     setIsLoading(true);
     try {
       await updateChoreography(selectedChoreography.id, formData);
-      setView('list');
-      await loadChoreographies(currentFilters);
+      await returnToList();
     } catch (err) {
       setError('Failed to update choreography');
       console.error(err);
@@ -93,7 +96,7 @@ export const App: React.FC = () => {
     setIsLoading(true);
     try {
       await deleteChoreography(id);
-      await loadChoreographies(currentFilters);
+      await returnToList();
     } catch (err) {
       setError('Failed to delete choreography');
       console.error(err);
@@ -127,7 +130,7 @@ export const App: React.FC = () => {
 
       {view === 'list' && (
         <div className="list-view">
-          <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+          <SearchBar onSearch={handleSearch} filters={currentFilters} isLoading={isLoading} />
           
           {isLoading ? (
             <div className="loading">Loading choreographies...</div>
@@ -206,7 +209,7 @@ export const App: React.FC = () => {
             }}
             onSubmit={handleUpdate}
             isLoading={isLoading}
-            onCancel={() => setView('list')}
+            onCancel={() => returnToList()}
           />
         </div>
       )}
