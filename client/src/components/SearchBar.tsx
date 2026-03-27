@@ -79,17 +79,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
     }
   }, [filters]);
 
-  useEffect(() => {
-    // Only auto-search on text input changes, not filter selections
-    if (filterSyncRef.current) {
-      return;
-    }
 
-    if (searchTerm !== undefined) {
-      const timer = setTimeout(handleSearch, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [searchTerm]);
 
   useEffect(() => {
     const loadFilters = async () => {
@@ -255,6 +245,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
           placeholder="Search choreographies by name..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              handleSearch();
+            }
+          }}
+          onBlur={handleSearch}
           className="search-input"
           disabled={isLoading}
         />

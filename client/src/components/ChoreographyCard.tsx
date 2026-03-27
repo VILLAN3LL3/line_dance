@@ -82,18 +82,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
             🎓 Watch Tutorial
           </a>
         )}
-
-        {choreography.tag_information && (
-          <div className="info-section">
-            <strong>Tag Info:</strong> {choreography.tag_information}
-          </div>
-        )}
-
-        {choreography.restart_information && (
-          <div className="info-section">
-            <strong>Restart Info:</strong> {choreography.restart_information}
-          </div>
-        )}
       </div>
 
       <div className="card-actions">
