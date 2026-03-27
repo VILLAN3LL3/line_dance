@@ -46,6 +46,8 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
                   {figure}
                 </span>
               ))}
+              {choreography.restart_information && <span className="info-badge" title="Has restart information">Restart 🔁</span>}
+              {choreography.tag_information && <span className="info-badge" title="Has tag information">Tag 🌉</span>}
             </div>
           </div>
         )}
