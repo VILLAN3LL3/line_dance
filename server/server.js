@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { getDatabase, closeDatabase } from './db.js';
-import { createChoreography, getChoreographies, getChoreographyById, updateChoreography, deleteChoreography, searchChoreographies, getLevels, addLevel, getTags, getStepFigures, getAuthors } from './routes/choreographies.js';
+import { createChoreography, getChoreographies, getChoreographyById, updateChoreography, deleteChoreography, searchChoreographies, getLevels, addLevel, getTags, getStepFigures, getAuthors, getSavedFilterConfigurations, saveFilterConfiguration, updateSavedFilterConfiguration, deleteSavedFilterConfiguration, getMaxChoreographyCount } from './routes/choreographies.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -19,6 +19,7 @@ getDatabase();
 app.post('/api/choreographies', createChoreography);
 app.get('/api/choreographies', getChoreographies);
 app.get('/api/choreographies/search', searchChoreographies);
+app.get('/api/choreographies/max-count', getMaxChoreographyCount);
 app.get('/api/choreographies/:id', getChoreographyById);
 app.put('/api/choreographies/:id', updateChoreography);
 app.delete('/api/choreographies/:id', deleteChoreography);
@@ -27,6 +28,10 @@ app.post('/api/levels', addLevel);
 app.get('/api/tags', getTags);
 app.get('/api/authors', getAuthors);
 app.get('/api/step_figures', getStepFigures);
+app.get('/api/saved-filters', getSavedFilterConfigurations);
+app.post('/api/saved-filters', saveFilterConfiguration);
+app.patch('/api/saved-filters/:id', updateSavedFilterConfiguration);
+app.delete('/api/saved-filters/:id', deleteSavedFilterConfiguration);
 
 // Health check
 app.get('/api/health', (req, res) => {

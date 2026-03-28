@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { Choreography, ChoreographyFormData, PaginatedResponse } from "./types";
+import { Choreography, ChoreographyFormData, PaginatedResponse, SavedFilterConfiguration, SearchFilters } from "./types";
 
 const API_URL = 'http://localhost:3001/api';
 
@@ -24,19 +24,7 @@ export async function fetchChoreography(id: number): Promise<Choreography> {
 }
 
 export async function searchChoreographies(
-  filters: {
-    search?: string;
-    level?: string[];
-    step_figures?: string[];
-    step_figures_match_mode?: 'all' | 'any';
-    without_step_figures?: boolean;
-    tags?: string[];
-    authors?: string[];
-    sort_field?: string;
-    sort_direction?: 'asc' | 'desc';
-    page?: number;
-    limit?: number;
-  }
+  filters: SearchFilters
 ): Promise<PaginatedResponse<Choreography>> {
   const response = await api.get('/choreographies/search', {
     params: filters,
@@ -93,5 +81,39 @@ export async function addLevel(name: string): Promise<{ id: number; name: string
 
 export async function getStepFigures(): Promise<string[]> {
   const response = await api.get('/step_figures');
+  return response.data;
+}
+
+export async function getMaxChoreographyCount(): Promise<number> {
+  const response = await api.get('/choreographies/max-count');
+  return response.data?.max_count || 0;
+}
+
+export async function getSavedFilterConfigurations(): Promise<SavedFilterConfiguration[]> {
+  const response = await api.get('/saved-filters');
+  return response.data;
+}
+
+export async function saveFilterConfiguration(
+  name: string,
+  filters: SearchFilters
+): Promise<SavedFilterConfiguration> {
+  const response = await api.post('/saved-filters', { name, filters });
+  return response.data;
+}
+
+export async function updateSavedFilterConfiguration(
+  id: number,
+  payload: {
+    name?: string;
+    filters?: SearchFilters;
+  }
+): Promise<SavedFilterConfiguration> {
+  const response = await api.patch(`/saved-filters/${id}`, payload);
+  return response.data;
+}
+
+export async function deleteSavedFilterConfiguration(id: number): Promise<{ message: string }> {
+  const response = await api.delete(`/saved-filters/${id}`);
   return response.data;
 }

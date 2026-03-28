@@ -1,5 +1,3 @@
-- figure filter: AND/OR/ALL. ALL: Tänze, die ausschließlich die selektierten Figuren beinhalten
-
 in eigener tabelle, damit line_dance.db eingecheckt werden kann
 entity dance_groups: name
 entity sessions: date
@@ -8,7 +6,3 @@ dance_course 1:n sessions
 dance_groups 1:n dance_course
 session n:n choreographies => daraus ergibt sich, wie oft eine choreo bereits pro gruppe getanzt wurde und ob es eine neue choreographie für die gruppe war
 view learned_choreographies
-
-- filter: nach max. anzahl counts filtern (8-er schritte)
-- readme ergänzen
-- eu 2 lizenz hinterlegen

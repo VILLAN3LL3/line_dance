@@ -1,5 +1,243 @@
 import { runQuery, getQuery, allQuery } from '../db.js';
 
+let savedFiltersTableReady = false;
+
+async function ensureSavedFiltersTable() {
+  if (savedFiltersTableReady) {
+    return;
+  }
+
+  await runQuery(`
+    CREATE TABLE IF NOT EXISTS saved_filter_configurations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      filters_json TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  savedFiltersTableReady = true;
+}
+
+function normalizeSavedFilters(rawFilters) {
+  if (!rawFilters || typeof rawFilters !== 'object' || Array.isArray(rawFilters)) {
+    return {};
+  }
+
+  const normalized = {};
+
+  if (typeof rawFilters.search === 'string' && rawFilters.search.trim()) {
+    normalized.search = rawFilters.search.trim();
+  }
+
+  if (Array.isArray(rawFilters.level) && rawFilters.level.length > 0) {
+    normalized.level = rawFilters.level.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+  }
+
+  if (Array.isArray(rawFilters.step_figures) && rawFilters.step_figures.length > 0) {
+    normalized.step_figures = rawFilters.step_figures.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+  }
+
+  if (['all', 'any', 'exact'].includes(rawFilters.step_figures_match_mode)) {
+    normalized.step_figures_match_mode = rawFilters.step_figures_match_mode;
+  }
+
+  if (rawFilters.without_step_figures === true) {
+    normalized.without_step_figures = true;
+  }
+
+  if (Array.isArray(rawFilters.tags) && rawFilters.tags.length > 0) {
+    normalized.tags = rawFilters.tags.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+  }
+
+  if (Array.isArray(rawFilters.authors) && rawFilters.authors.length > 0) {
+    normalized.authors = rawFilters.authors.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+  }
+
+  const parsedMaxCount = Number.parseInt(String(rawFilters.max_count), 10);
+  if (!Number.isNaN(parsedMaxCount) && parsedMaxCount >= 0) {
+    normalized.max_count = parsedMaxCount;
+  }
+
+  return normalized;
+}
+
+function parseStoredFilters(storedValue) {
+  try {
+    const parsed = JSON.parse(storedValue || '{}');
+    return normalizeSavedFilters(parsed);
+  } catch (error) {
+    console.warn('Invalid saved filter JSON detected, returning empty filter set', error);
+    return {};
+  }
+}
+
+export async function getSavedFilterConfigurations(req, res) {
+  try {
+    await ensureSavedFiltersTable();
+
+    const rows = await allQuery(
+      `SELECT id, name, filters_json, created_at, updated_at
+       FROM saved_filter_configurations
+       ORDER BY LOWER(name) ASC`
+    );
+
+    res.json(rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      filters: parseStoredFilters(row.filters_json),
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    })));
+  } catch (error) {
+    console.error('Error loading saved filter configurations:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function saveFilterConfiguration(req, res) {
+  try {
+    await ensureSavedFiltersTable();
+
+    const rawName = req.body?.name;
+    const name = typeof rawName === 'string' ? rawName.trim() : '';
+
+    if (!name) {
+      return res.status(400).json({ error: 'Configuration name is required' });
+    }
+
+    const filters = normalizeSavedFilters(req.body?.filters || {});
+    const filtersJson = JSON.stringify(filters);
+
+    await runQuery(
+      `INSERT INTO saved_filter_configurations (name, filters_json)
+       VALUES (?, ?)
+       ON CONFLICT(name)
+       DO UPDATE SET
+         filters_json = excluded.filters_json,
+         updated_at = CURRENT_TIMESTAMP`,
+      [name, filtersJson]
+    );
+
+    const saved = await getQuery(
+      `SELECT id, name, filters_json, created_at, updated_at
+       FROM saved_filter_configurations
+       WHERE name = ?`,
+      [name]
+    );
+
+    res.status(201).json({
+      id: saved.id,
+      name: saved.name,
+      filters: parseStoredFilters(saved.filters_json),
+      created_at: saved.created_at,
+      updated_at: saved.updated_at,
+      message: 'Filter configuration saved successfully',
+    });
+  } catch (error) {
+    console.error('Error saving filter configuration:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function updateSavedFilterConfiguration(req, res) {
+  try {
+    await ensureSavedFiltersTable();
+
+    const configurationId = Number.parseInt(req.params.id, 10);
+    if (Number.isNaN(configurationId)) {
+      return res.status(400).json({ error: 'Invalid configuration id' });
+    }
+
+    const existing = await getQuery(
+      `SELECT id, name, filters_json, created_at, updated_at
+       FROM saved_filter_configurations
+       WHERE id = ?`,
+      [configurationId]
+    );
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Saved filter configuration not found' });
+    }
+
+    const hasNameUpdate = Object.hasOwn(req.body || {}, 'name');
+    const hasFiltersUpdate = Object.hasOwn(req.body || {}, 'filters');
+
+    if (!hasNameUpdate && !hasFiltersUpdate) {
+      return res.status(400).json({ error: 'Nothing to update' });
+    }
+
+    let nextName = existing.name;
+    if (hasNameUpdate) {
+      const rawName = req.body?.name;
+      const trimmedName = typeof rawName === 'string' ? rawName.trim() : '';
+      if (!trimmedName) {
+        return res.status(400).json({ error: 'Configuration name is required' });
+      }
+      nextName = trimmedName;
+    }
+
+    const nextFilters = hasFiltersUpdate
+      ? normalizeSavedFilters(req.body?.filters || {})
+      : parseStoredFilters(existing.filters_json);
+
+    await runQuery(
+      `UPDATE saved_filter_configurations
+       SET name = ?, filters_json = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [nextName, JSON.stringify(nextFilters), configurationId]
+    );
+
+    const updated = await getQuery(
+      `SELECT id, name, filters_json, created_at, updated_at
+       FROM saved_filter_configurations
+       WHERE id = ?`,
+      [configurationId]
+    );
+
+    res.json({
+      id: updated.id,
+      name: updated.name,
+      filters: parseStoredFilters(updated.filters_json),
+      created_at: updated.created_at,
+      updated_at: updated.updated_at,
+      message: 'Filter configuration updated successfully',
+    });
+  } catch (error) {
+    if (error.message?.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'A configuration with that name already exists' });
+    }
+    console.error('Error updating filter configuration:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function deleteSavedFilterConfiguration(req, res) {
+  try {
+    await ensureSavedFiltersTable();
+
+    const configurationId = Number.parseInt(req.params.id, 10);
+    if (Number.isNaN(configurationId)) {
+      return res.status(400).json({ error: 'Invalid configuration id' });
+    }
+
+    const result = await runQuery(
+      'DELETE FROM saved_filter_configurations WHERE id = ?',
+      [configurationId]
+    );
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Saved filter configuration not found' });
+    }
+
+    res.json({ message: 'Filter configuration deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting filter configuration:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
 export async function createChoreography(req, res) {
   try {
     const { name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level, creation_year, tag_information, restart_information, authors, tags, step_figures } = req.body;
@@ -296,8 +534,7 @@ export async function deleteChoreography(req, res) {
 
 export async function searchChoreographies(req, res) {
   try {
-    const { level, step_figures, step_figures_match_mode, without_step_figures, tags, authors, search, sort_field, sort_direction } = req.query;
-    console.log('searchChoreographies called with sort_field:', sort_field, 'sort_direction:', sort_direction);
+    const { level, step_figures, step_figures_match_mode, without_step_figures, tags, authors, search, sort_field, sort_direction, max_count } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
@@ -310,6 +547,7 @@ export async function searchChoreographies(req, res) {
     let conditions = [];
     let groupBy = '';
     let having = '';
+    let havingParams = [];
 
     // Add search by name or other fields
     if (search) {
@@ -333,18 +571,34 @@ export async function searchChoreographies(req, res) {
       conditions.push('csfNo.choreography_id IS NULL');
     } else if (step_figures) {
       const figures = Array.isArray(step_figures) ? step_figures : [step_figures];
-      joins.push(`
-        INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
-        INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
-      `);
-      const placeholders = figures.map(() => '?').join(',');
-      conditions.push(`sf.name IN (${placeholders})`);
-      params.push(...figures);
 
-      // If matching ALL figures, use GROUP BY and HAVING
-      if (matchMode === 'all' && figures.length > 1) {
+      // EXACT means choreography figures must be a non-empty subset of selected figures.
+      if (matchMode === 'exact') {
+        joins.push(`
+          LEFT JOIN choreography_step_figures csf_all ON c.id = csf_all.choreography_id
+          LEFT JOIN step_figures sf_all ON csf_all.step_figure_id = sf_all.id
+        `);
+
+        const placeholders = figures.map(() => '?').join(',');
         groupBy = ' GROUP BY c.id';
-        having = ` HAVING COUNT(DISTINCT sf.id) = ${figures.length}`;
+        having = ` HAVING COUNT(DISTINCT sf_all.id) > 0
+                         AND COUNT(DISTINCT CASE WHEN sf_all.name IN (${placeholders}) THEN sf_all.id END) = COUNT(DISTINCT sf_all.id)`;
+        havingParams.push(...figures);
+      } else {
+        // For 'all' and 'any' modes
+        joins.push(`
+          INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
+          INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+        `);
+        const placeholders = figures.map(() => '?').join(',');
+        conditions.push(`sf.name IN (${placeholders})`);
+        params.push(...figures);
+
+        // If matching ALL figures, use GROUP BY and HAVING
+        if (matchMode === 'all' && figures.length > 1) {
+          groupBy = ' GROUP BY c.id';
+          having = ` HAVING COUNT(DISTINCT sf.id) = ${figures.length}`;
+        }
       }
     }
 
@@ -372,6 +626,14 @@ export async function searchChoreographies(req, res) {
       params.push(...authorList);
     }
 
+    if (max_count !== undefined) {
+      const parsedMaxCount = Number.parseInt(String(max_count), 10);
+      if (!Number.isNaN(parsedMaxCount) && parsedMaxCount >= 0) {
+        conditions.push('c.count <= ?');
+        params.push(parsedMaxCount);
+      }
+    }
+
     // Build final query
     if (joins.length > 0) {
       query += joins.join('');
@@ -387,6 +649,7 @@ export async function searchChoreographies(req, res) {
 
     if (having) {
       query += having;
+      params.push(...havingParams);
     }
 
     // Add sorting
@@ -424,6 +687,9 @@ export async function searchChoreographies(req, res) {
     let countQuery = 'SELECT COUNT(DISTINCT c.id) as count FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id';
     let countParams = [];
     let countConditions = [];
+    let countGroupBy = '';
+    let countHaving = '';
+    let countHavingParams = [];
 
     if (search) {
       countConditions.push('c.name LIKE ?');
@@ -444,13 +710,31 @@ export async function searchChoreographies(req, res) {
       countConditions.push('csfNo.choreography_id IS NULL');
     } else if (step_figures) {
       const figures = Array.isArray(step_figures) ? step_figures : [step_figures];
-      countQuery += `
-        INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
-        INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
-      `;
-      const placeholders = figures.map(() => '?').join(',');
-      countConditions.push(`sf.name IN (${placeholders})`);
-      countParams.push(...figures);
+
+      if (matchMode === 'exact') {
+        const placeholders = figures.map(() => '?').join(',');
+        countQuery += `
+          LEFT JOIN choreography_step_figures csf_all ON c.id = csf_all.choreography_id
+          LEFT JOIN step_figures sf_all ON csf_all.step_figure_id = sf_all.id
+        `;
+        countGroupBy = ' GROUP BY c.id';
+        countHaving = ` HAVING COUNT(DISTINCT sf_all.id) > 0
+                            AND COUNT(DISTINCT CASE WHEN sf_all.name IN (${placeholders}) THEN sf_all.id END) = COUNT(DISTINCT sf_all.id)`;
+        countHavingParams.push(...figures);
+      } else {
+        countQuery += `
+          INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
+          INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+        `;
+        const placeholders = figures.map(() => '?').join(',');
+        countConditions.push(`sf.name IN (${placeholders})`);
+        countParams.push(...figures);
+
+        if (matchMode === 'all' && figures.length > 1) {
+          countGroupBy = ' GROUP BY c.id';
+          countHaving = ` HAVING COUNT(DISTINCT sf.id) = ${figures.length}`;
+        }
+      }
     }
 
     if (tags) {
@@ -475,20 +759,29 @@ export async function searchChoreographies(req, res) {
       countParams.push(...authorList);
     }
 
+    if (max_count !== undefined) {
+      const parsedMaxCount = Number.parseInt(String(max_count), 10);
+      if (!Number.isNaN(parsedMaxCount) && parsedMaxCount >= 0) {
+        countConditions.push('c.count <= ?');
+        countParams.push(parsedMaxCount);
+      }
+    }
+
     if (countConditions.length > 0) {
       countQuery += ' WHERE ' + countConditions.join(' AND ');
     }
 
-    if (groupBy) {
-      countQuery += groupBy;
+    if (countGroupBy) {
+      countQuery += countGroupBy;
     }
 
-    if (having) {
-      countQuery += having;
+    if (countHaving) {
+      countQuery += countHaving;
+      countParams.push(...countHavingParams);
     }
 
     // Wrap in subquery to properly count with GROUP BY
-    if (groupBy || having) {
+    if (countGroupBy || countHaving) {
       countQuery = `SELECT COUNT(*) as count FROM (${countQuery})`;
     }
 
@@ -614,6 +907,17 @@ export async function getStepFigures(req, res) {
     res.json(figures.map(f => f.name));
   } catch (error) {
     console.error('Error fetching step figures:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function getMaxChoreographyCount(req, res) {
+  try {
+    const result = await getQuery('SELECT MAX(count) as max_count FROM choreographies WHERE count IS NOT NULL');
+    const maxCount = result?.max_count || 0;
+    res.json({ max_count: maxCount });
+  } catch (error) {
+    console.error('Error fetching max choreography count:', error);
     res.status(500).json({ error: error.message });
   }
 }

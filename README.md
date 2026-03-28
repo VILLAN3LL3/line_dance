@@ -1,6 +1,6 @@
 # Line Dance Choreography Search App
 
-A full-stack web application to search, create, and manage line dance choreographies with filtering by level and step figures.
+A full-stack web application to search, create, and manage line dance choreographies with advanced filtering, saved filter configurations, and a responsive React UI.
 
 ## Project Structure
 
@@ -39,27 +39,27 @@ line_dance/
 ## Features
 
 ✅ **Search & Filter**
-- Search choreographies by name
-- Filter by difficulty level (Beginner, Intermediate, Advanced, Experienced)
-- Filter by step figures (Vine, Shuffle, Grapevine, etc.)
-- Filter by tags
-- Pagination support
+- Search by choreography name
+- Filter by level, step figures, tags, and authors
+- Step figure matching modes: `all`, `any`, `exact`
+- Filter choreographies with no step figures
+- Max counts slider filter (step size: 8)
+
+✅ **Saved Filter Configurations**
+- Save named filter presets to the database
+- Load, rename, update, and delete saved presets
+- Saved filters include all active filter fields, including `max_count`
+- Saved filters panel is collapsible and collapsed by default
 
 ✅ **Create & Edit**
-- Add new choreographies with detailed information
-- Edit existing choreographies
-- Manage multiple authors, tags, and step figures per choreography
+- Add new choreographies with detailed metadata
+- Edit and delete existing choreographies
+- Manage many-to-many data for authors, tags, and step figures
 
-✅ **Database**
-- SQLite database with normalized schema
-- Support for many-to-many relationships (authors, step figures, tags)
-- Automatic timestamp tracking
-
-✅ **UI/UX**
-- Modern, responsive design
-- Color-coded difficulty levels
-- Quick filtering interface
-- Card-based layout with hover effects
+✅ **Persistence & UX**
+- Current filters and display mode persist via localStorage
+- Mobile-friendly layout and filter controls
+- Card and table list views
 
 ## Choreography Data Model
 
@@ -89,7 +89,7 @@ node init-db.js
 npm start
 ```
 
-The server will start on `http://localhost:5000`
+The server runs on `http://localhost:3001`.
 
 ### Client Setup
 
@@ -99,58 +99,51 @@ npm install
 npm run dev
 ```
 
-The app will automatically open at `http://localhost:3000`
+The client dev server runs on `http://localhost:5173`.
 
 ## API Endpoints
 
-### Get All Choreographies
+### Choreographies
 ```
 GET /api/choreographies?page=1&limit=20
-```
-
-### Search Choreographies
-```
-GET /api/choreographies/search?level=Intermediate&step_figures=Vine&step_figures=Shuffle&search=example
-```
-
-### Get Single Choreography
-```
 GET /api/choreographies/:id
-```
-
-### Create Choreography
-```
 POST /api/choreographies
-Content-Type: application/json
-
-{
-  "name": "Country Road",
-  "level": "Intermediate",
-  "count": 64,
-  "wall_count": 4,
-  "creation_year": 2023,
-  "step_sheet_link": "https://example.com/sheet.pdf",
-  "authors": ["Jane Doe"],
-  "step_figures": ["Vine", "Shuffle"],
-  "tags": ["Country", "Western"]
-}
-```
-
-### Update Choreography
-```
 PUT /api/choreographies/:id
-Content-Type: application/json
-
-{
-  "name": "Country Road v2",
-  "level": "Intermediate",
-  ...
-}
-```
-
-### Delete Choreography
-```
 DELETE /api/choreographies/:id
+```
+
+### Search
+```
+GET /api/choreographies/search
+```
+
+Supported query parameters:
+- `search`
+- `level` (repeatable)
+- `step_figures` (repeatable)
+- `step_figures_match_mode` (`all` | `any` | `exact`)
+- `without_step_figures` (`true` | `false`)
+- `tags` (repeatable)
+- `authors` (repeatable)
+- `max_count` (integer)
+- `sort_field`, `sort_direction`
+- `page`, `limit`
+
+### Search Metadata
+```
+GET /api/choreographies/max-count
+GET /api/levels
+GET /api/step_figures
+GET /api/tags
+GET /api/authors
+```
+
+### Saved Filter Configurations
+```
+GET /api/saved-filters
+POST /api/saved-filters
+PATCH /api/saved-filters/:id
+DELETE /api/saved-filters/:id
 ```
 
 ## Technologies Used
@@ -171,14 +164,22 @@ DELETE /api/choreographies/:id
 
 ### choreographies
 - id (Primary Key)
-- name ✓
+- name
 - step_sheet_link
+- demo_video_url
+- tutorial_video_url
 - count
-- wall_count ✓
-- level ✓
+- wall_count
+- level_id (Foreign Key to levels)
 - creation_year
+- tag_information
+- restart_information
 - created_at
 - updated_at
+
+### levels
+- id (Primary Key)
+- name (Unique)
 
 ### authors
 - id (Primary Key)
@@ -204,6 +205,13 @@ DELETE /api/choreographies/:id
 - choreography_id (Foreign Key)
 - tag_id (Foreign Key)
 
+### saved_filter_configurations
+- id (Primary Key)
+- name (Unique)
+- filters_json
+- created_at
+- updated_at
+
 ## Development
 
 ### Adding Sample Data
@@ -211,7 +219,7 @@ DELETE /api/choreographies/:id
 You can create sample data through the UI or by making POST requests:
 
 ```bash
-curl -X POST http://localhost:5000/api/choreographies \
+curl -X POST http://localhost:3001/api/choreographies \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Tumbleweed",
@@ -246,19 +254,14 @@ npm run dev
 - Safari (latest)
 - Edge (latest)
 
-## Future Enhancements
+## Notes
 
-- User authentication & profiles
-- Favorites/bookmarks functionality
-- Video demonstrations of choreographies
-- Community ratings & reviews
-- Export to various formats (PDF, Excel)
-- Mobile app (React Native)
-- Advanced analytics dashboard
+- For backend auto-reload during development, run `npm run dev` in `server`.
+- If you run `npm start`, restart the server after backend code changes.
 
 ## License
 
-MIT
+European Union Public Licence (EUPL) v1.2
 
 ## Support
 
