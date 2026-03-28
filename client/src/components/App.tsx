@@ -12,21 +12,50 @@ import { SearchBar } from "./SearchBar";
 type View = 'list' | 'create' | 'edit' | 'detail';
 
 export const App: React.FC = () => {
+  // Initialize display mode from localStorage
+  const getInitialDisplayMode = () => {
+    const saved = localStorage.getItem('displayMode');
+    return (saved === 'card' || saved === 'table') ? saved : 'card';
+  };
+
+  // Initialize filters from localStorage
+  const getInitialFilters = () => {
+    const saved = localStorage.getItem('currentFilters');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (error) {
+        console.error('Error parsing saved filters:', error);
+      }
+    }
+    return {};
+  };
+
   const [view, setView] = useState<View>('list');
-  const [displayMode, setDisplayMode] = useState<'card' | 'table'>('card');
+  const [displayMode, setDisplayMode] = useState<'card' | 'table'>(getInitialDisplayMode);
   const [choreographies, setChoreographies] = useState<Choreography[]>([]);
   const [selectedChoreography, setSelectedChoreography] = useState<Choreography | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
-  const [currentFilters, setCurrentFilters] = useState({});
+  const [currentFilters, setCurrentFilters] = useState(getInitialFilters);
 
-  // Load choreographies on mount and when filters change
+  // Load choreographies on mount
   useEffect(() => {
-    loadChoreographies();
+    loadChoreographies(currentFilters, true);
   }, []);
 
-  const loadChoreographies = async (filters = {}) => {
+  // Save display mode to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('displayMode', displayMode);
+  }, [displayMode]);
+
+  // Save filters to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('currentFilters', JSON.stringify(currentFilters));
+  }, [currentFilters]);
+
+  const loadChoreographies = async (filters = {}, isInitialLoad = false) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -34,7 +63,9 @@ export const App: React.FC = () => {
       
       setChoreographies(result.data);
       setPagination({ page: 1, limit: result.data.length, total: result.data.length, totalPages: 1 });
-      setCurrentFilters(filters);
+      if (!isInitialLoad) {
+        setCurrentFilters(filters);
+      }
     } catch (err) {
       setError('Failed to load choreographies');
       console.error(err);
@@ -43,13 +74,13 @@ export const App: React.FC = () => {
     }
   };
 
-  const returnToList = async (filters = currentFilters, page = pagination.page) => {
+  const returnToList = async (filters = currentFilters) => {
     setView('list');
-    await loadChoreographies(filters, page);
+    await loadChoreographies(filters);
   };
 
   const handleSearch = async (filters: any) => {
-    await loadChoreographies(filters, 1);
+    await loadChoreographies(filters);
   };
 
   const handleCreate = async (formData: any) => {
@@ -169,7 +200,7 @@ export const App: React.FC = () => {
                 <div className="pagination">
                   <button
                     disabled={pagination.page === 1 || isLoading}
-                    onClick={() => loadChoreographies(currentFilters, pagination.page - 1)}
+                    onClick={() => loadChoreographies(currentFilters)}
                   >
                     Previous
                   </button>
@@ -178,7 +209,7 @@ export const App: React.FC = () => {
                   </span>
                   <button
                     disabled={pagination.page === pagination.totalPages || isLoading}
-                    onClick={() => loadChoreographies(currentFilters, pagination.page + 1)}
+                    onClick={() => loadChoreographies(currentFilters)}
                   >
                     Next
                   </button>
@@ -199,7 +230,7 @@ export const App: React.FC = () => {
                 <div className="pagination">
                   <button
                     disabled={pagination.page === 1 || isLoading}
-                    onClick={() => loadChoreographies(currentFilters, pagination.page - 1)}
+                    onClick={() => loadChoreographies(currentFilters)}
                   >
                     Previous
                   </button>
@@ -208,7 +239,7 @@ export const App: React.FC = () => {
                   </span>
                   <button
                     disabled={pagination.page === pagination.totalPages || isLoading}
-                    onClick={() => loadChoreographies(currentFilters, pagination.page + 1)}
+                    onClick={() => loadChoreographies(currentFilters)}
                   >
                     Next
                   </button>
