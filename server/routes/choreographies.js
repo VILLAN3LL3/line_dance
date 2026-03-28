@@ -296,7 +296,8 @@ export async function deleteChoreography(req, res) {
 
 export async function searchChoreographies(req, res) {
   try {
-    const { level, step_figures, step_figures_match_mode, without_step_figures, tags, authors, search } = req.query;
+    const { level, step_figures, step_figures_match_mode, without_step_figures, tags, authors, search, sort_field, sort_direction } = req.query;
+    console.log('searchChoreographies called with sort_field:', sort_field, 'sort_direction:', sort_direction);
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
@@ -388,7 +389,32 @@ export async function searchChoreographies(req, res) {
       query += having;
     }
 
-    query += ` ORDER BY c.created_at DESC LIMIT ? OFFSET ?`;
+    // Add sorting
+    let orderBy = 'c.created_at DESC';
+    if (sort_field) {
+      const direction = sort_direction === 'desc' ? 'DESC' : 'ASC';
+      switch (sort_field) {
+        case 'name':
+          orderBy = `LOWER(c.name) ${direction}`;
+          break;
+        case 'level':
+          orderBy = `LOWER(l.name) ${direction}`;
+          break;
+        case 'count':
+          orderBy = `c.count ${direction}`;
+          break;
+        case 'wall_count':
+          orderBy = `c.wall_count ${direction}`;
+          break;
+        case 'creation_year':
+          orderBy = `c.creation_year ${direction}`;
+          break;
+        default:
+          orderBy = `c.created_at DESC`;
+      }
+    }
+
+    query += ` ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
     params.push(limit, offset);
 
     const choreographies = await allQuery(query, params);

@@ -32,6 +32,8 @@ export async function searchChoreographies(
     without_step_figures?: boolean;
     tags?: string[];
     authors?: string[];
+    sort_field?: string;
+    sort_direction?: 'asc' | 'desc';
     page?: number;
     limit?: number;
   }

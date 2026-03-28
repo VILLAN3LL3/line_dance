@@ -6,12 +6,14 @@ import { createChoreography, deleteChoreography, fetchChoreographies, searchChor
 import { Choreography, PaginatedResponse } from "../types";
 import { ChoreographyCard } from "./ChoreographyCard";
 import { ChoreographyForm } from "./ChoreographyForm";
+import { ChoreographyTable } from "./ChoreographyTable";
 import { SearchBar } from "./SearchBar";
 
 type View = 'list' | 'create' | 'edit' | 'detail';
 
 export const App: React.FC = () => {
   const [view, setView] = useState<View>('list');
+  const [displayMode, setDisplayMode] = useState<'card' | 'table'>('card');
   const [choreographies, setChoreographies] = useState<Choreography[]>([]);
   const [selectedChoreography, setSelectedChoreography] = useState<Choreography | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,20 +26,14 @@ export const App: React.FC = () => {
     loadChoreographies();
   }, []);
 
-  const loadChoreographies = async (filters = {}, page = 1) => {
+  const loadChoreographies = async (filters = {}) => {
     setIsLoading(true);
     setError(null);
     try {
-      let result: PaginatedResponse<Choreography>;
-      
-      if (Object.keys(filters).length > 0) {
-        result = await searchChoreographies({ ...filters, page, limit: 20 });
-      } else {
-        result = await fetchChoreographies(page, 20);
-      }
+      const result = await searchChoreographies({ ...filters, page: 1, limit: 10000 });
       
       setChoreographies(result.data);
-      setPagination(result.pagination);
+      setPagination({ page: 1, limit: result.data.length, total: result.data.length, totalPages: 1 });
       setCurrentFilters(filters);
     } catch (err) {
       setError('Failed to load choreographies');
@@ -132,13 +128,30 @@ export const App: React.FC = () => {
         <div className="list-view">
           <SearchBar onSearch={handleSearch} filters={currentFilters} isLoading={isLoading} />
           
+          <div className="view-toggle">
+            <button
+              className={`view-toggle-btn ${displayMode === 'card' ? 'active' : ''}`}
+              onClick={() => setDisplayMode('card')}
+              title="Card view"
+            >
+              📇 Cards
+            </button>
+            <button
+              className={`view-toggle-btn ${displayMode === 'table' ? 'active' : ''}`}
+              onClick={() => setDisplayMode('table')}
+              title="Table view"
+            >
+              📊 Table
+            </button>
+          </div>
+          
           {isLoading ? (
             <div className="loading">Loading choreographies...</div>
           ) : choreographies.length === 0 ? (
             <div className="empty-state">
               <p>No choreographies found. Start by adding one!</p>
             </div>
-          ) : (
+          ) : displayMode === 'card' ? (
             <>
               <div className="choreographies-grid">
                 {choreographies.map(choreo => (
@@ -151,6 +164,36 @@ export const App: React.FC = () => {
                   />
                 ))}
               </div>
+              
+              {pagination.totalPages > 1 && (
+                <div className="pagination">
+                  <button
+                    disabled={pagination.page === 1 || isLoading}
+                    onClick={() => loadChoreographies(currentFilters, pagination.page - 1)}
+                  >
+                    Previous
+                  </button>
+                  <span>
+                    Page {pagination.page} of {pagination.totalPages}
+                  </span>
+                  <button
+                    disabled={pagination.page === pagination.totalPages || isLoading}
+                    onClick={() => loadChoreographies(currentFilters, pagination.page + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <ChoreographyTable
+                choreographies={choreographies}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onSelect={handleSelectChoreography}
+                isLoading={isLoading}
+              />
               
               {pagination.totalPages > 1 && (
                 <div className="pagination">

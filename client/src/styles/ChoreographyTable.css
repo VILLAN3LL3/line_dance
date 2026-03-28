@@ -1,0 +1,196 @@
+.choreography-table-wrapper {
+  overflow-x: auto;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.figure-filters {
+  padding: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.figure-filters-label {
+  font-weight: 600;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.figure-filters-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.figure-filter-btn {
+  padding: 4px 10px;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  background-color: white;
+  color: #666;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.figure-filter-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.figure-filter-btn.active {
+  background-color: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.figure-filter-btn.clear {
+  background-color: #f5f5f5;
+  border-color: #ddd;
+}
+
+.figure-filter-btn.clear:hover {
+  background-color: #e0e0e0;
+}
+
+.table-scroll-wrapper {
+  overflow-x: auto;
+}
+
+.choreography-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.choreography-table thead {
+  background-color: var(--color-primary);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.choreography-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.choreography-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.choreography-table th.sortable:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.choreography-table th.figure-column {
+  font-size: 11px;
+  padding: 10px 6px;
+  width: 30px;
+  max-width: 30px;
+  text-align: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  white-space: nowrap;
+}
+}
+
+.choreography-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.choreography-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.choreography-table td {
+  padding: 12px;
+  vertical-align: middle;
+}
+
+.choreography-table td.figure-cell {
+  text-align: center;
+  padding: 8px 6px;
+  font-size: 14px;
+  width: 30px;
+  max-width: 30px;
+}
+
+.name-cell {
+  max-width: 200px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.name-cell strong {
+  flex-basis: 100%;
+}
+
+.info-badge {
+  background-color: #e0e0e0;
+  color: #666;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.tags-cell {
+  max-width: 250px;
+  overflow-y: auto;
+  max-height: 60px;
+}
+
+.actions-cell {
+  white-space: nowrap;
+  display: flex;
+  gap: 4px;
+}
+
+.btn-small {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-small.btn-primary {
+  background-color: var(--color-info);
+  color: white;
+}
+
+.btn-small.btn-primary:hover:not(:disabled) {
+  background-color: #1071a7;
+}
+
+.btn-small.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-small.btn-danger:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.btn-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
