@@ -1,10 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import swaggerUi from 'swagger-ui-express';
 import { getDatabase, closeDatabase } from './db.js';
 import { runMigrations } from './migrations/index.js';
+import { openApiSpec } from './openapi.js';
 import { createChoreography, getChoreographies, getChoreographyById, updateChoreography, deleteChoreography, searchChoreographies, getLevels, addLevel, getTags, getStepFigures, getAuthors, getSavedFilterConfigurations, saveFilterConfiguration, updateSavedFilterConfiguration, deleteSavedFilterConfiguration, getMaxChoreographyCount } from './routes/choreographies.js';
-import { getDanceGroups, createDanceGroup, getDanceGroupById, updateDanceGroup, deleteDanceGroup, getDanceCourses, createDanceCourse, updateDanceCourse, deleteDanceCourse, exportDanceCoursePdf, getSessions, createSession, updateSession, deleteSession, getSessionChoreographies, addChoreographyToSession, removeChoreographyFromSession, getLearnedChoreographies, getGroupLevels, addGroupLevel, removeGroupLevel } from './routes/dance-groups.js';
+import { getDanceGroups, createDanceGroup, getDanceGroupById, updateDanceGroup, deleteDanceGroup, getTrainers, createTrainer, updateTrainer, deleteTrainer, getDanceCourses, createDanceCourse, updateDanceCourse, deleteDanceCourse, exportDanceCoursePdf, getSessions, createSession, updateSession, deleteSession, getSessionChoreographies, addChoreographyToSession, removeChoreographyFromSession, getLearnedChoreographies, getGroupLevels, addGroupLevel, removeGroupLevel } from './routes/dance-groups.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,6 +15,11 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, { explorer: true }));
+
+app.get('/api/openapi.json', (req, res) => {
+  res.json(openApiSpec);
+});
 
 // Initialize database
 getDatabase();
@@ -43,6 +50,12 @@ app.post('/api/dance-groups', createDanceGroup);
 app.get('/api/dance-groups/:id', getDanceGroupById);
 app.put('/api/dance-groups/:id', updateDanceGroup);
 app.delete('/api/dance-groups/:id', deleteDanceGroup);
+
+// Trainers Routes
+app.get('/api/trainers', getTrainers);
+app.post('/api/trainers', createTrainer);
+app.put('/api/trainers/:id', updateTrainer);
+app.delete('/api/trainers/:id', deleteTrainer);
 
 // Dance Courses Routes
 app.get('/api/dance-courses', getDanceCourses);

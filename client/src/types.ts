@@ -76,6 +76,14 @@ export interface DanceGroup {
   created_at: string;
 }
 
+export interface Trainer {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+  created_at: string;
+}
+
 export interface DanceCourse {
   id: number;
   dance_group_id: number;
@@ -85,6 +93,10 @@ export interface DanceCourse {
   youtube_playlist_url?: string;
   copperknob_list_url?: string;
   spotify_playlist_url?: string;
+  trainer_id?: number | null;
+  trainer_name?: string | null;
+  trainer_phone?: string | null;
+  trainer_email?: string | null;
   created_at: string;
 }
 

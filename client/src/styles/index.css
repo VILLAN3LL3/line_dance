@@ -80,7 +80,9 @@ select:focus {
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #efefef;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
 }
 
 .btn-danger {

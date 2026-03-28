@@ -5,6 +5,8 @@ import {
   SearchFilters, Session, SessionChoreography
 } from "./types";
 
+import type { Trainer } from "./types";
+
 const API_URL = 'http://localhost:3001/api';
 
 const api = axios.create({
@@ -148,6 +150,28 @@ export async function deleteDanceGroup(id: number): Promise<{ message: string }>
   return response.data;
 }
 
+// Trainers API
+
+export async function getTrainers(): Promise<Trainer[]> {
+  const response = await api.get('/trainers');
+  return response.data;
+}
+
+export async function createTrainer(name: string, phone: string, email: string): Promise<Trainer> {
+  const response = await api.post('/trainers', { name, phone, email });
+  return response.data;
+}
+
+export async function updateTrainer(id: number, name: string, phone: string, email: string): Promise<Trainer> {
+  const response = await api.put(`/trainers/${id}`, { name, phone, email });
+  return response.data;
+}
+
+export async function deleteTrainer(id: number): Promise<{ message: string }> {
+  const response = await api.delete(`/trainers/${id}`);
+  return response.data;
+}
+
 // Dance Courses API
 
 export async function getDanceCourses(danceGroupId?: number): Promise<DanceCourse[]> {
@@ -157,23 +181,25 @@ export async function getDanceCourses(danceGroupId?: number): Promise<DanceCours
   return response.data;
 }
 
-export async function createDanceCourse(
-  danceGroupId: number,
-  semester: string,
-  startDate?: string,
-  id?: number,
-  youtubePlaylistUrl?: string,
-  copperknobListUrl?: string,
-  spotifyPlaylistUrl?: string
-): Promise<DanceCourse> {
+export async function createDanceCourse(payload: {
+  danceGroupId: number;
+  semester: string;
+  startDate?: string;
+  id?: number;
+  youtubePlaylistUrl?: string;
+  copperknobListUrl?: string;
+  spotifyPlaylistUrl?: string;
+  trainerId?: number;
+}): Promise<DanceCourse> {
   const response = await api.post('/dance-courses', {
-    id,
-    dance_group_id: danceGroupId,
-    semester,
-    start_date: startDate,
-    youtube_playlist_url: youtubePlaylistUrl,
-    copperknob_list_url: copperknobListUrl,
-    spotify_playlist_url: spotifyPlaylistUrl,
+    id: payload.id,
+    dance_group_id: payload.danceGroupId,
+    semester: payload.semester,
+    start_date: payload.startDate,
+    youtube_playlist_url: payload.youtubePlaylistUrl,
+    copperknob_list_url: payload.copperknobListUrl,
+    spotify_playlist_url: payload.spotifyPlaylistUrl,
+    trainer_id: payload.trainerId ?? null,
   });
   return response.data;
 }
@@ -184,7 +210,8 @@ export async function updateDanceCourse(
   startDate?: string,
   youtubePlaylistUrl?: string,
   copperknobListUrl?: string,
-  spotifyPlaylistUrl?: string
+  spotifyPlaylistUrl?: string,
+  trainerId?: number
 ): Promise<DanceCourse> {
   const response = await api.put(`/dance-courses/${id}`, {
     semester,
@@ -192,6 +219,7 @@ export async function updateDanceCourse(
     youtube_playlist_url: youtubePlaylistUrl,
     copperknob_list_url: copperknobListUrl,
     spotify_playlist_url: spotifyPlaylistUrl,
+    trainer_id: trainerId ?? null,
   });
   return response.data;
 }

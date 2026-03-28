@@ -1,0 +1,89 @@
+.trainers-admin {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.trainers-header h2 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.trainer-section {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--border-radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.trainer-section h3 {
+  margin-top: 0;
+  color: var(--color-primary);
+}
+
+.trainer-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 10px;
+}
+
+.trainer-form input {
+  min-width: 0;
+}
+
+.trainers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trainer-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--border-radius);
+  padding: 12px;
+  background: #fff;
+}
+
+.trainer-item input {
+  margin-right: 8px;
+}
+
+.trainer-info h4 {
+  margin: 0 0 6px;
+  color: var(--color-primary);
+}
+
+.trainer-info p {
+  margin: 0;
+  color: #555;
+}
+
+.trainer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .trainer-form {
+    grid-template-columns: 1fr;
+  }
+
+  .trainer-item {
+    grid-template-columns: 1fr;
+  }
+
+  .trainer-actions {
+    width: 100%;
+  }
+
+  .trainer-actions button {
+    flex: 1;
+  }
+}

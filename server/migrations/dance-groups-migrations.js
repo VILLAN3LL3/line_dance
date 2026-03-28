@@ -137,6 +137,29 @@ const migrations = [
       await runQuery(learnedChoreographiesViewSql, [], dbName);
     },
   },
+  {
+    id: '005_add_trainers_and_course_trainer_relation',
+    up: async () => {
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS trainers (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          phone TEXT NOT NULL,
+          email TEXT NOT NULL UNIQUE,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
+        [],
+        dbName
+      );
+
+      await ensureColumnExists('dance_courses', 'trainer_id', 'INTEGER');
+      await runQuery(
+        `CREATE INDEX IF NOT EXISTS idx_dance_courses_trainer_id ON dance_courses(trainer_id)`,
+        [],
+        dbName
+      );
+    },
+  },
 ];
 
 export async function runDanceGroupsMigrations() {

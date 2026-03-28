@@ -268,7 +268,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
             <button
               type="button"
               onClick={() => setShowAddLevel(!showAddLevel)}
-              className="btn-small btn-secondary"
+              className="btn-add-level"
               title="Add new level"
             >
               +
@@ -523,7 +523,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           {isLoading ? 'Saving...' : 'Save Choreography'}
         </button>
         {onCancel && (
-          <button type="button" onClick={onCancel} className="btn-secondary">
+          <button type="button" onClick={onCancel} className="btn-small btn-edit">
             Cancel
           </button>
         )}

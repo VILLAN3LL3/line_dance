@@ -16,7 +16,7 @@ function initializeDanceGroupsDatabase() {
   });
 
   let completedQueries = 0;
-  const totalQueries = 6;
+  const totalQueries = 7;
 
   const checkComplete = () => {
     completedQueries++;
@@ -52,12 +52,29 @@ function initializeDanceGroupsDatabase() {
        youtube_playlist_url TEXT,
        copperknob_list_url TEXT,
        spotify_playlist_url TEXT,
+       trainer_id INTEGER,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (dance_group_id) REFERENCES dance_groups(id) ON DELETE CASCADE
+      FOREIGN KEY (dance_group_id) REFERENCES dance_groups(id) ON DELETE CASCADE,
+      FOREIGN KEY (trainer_id) REFERENCES trainers(id) ON DELETE SET NULL
     )
   `, (err) => {
     if (err) console.error('Error creating dance_courses table:', err);
     else console.log('Created dance_courses table');
+    checkComplete();
+  });
+
+  // Create trainers table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS trainers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) console.error('Error creating trainers table:', err);
+    else console.log('Created trainers table');
     checkComplete();
   });
 

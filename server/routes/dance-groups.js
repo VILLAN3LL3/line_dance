@@ -4,6 +4,14 @@ import QRCode from 'qrcode';
 
 const dbName = 'danceGroups';
 
+function escapeVCardValue(value) {
+  return String(value ?? '')
+    .replaceAll('\\', String.raw`\\`)
+    .replaceAll(';', String.raw`\;`)
+    .replaceAll(',', String.raw`\,`)
+    .replaceAll('\n', String.raw`\n`);
+}
+
 // Dance Groups endpoints
 
 export async function getDanceGroups(req, res) {
@@ -131,15 +139,144 @@ export async function deleteDanceGroup(req, res) {
   }
 }
 
+// Trainers endpoints
+
+export async function getTrainers(req, res) {
+  try {
+    const rows = await allQuery(
+      `SELECT id, name, phone, email, created_at FROM trainers ORDER BY LOWER(name) ASC`,
+      [],
+      dbName
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching trainers:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function createTrainer(req, res) {
+  try {
+    const { name, phone, email } = req.body;
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+    if (!phone || typeof phone !== 'string' || !phone.trim()) {
+      return res.status(400).json({ error: 'Phone is required' });
+    }
+    if (!email || typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const result = await runQuery(
+      `INSERT INTO trainers (name, phone, email) VALUES (?, ?, ?)`,
+      [name.trim(), phone.trim(), email.trim()],
+      dbName
+    );
+
+    const trainer = await getQuery(
+      `SELECT id, name, phone, email, created_at FROM trainers WHERE id = ?`,
+      [result.id],
+      dbName
+    );
+
+    res.status(201).json(trainer);
+  } catch (error) {
+    if (error.message?.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'A trainer with that email already exists' });
+    }
+    console.error('Error creating trainer:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function updateTrainer(req, res) {
+  try {
+    const { id } = req.params;
+    const { name, phone, email } = req.body;
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+    if (!phone || typeof phone !== 'string' || !phone.trim()) {
+      return res.status(400).json({ error: 'Phone is required' });
+    }
+    if (!email || typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const existing = await getQuery(
+      `SELECT id FROM trainers WHERE id = ?`,
+      [id],
+      dbName
+    );
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Trainer not found' });
+    }
+
+    await runQuery(
+      `UPDATE trainers SET name = ?, phone = ?, email = ? WHERE id = ?`,
+      [name.trim(), phone.trim(), email.trim(), id],
+      dbName
+    );
+
+    const updated = await getQuery(
+      `SELECT id, name, phone, email, created_at FROM trainers WHERE id = ?`,
+      [id],
+      dbName
+    );
+
+    res.json(updated);
+  } catch (error) {
+    if (error.message?.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'A trainer with that email already exists' });
+    }
+    console.error('Error updating trainer:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export async function deleteTrainer(req, res) {
+  try {
+    const { id } = req.params;
+
+    // Keep courses intact by removing trainer assignment first.
+    await runQuery(
+      `UPDATE dance_courses SET trainer_id = NULL WHERE trainer_id = ?`,
+      [id],
+      dbName
+    );
+
+    const result = await runQuery(
+      `DELETE FROM trainers WHERE id = ?`,
+      [id],
+      dbName
+    );
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Trainer not found' });
+    }
+
+    res.json({ message: 'Trainer deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting trainer:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
 // Dance Courses endpoints
 
 export async function getDanceCourses(req, res) {
   try {
     const { dance_group_id } = req.query;
     
-  let query = `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.created_at, dg.name as dance_group_name
+  let query = `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
+                 t.name as trainer_name, t.phone as trainer_phone, t.email as trainer_email
                  FROM dance_courses dc
-                 LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id`;
+                 LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
+                 LEFT JOIN trainers t ON dc.trainer_id = t.id`;
     let params = [];
 
     if (dance_group_id) {
@@ -159,7 +296,7 @@ export async function getDanceCourses(req, res) {
 
 export async function createDanceCourse(req, res) {
   try {
-  const { id, dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url } = req.body;
+  const { id, dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id } = req.body;
 
     if (!dance_group_id || !semester) {
       return res.status(400).json({ error: 'Dance group ID and semester are required' });
@@ -176,25 +313,40 @@ export async function createDanceCourse(req, res) {
       return res.status(404).json({ error: 'Dance group not found' });
     }
 
+    if (trainer_id !== null && trainer_id !== undefined && trainer_id !== '') {
+      const trainer = await getQuery(
+        `SELECT id FROM trainers WHERE id = ?`,
+        [trainer_id],
+        dbName
+      );
+      if (!trainer) {
+        return res.status(404).json({ error: 'Trainer not found' });
+      }
+    }
+
+    const normalizedTrainerId = trainer_id ? Number.parseInt(String(trainer_id), 10) : null;
+
     let result;
     if (id) {
        result = await runQuery(
-         `INSERT INTO dance_courses (id, dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-         [id, dance_group_id, semester, start_date || null, youtube_playlist_url || null, copperknob_list_url || null, spotify_playlist_url || null],
+         `INSERT INTO dance_courses (id, dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         [id, dance_group_id, semester, start_date || null, youtube_playlist_url || null, copperknob_list_url || null, spotify_playlist_url || null, normalizedTrainerId],
         dbName
       );
     } else {
        result = await runQuery(
-         `INSERT INTO dance_courses (dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url) VALUES (?, ?, ?, ?, ?, ?)`,
-         [dance_group_id, semester, start_date || null, youtube_playlist_url || null, copperknob_list_url || null, spotify_playlist_url || null],
+         `INSERT INTO dance_courses (dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         [dance_group_id, semester, start_date || null, youtube_playlist_url || null, copperknob_list_url || null, spotify_playlist_url || null, normalizedTrainerId],
         dbName
       );
     }
 
     const course = await getQuery(
-       `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.created_at, dg.name as dance_group_name
+       `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
+       t.name as trainer_name, t.phone as trainer_phone, t.email as trainer_email
        FROM dance_courses dc
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
+       LEFT JOIN trainers t ON dc.trainer_id = t.id
        WHERE dc.id = ?`,
       [result.id],
       dbName
@@ -213,7 +365,7 @@ export async function createDanceCourse(req, res) {
 export async function updateDanceCourse(req, res) {
   try {
     const { id } = req.params;
-  const { semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url } = req.body;
+  const { semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id } = req.body;
 
     const existing = await getQuery(
       `SELECT id FROM dance_courses WHERE id = ?`,
@@ -225,16 +377,31 @@ export async function updateDanceCourse(req, res) {
       return res.status(404).json({ error: 'Dance course not found' });
     }
 
+    if (trainer_id !== null && trainer_id !== undefined && trainer_id !== '') {
+      const trainer = await getQuery(
+        `SELECT id FROM trainers WHERE id = ?`,
+        [trainer_id],
+        dbName
+      );
+      if (!trainer) {
+        return res.status(404).json({ error: 'Trainer not found' });
+      }
+    }
+
+    const normalizedTrainerId = trainer_id ? Number.parseInt(String(trainer_id), 10) : null;
+
     await runQuery(
-       `UPDATE dance_courses SET semester = ?, start_date = ?, youtube_playlist_url = ?, copperknob_list_url = ?, spotify_playlist_url = ? WHERE id = ?`,
-       [semester, start_date || null, youtube_playlist_url || null, copperknob_list_url || null, spotify_playlist_url || null, id],
+       `UPDATE dance_courses SET semester = ?, start_date = ?, youtube_playlist_url = ?, copperknob_list_url = ?, spotify_playlist_url = ?, trainer_id = ? WHERE id = ?`,
+       [semester, start_date || null, youtube_playlist_url || null, copperknob_list_url || null, spotify_playlist_url || null, normalizedTrainerId, id],
       dbName
     );
 
     const updated = await getQuery(
-       `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.created_at, dg.name as dance_group_name
+       `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
+       t.name as trainer_name, t.phone as trainer_phone, t.email as trainer_email
        FROM dance_courses dc
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
+       LEFT JOIN trainers t ON dc.trainer_id = t.id
        WHERE dc.id = ?`,
       [id],
       dbName
@@ -272,9 +439,11 @@ export async function exportDanceCoursePdf(req, res) {
     const { id } = req.params;
 
     const course = await getQuery(
-      `SELECT dc.id, dc.semester, dg.name as dance_group_name, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url
+      `SELECT dc.id, dc.semester, dg.name as dance_group_name, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url,
+      t.id as trainer_id, t.name as trainer_name, t.phone as trainer_phone, t.email as trainer_email
        FROM dance_courses dc
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
+       LEFT JOIN trainers t ON dc.trainer_id = t.id
        WHERE dc.id = ?`,
       [id],
       dbName
@@ -293,7 +462,7 @@ export async function exportDanceCoursePdf(req, res) {
 
     const links = [
       { label: 'YouTube Playlist', url: course.youtube_playlist_url },
-      { label: 'Copperknob Liste', url: course.copperknob_list_url },
+      { label: 'Copperknob Step Sheets', url: course.copperknob_list_url },
       { label: 'Spotify Playlist', url: course.spotify_playlist_url },
     ].filter((entry) => Boolean(entry.url));
 
@@ -307,6 +476,18 @@ export async function exportDanceCoursePdf(req, res) {
         }),
       }))
     );
+
+    const hasTrainer = Boolean(course.trainer_id);
+    const trainerVCard = hasTrainer
+      ? `BEGIN:VCARD\nVERSION:3.0\nFN:${escapeVCardValue(course.trainer_name)}\nTEL;TYPE=CELL:${escapeVCardValue(course.trainer_phone)}\nEMAIL;TYPE=INTERNET:${escapeVCardValue(course.trainer_email)}\nEND:VCARD`
+      : null;
+    const trainerQr = trainerVCard
+      ? await QRCode.toBuffer(trainerVCard, {
+          errorCorrectionLevel: 'M',
+          margin: 1,
+          width: 180,
+        })
+      : null;
 
     const safeSemester = String(course.semester ?? 'Kurs')
       .split(/[^a-zA-Z0-9_-]+/)
@@ -328,11 +509,9 @@ export async function exportDanceCoursePdf(req, res) {
       muted: '#6B7280',
       cardBg: '#F9FAFB',
       cardBorder: '#D1D5DB',
-      footer: '#9CA3AF',
     };
 
     const pageWidth = doc.page.width;
-    const pageHeight = doc.page.height;
     const leftMargin = doc.page.margins.left;
     const rightMargin = doc.page.margins.right;
     const contentWidth = pageWidth - leftMargin - rightMargin;
@@ -368,20 +547,90 @@ export async function exportDanceCoursePdf(req, res) {
     doc.y = headerY + headerHeight + 18;
 
     // Session dates section
-    if (sessions.length > 0) {
-      const sessionDatesText = sessions
-        .map((s) => new Date(s.session_date).toLocaleDateString('de-DE'))
-        .join(', ');
-      
-      doc.fillColor(colors.muted)
-        .fontSize(10)
-        .text('Termine: ' + sessionDatesText, leftMargin, doc.y, {
-          width: contentWidth,
-          align: 'left',
+    const sessionDatesText = sessions.length > 0
+      ? sessions.map((s) => new Date(s.session_date).toLocaleDateString('de-DE')).join(', ')
+      : 'Keine Termine hinterlegt.';
+    const sessionsTextWidth = contentWidth - 24;
+    const sessionsTextY = doc.y + 32;
+    doc.fontSize(11);
+    const sessionsTextHeight = doc.heightOfString(sessionDatesText, {
+      width: sessionsTextWidth,
+      align: 'left',
+      lineGap: 0,
+    });
+    const sessionsBoxY = doc.y;
+    const sessionsBottomPadding = 8;
+    const sessionsBoxHeight = (sessionsTextY - sessionsBoxY) + sessionsTextHeight + sessionsBottomPadding;
+
+    doc.roundedRect(leftMargin, sessionsBoxY, contentWidth, sessionsBoxHeight, 8)
+      .fillAndStroke('#F8FAFC', '#E2E8F0');
+
+    doc.fillColor(colors.title)
+      .fontSize(12)
+      .text('Termine', leftMargin + 12, sessionsBoxY + 10, {
+        width: contentWidth - 24,
+      });
+
+    doc.fillColor(colors.subtitle)
+      .fontSize(11)
+      .text(sessionDatesText, leftMargin + 12, sessionsTextY, {
+        width: sessionsTextWidth,
+        align: 'left',
+        lineGap: 0,
+      });
+
+    const trainerBoxY = sessionsBoxY + sessionsBoxHeight + 12;
+    const trainerBoxHeight = 112;
+    const trainerQrSize = 72;
+    const trainerQrX = leftMargin + contentWidth - trainerQrSize - 12;
+    const trainerQrY = trainerBoxY + 20;
+
+    doc.roundedRect(leftMargin, trainerBoxY, contentWidth, trainerBoxHeight, 8)
+      .fillAndStroke('#F8FAFC', '#E2E8F0');
+
+    doc.fillColor(colors.title)
+      .fontSize(12)
+      .text('Kursleitung', leftMargin + 12, trainerBoxY + 10, {
+        width: contentWidth - 24,
+      });
+
+    if (hasTrainer) {
+      doc.fillColor(colors.subtitle)
+        .fontSize(11);
+
+      doc.font('Helvetica-Bold')
+        .text(course.trainer_name, leftMargin + 12, trainerBoxY + 30, {
+          width: contentWidth - trainerQrSize - 34,
         });
-      
-      doc.y += 16;
+
+      doc.font('Helvetica')
+        .text(`Telefon: ${course.trainer_phone}`, leftMargin + 12, trainerBoxY + 48, {
+          width: contentWidth - trainerQrSize - 34,
+        })
+        .text(`E-Mail: ${course.trainer_email}`, leftMargin + 12, trainerBoxY + 66, {
+          width: contentWidth - trainerQrSize - 34,
+        });
+
+      doc.image(trainerQr, trainerQrX, trainerQrY, { fit: [trainerQrSize, trainerQrSize] });
+      doc.roundedRect(trainerQrX - 2, trainerQrY - 2, trainerQrSize + 4, trainerQrSize + 4, 4)
+        .lineWidth(1)
+        .stroke('#CBD5E1');
+
+      doc.fillColor(colors.muted)
+        .fontSize(9)
+        .text('vCard', trainerQrX, trainerQrY + trainerQrSize + 3, {
+          width: trainerQrSize,
+          align: 'center',
+        });
+    } else {
+      doc.fillColor(colors.muted)
+        .fontSize(11)
+        .text('Kein Trainer fuer diesen Kurs hinterlegt.', leftMargin + 12, trainerBoxY + 48, {
+          width: contentWidth - 24,
+        });
     }
+
+    doc.y = trainerBoxY + trainerBoxHeight + 14;
 
     if (linksWithQr.length === 0) {
       doc.roundedRect(leftMargin, doc.y, contentWidth, 56, 8)
@@ -397,7 +646,8 @@ export async function exportDanceCoursePdf(req, res) {
     }
 
     const columns = 2;
-    const columnWidth = contentWidth / columns;
+    const columnGap = 16;
+    const cardWidth = (contentWidth - columnGap) / columns;
     const qrSize = 160;
     const labelHeight = 24;
     const rowHeight = 232;
@@ -406,12 +656,11 @@ export async function exportDanceCoursePdf(req, res) {
     linksWithQr.forEach((entry, index) => {
       const columnIndex = index % columns;
       const rowIndex = Math.floor(index / columns);
-      const blockX = leftMargin + columnIndex * columnWidth;
+      const blockX = leftMargin + columnIndex * (cardWidth + columnGap);
       const blockY = gridStartY + rowIndex * rowHeight;
       const cardPadding = 12;
-      const cardWidth = columnWidth - 16;
       const cardHeight = 214;
-      const cardX = blockX + 8;
+      const cardX = blockX;
       const cardY = blockY;
       const qrX = cardX + (cardWidth - qrSize) / 2;
       const qrY = cardY + labelHeight + cardPadding;
@@ -432,14 +681,6 @@ export async function exportDanceCoursePdf(req, res) {
         .lineWidth(1)
         .stroke('#E5E7EB');
     });
-
-    // Subtle footer to balance the page
-    doc.fillColor(colors.footer)
-      .fontSize(9)
-      .text('Line Dance Kursuebersicht', leftMargin, pageHeight - doc.page.margins.bottom - 12, {
-        width: contentWidth,
-        align: 'center',
-      });
 
     doc.end();
   } catch (error) {

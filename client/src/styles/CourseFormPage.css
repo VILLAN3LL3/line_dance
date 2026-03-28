@@ -1,0 +1,80 @@
+.course-form-page {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.course-form-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.course-form-header h2 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.course-form-subtitle {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.course-form-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.course-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.course-form-field label {
+  font-weight: 600;
+  color: var(--color-dark);
+  font-size: 14px;
+}
+
+.course-form-field input,
+.course-form-field select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+}
+
+.course-form-field input:focus,
+.course-form-field select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(139, 71, 137, 0.1);
+}
+
+.course-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+@media (max-width: 800px) {
+  .course-form-card {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .course-form-actions {
+    flex-direction: column;
+  }
+}

@@ -1,263 +1,213 @@
-# Line Dance Choreography Search App
+# Line Dance App
 
-A full-stack web application to search, create, and manage line dance choreographies with advanced filtering, saved filter configurations, and a responsive React UI.
+A full-stack line dance management app with two main areas:
 
-## Project Structure
+- choreography search and catalog management
+- dance group administration with courses, sessions, learned figures, and course PDF export
 
-```
-line_dance/
-├── server/          # Express.js backend with SQLite
-│   ├── package.json
-│   ├── server.js
-│   ├── db.js
-│   ├── init-db.js
-│   ├── routes/
-│   │   └── choreographies.js
-│   └── line_dance.db (created after init)
-└── client/          # React + TypeScript frontend with Vite
-    ├── package.json
-    ├── index.html
-    ├── vite.config.ts
-    ├── tsconfig.json
-    └── src/
-        ├── main.tsx
-        ├── api.ts
-        ├── types.ts
-        ├── components/
-        │   ├── App.tsx
-        │   ├── ChoreographyForm.tsx
-        │   ├── ChoreographyCard.tsx
-        │   └── SearchBar.tsx
-        └── styles/
-            ├── index.css
-            ├── App.css
-            ├── ChoreographyCard.css
-            ├── ChoreographyForm.css
-            └── SearchBar.css
-```
+The frontend is built with React and TypeScript. The backend is an Express API backed by SQLite.
 
 ## Features
 
-✅ **Search & Filter**
-- Search by choreography name
+### Choreography Search
+
+- Search choreographies by name
 - Filter by level, step figures, tags, and authors
-- Step figure matching modes: `all`, `any`, `exact`
-- Filter choreographies with no step figures
-- Max counts slider filter (step size: 8)
+- Choose step figure matching mode: `all`, `any`, or `exact`
+- Filter choreographies without step figures
+- Filter by maximum count
+- Switch between card and table views
+- Persist current filters and display mode in local storage
+- Save, rename, update, and delete filter presets
+- Create, edit, and delete choreographies
 
-✅ **Saved Filter Configurations**
-- Save named filter presets to the database
-- Load, rename, update, and delete saved presets
-- Saved filters include all active filter fields, including `max_count`
-- Saved filters panel is collapsible and collapsed by default
+### Dance Group Administration
 
-✅ **Create & Edit**
-- Add new choreographies with detailed metadata
-- Edit and delete existing choreographies
-- Manage many-to-many data for authors, tags, and step figures
+- Create, rename, and delete dance groups
+- Manage dance courses per group
+- Assign custom numeric course IDs when needed
+- Track course semester and optional start date
+- Store optional playlist links for:
+  - YouTube
+  - Copperknob
+  - Spotify
+- Edit existing courses inline
+- Manage allowed levels per dance group
+- Compute learned step figures from past course activity
+- Jump back into choreography search using a group's learned figures and configured levels
 
-✅ **Persistence & UX**
-- Current filters and display mode persist via localStorage
-- Mobile-friendly layout and filter controls
-- Card and table list views
+### Sessions And Course Planning
 
-## Choreography Data Model
+- Create and delete sessions for a course
+- Attach choreographies to sessions
+- Remove choreographies from sessions
+- View sessions in chronological order
 
-Each choreography contains:
-- **Name** - Choreography title
-- **Level** - Difficulty (Beginner, Intermediate, Advanced, Experienced)
-- **Count** - Number of counts
-- **Wall Count** - Number of walls
-- **Year Created** - Creation year
-- **Step Sheet Link** - URL to the step sheet PDF/image
-- **Authors** - List of choreographers
-- **Step Figures** - List of included dance steps
-- **Tags** - Custom category tags
+### PDF Export
+
+- Export a course PDF from the admin UI
+- German-language PDF output
+- Header with dance group name, course ID, and semester
+- QR codes for playlist links when present
+- Session date list included in the PDF
+
+## Project Structure
+
+```text
+line_dance/
+├── client/                  # React + TypeScript + Vite frontend
+│   ├── src/
+│   │   ├── api.ts
+│   │   ├── main.tsx
+│   │   ├── types.ts
+│   │   ├── components/
+│   │   └── styles/
+├── raw_data/                # CSV source files
+├── server/                  # Express + SQLite backend
+│   ├── db.js
+│   ├── init-db.js
+│   ├── init-dance-groups-db.js
+│   ├── migrations/
+│   ├── routes/
+│   ├── server.js
+│   ├── line_dance.db
+│   └── dance_groups.db
+└── README.md
+```
+
+## Routes In The UI
+
+- `/` - choreography search
+- `/choreographies/:id` - choreography detail
+- `/admin` - dance group admin overview
+- `/admin/groups/new` - create a new dance group
+- `/admin/groups/:groupId` - dance group detail, course management, learned figures
+- `/admin/groups/:groupId/courses/:courseId` - session and choreography management for a course
 
 ## Quick Start
 
 ### Prerequisites
-- Node.js 16+ and npm/yarn
-- macOS, Linux, or Windows
 
-### Server Setup
+- Node.js 18+ recommended
+- npm
+
+### Install Dependencies
 
 ```bash
 cd server
 npm install
-node init-db.js
-npm start
-```
 
-The server runs on `http://localhost:3001`.
-
-### Client Setup
-
-```bash
-cd client
+cd ../client
 npm install
-npm run dev
 ```
 
-The client dev server runs on `http://localhost:5173`.
+### Initialize The Dance Group Database
 
-## API Endpoints
-
-### Choreographies
-```
-GET /api/choreographies?page=1&limit=20
-GET /api/choreographies/:id
-POST /api/choreographies
-PUT /api/choreographies/:id
-DELETE /api/choreographies/:id
-```
-
-### Search
-```
-GET /api/choreographies/search
-```
-
-Supported query parameters:
-- `search`
-- `level` (repeatable)
-- `step_figures` (repeatable)
-- `step_figures_match_mode` (`all` | `any` | `exact`)
-- `without_step_figures` (`true` | `false`)
-- `tags` (repeatable)
-- `authors` (repeatable)
-- `max_count` (integer)
-- `sort_field`, `sort_direction`
-- `page`, `limit`
-
-### Search Metadata
-```
-GET /api/choreographies/max-count
-GET /api/levels
-GET /api/step_figures
-GET /api/tags
-GET /api/authors
-```
-
-### Saved Filter Configurations
-```
-GET /api/saved-filters
-POST /api/saved-filters
-PATCH /api/saved-filters/:id
-DELETE /api/saved-filters/:id
-```
-
-## Technologies Used
-
-### Backend
-- **Express.js** - Web framework
-- **SQLite3** - Database
-- **CORS** - Cross-origin resource sharing
-- **body-parser** - Request body parsing
-
-### Frontend
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Vite** - Build tool & dev server
-- **Axios** - HTTP client
-
-## Database Schema
-
-### choreographies
-- id (Primary Key)
-- name
-- step_sheet_link
-- demo_video_url
-- tutorial_video_url
-- count
-- wall_count
-- level_id (Foreign Key to levels)
-- creation_year
-- tag_information
-- restart_information
-- created_at
-- updated_at
-
-### levels
-- id (Primary Key)
-- name (Unique)
-
-### authors
-- id (Primary Key)
-- name (Unique)
-
-### choreography_authors (Junction Table)
-- choreography_id (Foreign Key)
-- author_id (Foreign Key)
-
-### step_figures
-- id (Primary Key)
-- name (Unique)
-
-### choreography_step_figures (Junction Table)
-- choreography_id (Foreign Key)
-- step_figure_id (Foreign Key)
-
-### tags
-- id (Primary Key)
-- name (Unique)
-
-### choreography_tags (Junction Table)
-- choreography_id (Foreign Key)
-- tag_id (Foreign Key)
-
-### saved_filter_configurations
-- id (Primary Key)
-- name (Unique)
-- filters_json
-- created_at
-- updated_at
-
-## Development
-
-### Adding Sample Data
-
-You can create sample data through the UI or by making POST requests:
+From the `server` directory:
 
 ```bash
-curl -X POST http://localhost:3001/api/choreographies \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Tumbleweed",
-    "level": "Beginner",
-    "count": 32,
-    "wall_count": 2,
-    "creation_year": 2022,
-    "authors": ["John Smith"],
-    "step_figures": ["Rock Step", "Shuffle"],
-    "tags": ["Western", "Easy"]
-  }'
+npm run init-dance-groups-db
+npm run migrate
 ```
 
-### Running in Development Mode
+The choreography database file `line_dance.db` is checked into the repository.
 
-**Server (with auto-reload on changes):**
+The commands above create or refresh `dance_groups.db` for:
+
+- dance groups
+- dance courses
+- sessions
+- session choreographies
+- group levels
+
+### Run The App
+
+Backend:
+
 ```bash
 cd server
 npm run dev
 ```
 
-**Client (with hot module replacement):**
+Frontend:
+
 ```bash
 cd client
 npm run dev
 ```
 
-## Browser Support
+Default local URLs:
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
+- frontend: `http://localhost:5173`
+- backend: `http://localhost:3001`
 
-## Notes
+## Server Scripts
 
-- For backend auto-reload during development, run `npm run dev` in `server`.
-- If you run `npm start`, restart the server after backend code changes.
+Run these from [server/package.json](/Users/mira/Documents/development/line_dance/server/package.json):
+
+- `npm start` - start the API server
+- `npm run dev` - start the API server with nodemon
+- `npm run init-db` - initialize the choreography database
+- `npm run init-dance-groups-db` - initialize the dance-groups database
+- `npm run init-all` - initialize both databases (optional convenience script)
+- `npm run migrate` - run dance-group database migrations
+
+## Client Scripts
+
+Run these from [client/package.json](/Users/mira/Documents/development/line_dance/client/package.json):
+
+- `npm run dev` - start the Vite dev server
+- `npm run build` - create a production build
+- `npm run typecheck` - run TypeScript without emitting files
+- `npm run preview` - preview the production build
+
+## API Documentation
+
+Use Swagger UI for all endpoint documentation and request/response details:
+
+- `http://localhost:3001/api/docs`
+
+Raw OpenAPI JSON is available at:
+
+- `http://localhost:3001/api/openapi.json`
+
+## Data Notes
+
+### Choreography Search Database
+
+The choreography side stores choreographies, levels, authors, tags, step figures, and saved filter configurations.
+
+### Dance Group Database
+
+The dance-group side stores:
+
+- `dance_groups`
+- `dance_courses`
+- `sessions`
+- `session_choreographies`
+- `group_levels`
+- `learned_choreographies` view
+
+The course table includes optional playlist URL fields for YouTube, Copperknob, and Spotify.
+
+## Migrations
+
+Dance-group schema changes are versioned under [server/migrations](/Users/mira/Documents/development/line_dance/server/migrations).
+
+Run migrations manually with:
+
+```bash
+cd server
+npm run migrate
+```
+
+The server also runs migrations on startup before registering routes.
+
+## Development Notes
+
+- The backend uses Express, SQLite3, PDFKit, and QRCode generation.
+- The frontend uses React 18, React Router, Axios, and Vite.
+- If backend code changes and you are not using `npm run dev`, restart the server manually.
 
 ## License
 
