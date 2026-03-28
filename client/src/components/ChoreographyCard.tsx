@@ -67,7 +67,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
 
         {choreography.step_sheet_link && (
           <a href={choreography.step_sheet_link} target="_blank" rel="noopener noreferrer" className="step-sheet-link">
-            📄 View Step Sheet
+            🦶 View Step Sheet
           </a>
         )}
 

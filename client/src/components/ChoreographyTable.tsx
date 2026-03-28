@@ -78,6 +78,18 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
       sortingFn: 'alphanumeric',
       cell: ({ getValue }) => (getValue() as string[]).join(', '),
     },
+    {
+      id: 'restart',
+      header: 'Restart',
+      accessorFn: (row) => row.restart_information ? '✅' : '',
+      sortingFn: 'alphanumeric',
+    },
+    {
+      id: 'tag',
+      header: 'Tag',
+      accessorFn: (row) => row.tag_information ? '✅' : '',
+      sortingFn: 'alphanumeric',
+    },
     ...allStepFigures.map(fig => ({
       id: fig,
       header: fig,
@@ -129,6 +141,12 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                 Year{table.getColumn('creation_year')?.getIsSorted() === 'asc' ? ' ⇧' : table.getColumn('creation_year')?.getIsSorted() === 'desc' ? ' ⇩' : ''}
               </th>
               <th>Tags</th>
+              <th className="figure-column sortable" onClick={() => table.getColumn('restart')?.toggleSorting()}>
+                Restart{table.getColumn('restart')?.getIsSorted() === 'asc' ? ' ⇧' : table.getColumn('restart')?.getIsSorted() === 'desc' ? ' ⇩' : ''}
+              </th>
+              <th className="figure-column sortable" onClick={() => table.getColumn('tag')?.toggleSorting()}>
+                Tag{table.getColumn('tag')?.getIsSorted() === 'asc' ? ' ⇧' : table.getColumn('tag')?.getIsSorted() === 'desc' ? ' ⇩' : ''}
+              </th>
               {allStepFigures.map(figure => (
                 <th key={figure} className="figure-column" title={figure}>
                   {figure}
@@ -144,10 +162,8 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                 <tr key={choreo.id} className="choreography-row" onClick={() => onSelect?.(choreo.id)}>
                   <td className="name-cell">
                     <strong>{choreo.name}</strong>
-                    {choreo.restart_information && <span className="info-badge" title="Has restart information">Restart 🔁</span>}
-                    {choreo.tag_information && <span className="info-badge" title="Has tag information">Tag 🌉</span>}
                   </td>
-                  <td>{choreo.level}</td>
+                  <td className="level-cell">{choreo.level}</td>
                   <td>{choreo.count || '-'}</td>
                   <td>{choreo.wall_count || '-'}</td>
                   <td>{choreo.creation_year || '-'}</td>
@@ -156,12 +172,54 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                       {choreo.tags.length > 0 ? choreo.tags.join(', ') : '-'}
                     </div>
                   </td>
+                  <td className="figure-cell">
+                    {choreo.restart_information ? '✅' : ''}
+                  </td>
+                  <td className="figure-cell">
+                    {choreo.tag_information ? '✅' : ''}
+                  </td>
                   {allStepFigures.map(figure => (
                     <td key={`${choreo.id}-${figure}`} className="figure-cell">
                       {choreo.step_figures.includes(figure) ? '✅' : ''}
                     </td>
                   ))}
                   <td className="actions-cell">
+                    {choreo.step_sheet_link && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(choreo.step_sheet_link!, '_blank');
+                        }}
+                        className="btn-small btn-secondary"
+                        title="Open Step Sheet"
+                      >
+                        🦶
+                      </button>
+                    )}
+                    {choreo.demo_video_url && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(choreo.demo_video_url!, '_blank');
+                        }}
+                        className="btn-small btn-secondary"
+                        title="Open Demo Video"
+                      >
+                        🎬
+                      </button>
+                    )}
+                    {choreo.tutorial_video_url && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(choreo.tutorial_video_url!, '_blank');
+                        }}
+                        className="btn-small btn-secondary"
+                        title="Open Tutorial Video"
+                      >
+                        🎓
+                      </button>
+                    )}
                     <button
                       onClick={e => {
                         e.stopPropagation();

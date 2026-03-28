@@ -1,11 +1,5 @@
 - figure filter: AND/OR/ALL. ALL: Tänze, die ausschließlich die selektierten Figuren beinhalten
-- Tabelle Figures fixen
-- Tabelle Buttons für Tutorial, Demo und Step Sheet
-- Tabelle Count & Wall Sort fixen
-- jeweils alle in der tabelle sortieren, nicht nur aktuelle seite
-- Tabelle: figure filter wieder rausnehmen
 - Table/Cards option in local storage speichern, ebenso letzte filter-config
-- Tabelle: Für Restart und Tag jeweils eine Spalte mit Tick Emoji
 
 in eigener tabelle, damit line_dance.db eingecheckt werden kann
 entity dance_groups: name

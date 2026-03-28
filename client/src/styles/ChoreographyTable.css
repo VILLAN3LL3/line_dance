@@ -128,16 +128,22 @@
 }
 
 .name-cell {
-  max-width: 200px;
+  min-width: 300px;
+  max-width: 400px;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  white-space: nowrap;
 }
 
 .name-cell strong {
   flex-basis: 100%;
+}
+
+.level-cell {
+  min-width: 120px;
+  white-space: nowrap;
 }
 
 .info-badge {
@@ -179,6 +185,15 @@
 
 .btn-small.btn-primary:hover:not(:disabled) {
   background-color: #1071a7;
+}
+
+.btn-small.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-small.btn-secondary:hover:not(:disabled) {
+  background-color: #5a6268;
 }
 
 .btn-small.btn-danger {
