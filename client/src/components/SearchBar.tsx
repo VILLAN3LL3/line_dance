@@ -47,6 +47,24 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
   const [inputTag, setInputTag] = useState('');
   const [inputAuthor, setInputAuthor] = useState('');
 
+  const handleClearAllFilters = async () => {
+    // Reset all filter states to initial values
+    setSearchTerm('');
+    setSelectedLevel([]);
+    setSelectedFigures([]);
+    setSelectedTags([]);
+    setSelectedAuthors([]);
+    setWithoutStepFigures(false);
+    setStepFiguresMatchMode('all');
+    setInputLevel('');
+    setInputFigure('');
+    setInputTag('');
+    setInputAuthor('');
+    
+    // Apply the cleared filters
+    await onSearch({});
+  };
+
   const handleSearch = async () => {
     await onSearch({
       search: searchTerm || undefined,
@@ -481,6 +499,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
             disabled={isLoading}
           >
             Apply Filters
+          </button>
+          <button
+            type="button"
+            onClick={handleClearAllFilters}
+            className="btn-secondary"
+            disabled={isLoading}
+          >
+            Clear All Filters
           </button>
         </div>
       )}

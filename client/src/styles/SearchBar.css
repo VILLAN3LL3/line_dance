@@ -169,9 +169,16 @@
   border-top: 1px solid #e0e0e0;
   display: flex;
   justify-content: center;
+  gap: 12px;
 }
 
 .search-actions .btn-primary {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.search-actions .btn-secondary {
   padding: 12px 24px;
   font-size: 16px;
   font-weight: 600;
