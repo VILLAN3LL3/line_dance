@@ -68,3 +68,47 @@ export interface SavedFilterConfiguration {
 }
 
 export type Level = 'Beginner' | 'Intermediate' | 'Advanced' | 'Experienced';
+
+// Dance Groups Types
+export interface DanceGroup {
+  id: number;
+  name: string;
+  created_at: string;
+}
+
+export interface DanceCourse {
+  id: number;
+  dance_group_id: number;
+  dance_group_name: string;
+  semester: string;
+  start_date?: string;
+  youtube_playlist_url?: string;
+  copperknob_list_url?: string;
+  spotify_playlist_url?: string;
+  created_at: string;
+}
+
+export interface Session {
+  id: number;
+  dance_course_id: number;
+  session_date: string;
+  dance_group_name: string;
+  semester: string;
+  created_at: string;
+}
+
+export interface SessionChoreography {
+  id: number;
+  session_id: number;
+  choreography_id: number;
+  created_at: string;
+}
+
+export interface LearnedChoreography {
+  dance_group_id: number;
+  dance_group_name: string;
+  choreography_id: number;
+  times_danced: number;
+  first_learned_date: string;
+  last_danced_date: string;
+}

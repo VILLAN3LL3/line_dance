@@ -629,7 +629,7 @@ export async function searchChoreographies(req, res) {
     if (max_count !== undefined) {
       const parsedMaxCount = Number.parseInt(String(max_count), 10);
       if (!Number.isNaN(parsedMaxCount) && parsedMaxCount >= 0) {
-        conditions.push('c.count <= ?');
+        conditions.push('(c.count IS NULL OR c.count <= ?)');
         params.push(parsedMaxCount);
       }
     }
@@ -762,7 +762,7 @@ export async function searchChoreographies(req, res) {
     if (max_count !== undefined) {
       const parsedMaxCount = Number.parseInt(String(max_count), 10);
       if (!Number.isNaN(parsedMaxCount) && parsedMaxCount >= 0) {
-        countConditions.push('c.count <= ?');
+        countConditions.push('(c.count IS NULL OR c.count <= ?)');
         countParams.push(parsedMaxCount);
       }
     }

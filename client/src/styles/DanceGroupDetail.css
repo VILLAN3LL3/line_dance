@@ -1,0 +1,278 @@
+.dance-group-detail {
+  background-color: white;
+  border-radius: var(--border-radius);
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: 20px;
+}
+
+.detail-header h2 {
+  margin: 0;
+  flex: 1;
+  color: var(--color-primary);
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.section {
+  background: linear-gradient(135deg, var(--color-light) 0%, #ffffff 100%);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.section h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 18px;
+  color: var(--color-primary);
+}
+
+.course-form,
+.session-form,
+.choreo-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.course-form input,
+.course-form button,
+.session-form input,
+.session-form button,
+.choreo-form select,
+.choreo-form button {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.course-form input,
+.session-form input,
+.choreo-form select {
+  flex: 1;
+  min-width: 150px;
+}
+
+.course-form button,
+.session-form button,
+.choreo-form button {
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.courses-list,
+.sessions-list,
+.choreographies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.course-item,
+.session-item,
+.choreography-item {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s;
+}
+
+.course-links {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.course-links a {
+  padding: 6px 12px;
+  background-color: var(--color-primary);
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.course-links a:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.course-edit-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.course-edit-form input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.course-edit-actions {
+  display: flex;
+  gap: 10px;
+}
+.course-item:hover,
+.session-item:hover,
+.choreography-item:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.course-info,
+.session-info,
+.choreo-info {
+  flex: 1;
+}
+
+.course-info h4,
+.session-info h4,
+.choreo-info h4 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  color: var(--color-primary);
+}
+
+.course-info p,
+.session-info p,
+.choreo-info p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.course-semester {
+  font-size: 14px;
+  color: #999;
+  font-weight: normal;
+}
+
+.course-actions,
+.session-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.session-item.active {
+  border: 2px solid var(--color-primary);
+  background: linear-gradient(135deg, rgba(139, 71, 137, 0.05) 0%, rgba(212, 121, 75, 0.05) 100%);
+}
+
+.session-item.active .btn-secondary.active {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  color: white;
+}
+
+.learned-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.learned-table thead {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+}
+
+.learned-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: white;
+  border: none;
+}
+
+.learned-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.learned-table tbody tr.clickable-row {
+  cursor: pointer;
+}
+
+.learned-table tbody tr:hover {
+  background-color: var(--color-light);
+}
+
+.level-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.level-form input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .course-item,
+  .session-item,
+  .choreography-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .course-actions,
+  .session-actions {
+    width: 100%;
+  }
+
+  .course-actions button,
+  .session-actions button {
+    flex: 1;
+  }
+
+  .course-form,
+  .session-form,
+  .choreo-form {
+    flex-direction: column;
+  }
+
+  .learned-table {
+    font-size: 12px;
+  }
+
+  .learned-table th,
+  .learned-table td {
+    padding: 8px;
+  }
+}

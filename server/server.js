@@ -2,7 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { getDatabase, closeDatabase } from './db.js';
+import { runMigrations } from './migrations/index.js';
 import { createChoreography, getChoreographies, getChoreographyById, updateChoreography, deleteChoreography, searchChoreographies, getLevels, addLevel, getTags, getStepFigures, getAuthors, getSavedFilterConfigurations, saveFilterConfiguration, updateSavedFilterConfiguration, deleteSavedFilterConfiguration, getMaxChoreographyCount } from './routes/choreographies.js';
+import { getDanceGroups, createDanceGroup, getDanceGroupById, updateDanceGroup, deleteDanceGroup, getDanceCourses, createDanceCourse, updateDanceCourse, deleteDanceCourse, exportDanceCoursePdf, getSessions, createSession, updateSession, deleteSession, getSessionChoreographies, addChoreographyToSession, removeChoreographyFromSession, getLearnedChoreographies, getGroupLevels, addGroupLevel, removeGroupLevel } from './routes/dance-groups.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -14,6 +16,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Initialize database
 getDatabase();
+getDatabase('danceGroups');
+await runMigrations();
 
 // Routes
 app.post('/api/choreographies', createChoreography);
@@ -32,6 +36,39 @@ app.get('/api/saved-filters', getSavedFilterConfigurations);
 app.post('/api/saved-filters', saveFilterConfiguration);
 app.patch('/api/saved-filters/:id', updateSavedFilterConfiguration);
 app.delete('/api/saved-filters/:id', deleteSavedFilterConfiguration);
+
+// Dance Groups Routes
+app.get('/api/dance-groups', getDanceGroups);
+app.post('/api/dance-groups', createDanceGroup);
+app.get('/api/dance-groups/:id', getDanceGroupById);
+app.put('/api/dance-groups/:id', updateDanceGroup);
+app.delete('/api/dance-groups/:id', deleteDanceGroup);
+
+// Dance Courses Routes
+app.get('/api/dance-courses', getDanceCourses);
+app.post('/api/dance-courses', createDanceCourse);
+app.put('/api/dance-courses/:id', updateDanceCourse);
+app.delete('/api/dance-courses/:id', deleteDanceCourse);
+app.get('/api/dance-courses/:id/export-pdf', exportDanceCoursePdf);
+
+// Sessions Routes
+app.get('/api/sessions', getSessions);
+app.post('/api/sessions', createSession);
+app.put('/api/sessions/:id', updateSession);
+app.delete('/api/sessions/:id', deleteSession);
+
+// Session Choreographies Routes
+app.get('/api/session-choreographies', getSessionChoreographies);
+app.post('/api/session-choreographies', addChoreographyToSession);
+app.delete('/api/session-choreographies/:id', removeChoreographyFromSession);
+
+// Learned Choreographies View
+app.get('/api/learned-choreographies', getLearnedChoreographies);
+
+// Group Levels Routes
+app.get('/api/dance-groups/:groupId/levels', getGroupLevels);
+app.post('/api/dance-groups/:groupId/levels', addGroupLevel);
+app.delete('/api/dance-groups/:groupId/levels/:level', removeGroupLevel);
 
 // Health check
 app.get('/api/health', (req, res) => {

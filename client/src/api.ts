@@ -1,6 +1,9 @@
 import axios from "axios";
 
-import { Choreography, ChoreographyFormData, PaginatedResponse, SavedFilterConfiguration, SearchFilters } from "./types";
+import {
+  Choreography, ChoreographyFormData, DanceCourse, DanceGroup, LearnedChoreography, PaginatedResponse, SavedFilterConfiguration,
+  SearchFilters, Session, SessionChoreography
+} from "./types";
 
 const API_URL = 'http://localhost:3001/api';
 
@@ -115,5 +118,173 @@ export async function updateSavedFilterConfiguration(
 
 export async function deleteSavedFilterConfiguration(id: number): Promise<{ message: string }> {
   const response = await api.delete(`/saved-filters/${id}`);
+  return response.data;
+}
+
+// Dance Groups API
+
+export async function getDanceGroups(): Promise<DanceGroup[]> {
+  const response = await api.get('/dance-groups');
+  return response.data;
+}
+
+export async function getDanceGroup(id: number): Promise<DanceGroup> {
+  const response = await api.get(`/dance-groups/${id}`);
+  return response.data;
+}
+
+export async function createDanceGroup(name: string): Promise<DanceGroup> {
+  const response = await api.post('/dance-groups', { name });
+  return response.data;
+}
+
+export async function updateDanceGroup(id: number, name: string): Promise<DanceGroup> {
+  const response = await api.put(`/dance-groups/${id}`, { name });
+  return response.data;
+}
+
+export async function deleteDanceGroup(id: number): Promise<{ message: string }> {
+  const response = await api.delete(`/dance-groups/${id}`);
+  return response.data;
+}
+
+// Dance Courses API
+
+export async function getDanceCourses(danceGroupId?: number): Promise<DanceCourse[]> {
+  const response = await api.get('/dance-courses', {
+    params: danceGroupId ? { dance_group_id: danceGroupId } : {},
+  });
+  return response.data;
+}
+
+export async function createDanceCourse(
+  danceGroupId: number,
+  semester: string,
+  startDate?: string,
+  id?: number,
+  youtubePlaylistUrl?: string,
+  copperknobListUrl?: string,
+  spotifyPlaylistUrl?: string
+): Promise<DanceCourse> {
+  const response = await api.post('/dance-courses', {
+    id,
+    dance_group_id: danceGroupId,
+    semester,
+    start_date: startDate,
+    youtube_playlist_url: youtubePlaylistUrl,
+    copperknob_list_url: copperknobListUrl,
+    spotify_playlist_url: spotifyPlaylistUrl,
+  });
+  return response.data;
+}
+
+export async function updateDanceCourse(
+  id: number,
+  semester: string,
+  startDate?: string,
+  youtubePlaylistUrl?: string,
+  copperknobListUrl?: string,
+  spotifyPlaylistUrl?: string
+): Promise<DanceCourse> {
+  const response = await api.put(`/dance-courses/${id}`, {
+    semester,
+    start_date: startDate,
+    youtube_playlist_url: youtubePlaylistUrl,
+    copperknob_list_url: copperknobListUrl,
+    spotify_playlist_url: spotifyPlaylistUrl,
+  });
+  return response.data;
+}
+
+export async function deleteDanceCourse(id: number): Promise<{ message: string }> {
+  const response = await api.delete(`/dance-courses/${id}`);
+  return response.data;
+}
+
+export async function exportDanceCoursePdf(id: number): Promise<Blob> {
+  const response = await api.get(`/dance-courses/${id}/export-pdf`, {
+    responseType: 'blob',
+  });
+  return response.data;
+}
+
+// Sessions API
+
+export async function getSessions(danceCoursesId?: number): Promise<Session[]> {
+  const response = await api.get('/sessions', {
+    params: danceCoursesId ? { dance_course_id: danceCoursesId } : {},
+  });
+  return response.data;
+}
+
+export async function createSession(
+  danceCourseId: number,
+  sessionDate: string
+): Promise<Session> {
+  const response = await api.post('/sessions', {
+    dance_course_id: danceCourseId,
+    session_date: sessionDate,
+  });
+  return response.data;
+}
+
+export async function updateSession(id: number, sessionDate: string): Promise<Session> {
+  const response = await api.put(`/sessions/${id}`, { session_date: sessionDate });
+  return response.data;
+}
+
+export async function deleteSession(id: number): Promise<{ message: string }> {
+  const response = await api.delete(`/sessions/${id}`);
+  return response.data;
+}
+
+// Session Choreographies API
+
+export async function getSessionChoreographies(sessionId: number): Promise<SessionChoreography[]> {
+  const response = await api.get('/session-choreographies', {
+    params: { session_id: sessionId },
+  });
+  return response.data;
+}
+
+export async function addChoreographyToSession(
+  sessionId: number,
+  choreographyId: number
+): Promise<SessionChoreography> {
+  const response = await api.post('/session-choreographies', {
+    session_id: sessionId,
+    choreography_id: choreographyId,
+  });
+  return response.data;
+}
+
+export async function removeChoreographyFromSession(id: number): Promise<{ message: string }> {
+  const response = await api.delete(`/session-choreographies/${id}`);
+  return response.data;
+}
+
+// Learned Choreographies API
+
+export async function getLearnedChoreographies(danceGroupId?: number): Promise<LearnedChoreography[]> {
+  const response = await api.get('/learned-choreographies', {
+    params: danceGroupId ? { dance_group_id: danceGroupId } : {},
+  });
+  return response.data;
+}
+
+// Group Levels API
+
+export async function getGroupLevels(groupId: number): Promise<string[]> {
+  const response = await api.get(`/dance-groups/${groupId}/levels`);
+  return response.data;
+}
+
+export async function addGroupLevel(groupId: number, level: string): Promise<{ level: string }> {
+  const response = await api.post(`/dance-groups/${groupId}/levels`, { level });
+  return response.data;
+}
+
+export async function removeGroupLevel(groupId: number, level: string): Promise<{ message: string }> {
+  const response = await api.delete(`/dance-groups/${groupId}/levels/${encodeURIComponent(level)}`);
   return response.data;
 }

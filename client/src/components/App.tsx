@@ -1,9 +1,10 @@
 import "../styles/App.css";
 
 import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
-import { createChoreography, deleteChoreography, fetchChoreographies, searchChoreographies, updateChoreography } from "../api";
-import { Choreography, PaginatedResponse } from "../types";
+import { createChoreography, deleteChoreography, searchChoreographies, updateChoreography } from "../api";
+import { Choreography } from "../types";
 import { ChoreographyCard } from "./ChoreographyCard";
 import { ChoreographyForm } from "./ChoreographyForm";
 import { ChoreographyTable } from "./ChoreographyTable";
@@ -12,14 +13,24 @@ import { SearchBar } from "./SearchBar";
 type View = 'list' | 'create' | 'edit' | 'detail';
 
 export const App: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   // Initialize display mode from localStorage
   const getInitialDisplayMode = () => {
     const saved = localStorage.getItem('displayMode');
     return (saved === 'card' || saved === 'table') ? saved : 'card';
   };
 
-  // Initialize filters from localStorage
+  // Initialize filters from location state or localStorage
   const getInitialFilters = () => {
+    // Check if we have initial filters from location state
+    const state = location.state as { initialFilters?: Record<string, unknown> } | null;
+    if (state?.initialFilters) {
+      return state.initialFilters;
+    }
+
+    // Otherwise use localStorage
     const saved = localStorage.getItem('currentFilters');
     if (saved) {
       try {
@@ -40,10 +51,17 @@ export const App: React.FC = () => {
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [currentFilters, setCurrentFilters] = useState(getInitialFilters);
 
-  // Load choreographies on mount
+  // Load choreographies on mount or when location changes
   useEffect(() => {
-    loadChoreographies(currentFilters, true);
-  }, []);
+    const initialFilters = getInitialFilters();
+    setCurrentFilters(initialFilters);
+    loadChoreographies(initialFilters, true);
+    
+    // Clear location state after using it
+    if (location.state?.initialFilters) {
+      globalThis.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   // Save display mode to localStorage when it changes
   useEffect(() => {
@@ -97,11 +115,7 @@ export const App: React.FC = () => {
   };
 
   const handleEdit = (id: number) => {
-    const choreo = choreographies.find(c => c.id === id);
-    if (choreo) {
-      setSelectedChoreography(choreo);
-      setView('edit');
-    }
+    navigate(`/choreographies/${id}`, { state: { editMode: true } });
   };
 
   const handleUpdate = async (formData: any) => {
@@ -143,7 +157,7 @@ export const App: React.FC = () => {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Line Dance Choreography Search</h1>
+        <h2>Choreography Search</h2>
         <button
           onClick={() => setView('create')}
           className="btn-primary"
