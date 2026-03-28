@@ -2,7 +2,10 @@ import "../styles/SearchBar.css";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import { deleteSavedFilterConfiguration, getAuthors, getLevels, getMaxChoreographyCount, getSavedFilterConfigurations, getStepFigures, getTags, saveFilterConfiguration, updateSavedFilterConfiguration } from "../api";
+import {
+  deleteSavedFilterConfiguration, getAuthors, getLevels, getMaxChoreographyCount, getSavedFilterConfigurations, getStepFigures, getTags,
+  saveFilterConfiguration, updateSavedFilterConfiguration
+} from "../api";
 import { SavedFilterConfiguration, SearchFilters } from "../types";
 
 interface SearchBarProps {
