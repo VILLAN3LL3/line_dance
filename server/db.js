@@ -5,9 +5,23 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+function resolveDatabasePath(inputPath, fallbackFileName) {
+  if (inputPath === ':memory:') {
+    return ':memory:';
+  }
+
+  if (typeof inputPath === 'string' && inputPath.trim()) {
+    return path.isAbsolute(inputPath)
+      ? inputPath
+      : path.join(__dirname, inputPath);
+  }
+
+  return path.join(__dirname, fallbackFileName);
+}
+
 const databases = {
-  choreography: path.join(__dirname, 'line_dance.db'),
-  danceGroups: path.join(__dirname, 'dance_groups.db'),
+  choreography: resolveDatabasePath(process.env.CHOREOGRAPHY_DB_PATH, 'line_dance.db'),
+  danceGroups: resolveDatabasePath(process.env.DANCE_GROUPS_DB_PATH, 'dance_groups.db'),
 };
 
 let dbConnections = {};

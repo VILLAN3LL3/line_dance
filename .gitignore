@@ -9,3 +9,7 @@ dance_groups.db
 *.db-journal
 raw_data/
 src/**/*.js
+playwright-report/
+client/playwright-report/
+test-results/
+client/test-results/
