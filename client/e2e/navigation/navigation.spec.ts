@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test.describe("Global navigation", () => {
+test.describe("Navigation", () => {
   test("loads app shell and navigates between major sections", async ({ page }) => {
     await page.goto("/");
 

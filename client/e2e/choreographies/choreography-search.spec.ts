@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test.describe("Choreography end-to-end", () => {
+test.describe("Choreography Search", () => {
   test("create, filter, and open a choreography", async ({ page }) => {
     const name = `E2E Choreo ${Date.now()}`;
 
