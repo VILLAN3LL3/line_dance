@@ -8,58 +8,7 @@ import {
   getLearnedChoreographies, getSessions, removeGroupLevel
 } from "../api";
 import { Choreography, DanceCourse, DanceGroup, LearnedChoreography, Session } from "../types";
-
-type CourseStatus = "planned" | "running" | "passed";
-
-const getBerlinTodayIso = () => {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Berlin",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return formatter.format(new Date());
-};
-
-const normalizeDate = (dateString: string) => dateString.slice(0, 10);
-
-const getCourseStatus = (course: DanceCourse, courseSessions: Session[], berlinTodayIso: string): CourseStatus => {
-  if (courseSessions.length > 0) {
-    const sessionDates = courseSessions
-      .map((session) => normalizeDate(session.session_date))
-      .sort((a, b) => a.localeCompare(b));
-
-    const hasPast = sessionDates.some((date) => date < berlinTodayIso);
-    const hasFuture = sessionDates.some((date) => date > berlinTodayIso);
-    const hasToday = sessionDates.includes(berlinTodayIso);
-
-    if (!hasToday && !hasFuture) {
-      return "passed";
-    }
-
-    if (!hasToday && !hasPast) {
-      return "planned";
-    }
-
-    return "running";
-  }
-
-  if (course.start_date) {
-    return normalizeDate(course.start_date) > berlinTodayIso ? "planned" : "running";
-  }
-
-  return "planned";
-};
-
-const getCourseStatusLabel = (status: CourseStatus) => {
-  if (status === "planned") {
-    return "Planned";
-  }
-  if (status === "passed") {
-    return "Passed";
-  }
-  return "Running";
-};
+import { CourseStatus, getBerlinTodayIso, getCourseStatus, getCourseStatusLabel, type } from "../utils/courseStatus";
 
 const DanceGroupDetail: React.FC = () => {
   const navigate = useNavigate();

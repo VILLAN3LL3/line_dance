@@ -20,7 +20,7 @@ async function ensureSavedFiltersTable() {
   savedFiltersTableReady = true;
 }
 
-function normalizeSavedFilters(rawFilters) {
+export function normalizeSavedFilters(rawFilters) {
   if (!rawFilters || typeof rawFilters !== 'object' || Array.isArray(rawFilters)) {
     return {};
   }
@@ -32,11 +32,17 @@ function normalizeSavedFilters(rawFilters) {
   }
 
   if (Array.isArray(rawFilters.level) && rawFilters.level.length > 0) {
-    normalized.level = rawFilters.level.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+    const levels = rawFilters.level.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+    if (levels.length > 0) {
+      normalized.level = levels;
+    }
   }
 
   if (Array.isArray(rawFilters.step_figures) && rawFilters.step_figures.length > 0) {
-    normalized.step_figures = rawFilters.step_figures.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+    const stepFigures = rawFilters.step_figures.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+    if (stepFigures.length > 0) {
+      normalized.step_figures = stepFigures;
+    }
   }
 
   if (['all', 'any', 'exact'].includes(rawFilters.step_figures_match_mode)) {
@@ -48,11 +54,17 @@ function normalizeSavedFilters(rawFilters) {
   }
 
   if (Array.isArray(rawFilters.tags) && rawFilters.tags.length > 0) {
-    normalized.tags = rawFilters.tags.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+    const tags = rawFilters.tags.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+    if (tags.length > 0) {
+      normalized.tags = tags;
+    }
   }
 
   if (Array.isArray(rawFilters.authors) && rawFilters.authors.length > 0) {
-    normalized.authors = rawFilters.authors.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+    const authors = rawFilters.authors.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+    if (authors.length > 0) {
+      normalized.authors = authors;
+    }
   }
 
   const parsedMaxCount = Number.parseInt(String(rawFilters.max_count), 10);

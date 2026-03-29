@@ -60,6 +60,10 @@ export function allQuery(query, params = [], dbName = 'choreography') {
   });
 }
 
+export function setDatabaseConnection(name, db) {
+  dbConnections[name] = db;
+}
+
 export function closeDatabase() {
   return new Promise((resolve, reject) => {
     const dbNames = Object.keys(dbConnections);

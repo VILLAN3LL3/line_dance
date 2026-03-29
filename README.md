@@ -1,11 +1,15 @@
 # Line Dance App
 
+[![CI](https://github.com/VILLAN3LL3/line_dance/actions/workflows/ci.yml/badge.svg)](https://github.com/VILLAN3LL3/line_dance/actions/workflows/ci.yml)
+
 A full-stack line dance management app with two main areas:
 
 - choreography search and catalog management
 - dance group administration with courses, sessions, learned figures, and course PDF export
 
 The frontend is built with React and TypeScript. The backend is an Express API backed by SQLite.
+
+__All code was written by GitHub Copilot. Use with caution.__
 
 ## Features
 
@@ -27,11 +31,16 @@ The frontend is built with React and TypeScript. The backend is an Express API b
 - Manage dance courses per group
 - Assign custom numeric course IDs when needed
 - Track course semester and optional start date
+- Show course lifecycle status in course cards: `running`, `planned`, `passed`
+- Default course view shows only `running` courses
+- Toggle `planned` and `passed` courses with header checkboxes
 - Store optional playlist links for:
   - YouTube
   - Copperknob
   - Spotify
-- Edit existing courses inline
+- Create and edit courses on dedicated pages
+- Manage trainers (name, phone, email) in a separate admin area
+- Assign trainers to courses
 - Manage allowed levels per dance group
 - Compute learned step figures from past course activity
 - Jump back into choreography search using a group's learned figures and configured levels
@@ -48,8 +57,10 @@ The frontend is built with React and TypeScript. The backend is an Express API b
 - Export a course PDF from the admin UI
 - German-language PDF output
 - Header with dance group name, course ID, and semester
+- Termine box with session dates
+- Kursleitung box with trainer contact details
+- vCard QR code for trainer contact (when trainer is assigned)
 - QR codes for playlist links when present
-- Session date list included in the PDF
 
 ## Project Structure
 
@@ -82,7 +93,10 @@ line_dance/
 - `/admin` - dance group admin overview
 - `/admin/groups/new` - create a new dance group
 - `/admin/groups/:groupId` - dance group detail, course management, learned figures
+- `/admin/groups/:groupId/courses/new` - create course page
+- `/admin/groups/:groupId/courses/:courseId/edit` - edit course page
 - `/admin/groups/:groupId/courses/:courseId` - session and choreography management for a course
+- `/trainers` - trainer management
 
 ## Quick Start
 
@@ -143,7 +157,7 @@ Default local URLs:
 
 ## Server Scripts
 
-Run these from [server/package.json](/Users/mira/Documents/development/line_dance/server/package.json):
+Run these from `server/package.json`:
 
 - `npm start` - start the API server
 - `npm run dev` - start the API server with nodemon
@@ -151,15 +165,70 @@ Run these from [server/package.json](/Users/mira/Documents/development/line_danc
 - `npm run init-dance-groups-db` - initialize the dance-groups database
 - `npm run init-all` - initialize both databases (optional convenience script)
 - `npm run migrate` - run dance-group database migrations
+- `npm test` - run server tests with Vitest
+- `npm run test:watch` - run server tests in watch mode
 
 ## Client Scripts
 
-Run these from [client/package.json](/Users/mira/Documents/development/line_dance/client/package.json):
+Run these from `client/package.json`:
 
 - `npm run dev` - start the Vite dev server
 - `npm run build` - create a production build
 - `npm run typecheck` - run TypeScript without emitting files
 - `npm run preview` - preview the production build
+- `npm test` - run client tests with Vitest
+- `npm run test:watch` - run client tests in watch mode
+
+## Testing
+
+The project includes automated tests for backend business logic and frontend component behavior.
+
+### Server Tests (Vitest + Supertest)
+
+- API integration tests run against in-memory SQLite databases
+- Dance-group schema tests use the real migration pipeline (`runDanceGroupsMigrations`) to match production schema
+- Coverage includes:
+  - dance groups, trainers, courses, sessions, session choreographies
+  - learned choreographies view behavior for past/future session timelines
+  - group levels management
+  - choreography CRUD and search filter logic (`all` / `any` / `exact`, max count, combined filters)
+  - saved filter configuration lifecycle
+  - PDF export endpoint headers and response behavior
+  - health and OpenAPI smoke endpoints
+  - utility/unit tests for vCard escaping and filter normalization
+
+Run server tests:
+
+```bash
+cd server
+npm test
+```
+
+### Client Tests (Vitest + Testing Library)
+
+- Utility tests for course status evaluation logic
+- Component tests for:
+  - choreography card, table, and search bar
+  - dance groups admin and dance group detail views
+  - course form page and course detail/session management flows
+
+Run client tests:
+
+```bash
+cd client
+npm test
+```
+
+## Continuous Integration
+
+GitHub Actions runs CI on every push and pull request:
+
+- server job: install dependencies and run backend tests
+- client job: type-check, run frontend tests, and build production bundle
+
+Workflow file:
+
+- `.github/workflows/ci.yml`
 
 ## API Documentation
 
@@ -183,16 +252,17 @@ The dance-group side stores:
 
 - `dance_groups`
 - `dance_courses`
+- `trainers`
 - `sessions`
 - `session_choreographies`
 - `group_levels`
 - `learned_choreographies` view
 
-The course table includes optional playlist URL fields for YouTube, Copperknob, and Spotify.
+The course table includes optional playlist URL fields for YouTube, Copperknob, and Spotify, plus an optional trainer relation.
 
 ## Migrations
 
-Dance-group schema changes are versioned under [server/migrations](/Users/mira/Documents/development/line_dance/server/migrations).
+Dance-group schema changes are versioned under `server/migrations`.
 
 Run migrations manually with:
 

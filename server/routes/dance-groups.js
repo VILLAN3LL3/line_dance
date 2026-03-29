@@ -4,7 +4,7 @@ import QRCode from 'qrcode';
 
 const dbName = 'danceGroups';
 
-function escapeVCardValue(value) {
+export function escapeVCardValue(value) {
   return String(value ?? '')
     .replaceAll('\\', String.raw`\\`)
     .replaceAll(';', String.raw`\;`)
