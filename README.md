@@ -67,6 +67,15 @@ __All code was written by GitHub Copilot. Use with caution.__
 ```text
 line_dance/
 ├── client/                  # React + TypeScript + Vite frontend
+│   ├── e2e/                 # Playwright end-to-end tests
+│   │   ├── choreographies/
+│   │   ├── courses/
+│   │   ├── dance-groups/
+│   │   ├── filters/
+│   │   ├── helpers/
+│   │   ├── navigation/
+│   │   └── trainers/
+│   ├── playwright.config.ts
 │   ├── src/
 │   │   ├── api.ts
 │   │   ├── main.tsx
@@ -178,6 +187,8 @@ Run these from `client/package.json`:
 - `npm run preview` - preview the production build
 - `npm test` - run client tests with Vitest
 - `npm run test:watch` - run client tests in watch mode
+- `npm run test:e2e` - run Playwright E2E tests
+- `npm run test:e2e:ui` - run Playwright in interactive UI mode
 
 ## Testing
 
@@ -219,12 +230,40 @@ cd client
 npm test
 ```
 
+### End-To-End Tests (Playwright)
+
+- E2E tests are grouped by user-facing use cases under `client/e2e`:
+  - `navigation` - app shell and primary route navigation
+  - `choreographies` - create/search/detail/edit/delete choreography flows
+  - `dance-groups` - dance group admin and detail behaviors
+  - `courses` - course edit and session/choreography lifecycle
+  - `trainers` - trainer validation, create/edit/delete
+  - `filters` - saved filter configuration lifecycle and updates
+- Shared API seed helpers live in `client/e2e/helpers/api.ts`.
+- Playwright starts both backend and frontend automatically via `webServer`.
+- E2E runs against in-memory SQLite databases using:
+  - `CHOREOGRAPHY_DB_PATH=:memory:`
+  - `DANCE_GROUPS_DB_PATH=:memory:`
+
+Run E2E tests:
+
+```bash
+cd client
+npm run test:e2e
+```
+
 ## Continuous Integration
 
 GitHub Actions runs CI on every push and pull request:
 
 - server job: install dependencies and run backend tests
 - client job: type-check, run frontend tests, and build production bundle
+- e2e job: install Playwright Chromium and run full end-to-end suite
+
+The E2E job uploads Playwright artifacts on every run (including failures):
+
+- `client/playwright-report`
+- `client/test-results`
 
 Workflow file:
 

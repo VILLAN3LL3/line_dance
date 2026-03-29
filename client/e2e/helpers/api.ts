@@ -1,6 +1,6 @@
 import { APIRequestContext, expect } from "@playwright/test";
 
-const API_BASE = "http://127.0.0.1:3001/api";
+const API_BASE = "http://127.0.0.1:3101/api";
 
 async function expectOk(response: Awaited<ReturnType<APIRequestContext["post"]>>) {
   expect(response.ok()).toBeTruthy();

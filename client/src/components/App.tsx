@@ -222,7 +222,6 @@ export const App: React.FC = () => {
         <h2>Choreography Search</h2>
         <button
           onClick={() => setView('create')}
-          className="btn-primary"
           disabled={isLoading || view !== 'list'}
         >
           + Add New Choreography

@@ -564,7 +564,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                 <button
                   type="button"
                   onClick={handleDeleteConfiguration}
-                  className="btn-danger"
+                  className="btn-delete"
                   disabled={isLoading || isSavingConfiguration || isUpdatingConfiguration || isDeletingConfiguration || !selectedConfigurationId}
                 >
                   {isDeletingConfiguration ? 'Deleting...' : 'Delete Selected'}

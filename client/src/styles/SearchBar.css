@@ -1,7 +1,4 @@
 .search-bar {
-  background: white;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
   padding: 20px;
   margin-bottom: 30px;
 }
@@ -15,8 +12,8 @@
 .search-input {
   flex: 1;
   padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 15px;
   transition: border-color 0.2s ease;
 }
@@ -28,9 +25,9 @@
 }
 
 .btn-toggle-advanced {
-  background-color: transparent;
+  background-color: #f5eefb;
   color: var(--color-primary);
-  border: 2px solid var(--color-primary);
+  border: 1px solid var(--color-primary);
   padding: 10px 16px;
   font-weight: 600;
   cursor: pointer;
@@ -92,7 +89,7 @@
 }
 
 .btn-toggle-saved-configs:hover {
-  background-color: #f6eef6;
+  background-color: #f4eef9;
   border-color: var(--color-primary);
 }
 
@@ -113,35 +110,14 @@
   flex: 1;
 }
 
-.btn-danger {
-  padding: 12px 20px;
-  border: none;
-  border-radius: var(--border-radius);
-  background-color: #c0392b;
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background-color: #a12f23;
-  transform: translateY(-1px);
-}
-
-.btn-danger:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .saved-filters-controls input,
 .saved-filters-controls select {
   flex: 1;
   padding: 10px 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 14px;
-  background-color: #fff;
+  background-color: var(--color-surface);
 }
 
 .saved-filters-controls input:focus,
@@ -159,11 +135,11 @@
 }
 
 .saved-filters-message {
-  color: #1f7a3f;
+  color: var(--color-success);
 }
 
 .saved-filters-error {
-  color: #b33a3a;
+  color: var(--color-danger);
 }
 
 .max-count-filter {
@@ -181,7 +157,7 @@
   min-width: 140px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-text-muted);
   text-align: right;
 }
 
@@ -392,7 +368,7 @@
 
 .btn-add-filter {
   padding: 10px 14px;
-  background-color: var(--color-primary);
+  background: var(--gradient-brand);
   color: white;
   border: none;
   border-radius: var(--border-radius);
@@ -404,7 +380,7 @@
 }
 
 .btn-add-filter:hover:not(:disabled) {
-  background-color: #6d3a6d;
+  filter: brightness(1.05);
   transform: translateY(-2px);
 }
 
@@ -415,7 +391,7 @@
 
 .btn-remove-filter {
   padding: 10px 12px;
-  background-color: #e74c3c;
+  background-color: var(--color-danger);
   color: white;
   border: none;
   border-radius: var(--border-radius);
@@ -427,7 +403,7 @@
 }
 
 .btn-remove-filter:hover:not(:disabled) {
-  background-color: #c0392b;
+  background-color: #ad3529;
   transform: translateY(-2px);
 }
 
@@ -459,7 +435,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background-color: var(--color-primary);
+  background: var(--gradient-brand);
   color: white;
   padding: 6px 12px;
   border-radius: 20px;
@@ -512,12 +488,12 @@
   display: inline-flex;
   align-items: center;
   padding: 7px 10px;
-  border-radius: var(--border-radius);
-  border: 2px solid #dcdcdc;
-  background-color: #f8f8f8;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
   font-weight: 600;
   font-size: 12px;
-  color: #3d3d3d;
+  color: var(--color-text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -534,21 +510,21 @@
 }
 
 .match-mode-option.mode-all.active {
-  background-color: var(--color-primary);
+  background-color: #ece0f5;
   border-color: var(--color-primary);
-  color: white;
+  color: #4a2360;
 }
 
 .match-mode-option.mode-any.active {
-  background-color: var(--color-secondary);
+  background-color: #fde8dc;
   border-color: var(--color-secondary);
-  color: white;
+  color: #7a3f1f;
 }
 
 .match-mode-option.mode-exact.active {
-  background-color: #ff6b35;
-  border-color: #ff6b35;
-  color: white;
+  background-color: #ffe8de;
+  border-color: var(--color-danger);
+  color: #8f3429;
 }
 
 .match-mode-option:has(input:disabled) {

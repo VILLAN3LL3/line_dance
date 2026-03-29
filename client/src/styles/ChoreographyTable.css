@@ -1,19 +1,19 @@
 .choreography-table-wrapper {
   overflow-x: auto;
-  background: white;
-  border-radius: var(--border-radius);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow);
 }
 
 .figure-filters {
   padding: 15px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .figure-filters-label {
   font-weight: 600;
   font-size: 12px;
-  color: #666;
+  color: var(--color-text-muted);
   margin-bottom: 8px;
   text-transform: uppercase;
 }
@@ -26,10 +26,10 @@
 
 .figure-filter-btn {
   padding: 4px 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 16px;
-  background-color: white;
-  color: #666;
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
@@ -43,18 +43,18 @@
 }
 
 .figure-filter-btn.active {
-  background-color: var(--color-primary);
+  background: var(--gradient-brand);
   color: white;
-  border-color: var(--color-primary);
+  border-color: transparent;
 }
 
 .figure-filter-btn.clear {
-  background-color: #f5f5f5;
-  border-color: #ddd;
+  background-color: #f2f4f9;
+  border-color: #d9deea;
 }
 
 .figure-filter-btn.clear:hover {
-  background-color: #e0e0e0;
+  background-color: #e7ebf4;
 }
 
 .table-scroll-wrapper {
@@ -68,7 +68,7 @@
 }
 
 .choreography-table thead {
-  background-color: var(--color-primary);
+  background: var(--gradient-brand);
   color: white;
   position: sticky;
   top: 0;
@@ -104,13 +104,13 @@
 }
 
 .choreography-table tbody tr {
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #ebe7f0;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .choreography-table tbody tr:hover {
-  background-color: #f5f5f5;
+  background-color: #f9f5fd;
 }
 
 .choreography-table td {
@@ -146,8 +146,8 @@
 }
 
 .info-badge {
-  background-color: #e0e0e0;
-  color: #222;
+  background-color: #edf1f7;
+  color: #4b5568;
   padding: 2px 6px;
   border-radius: 12px;
   font-size: 11px;
@@ -171,40 +171,4 @@
 .btn-small {
   padding: 4px 8px;
   font-size: 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-small.btn-primary {
-  background-color: var(--color-info);
-  color: white;
-}
-
-.btn-small.btn-primary:hover:not(:disabled) {
-  background-color: #1071a7;
-}
-
-.btn-small.btn-secondary {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn-small.btn-secondary:hover:not(:disabled) {
-  background-color: #5a6268;
-}
-
-.btn-small.btn-danger {
-  background-color: #dc3545;
-  color: white;
-}
-
-.btn-small.btn-danger:hover:not(:disabled) {
-  background-color: #c82333;
-}
-
-.btn-small:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }

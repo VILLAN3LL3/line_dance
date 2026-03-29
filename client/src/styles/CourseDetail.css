@@ -1,6 +1,6 @@
 .course-detail {
-  background-color: white;
-  border-radius: var(--border-radius);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
@@ -11,7 +11,7 @@
   align-items: center;
   gap: 20px;
   margin-bottom: 30px;
-  border-bottom: 2px solid var(--color-primary);
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 20px;
 }
 
@@ -28,10 +28,10 @@
 }
 
 .section {
-  background: linear-gradient(135deg, var(--color-light) 0%, #ffffff 100%);
-  border-radius: var(--border-radius);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
   padding: 20px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--color-border);
 }
 
 .section h3 {
@@ -53,8 +53,8 @@
 .choreo-form input,
 .choreo-form button {
   padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 14px;
   font-family: inherit;
 }
@@ -71,7 +71,7 @@
 
 .choreo-autocomplete-hint {
   margin: -8px 0 20px;
-  color: #666;
+  color: var(--color-text-muted);
   font-size: 13px;
 }
 
@@ -90,9 +90,9 @@
 
 .session-item,
 .choreography-item {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: var(--border-radius);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   padding: 15px;
   display: flex;
   justify-content: space-between;
@@ -122,7 +122,7 @@
 .session-info p,
 .choreo-info p {
   margin: 0;
-  color: #666;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -133,113 +133,26 @@
 
 .session-item.active {
   border: 2px solid var(--color-primary);
-  background: linear-gradient(135deg, rgba(139, 71, 137, 0.05) 0%, rgba(212, 121, 75, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(123, 63, 138, 0.07) 0%, rgba(210, 116, 71, 0.06) 100%);
 }
 
 .session-item.active .btn-secondary.active {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  background: var(--gradient-brand);
   color: white;
-}
-
-.btn-back {
-  background-color: #64748b;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-
-.btn-back:hover {
-  background-color: #475569;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.btn-primary:disabled {
-  background: #cbd5e1;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-secondary {
-  background-color: #6b7280;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: #4b5563;
-}
-
-.btn-secondary:disabled {
-  background-color: #cbd5e1;
-  cursor: not-allowed;
-}
-
-.btn-danger {
-  background-color: var(--color-danger);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background-color: #c0392b;
-}
-
-.btn-danger:disabled {
-  background-color: #cbd5e1;
-  cursor: not-allowed;
 }
 
 .empty-state {
   text-align: center;
   padding: 40px 20px;
-  color: #999;
+  color: var(--color-text-muted);
   font-size: 16px;
 }
 
 .loading {
   text-align: center;
   padding: 20px;
-  color: #666;
+  color: var(--color-text-muted);
   font-size: 16px;
-}
-
-.error-message {
-  background-color: #fee2e2;
-  color: #991b1b;
-  padding: 12px 16px;
-  border-radius: 4px;
-  border-left: 4px solid #dc2626;
-  margin-bottom: 20px;
 }
 
 @media (max-width: 768px) {

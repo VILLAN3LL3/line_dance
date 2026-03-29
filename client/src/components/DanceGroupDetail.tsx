@@ -255,14 +255,14 @@ const DanceGroupDetail: React.FC = () => {
                 </button>
                 <button
                   onClick={() => navigate(`/admin/groups/${parsedGroupId}/courses/${course.id}/edit`)}
-                  className="btn-secondary"
+                  className="btn-edit"
                   disabled={isLoading}
                 >
                   ✏️ Edit
                 </button>
                 <button
                   onClick={() => handleDeleteCourse(course.id)}
-                  className="btn-danger"
+                  className="btn-delete"
                   disabled={isLoading}
                 >
                   Delete

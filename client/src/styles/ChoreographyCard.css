@@ -1,8 +1,8 @@
 .choreography-card {
-  background: white;
-  border: none;
-  border-radius: var(--border-radius);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow);
+  border: 1px solid var(--color-border);
   overflow: hidden;
   transition: all 0.3s ease;
   cursor: pointer;
@@ -21,7 +21,7 @@
 }
 
 .card-header {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  background: var(--gradient-brand);
   color: white;
   padding: 20px;
   display: flex;
@@ -48,8 +48,8 @@
 }
 
 .info-badge {
-  background-color: #e0e0e0;
-  color: #222;
+  background-color: rgba(255, 255, 255, 0.88);
+  color: #3f485a;
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 12px;
@@ -63,27 +63,27 @@
 }
 
 .info-badge:hover {
-  background-color: #d0d0d0;
+  background-color: white;
 }
 
 .level-beginner {
-  background-color: #a8d5a8;
-  color: #000;
+  background-color: #def4ea;
+  color: #1f6e4b;
 }
 
 .level-intermediate {
-  background-color: #f9c74f;
-  color: #333;
+  background-color: #fff1da;
+  color: #6a4300;
 }
 
 .level-advanced {
-  background-color: #f8961e;
-  color: #000;
+  background-color: #fde9d8;
+  color: #9d5735;
 }
 
 .level-experienced {
-  background-color: #d62828;
-  color: white;
+  background-color: #ffe2de;
+  color: #9f3025;
 }
 
 .card-content {
@@ -97,7 +97,7 @@
 .card-content p {
   margin: 0;
   font-size: 13px;
-  color: #555;
+  color: var(--color-text-muted);
 }
 
 .card-content p strong {
@@ -106,8 +106,8 @@
 
 .phrased-badge {
   display: inline-block;
-  background-color: #d4f1d4;
-  color: #2d6a2d;
+  background-color: #def4ea;
+  color: #1f6e4b;
   padding: 6px 12px;
   border-radius: 12px;
   font-weight: 600;
@@ -141,24 +141,25 @@
   text-decoration: none;
   font-weight: 600;
   padding: 8px 12px;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(123, 63, 138, 0.35);
   transition: all 0.2s ease;
   margin-top: 8px;
+  background: #faf5fe;
 }
 
 .step-sheet-link:hover {
-  background-color: var(--color-primary);
-  color: white;
+  background-color: #f0e5fa;
+  color: var(--color-primary);
 }
 
 .info-section {
   padding: 10px 12px;
-  background-color: #f5f5f5;
+  background-color: var(--color-surface-soft);
   border-left: 3px solid var(--color-primary);
   border-radius: 4px;
   font-size: 13px;
-  color: #555;
+  color: var(--color-text-muted);
   margin-top: 8px;
   line-height: 1.5;
 }

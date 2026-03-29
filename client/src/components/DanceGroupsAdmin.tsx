@@ -108,7 +108,6 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
             setNewGroupName("");
             navigate("/admin/groups/new");
           }}
-          className="btn-primary"
           disabled={isLoading || mode !== "list"}
         >
           + New Dance Group
@@ -185,14 +184,14 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
                             setEditingId(group.id);
                             setEditingName(group.name);
                           }}
-                          className="btn-secondary"
+                          className="btn-edit"
                           disabled={isLoading}
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(group.id)}
-                          className="btn-danger"
+                          className="btn-delete"
                           disabled={isLoading}
                         >
                           Delete

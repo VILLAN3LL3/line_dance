@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const isCI = !!process.env.CI;
+const e2eApiPort = 3101;
+const e2eAppPort = 4173;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -15,7 +17,7 @@ export default defineConfig({
     ? [["github"], ["html", { open: "never" }]]
     : [["list"], ["html", { open: "never" }]],
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    baseURL: `http://127.0.0.1:${e2eAppPort}`,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -23,19 +25,24 @@ export default defineConfig({
   webServer: [
     {
       command: "npm --prefix ../server start",
-      port: 3001,
+      port: e2eApiPort,
       env: {
         ...process.env,
+        PORT: String(e2eApiPort),
         CHOREOGRAPHY_DB_PATH: ":memory:",
         DANCE_GROUPS_DB_PATH: ":memory:",
       },
-      reuseExistingServer: !isCI,
+      reuseExistingServer: false,
       timeout: 120_000,
     },
     {
-      command: "npm run dev -- --host 127.0.0.1 --port 5173",
-      port: 5173,
-      reuseExistingServer: !isCI,
+      command: `npm run dev -- --host 127.0.0.1 --port ${e2eAppPort}`,
+      port: e2eAppPort,
+      env: {
+        ...process.env,
+        VITE_API_URL: `http://127.0.0.1:${e2eApiPort}/api`,
+      },
+      reuseExistingServer: false,
       timeout: 120_000,
     },
   ],

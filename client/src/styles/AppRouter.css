@@ -2,11 +2,11 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: linear-gradient(135deg, var(--color-light) 0%, #ffffff 100%);
+  background: transparent;
 }
 
 .main-nav {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  background: var(--gradient-brand);
   color: white;
   box-shadow: var(--shadow-lg);
   position: sticky;
@@ -41,23 +41,24 @@
 
 .nav-link {
   display: inline-block;
-  padding: 10px 20px;
-  border-radius: var(--border-radius);
-  color: rgba(255, 255, 255, 0.8);
+  padding: 9px 16px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
   transition: all 0.3s;
   cursor: pointer;
 }
 
 .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #1f2937;
+  background-color: rgba(31, 21, 40, 0.22);
+  color: white;
 }
 
 .nav-link.active {
-  background-color: rgba(255, 255, 255, 0.3);
-  color: #1f2937;
+  background-color: rgba(31, 21, 40, 0.3);
+  color: white;
   font-weight: 600;
 }
 
@@ -76,8 +77,8 @@
 }
 
 .nav-icon-link:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #1f2937;
+  background-color: rgba(31, 21, 40, 0.28);
+  color: white;
 }
 
 .router-content {

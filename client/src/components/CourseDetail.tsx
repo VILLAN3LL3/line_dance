@@ -261,7 +261,7 @@ const CourseDetail: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleDeleteSession(session.id)}
-                      className="btn-danger"
+                      className="btn-delete"
                       disabled={isLoading}
                     >
                       Delete
@@ -324,7 +324,7 @@ const CourseDetail: React.FC = () => {
                       </div>
                       <button
                         onClick={() => handleRemoveChoreography(sessionChoreography.choreography_id)}
-                        className="btn-danger"
+                        className="btn-delete"
                         disabled={isLoading}
                       >
                         Remove

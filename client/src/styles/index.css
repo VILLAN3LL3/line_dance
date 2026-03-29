@@ -1,15 +1,29 @@
 :root {
-  --color-primary: #8b4789;
-  --color-secondary: #d4794b;
-  --color-success: #4caf50;
-  --color-danger: #e74c3c;
-  --color-warning: #f39c12;
-  --color-info: #3498db;
-  --color-light: #f5f5f5;
-  --color-dark: #333;
-  --border-radius: 8px;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --color-primary: #7b3f8a;
+  --color-secondary: #d27447;
+  --color-success: #1f8a5b;
+  --color-danger: #c63d2f;
+  --color-warning: #c88410;
+  --color-info: #7b3f8a;
+
+  --color-bg: #f6f7fb;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f9f7fc;
+  --color-border: #ddd8e4;
+  --color-text: #1f2430;
+  --color-text-muted: #5f6675;
+
+  --gradient-brand: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  --gradient-page: linear-gradient(145deg, #f7f3fb 0%, #fefaf6 60%, #f7f8fc 100%);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --border-radius: var(--radius-md);
+
+  --shadow: 0 2px 10px rgba(29, 22, 45, 0.08);
+  --shadow-lg: 0 10px 26px rgba(29, 22, 45, 0.14);
+  --shadow-soft: 0 1px 4px rgba(29, 22, 45, 0.08);
 }
 
 * {
@@ -24,34 +38,44 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #fafafa;
-  color: var(--color-dark);
+  background: var(--gradient-page);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 button {
   cursor: pointer;
   font-family: inherit;
-  border: none;
-  padding: 8px 16px;
-  border-radius: var(--border-radius);
+  border: 1px solid transparent;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
   transition: all 0.2s ease;
   font-size: 14px;
+  font-weight: 600;
 }
 
 button:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 input,
 textarea,
 select {
   font-family: inherit;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: var(--border-radius);
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 14px;
   transition: border-color 0.2s ease;
+  color: var(--color-text);
+  background-color: var(--color-surface);
 }
 
 input:focus,
@@ -59,69 +83,98 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(139, 71, 137, 0.1);
+  box-shadow: 0 0 0 3px rgba(123, 63, 138, 0.14);
 }
 
 .btn-primary {
-  background-color: var(--color-primary);
+  background: var(--gradient-brand);
   color: white;
+  border: none;
+  box-shadow: var(--shadow-soft);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #6d3566;
+  filter: brightness(1.04);
   transform: translateY(-2px);
   box-shadow: var(--shadow);
 }
 
 .btn-secondary {
-  background-color: var(--color-light);
-  color: var(--color-dark);
-  border: 1px solid #ddd;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--color-primary);
+  background-color: #f4eef9;
   border-color: var(--color-primary);
-  color: white;
+  color: var(--color-primary);
 }
 
 .btn-danger {
   background-color: var(--color-danger);
   color: white;
+  border: none;
+  box-shadow: var(--shadow-soft);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: #c0392b;
+  background-color: #ad3529;
+  transform: translateY(-1px);
 }
 
 .btn-small {
   padding: 6px 12px;
   font-size: 13px;
-  background-color: var(--color-light);
-  color: var(--color-dark);
-  border: 1px solid #ddd;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 
 .btn-small:hover:not(:disabled) {
-  background-color: #e8e8e8;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background-color: #f6f0fb;
 }
 
 .btn-edit {
-  background-color: var(--color-info);
-  color: white;
+  background-color: #f3e9fb;
+  color: #4d2866;
+  border-color: #d9bee8;
 }
 
 .btn-edit:hover:not(:disabled) {
-  background-color: #2980b9;
+  background-color: #ead7f8;
+  color: #3f2154;
+  border-color: #cfa7e3;
 }
 
 .btn-delete {
-  background-color: var(--color-danger);
+  background-color: var(--color-secondary);
   color: white;
+  border: none;
 }
 
 .btn-delete:hover:not(:disabled) {
-  background-color: #c0392b;
+  background-color: #cd6533;
+}
+
+.btn-back,
+.btn-cancel {
+  background-color: #eef1f7;
+  color: #3d475a;
+  border: 1px solid #d3dae5;
+}
+
+.btn-back:hover:not(:disabled),
+.btn-cancel:hover:not(:disabled) {
+  background-color: #e3e8f2;
+}
+
+.btn-save {
+  background: var(--gradient-brand);
+  color: white;
+  border: none;
 }
 
 .btn-remove {
@@ -134,7 +187,7 @@ select:focus {
 }
 
 .btn-remove:hover {
-  color: var(--color-danger);
+  color: #ffe0dc;
 }
 
 .btn-remove-small {
@@ -149,42 +202,44 @@ select:focus {
   text-align: center;
   padding: 40px;
   font-size: 16px;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .error-message {
-  background-color: #fdeaea;
+  background-color: #fff0ee;
   border-left: 4px solid var(--color-danger);
-  color: var(--color-danger);
+  color: #8f2f24;
   padding: 16px;
   margin-bottom: 20px;
-  border-radius: var(--border-radius);
+  border-radius: var(--radius-sm);
 }
 
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: #999;
+  color: var(--color-text-muted);
 }
 
 .empty-state p {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .tag {
-  display: inline-block;
-  background-color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--gradient-brand);
   color: white;
   padding: 6px 12px;
-  border-radius: 20px;
-  margin: 4px;
+  border-radius: 999px;
+  margin: 0;
   font-size: 13px;
 }
 
 .tag-small {
   display: inline-block;
-  background-color: #e0e0e0;
-  color: var(--color-dark);
+  background-color: #ebedf3;
+  color: #4f586a;
   padding: 4px 8px;
   border-radius: 12px;
   margin: 2px;
@@ -209,12 +264,27 @@ select:focus {
 
 .pagination button {
   padding: 10px 20px;
-  background-color: var(--color-primary);
+  background: var(--gradient-brand);
   color: white;
+  border: none;
 }
 
 .pagination button:hover:not(:disabled) {
-  background-color: #6d3566;
+  filter: brightness(1.05);
+}
+
+.section,
+.form-view,
+.detail-view,
+.trainer-section,
+.course-form-card,
+.search-bar,
+.choreography-table-wrapper,
+.learned-table {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
 }
 
 @media (max-width: 768px) {

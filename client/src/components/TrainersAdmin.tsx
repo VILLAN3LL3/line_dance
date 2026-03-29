@@ -197,10 +197,10 @@ const TrainersAdmin: React.FC = () => {
                       <p>{trainer.email}</p>
                     </div>
                     <div className="trainer-actions">
-                      <button type="button" className="btn-secondary" onClick={() => startEdit(trainer)} disabled={isLoading}>
+                      <button type="button" className="btn-edit" onClick={() => startEdit(trainer)} disabled={isLoading}>
                         ✏️ Edit
                       </button>
-                      <button type="button" className="btn-danger" onClick={() => handleDelete(trainer.id)} disabled={isLoading}>
+                      <button type="button" className="btn-delete" onClick={() => handleDelete(trainer.id)} disabled={isLoading}>
                         Delete
                       </button>
                     </div>

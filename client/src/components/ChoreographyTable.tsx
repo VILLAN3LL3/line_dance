@@ -211,7 +211,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                         e.stopPropagation();
                         onEdit?.(choreo.id);
                       }}
-                      className="btn-small btn-primary"
+                      className="btn-small btn-edit"
                       disabled={isLoading}
                       title="Edit"
                     >
@@ -222,7 +222,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                         e.stopPropagation();
                         onDelete?.(choreo.id);
                       }}
-                      className="btn-small btn-danger"
+                      className="btn-small btn-delete"
                       disabled={isLoading}
                       title="Delete"
                     >

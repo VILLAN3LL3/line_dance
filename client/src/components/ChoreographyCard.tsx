@@ -94,7 +94,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
           </button>
         )}
         {onDelete && (
-          <button onClick={(e) => { e.stopPropagation(); onDelete(choreography.id); }} className="btn-small btn-danger">
+          <button onClick={(e) => { e.stopPropagation(); onDelete(choreography.id); }} className="btn-small btn-delete">
             Delete
           </button>
         )}
