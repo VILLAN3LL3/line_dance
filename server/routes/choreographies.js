@@ -460,8 +460,8 @@ export async function updateChoreography(req, res) {
       }
     }
 
-    res.json({ id: choreography_id, message: 'Choreography updated successfully' });
     await cleanupOrphanedRecords();
+    res.json({ id: choreography_id, message: 'Choreography updated successfully' });
   } catch (error) {
     console.error('Error updating choreography:', error);
     res.status(500).json({ error: error.message });
