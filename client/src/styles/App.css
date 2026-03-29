@@ -89,7 +89,6 @@
 .form-view {
   padding: 20px;
   border-radius: var(--radius-md);
-  max-width: 800px;
   margin: 0 auto;
 }
 

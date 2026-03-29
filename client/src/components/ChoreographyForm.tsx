@@ -284,7 +284,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           </div>
         </div>
 
-        <div className="form-group form-input-row">
+        <div className="form-group">
           <label htmlFor="step_sheet_link">Step Sheet Link</label>
           <input
             type="url"
