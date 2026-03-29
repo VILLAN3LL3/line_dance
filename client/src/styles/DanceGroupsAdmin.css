@@ -42,7 +42,7 @@
 
 .admin-header button:hover:not(:disabled) {
   background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: #1f2937;
 }
 
 .groups-list-view {
@@ -188,7 +188,7 @@
 
 .error-message {
   background-color: #fee2e2;
-  color: #dc2626;
+  color: #7f1d1d;
   padding: 12px 16px;
   border-radius: 4px;
   border-left: 4px solid #dc2626;

@@ -18,7 +18,10 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   onSelect,
 }) => {
   return (
-    <div className="choreography-card" onClick={() => onSelect?.(choreography.id)}>
+    <button
+      className="choreography-card"
+      onClick={() => onSelect?.(choreography.id)}
+      >
       <div className="card-header">
         <h3>{choreography.name}</h3>
         <span className={`level-badge level-${choreography.level.toLowerCase()}`}>
@@ -41,8 +44,8 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
           <div className="step-figures">
             <strong>Step Figures:</strong>
             <div className="tag-list">
-              {choreography.step_figures.map((figure, idx) => (
-                <span key={idx} className="tag-small">
+              {choreography.step_figures.map((figure) => (
+                <span key={figure} className="tag-small">
                   {figure}
                 </span>
               ))}
@@ -56,8 +59,8 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
           <div className="tags">
             <strong>Tags:</strong>
             <div className="tag-list">
-              {choreography.tags.map((tag, idx) => (
-                <span key={idx} className="tag-small">
+              {choreography.tags.map((tag) => (
+                <span key={tag} className="tag-small">
                   {tag}
                 </span>
               ))}
@@ -96,6 +99,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
           </button>
         )}
       </div>
-    </div>
+    </button>
   );
 };

@@ -26,24 +26,14 @@ export function normalizeSavedFilters(rawFilters) {
   }
 
   const normalized = {};
+  const search = normalizeStringField(rawFilters.search);
+  if (search) normalized.search = search;
 
-  if (typeof rawFilters.search === 'string' && rawFilters.search.trim()) {
-    normalized.search = rawFilters.search.trim();
-  }
+  const level = normalizeStringArray(rawFilters.level);
+  if (level.length > 0) normalized.level = level;
 
-  if (Array.isArray(rawFilters.level) && rawFilters.level.length > 0) {
-    const levels = rawFilters.level.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
-    if (levels.length > 0) {
-      normalized.level = levels;
-    }
-  }
-
-  if (Array.isArray(rawFilters.step_figures) && rawFilters.step_figures.length > 0) {
-    const stepFigures = rawFilters.step_figures.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
-    if (stepFigures.length > 0) {
-      normalized.step_figures = stepFigures;
-    }
-  }
+  const stepFigures = normalizeStringArray(rawFilters.step_figures);
+  if (stepFigures.length > 0) normalized.step_figures = stepFigures;
 
   if (['all', 'any', 'exact'].includes(rawFilters.step_figures_match_mode)) {
     normalized.step_figures_match_mode = rawFilters.step_figures_match_mode;
@@ -53,19 +43,11 @@ export function normalizeSavedFilters(rawFilters) {
     normalized.without_step_figures = true;
   }
 
-  if (Array.isArray(rawFilters.tags) && rawFilters.tags.length > 0) {
-    const tags = rawFilters.tags.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
-    if (tags.length > 0) {
-      normalized.tags = tags;
-    }
-  }
+  const tags = normalizeStringArray(rawFilters.tags);
+  if (tags.length > 0) normalized.tags = tags;
 
-  if (Array.isArray(rawFilters.authors) && rawFilters.authors.length > 0) {
-    const authors = rawFilters.authors.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
-    if (authors.length > 0) {
-      normalized.authors = authors;
-    }
-  }
+  const authors = normalizeStringArray(rawFilters.authors);
+  if (authors.length > 0) normalized.authors = authors;
 
   const parsedMaxCount = Number.parseInt(String(rawFilters.max_count), 10);
   if (!Number.isNaN(parsedMaxCount) && parsedMaxCount >= 0) {
@@ -258,13 +240,11 @@ export async function createChoreography(req, res) {
       return res.status(400).json({ error: 'Name and level are required' });
     }
 
-    // Get level ID
     const levelRecord = await getQuery('SELECT id FROM levels WHERE name = ?', [level]);
     if (!levelRecord) {
       return res.status(400).json({ error: 'Invalid level. Must be one of: Beginner, Intermediate, Advanced, Experienced' });
     }
 
-    // Insert choreography
     const choreoResult = await runQuery(
       `INSERT INTO choreographies (name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level_id, creation_year, tag_information, restart_information)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -273,50 +253,9 @@ export async function createChoreography(req, res) {
 
     const choreography_id = choreoResult.id;
 
-    // Insert authors
-    if (authors && Array.isArray(authors)) {
-      for (const author of authors) {
-        let authorId = await getAuthorId(author);
-        if (!authorId) {
-          const result = await runQuery(`INSERT INTO authors (name) VALUES (?)`, [author]);
-          authorId = result.id;
-        }
-        await runQuery(
-          `INSERT INTO choreography_authors (choreography_id, author_id) VALUES (?, ?)`,
-          [choreography_id, authorId]
-        );
-      }
-    }
-
-    // Insert step figures
-    if (step_figures && Array.isArray(step_figures)) {
-      for (const figure of step_figures) {
-        let figureId = await getStepFigureId(figure);
-        if (!figureId) {
-          const result = await runQuery(`INSERT INTO step_figures (name) VALUES (?)`, [figure]);
-          figureId = result.id;
-        }
-        await runQuery(
-          `INSERT INTO choreography_step_figures (choreography_id, step_figure_id) VALUES (?, ?)`,
-          [choreography_id, figureId]
-        );
-      }
-    }
-
-    // Insert tags
-    if (tags && Array.isArray(tags)) {
-      for (const tag of tags) {
-        let tagId = await getTagId(tag);
-        if (!tagId) {
-          const result = await runQuery(`INSERT INTO tags (name) VALUES (?)`, [tag]);
-          tagId = result.id;
-        }
-        await runQuery(
-          `INSERT INTO choreography_tags (choreography_id, tag_id) VALUES (?, ?)`,
-          [choreography_id, tagId]
-        );
-      }
-    }
+    await insertRelationship(choreography_id, authors, getAuthorId, 'choreography_authors', 'author_id', 'authors');
+    await insertRelationship(choreography_id, step_figures, getStepFigureId, 'choreography_step_figures', 'step_figure_id', 'step_figures');
+    await insertRelationship(choreography_id, tags, getTagId, 'choreography_tags', 'tag_id', 'tags');
 
     res.status(201).json({ id: choreography_id, message: 'Choreography created successfully' });
   } catch (error) {
@@ -327,8 +266,8 @@ export async function createChoreography(req, res) {
 
 export async function getChoreographies(req, res) {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = Number.parseInt(req.query.page, 10) || 1;
+    const limit = Number.parseInt(req.query.limit, 10) || 20;
     const offset = (page - 1) * limit;
 
     const choreographies = await allQuery(
@@ -382,7 +321,6 @@ export async function updateChoreography(req, res) {
     const { name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level, creation_year, tag_information, restart_information, authors, tags, step_figures } = req.body;
     const choreography_id = req.params.id;
 
-    // Check if choreography exists
     const existing = await getQuery('SELECT id FROM choreographies WHERE id = ?', [choreography_id]);
     if (!existing) {
       return res.status(404).json({ error: 'Choreography not found' });
@@ -397,68 +335,17 @@ export async function updateChoreography(req, res) {
       levelId = levelRecord.id;
     }
 
-    // Update main choreography
+    const updateFields = [name, step_sheet_link || null, demo_video_url || null, tutorial_video_url || null, count || null, wall_count || null, creation_year || null, tag_information || null, restart_information || null];
     const updateQuery = levelId
-      ? `UPDATE choreographies 
-         SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, level_id = ?, creation_year = ?, tag_information = ?, restart_information = ?, updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`
-      : `UPDATE choreographies 
-         SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, creation_year = ?, tag_information = ?, restart_information = ?, updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`;
+      ? `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, level_id = ?, creation_year = ?, tag_information = ?, restart_information = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+      : `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, creation_year = ?, tag_information = ?, restart_information = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
 
-    const updateParams = levelId
-      ? [name, step_sheet_link || null, demo_video_url || null, tutorial_video_url || null, count || null, wall_count || null, levelId, creation_year || null, tag_information || null, restart_information || null, choreography_id]
-      : [name, step_sheet_link || null, demo_video_url || null, tutorial_video_url || null, count || null, wall_count || null, creation_year || null, tag_information || null, restart_information || null, choreography_id];
-
+    const updateParams = levelId ? [...updateFields.slice(0, 6), levelId, ...updateFields.slice(6), choreography_id] : [...updateFields, choreography_id];
     await runQuery(updateQuery, updateParams);
 
-    // Delete and re-insert authors
-    if (authors !== undefined) {
-      await runQuery('DELETE FROM choreography_authors WHERE choreography_id = ?', [choreography_id]);
-      for (const author of authors) {
-        let authorId = await getAuthorId(author);
-        if (!authorId) {
-          const result = await runQuery(`INSERT INTO authors (name) VALUES (?)`, [author]);
-          authorId = result.id;
-        }
-        await runQuery(
-          `INSERT INTO choreography_authors (choreography_id, author_id) VALUES (?, ?)`,
-          [choreography_id, authorId]
-        );
-      }
-    }
-
-    // Delete and re-insert step figures
-    if (step_figures !== undefined) {
-      await runQuery('DELETE FROM choreography_step_figures WHERE choreography_id = ?', [choreography_id]);
-      for (const figure of step_figures) {
-        let figureId = await getStepFigureId(figure);
-        if (!figureId) {
-          const result = await runQuery(`INSERT INTO step_figures (name) VALUES (?)`, [figure]);
-          figureId = result.id;
-        }
-        await runQuery(
-          `INSERT INTO choreography_step_figures (choreography_id, step_figure_id) VALUES (?, ?)`,
-          [choreography_id, figureId]
-        );
-      }
-    }
-
-    // Delete and re-insert tags
-    if (tags !== undefined) {
-      await runQuery('DELETE FROM choreography_tags WHERE choreography_id = ?', [choreography_id]);
-      for (const tag of tags) {
-        let tagId = await getTagId(tag);
-        if (!tagId) {
-          const result = await runQuery(`INSERT INTO tags (name) VALUES (?)`, [tag]);
-          tagId = result.id;
-        }
-        await runQuery(
-          `INSERT INTO choreography_tags (choreography_id, tag_id) VALUES (?, ?)`,
-          [choreography_id, tagId]
-        );
-      }
-    }
+    await deleteAndReinsertRelationships(choreography_id, authors, 'choreography_authors', 'author_id', 'authors', getAuthorId);
+    await deleteAndReinsertRelationships(choreography_id, step_figures, 'choreography_step_figures', 'step_figure_id', 'step_figures', getStepFigureId);
+    await deleteAndReinsertRelationships(choreography_id, tags, 'choreography_tags', 'tag_id', 'tags', getTagId);
 
     await cleanupOrphanedRecords();
     res.json({ id: choreography_id, message: 'Choreography updated successfully' });
@@ -544,256 +431,106 @@ export async function deleteChoreography(req, res) {
   }
 }
 
+function buildFilterConditions(filterObj) {
+  const { search, level, step_figures, step_figures_match_mode, without_step_figures, tags, authors, max_count } = filterObj;
+  const conditions = [];
+  const params = [];
+  const joins = [];
+
+  if (search) {
+    conditions.push('c.name LIKE ?');
+    params.push(`%${search}%`);
+  }
+
+  if (level) {
+    const levelList = normalizeQueryParam(level);
+    const placeholders = levelList.map(() => '?').join(',');
+    conditions.push(`l.name IN (${placeholders})`);
+    params.push(...levelList);
+  }
+
+  const stepFilter = buildStepFiguresFilter(step_figures, step_figures_match_mode, without_step_figures);
+  joins.push(...stepFilter.joins);
+  conditions.push(...stepFilter.conditions);
+  params.push(...stepFilter.params);
+
+  const tagsFilter = buildRelationshipFilter(tags, 'choreography_tags', 'tag_id', 'tags');
+  joins.push(...tagsFilter.joins);
+  conditions.push(...tagsFilter.conditions);
+  params.push(...tagsFilter.params);
+
+  const authorsFilter = buildRelationshipFilter(authors, 'choreography_authors', 'author_id', 'authors');
+  joins.push(...authorsFilter.joins);
+  conditions.push(...authorsFilter.conditions);
+  params.push(...authorsFilter.params);
+
+  if (max_count !== undefined) {
+    const parsedMaxCount = Number.parseInt(String(max_count), 10);
+    if (!Number.isNaN(parsedMaxCount) && parsedMaxCount >= 0) {
+      conditions.push('(c.count IS NULL OR c.count <= ?)');
+      params.push(parsedMaxCount);
+    }
+  }
+
+  return { conditions, params, joins, stepFilter };
+}
+
 export async function searchChoreographies(req, res) {
   try {
     const { level, step_figures, step_figures_match_mode, without_step_figures, tags, authors, search, sort_field, sort_direction, max_count } = req.query;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = Number.parseInt(req.query.page, 10) || 1;
+    const limit = Number.parseInt(req.query.limit, 10) || 20;
     const offset = (page - 1) * limit;
-    const matchMode = step_figures_match_mode || 'all';
-    const noStepFigures = without_step_figures === 'true' || without_step_figures === true;
+
+    const { conditions, params, joins, stepFilter } = buildFilterConditions({
+      search, level, step_figures, step_figures_match_mode, without_step_figures, tags, authors, max_count
+    });
+    
+    // Build count params before adding pagination params
+    const countParams = [...params];
+    if (stepFilter.having) {
+      countParams.push(...stepFilter.havingParams);
+    }
 
     let query = 'SELECT DISTINCT c.*, l.name as level FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id';
-    let params = [];
-    let joins = [];
-    let conditions = [];
-    let groupBy = '';
-    let having = '';
-    let havingParams = [];
-
-    // Add search by name or other fields
-    if (search) {
-      conditions.push('c.name LIKE ?');
-      params.push(`%${search}%`);
-    }
-
-    // Filter by level
-    if (level) {
-      const levelList = Array.isArray(level) ? level : [level];
-      const placeholders = levelList.map(() => '?').join(',');
-      conditions.push(`l.name IN (${placeholders})`);
-      params.push(...levelList);
-    }
-
-    // Filter by step figures
-    if (noStepFigures) {
-      joins.push(`
-        LEFT JOIN choreography_step_figures csfNo ON c.id = csfNo.choreography_id
-      `);
-      conditions.push('csfNo.choreography_id IS NULL');
-    } else if (step_figures) {
-      const figures = Array.isArray(step_figures) ? step_figures : [step_figures];
-
-      // EXACT means choreography figures must be a non-empty subset of selected figures.
-      if (matchMode === 'exact') {
-        joins.push(`
-          LEFT JOIN choreography_step_figures csf_all ON c.id = csf_all.choreography_id
-          LEFT JOIN step_figures sf_all ON csf_all.step_figure_id = sf_all.id
-        `);
-
-        const placeholders = figures.map(() => '?').join(',');
-        groupBy = ' GROUP BY c.id';
-        having = ` HAVING COUNT(DISTINCT sf_all.id) > 0
-                         AND COUNT(DISTINCT CASE WHEN sf_all.name IN (${placeholders}) THEN sf_all.id END) = COUNT(DISTINCT sf_all.id)`;
-        havingParams.push(...figures);
-      } else {
-        // For 'all' and 'any' modes
-        joins.push(`
-          INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
-          INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
-        `);
-        const placeholders = figures.map(() => '?').join(',');
-        conditions.push(`sf.name IN (${placeholders})`);
-        params.push(...figures);
-
-        // If matching ALL figures, use GROUP BY and HAVING
-        if (matchMode === 'all' && figures.length > 1) {
-          groupBy = ' GROUP BY c.id';
-          having = ` HAVING COUNT(DISTINCT sf.id) = ${figures.length}`;
-        }
-      }
-    }
-
-    // Filter by tags
-    if (tags) {
-      const tagList = Array.isArray(tags) ? tags : [tags];
-      joins.push(`
-        INNER JOIN choreography_tags ct ON c.id = ct.choreography_id
-        INNER JOIN tags t ON ct.tag_id = t.id
-      `);
-      const placeholders = tagList.map(() => '?').join(',');
-      conditions.push(`t.name IN (${placeholders})`);
-      params.push(...tagList);
-    }
-
-    // Filter by authors
-    if (authors) {
-      const authorList = Array.isArray(authors) ? authors : [authors];
-      joins.push(`
-        INNER JOIN choreography_authors ca ON c.id = ca.choreography_id
-        INNER JOIN authors a ON ca.author_id = a.id
-      `);
-      const placeholders = authorList.map(() => '?').join(',');
-      conditions.push(`a.name IN (${placeholders})`);
-      params.push(...authorList);
-    }
-
-    if (max_count !== undefined) {
-      const parsedMaxCount = Number.parseInt(String(max_count), 10);
-      if (!Number.isNaN(parsedMaxCount) && parsedMaxCount >= 0) {
-        conditions.push('(c.count IS NULL OR c.count <= ?)');
-        params.push(parsedMaxCount);
-      }
-    }
-
-    // Build final query
-    if (joins.length > 0) {
-      query += joins.join('');
-    }
+    query += joins.map(j => ` ${j}`).join('');
 
     if (conditions.length > 0) {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    if (groupBy) {
-      query += groupBy;
+    if (stepFilter.groupBy) {
+      query += stepFilter.groupBy;
     }
 
-    if (having) {
-      query += having;
-      params.push(...havingParams);
+    if (stepFilter.having) {
+      query += stepFilter.having;
+      params.push(...stepFilter.havingParams);
     }
 
-    // Add sorting
-    let orderBy = 'c.created_at DESC';
-    if (sort_field) {
-      const direction = sort_direction === 'desc' ? 'DESC' : 'ASC';
-      switch (sort_field) {
-        case 'name':
-          orderBy = `LOWER(c.name) ${direction}`;
-          break;
-        case 'level':
-          orderBy = `LOWER(l.name) ${direction}`;
-          break;
-        case 'count':
-          orderBy = `c.count ${direction}`;
-          break;
-        case 'wall_count':
-          orderBy = `c.wall_count ${direction}`;
-          break;
-        case 'creation_year':
-          orderBy = `c.creation_year ${direction}`;
-          break;
-        default:
-          orderBy = `c.created_at DESC`;
-      }
-    }
-
-    query += ` ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
+    query += ` ORDER BY ${buildSortClause(sort_field, sort_direction)} LIMIT ? OFFSET ?`;
     params.push(limit, offset);
 
     const choreographies = await allQuery(query, params);
     const enriched = await Promise.all(choreographies.map(c => enrichChoreography(c)));
 
-    // Get total count
+    // Build count query
     let countQuery = 'SELECT COUNT(DISTINCT c.id) as count FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id';
-    let countParams = [];
-    let countConditions = [];
-    let countGroupBy = '';
-    let countHaving = '';
-    let countHavingParams = [];
+    countQuery += joins.map(j => ` ${j}`).join('');
 
-    if (search) {
-      countConditions.push('c.name LIKE ?');
-      countParams.push(`%${search}%`);
+    if (conditions.length > 0) {
+      countQuery += ' WHERE ' + conditions.join(' AND ');
     }
 
-    if (level) {
-      const levelList = Array.isArray(level) ? level : [level];
-      const placeholders = levelList.map(() => '?').join(',');
-      countConditions.push(`l.name IN (${placeholders})`);
-      countParams.push(...levelList);
+    if (stepFilter.groupBy) {
+      countQuery += stepFilter.groupBy;
     }
 
-    if (noStepFigures) {
-      countQuery += `
-        LEFT JOIN choreography_step_figures csfNo ON c.id = csfNo.choreography_id
-      `;
-      countConditions.push('csfNo.choreography_id IS NULL');
-    } else if (step_figures) {
-      const figures = Array.isArray(step_figures) ? step_figures : [step_figures];
-
-      if (matchMode === 'exact') {
-        const placeholders = figures.map(() => '?').join(',');
-        countQuery += `
-          LEFT JOIN choreography_step_figures csf_all ON c.id = csf_all.choreography_id
-          LEFT JOIN step_figures sf_all ON csf_all.step_figure_id = sf_all.id
-        `;
-        countGroupBy = ' GROUP BY c.id';
-        countHaving = ` HAVING COUNT(DISTINCT sf_all.id) > 0
-                            AND COUNT(DISTINCT CASE WHEN sf_all.name IN (${placeholders}) THEN sf_all.id END) = COUNT(DISTINCT sf_all.id)`;
-        countHavingParams.push(...figures);
-      } else {
-        countQuery += `
-          INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
-          INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
-        `;
-        const placeholders = figures.map(() => '?').join(',');
-        countConditions.push(`sf.name IN (${placeholders})`);
-        countParams.push(...figures);
-
-        if (matchMode === 'all' && figures.length > 1) {
-          countGroupBy = ' GROUP BY c.id';
-          countHaving = ` HAVING COUNT(DISTINCT sf.id) = ${figures.length}`;
-        }
-      }
+    if (stepFilter.having) {
+      countQuery += stepFilter.having;
     }
 
-    if (tags) {
-      const tagList = Array.isArray(tags) ? tags : [tags];
-      countQuery += `
-        INNER JOIN choreography_tags ct ON c.id = ct.choreography_id
-        INNER JOIN tags t ON ct.tag_id = t.id
-      `;
-      const placeholders = tagList.map(() => '?').join(',');
-      countConditions.push(`t.name IN (${placeholders})`);
-      countParams.push(...tagList);
-    }
-
-    if (authors) {
-      const authorList = Array.isArray(authors) ? authors : [authors];
-      countQuery += `
-        INNER JOIN choreography_authors ca ON c.id = ca.choreography_id
-        INNER JOIN authors a ON ca.author_id = a.id
-      `;
-      const placeholders = authorList.map(() => '?').join(',');
-      countConditions.push(`a.name IN (${placeholders})`);
-      countParams.push(...authorList);
-    }
-
-    if (max_count !== undefined) {
-      const parsedMaxCount = Number.parseInt(String(max_count), 10);
-      if (!Number.isNaN(parsedMaxCount) && parsedMaxCount >= 0) {
-        countConditions.push('(c.count IS NULL OR c.count <= ?)');
-        countParams.push(parsedMaxCount);
-      }
-    }
-
-    if (countConditions.length > 0) {
-      countQuery += ' WHERE ' + countConditions.join(' AND ');
-    }
-
-    if (countGroupBy) {
-      countQuery += countGroupBy;
-    }
-
-    if (countHaving) {
-      countQuery += countHaving;
-      countParams.push(...countHavingParams);
-    }
-
-    // Wrap in subquery to properly count with GROUP BY
-    if (countGroupBy || countHaving) {
+    if (stepFilter.groupBy || stepFilter.having) {
       countQuery = `SELECT COUNT(*) as count FROM (${countQuery})`;
     }
 
@@ -814,7 +551,115 @@ export async function searchChoreographies(req, res) {
   }
 }
 
+function normalizeQueryParam(param) {
+  if (Array.isArray(param)) {
+    return param;
+  }
+  return param ? [param] : [];
+}
+
+function buildStepFiguresFilter(step_figures, step_figures_match_mode, without_step_figures) {
+  const result = { joins: [], conditions: [], groupBy: '', having: '', havingParams: [], params: [] };
+  const matchMode = step_figures_match_mode || 'all';
+  const noStepFigures = without_step_figures === 'true' || without_step_figures === true;
+
+  if (noStepFigures) {
+    result.joins = ['LEFT JOIN choreography_step_figures csfNo ON c.id = csfNo.choreography_id'];
+    result.conditions = ['csfNo.choreography_id IS NULL'];
+  } else if (step_figures) {
+    const figures = normalizeQueryParam(step_figures);
+    if (figures.length > 0) {
+      if (matchMode === 'exact') {
+        result.joins = [
+          'LEFT JOIN choreography_step_figures csf_all ON c.id = csf_all.choreography_id',
+          'LEFT JOIN step_figures sf_all ON csf_all.step_figure_id = sf_all.id'
+        ];
+        const placeholders = figures.map(() => '?').join(',');
+        result.groupBy = ' GROUP BY c.id';
+        result.having = ` HAVING COUNT(DISTINCT sf_all.id) > 0 AND COUNT(DISTINCT CASE WHEN sf_all.name IN (${placeholders}) THEN sf_all.id END) = COUNT(DISTINCT sf_all.id)`;
+        result.havingParams = figures;
+      } else {
+        result.joins = [
+          'INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id',
+          'INNER JOIN step_figures sf ON csf.step_figure_id = sf.id'
+        ];
+        const placeholders = figures.map(() => '?').join(',');
+        result.conditions = [`sf.name IN (${placeholders})`];
+        result.params = figures;
+        if (matchMode === 'all' && figures.length > 1) {
+          result.groupBy = ' GROUP BY c.id';
+          result.having = ` HAVING COUNT(DISTINCT sf.id) = ${figures.length}`;
+        }
+      }
+    }
+  }
+  return result;
+}
+
+function buildRelationshipFilter(items, relationshipTable, relationshipPkCol, entityTable) {
+  const result = { joins: [], conditions: [], params: [] };
+  const itemList = normalizeQueryParam(items);
+  if (itemList.length > 0) {
+    result.joins = [
+      `INNER JOIN ${relationshipTable} ON c.id = ${relationshipTable}.choreography_id`,
+      `INNER JOIN ${entityTable} ON ${relationshipTable}.${relationshipPkCol} = ${entityTable}.id`
+    ];
+    const placeholders = itemList.map(() => '?').join(',');
+    result.conditions = [`${entityTable}.name IN (${placeholders})`];
+    result.params = itemList;
+  }
+  return result;
+}
+
+function buildSortClause(sort_field, sort_direction) {
+  let orderBy = 'c.created_at DESC';
+  if (sort_field) {
+    const direction = sort_direction === 'desc' ? 'DESC' : 'ASC';
+    const sortMap = {
+      name: `LOWER(c.name) ${direction}`,
+      level: `LOWER(l.name) ${direction}`,
+      count: `c.count ${direction}`,
+      wall_count: `c.wall_count ${direction}`,
+      creation_year: `c.creation_year ${direction}`,
+    };
+    orderBy = sortMap[sort_field] || 'c.created_at DESC';
+  }
+  return orderBy;
+}
+
 // Helper functions
+function normalizeStringArray(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+}
+
+function normalizeStringField(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+async function insertRelationship(choreography_id, items, getItemId, relationshipTable, relationshipIdCol, creationTable) {
+  if (!items || !Array.isArray(items)) return;
+  for (const item of items) {
+    let itemId = await getItemId(item);
+    if (!itemId) {
+      const result = await runQuery(`INSERT INTO ${creationTable} (name) VALUES (?)`, [item]);
+      itemId = result.id;
+    }
+    await runQuery(
+      `INSERT INTO ${relationshipTable} (choreography_id, ${relationshipIdCol}) VALUES (?, ?)`,
+      [choreography_id, itemId]
+    );
+  }
+}
+
+async function deleteAndReinsertRelationships(choreography_id, items, relationshipTable, relationshipIdCol, creationTable, getIdFn) {
+  if (items === undefined) return;
+  await runQuery(`DELETE FROM ${relationshipTable} WHERE choreography_id = ?`, [choreography_id]);
+  if (Array.isArray(items) && items.length > 0) {
+    await insertRelationship(choreography_id, items, getIdFn, relationshipTable, relationshipIdCol, creationTable);
+  }
+}
+
 async function enrichChoreography(choreography) {
   const authors = await allQuery(
     `SELECT a.name FROM authors a
@@ -894,7 +739,7 @@ export async function addLevel(req, res) {
   try {
     const { name } = req.body;
 
-    if (!name || !name.trim()) {
+    if (!name?.trim()) {
       return res.status(400).json({ error: 'Level name is required' });
     }
 

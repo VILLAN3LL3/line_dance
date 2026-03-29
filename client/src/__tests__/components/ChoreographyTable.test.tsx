@@ -55,7 +55,7 @@ describe('ChoreographyTable', () => {
       expect(mockGetStepFigures).toHaveBeenCalled();
     });
 
-    fireEvent.click(screen.getAllByText('Alpha Dance')[0].closest('tr')!);
+    fireEvent.click(screen.getAllByText('Alpha Dance')[0].closest('tr') || document.body);
     expect(onSelect).toHaveBeenCalledWith(10);
   });
 
@@ -86,7 +86,7 @@ describe('ChoreographyTable', () => {
   });
 
   it('opens external links from action buttons', async () => {
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const openSpy = vi.spyOn(globalThis, 'open').mockImplementation(() => null);
 
     render(
       <ChoreographyTable

@@ -71,13 +71,17 @@
   gap: 16px;
 }
 
-.form-group {
+.form-group.form-input-row {
   display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 8px;
+  flex-wrap: nowrap;
 }
 
-.form-group input[type="text"] {
+.form-group.form-input-row input[type="text"] {
   flex: 1;
+  min-width: 0;
 }
 
 .btn-add {
@@ -85,7 +89,13 @@
   color: white;
   padding: 10px 16px;
   font-weight: 600;
-  align-self: flex-end;
+  align-self: auto;
+  white-space: nowrap;
+}
+
+.form-group.form-input-row .btn-add {
+  width: auto;
+  flex: 0 0 auto;
 }
 
 .btn-add:hover {
@@ -160,70 +170,6 @@
   background-color: var(--color-primary);
   border-color: var(--color-primary);
   color: white;
-}
-
-.level-group {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-add-level {
-  padding: 10px 14px;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  min-width: 44px;
-}
-
-.btn-add-level:hover:not(:disabled) {
-  background-color: #6d3a6d;
-  transform: translateY(-2px);
-}
-
-.level-group select {
-  flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: var(--border-radius);
-  font-size: 14px;
-}
-
-.add-level-form {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 12px;
-  background-color: #f9f9f9;
-  border-radius: var(--border-radius);
-  border: 1px dashed #ddd;
-  flex-wrap: wrap;
-}
-
-.input-new-level {
-  flex: 1;
-  min-width: 150px;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: var(--border-radius);
-  font-size: 14px;
-}
-
-.input-new-level:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(139, 71, 137, 0.1);
-}
-
-.error-text {
-  color: var(--color-danger);
-  font-size: 12px;
-  width: 100%;
-  margin-top: 8px;
 }
 
 @media (max-width: 768px) {

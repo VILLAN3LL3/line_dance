@@ -15,23 +15,25 @@ describe('escapeVCardValue', () => {
   });
 
   it('escapes a backslash as double-backslash', () => {
-    expect(escapeVCardValue('C:\\path\\file')).toBe('C:\\\\path\\\\file');
+    expect(escapeVCardValue(String.raw`C:\path\file`)).toBe(String.raw`C:\\path\\file`);
   });
 
   it('escapes a semicolon', () => {
-    expect(escapeVCardValue('a;b')).toBe('a\\;b');
+    expect(escapeVCardValue('a;b')).toBe(String.raw`a\;b`);
   });
 
   it('escapes a comma', () => {
-    expect(escapeVCardValue('a,b')).toBe('a\\,b');
+    expect(escapeVCardValue('a,b')).toBe(String.raw`a\,b`);
   });
 
-  it('escapes a newline as literal \\n', () => {
-    expect(escapeVCardValue('line1\nline2')).toBe('line1\\nline2');
+  it(String.raw`escapes a newline as literal \n`, () => {
+    expect(escapeVCardValue(String.raw`line1
+line2`)).toBe(String.raw`line1\nline2`);
   });
 
   it('escapes multiple special characters in one string', () => {
-    expect(escapeVCardValue('a;b,c\\d\ne')).toBe('a\\;b\\,c\\\\d\\ne');
+    expect(escapeVCardValue(String.raw`a;b,c\d
+e`)).toBe(String.raw`a\;b\,c\\d\ne`);
   });
 
   it('coerces a number to string before escaping', () => {
@@ -43,7 +45,8 @@ describe('escapeVCardValue', () => {
   });
 
   it('handles a string with only special characters', () => {
-    expect(escapeVCardValue(';,\\\n')).toBe('\\;\\,\\\\\\n');
+    expect(escapeVCardValue(String.raw`;,\
+`)).toBe(String.raw`\;\,\\\n`);
   });
 
   it('handles an email-style string with no escaping needed', () => {

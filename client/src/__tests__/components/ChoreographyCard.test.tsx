@@ -61,7 +61,10 @@ describe('ChoreographyCard', () => {
 
     render(<ChoreographyCard choreography={makeChoreography()} onSelect={onSelect} />);
 
-    fireEvent.click(screen.getAllByText('Neon Waltz')[0].closest('.choreography-card')!);
+    const card = screen.getAllByText('Neon Waltz')[0].closest('.choreography-card');
+    if (card) {
+      fireEvent.click(card);
+    }
 
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith(42);

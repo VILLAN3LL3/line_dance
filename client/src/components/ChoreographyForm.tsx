@@ -2,7 +2,7 @@ import "../styles/ChoreographyForm.css";
 
 import React, { useEffect, useState } from "react";
 
-import { addLevel as apiAddLevel, getAuthors, getLevels, getStepFigures, getTags } from "../api";
+import { getAuthors, getLevels, getStepFigures, getTags } from "../api";
 import { ChoreographyFormData } from "../types";
 
 interface ChoreographyFormProps {
@@ -35,9 +35,6 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const [authorsFromDb, setAuthorsFromDb] = useState<string[]>([]);
   const [tagsFromDb, setTagsFromDb] = useState<string[]>([]);
   const [figuresFromDb, setFiguresFromDb] = useState<string[]>([]);
-  const [newLevelName, setNewLevelName] = useState('');
-  const [showAddLevel, setShowAddLevel] = useState(false);
-  const [levelError, setLevelError] = useState<string | null>(null);
 
   useEffect(() => {
     loadReferenceData();
@@ -66,25 +63,6 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     }
   };
 
-  const handleAddLevel = async () => {
-    if (!newLevelName.trim()) {
-      setLevelError('Level name cannot be empty');
-      return;
-    }
-
-    try {
-      setLevelError(null);
-      const newLevel = await apiAddLevel(newLevelName.trim());
-      setLevels([...levels, newLevel]);
-      setNewLevelName('');
-      setShowAddLevel(false);
-      // Automatically select the new level
-      setFormData(prev => ({ ...prev, level: newLevel.name }));
-    } catch (error) {
-      setLevelError(error instanceof Error ? error.message : 'Failed to add level');
-    }
-  };
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -96,11 +74,13 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
         [name]: isChecked,
       }));
     } else {
+      const isNumericField = name === 'count' || name === 'wall_count' || name === 'creation_year';
+      const parsedValue = isNumericField && value ? Number.parseInt(value, 10) : undefined;
+      const finalValue = isNumericField ? parsedValue : value;
+      
       setFormData(prev => ({
         ...prev,
-        [name]: name === 'count' || name === 'wall_count' || name === 'creation_year' 
-          ? value ? parseInt(value) : undefined
-          : value,
+        [name]: finalValue,
       }));
     }
   };
@@ -138,24 +118,24 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     setCurrentFigure('');
   };
 
-  const removeAuthor = (index: number) => {
+  const removeAuthor = (authorToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      authors: prev.authors.filter((_, i) => i !== index),
+      authors: prev.authors.filter(author => author !== authorToRemove),
     }));
   };
 
-  const removeTag = (index: number) => {
+  const removeTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags.filter((_, i) => i !== index),
+      tags: prev.tags.filter(tag => tag !== tagToRemove),
     }));
   };
 
-  const removeFigure = (index: number) => {
+  const removeFigure = (figureToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      step_figures: prev.step_figures.filter((_, i) => i !== index),
+      step_figures: prev.step_figures.filter(figure => figure !== figureToRemove),
     }));
   };
 
@@ -256,58 +236,14 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
         <div className="form-group">
           <label htmlFor="level">Level *</label>
-          <div className="level-group">
-            <select id="level" name="level" value={formData.level} onChange={handleChange} required>
-              <option value="">Select a level</option>
-              {levels.map(level => (
-                <option key={level.id} value={level.name}>
-                  {level.name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setShowAddLevel(!showAddLevel)}
-              className="btn-add-level"
-              title="Add new level"
-            >
-              +
-            </button>
-          </div>
-          {showAddLevel && (
-            <div className="add-level-form">
-              <input
-                type="text"
-                value={newLevelName}
-                onChange={e => {
-                  setNewLevelName(e.target.value);
-                  setLevelError(null);
-                }}
-                onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), handleAddLevel())}
-                placeholder="New level name"
-                className="input-new-level"
-              />
-              <button
-                type="button"
-                onClick={handleAddLevel}
-                className="btn-small btn-add"
-              >
-                Add
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddLevel(false);
-                  setNewLevelName('');
-                  setLevelError(null);
-                }}
-                className="btn-small btn-secondary"
-              >
-                Cancel
-              </button>
-              {levelError && <span className="error-text">{levelError}</span>}
-            </div>
-          )}
+          <select id="level" name="level" value={formData.level} onChange={handleChange} required>
+            <option value="">Select a level</option>
+            {levels.map(level => (
+              <option key={level.id} value={level.name}>
+                {level.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-row">
@@ -348,7 +284,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           </div>
         </div>
 
-        <div className="form-group">
+        <div className="form-group form-input-row">
           <label htmlFor="step_sheet_link">Step Sheet Link</label>
           <input
             type="url"
@@ -409,19 +345,24 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
       <div className="form-section">
         <h3>Authors</h3>
-        <div className="form-group">
+        <div className="form-group form-input-row">
           <input
             type="text"
             value={currentAuthor}
             onChange={handleAuthorChange}
             onBlur={handleAuthorBlur}
-            onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addAuthor())}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addAuthor();
+              }
+            }}
             placeholder={currentAuthor ? '' : 'Author name'}
             list="authors-list"
           />
           <datalist id="authors-list">
-            {authorsFromDb.map((author, index) => (
-              <option key={index} value={author} />
+            {authorsFromDb.map((author) => (
+              <option key={author} value={author} />
             ))}
           </datalist>
           <button type="button" onClick={() => addAuthor()} className="btn-add">
@@ -429,12 +370,12 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           </button>
         </div>
         <div className="tags-container">
-          {formData.authors.map((author, index) => (
-            <span key={index} className="tag">
+          {formData.authors.map((author) => (
+            <span key={author} className="tag">
               {author}
               <button
                 type="button"
-                onClick={() => removeAuthor(index)}
+                onClick={() => removeAuthor(author)}
                 className="btn-remove"
               >
                 ×
@@ -446,19 +387,24 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
       <div className="form-section">
         <h3>Step Figures</h3>
-        <div className="form-group">
+        <div className="form-group form-input-row">
           <input
             type="text"
             value={currentFigure}
             onChange={handleFigureChange}
             onBlur={handleFigureBlur}
-            onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addFigure())}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addFigure();
+              }
+            }}
             placeholder={currentFigure ? '' : 'Step figure name (e.g., Vine, Shuffle, Grapevine)'}
             list="figures-list"
           />
           <datalist id="figures-list">
-            {figuresFromDb.map((figure, index) => (
-              <option key={index} value={figure} />
+            {figuresFromDb.map((figure) => (
+              <option key={figure} value={figure} />
             ))}
           </datalist>
           <button type="button" onClick={() => addFigure()} className="btn-add">
@@ -466,12 +412,12 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           </button>
         </div>
         <div className="tags-container">
-          {formData.step_figures.map((figure, index) => (
-            <span key={index} className="tag">
+          {formData.step_figures.map((figure) => (
+            <span key={figure} className="tag">
               {figure}
               <button
                 type="button"
-                onClick={() => removeFigure(index)}
+                onClick={() => removeFigure(figure)}
                 className="btn-remove"
               >
                 ×
@@ -483,19 +429,24 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
       <div className="form-section">
         <h3>Tags</h3>
-        <div className="form-group">
+        <div className="form-group form-input-row">
           <input
             type="text"
             value={currentTag}
             onChange={handleTagChange}
             onBlur={handleTagBlur}
-            onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addTag();
+              }
+            }}
             placeholder={currentTag ? '' : 'Tag (e.g., Country, Western, Urban)'}
             list="tags-list"
           />
           <datalist id="tags-list">
-            {tagsFromDb.map((tag, index) => (
-              <option key={index} value={tag} />
+            {tagsFromDb.map((tag) => (
+              <option key={tag} value={tag} />
             ))}
           </datalist>
           <button type="button" onClick={() => addTag()} className="btn-add">
@@ -503,12 +454,12 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           </button>
         </div>
         <div className="tags-container">
-          {formData.tags.map((tag, index) => (
-            <span key={index} className="tag">
+          {formData.tags.map((tag) => (
+            <span key={tag} className="tag">
               {tag}
               <button
                 type="button"
-                onClick={() => removeTag(index)}
+                onClick={() => removeTag(tag)}
                 className="btn-remove"
               >
                 ×

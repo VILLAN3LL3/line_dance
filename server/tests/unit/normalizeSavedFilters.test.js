@@ -170,7 +170,7 @@ describe('normalizeSavedFilters', () => {
   });
 
   it('omits max_count for NaN', () => {
-    expect(normalizeSavedFilters({ max_count: NaN })).toEqual({});
+    expect(normalizeSavedFilters({ max_count: Number.NaN })).toEqual({});
   });
 
   it('omits max_count for a non-numeric string', () => {

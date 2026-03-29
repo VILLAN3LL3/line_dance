@@ -154,6 +154,68 @@ export const App: React.FC = () => {
     }
   };
 
+  const renderContent = () => {
+    if (isLoading) {
+      return <div className="loading">Loading choreographies...</div>;
+    }
+    
+    if (choreographies.length === 0) {
+      return (
+        <div className="empty-state">
+          <p>No choreographies found. Start by adding one!</p>
+        </div>
+      );
+    }
+    
+    if (displayMode === 'card') {
+      return (
+        <>
+          <div className="choreographies-grid">
+            {choreographies.map(choreo => (
+              <ChoreographyCard
+                key={choreo.id}
+                choreography={choreo}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onSelect={handleSelectChoreography}
+              />
+            ))}
+          </div>
+          
+          {pagination.totalPages > 1 && (
+            <div className="pagination">
+              <button
+                disabled={pagination.page === 1 || isLoading}
+                onClick={() => loadChoreographies(currentFilters)}
+              >
+                Previous
+              </button>
+              <span>
+                Page {pagination.page} of {pagination.totalPages}
+              </span>
+              <button
+                disabled={pagination.page === pagination.totalPages || isLoading}
+                onClick={() => loadChoreographies(currentFilters)}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      );
+    }
+    
+    return (
+      <ChoreographyTable
+        choreographies={choreographies}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onSelect={handleSelectChoreography}
+        isLoading={isLoading}
+      />
+    );
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -190,77 +252,7 @@ export const App: React.FC = () => {
             </button>
           </div>
           
-          {isLoading ? (
-            <div className="loading">Loading choreographies...</div>
-          ) : choreographies.length === 0 ? (
-            <div className="empty-state">
-              <p>No choreographies found. Start by adding one!</p>
-            </div>
-          ) : displayMode === 'card' ? (
-            <>
-              <div className="choreographies-grid">
-                {choreographies.map(choreo => (
-                  <ChoreographyCard
-                    key={choreo.id}
-                    choreography={choreo}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onSelect={handleSelectChoreography}
-                  />
-                ))}
-              </div>
-              
-              {pagination.totalPages > 1 && (
-                <div className="pagination">
-                  <button
-                    disabled={pagination.page === 1 || isLoading}
-                    onClick={() => loadChoreographies(currentFilters)}
-                  >
-                    Previous
-                  </button>
-                  <span>
-                    Page {pagination.page} of {pagination.totalPages}
-                  </span>
-                  <button
-                    disabled={pagination.page === pagination.totalPages || isLoading}
-                    onClick={() => loadChoreographies(currentFilters)}
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <ChoreographyTable
-                choreographies={choreographies}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onSelect={handleSelectChoreography}
-                isLoading={isLoading}
-              />
-              
-              {pagination.totalPages > 1 && (
-                <div className="pagination">
-                  <button
-                    disabled={pagination.page === 1 || isLoading}
-                    onClick={() => loadChoreographies(currentFilters)}
-                  >
-                    Previous
-                  </button>
-                  <span>
-                    Page {pagination.page} of {pagination.totalPages}
-                  </span>
-                  <button
-                    disabled={pagination.page === pagination.totalPages || isLoading}
-                    onClick={() => loadChoreographies(currentFilters)}
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+          {renderContent()}
         </div>
       )}
 

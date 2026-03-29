@@ -15,6 +15,12 @@ interface ChoreographyTableProps {
   isLoading?: boolean;
 }
 
+const getSortIndicator = (sortState: string | false | undefined): string => {
+  if (sortState === 'asc') return ' ⇧';
+  if (sortState === 'desc') return ' ⇩';
+  return '';
+};
+
 export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
   choreographies,
   onEdit,
@@ -29,7 +35,8 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
     const fetchStepFigures = async () => {
       try {
         const figures = await getStepFigures();
-        setAllStepFigures(figures.sort((a, b) => a.localeCompare(b)));
+        const sorted = [...figures].sort((a: string, b: string) => a.localeCompare(b));
+        setAllStepFigures(sorted);
       } catch (error) {
         console.error('Failed to fetch step figures:', error);
       }
@@ -105,26 +112,26 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
           <thead>
             <tr>
               <th className="sortable" onClick={() => table.getColumn('name')?.toggleSorting()}>
-                Name{table.getColumn('name')?.getIsSorted() === 'asc' ? ' ⇧' : table.getColumn('name')?.getIsSorted() === 'desc' ? ' ⇩' : ''}
+                Name{getSortIndicator(table.getColumn('name')?.getIsSorted())}
               </th>
               <th className="sortable" onClick={() => table.getColumn('level')?.toggleSorting()}>
-                Level{table.getColumn('level')?.getIsSorted() === 'asc' ? ' ⇧' : table.getColumn('level')?.getIsSorted() === 'desc' ? ' ⇩' : ''}
+                Level{getSortIndicator(table.getColumn('level')?.getIsSorted())}
               </th>
               <th className="sortable" onClick={() => table.getColumn('count')?.toggleSorting()}>
-                Count{table.getColumn('count')?.getIsSorted() === 'asc' ? ' ⇧' : table.getColumn('count')?.getIsSorted() === 'desc' ? ' ⇩' : ''}
+                Count{getSortIndicator(table.getColumn('count')?.getIsSorted())}
               </th>
               <th className="sortable" onClick={() => table.getColumn('wall_count')?.toggleSorting()}>
-                Walls{table.getColumn('wall_count')?.getIsSorted() === 'asc' ? ' ⇧' : table.getColumn('wall_count')?.getIsSorted() === 'desc' ? ' ⇩' : ''}
+                Walls{getSortIndicator(table.getColumn('wall_count')?.getIsSorted())}
               </th>
               <th className="sortable" onClick={() => table.getColumn('creation_year')?.toggleSorting()}>
-                Year{table.getColumn('creation_year')?.getIsSorted() === 'asc' ? ' ⇧' : table.getColumn('creation_year')?.getIsSorted() === 'desc' ? ' ⇩' : ''}
+                Year{getSortIndicator(table.getColumn('creation_year')?.getIsSorted())}
               </th>
               <th>Tags</th>
               <th className="figure-column sortable" onClick={() => table.getColumn('restart')?.toggleSorting()}>
-                Restart{table.getColumn('restart')?.getIsSorted() === 'asc' ? ' ⇧' : table.getColumn('restart')?.getIsSorted() === 'desc' ? ' ⇩' : ''}
+                Restart{getSortIndicator(table.getColumn('restart')?.getIsSorted())}
               </th>
               <th className="figure-column sortable" onClick={() => table.getColumn('tag')?.toggleSorting()}>
-                Tag{table.getColumn('tag')?.getIsSorted() === 'asc' ? ' ⇧' : table.getColumn('tag')?.getIsSorted() === 'desc' ? ' ⇩' : ''}
+                Tag{getSortIndicator(table.getColumn('tag')?.getIsSorted())}
               </th>
               {allStepFigures.map(figure => (
                 <th key={figure} className="figure-column" title={figure}>
@@ -167,7 +174,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(choreo.step_sheet_link!, '_blank');
+                          window.open(choreo.step_sheet_link, '_blank');
                         }}
                         className="btn-small btn-secondary"
                         title="Open Step Sheet"
@@ -179,7 +186,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(choreo.demo_video_url!, '_blank');
+                          window.open(choreo.demo_video_url, '_blank');
                         }}
                         className="btn-small btn-secondary"
                         title="Open Demo Video"
@@ -191,7 +198,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(choreo.tutorial_video_url!, '_blank');
+                          window.open(choreo.tutorial_video_url || '', '_blank');
                         }}
                         className="btn-small btn-secondary"
                         title="Open Tutorial Video"
