@@ -1,8 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { DanceGroupsAdmin } from '../../components/DanceGroupsAdmin';
-import { createDanceGroup, deleteDanceGroup, getDanceGroups, updateDanceGroup } from '../../api';
+import { MemoryRouter } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+
+import { createDanceGroup, deleteDanceGroup, getDanceGroups, updateDanceGroup } from "../../api";
+import { DanceGroupsAdmin } from "../../components/DanceGroupsAdmin";
 
 const mockNavigate = vi.fn();
 
