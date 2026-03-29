@@ -282,7 +282,3 @@ The server also runs migrations on startup before registering routes.
 ## License
 
 European Union Public Licence (EUPL) v1.2
-
-## Support
-
-For issues or questions, please create an issue in the repository.
