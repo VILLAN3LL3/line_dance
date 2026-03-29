@@ -15,8 +15,6 @@ interface ChoreographyTableProps {
   isLoading?: boolean;
 }
 
-type SortField = 'name' | 'level' | 'count' | 'wall_count' | 'creation_year';
-
 export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
   choreographies,
   onEdit,
@@ -45,56 +43,47 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
       id: 'name',
       header: 'Name',
       accessorKey: 'name',
-      sortingFn: 'alphanumeric',
     },
     {
       id: 'level',
       header: 'Level',
       accessorKey: 'level',
-      sortingFn: 'alphanumeric',
     },
     {
       id: 'count',
       header: 'Count',
       accessorKey: 'count',
-      sortingFn: 'basic',
     },
     {
       id: 'wall_count',
       header: 'Walls',
       accessorKey: 'wall_count',
-      sortingFn: 'basic',
     },
     {
       id: 'creation_year',
       header: 'Year',
       accessorKey: 'creation_year',
-      sortingFn: 'basic',
     },
     {
       id: 'tags',
       header: 'Tags',
       accessorKey: 'tags',
-      sortingFn: 'alphanumeric',
       cell: ({ getValue }) => (getValue() as string[]).join(', '),
     },
     {
       id: 'restart',
       header: 'Restart',
-      accessorFn: (row) => row.restart_information ? '✅' : '',
-      sortingFn: 'alphanumeric',
+      accessorFn: (row: Choreography) => row.restart_information ? '✅' : '',
     },
     {
       id: 'tag',
       header: 'Tag',
-      accessorFn: (row) => row.tag_information ? '✅' : '',
-      sortingFn: 'alphanumeric',
+      accessorFn: (row: Choreography) => row.tag_information ? '✅' : '',
     },
     ...allStepFigures.map(fig => ({
       id: fig,
       header: fig,
-      accessorFn: (row) => row.step_figures.includes(fig) ? '✅' : '',
-      sortingFn: 'alphanumeric',
+      accessorFn: (row: Choreography) => row.step_figures.includes(fig) ? '✅' : '',
     })),
     {
       id: 'actions',
@@ -108,16 +97,6 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
-
-  // Filter choreographies by selected figures
-  const filteredChoreographies = useMemo(() => {
-    return choreographies;
-  }, [choreographies]);
-
-  // Sort choreographies (client-side)
-  const sortedChoreographies = useMemo(() => {
-    return choreographies; // Table handles sorting
-  }, [choreographies]);
 
   return (
     <div className="choreography-table-wrapper">

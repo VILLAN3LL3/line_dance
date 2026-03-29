@@ -8,7 +8,7 @@ import {
   getLearnedChoreographies, getSessions, removeGroupLevel
 } from "../api";
 import { Choreography, DanceCourse, DanceGroup, LearnedChoreography, Session } from "../types";
-import { CourseStatus, getBerlinTodayIso, getCourseStatus, getCourseStatusLabel, type } from "../utils/courseStatus";
+import { CourseStatus, getBerlinTodayIso, getCourseStatus, getCourseStatusLabel } from "../utils/courseStatus";
 
 const DanceGroupDetail: React.FC = () => {
   const navigate = useNavigate();

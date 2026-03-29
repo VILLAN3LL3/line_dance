@@ -73,7 +73,7 @@ describe('DanceGroupDetail', () => {
       pagination: { page: 1, limit: 10000, total: 1, totalPages: 1 },
     });
     vi.mocked(getGroupLevels).mockResolvedValue(['Beginner']);
-    vi.mocked(addGroupLevel).mockResolvedValue({ message: 'ok' });
+    vi.mocked(addGroupLevel).mockResolvedValue({ level: 'Beginner' });
     vi.mocked(removeGroupLevel).mockResolvedValue({ message: 'ok' });
     vi.mocked(deleteDanceCourse).mockResolvedValue({ message: 'ok' });
     vi.mocked(exportDanceCoursePdf).mockResolvedValue(new Blob(['pdf'], { type: 'application/pdf' }));
