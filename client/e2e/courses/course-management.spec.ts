@@ -18,7 +18,9 @@ test.describe("Course Management", () => {
     await expect(page.locator(".session-item")).toHaveCount(1);
 
     await page.getByRole("button", { name: /Manage/i }).click();
-    await page.getByPlaceholder(/Search choreography by name/i).fill(choreoName);
+    await expect(page.getByPlaceholder(/Search choreography by name/i)).toBeEnabled();
+    await page.getByPlaceholder(/Search choreography by name/i).fill(`${choreoName} (Beginner)`);
+    await expect(page.getByRole("button", { name: /Add to Session/i })).toBeEnabled();
     await page.getByRole("button", { name: /Add to Session/i }).click();
     await expect(page.locator(".choreography-item", { hasText: choreoName })).toBeVisible({ timeout: 30_000 });
 
@@ -32,7 +34,9 @@ test.describe("Course Management", () => {
       await dialog.accept();
     });
     await page.getByRole("button", { name: /^Delete$/i }).click();
-    await expect(page.getByText(/No sessions yet/i)).toBeVisible();
+    await expect(page.locator(".session-item")).toHaveCount(0, { timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: /Choreographies for/i })).toHaveCount(0);
+    await expect(page.locator(".empty-state", { hasText: /No sessions yet/i })).toBeVisible();
 
     expect(choreographyId).toBeGreaterThan(0);
   });
