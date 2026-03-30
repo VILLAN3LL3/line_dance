@@ -1,6 +1,6 @@
 import "../styles/ChoreographyForm.css";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import { getAuthors, getLevels, getStepFigures, getTags } from "../api";
 import { ChoreographyFormData } from "../types";
@@ -36,11 +36,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const [tagsFromDb, setTagsFromDb] = useState<string[]>([]);
   const [figuresFromDb, setFiguresFromDb] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadReferenceData();
-  }, []);
-
-  const loadReferenceData = async () => {
+  const loadReferenceData = useCallback(async () => {
     try {
       const [fetchedLevels, fetchedAuthors, fetchedTags, fetchedFigures] = await Promise.all([
         getLevels(),
@@ -61,7 +57,11 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     } catch (error) {
       console.error('Error loading reference data:', error);
     }
-  };
+  }, [formData.level]);
+
+  useEffect(() => {
+    void loadReferenceData();
+  }, [loadReferenceData]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -207,7 +207,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       await onSubmit(formData);

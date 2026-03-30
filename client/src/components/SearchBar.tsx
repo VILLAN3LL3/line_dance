@@ -313,7 +313,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
   }, []);
 
   useEffect(() => {
-    const selected = getSelectedConfiguration();
+    const selected = savedConfigurations.find(config => String(config.id) === selectedConfigurationId) || null;
     if (selected) {
       setConfigurationName(selected.name);
     }
@@ -326,7 +326,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
     if (maxCount > maxCountLimit) {
       setMaxCount(maxCountLimit);
     }
-  }, [maxCountLimit]);
+  }, [maxCount, maxCountLimit]);
 
   const toggleFigure = (figure: string) => {
     if (withoutStepFigures) {

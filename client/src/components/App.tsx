@@ -1,10 +1,10 @@
 import "../styles/App.css";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { createChoreography, deleteChoreography, searchChoreographies, updateChoreography } from "../api";
-import { Choreography } from "../types";
+import { Choreography, ChoreographyFormData, SearchFilters } from "../types";
 import { ChoreographyCard } from "./ChoreographyCard";
 import { ChoreographyForm } from "./ChoreographyForm";
 import { ChoreographyTable } from "./ChoreographyTable";
@@ -23,9 +23,9 @@ export const App: React.FC = () => {
   };
 
   // Initialize filters from location state or localStorage
-  const getInitialFilters = () => {
+  const getInitialFilters = useCallback((): SearchFilters => {
     // Check if we have initial filters from location state
-    const state = location.state as { initialFilters?: Record<string, unknown> } | null;
+    const state = location.state as { initialFilters?: SearchFilters } | null;
     if (state?.initialFilters) {
       return state.initialFilters;
     }
@@ -40,7 +40,7 @@ export const App: React.FC = () => {
       }
     }
     return {};
-  };
+  }, [location.state]);
 
   const [view, setView] = useState<View>('list');
   const [displayMode, setDisplayMode] = useState<'card' | 'table'>(getInitialDisplayMode);
@@ -61,7 +61,7 @@ export const App: React.FC = () => {
     if (location.state?.initialFilters) {
       globalThis.history.replaceState({}, document.title);
     }
-  }, [location]);
+  }, [getInitialFilters, location.state]);
 
   // Save display mode to localStorage when it changes
   useEffect(() => {
@@ -73,7 +73,7 @@ export const App: React.FC = () => {
     localStorage.setItem('currentFilters', JSON.stringify(currentFilters));
   }, [currentFilters]);
 
-  const loadChoreographies = async (filters = {}, isInitialLoad = false) => {
+  const loadChoreographies = async (filters: SearchFilters = {}, isInitialLoad = false) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -97,11 +97,11 @@ export const App: React.FC = () => {
     await loadChoreographies(filters);
   };
 
-  const handleSearch = async (filters: any) => {
+  const handleSearch = async (filters: SearchFilters) => {
     await loadChoreographies(filters);
   };
 
-  const handleCreate = async (formData: any) => {
+  const handleCreate = async (formData: ChoreographyFormData) => {
     setIsLoading(true);
     try {
       await createChoreography(formData);
@@ -118,7 +118,7 @@ export const App: React.FC = () => {
     navigate(`/choreographies/${id}`, { state: { editMode: true } });
   };
 
-  const handleUpdate = async (formData: any) => {
+  const handleUpdate = async (formData: ChoreographyFormData) => {
     if (!selectedChoreography) return;
     setIsLoading(true);
     try {

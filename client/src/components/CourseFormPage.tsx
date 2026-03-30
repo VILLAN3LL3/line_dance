@@ -1,6 +1,6 @@
 import "../styles/CourseFormPage.css";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { createDanceCourse, getDanceCourses, getDanceGroup, getTrainers, updateDanceCourse } from "../api";
@@ -31,20 +31,7 @@ const CourseFormPage: React.FC = () => {
 
   const title = useMemo(() => (isEditMode ? "Edit Course" : "Create Course"), [isEditMode]);
 
-  useEffect(() => {
-    if (!Number.isFinite(parsedGroupId)) {
-      setError("Invalid dance group id");
-      return;
-    }
-    if (courseId && !Number.isFinite(Number(courseId))) {
-      setError("Invalid course id");
-      return;
-    }
-
-    void loadData();
-  }, [parsedGroupId, courseId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -79,9 +66,22 @@ const CourseFormPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [parsedGroupId, isEditMode, parsedCourseId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!Number.isFinite(parsedGroupId)) {
+      setError("Invalid dance group id");
+      return;
+    }
+    if (courseId && !Number.isFinite(Number(courseId))) {
+      setError("Invalid course id");
+      return;
+    }
+
+    void loadData();
+  }, [parsedGroupId, courseId, loadData]);
+
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!semester.trim()) {
       setError("Semester is required");

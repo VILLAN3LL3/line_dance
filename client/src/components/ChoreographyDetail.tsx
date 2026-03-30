@@ -1,6 +1,6 @@
 import "../styles/ChoreographyDetail.css";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { deleteChoreography, fetchChoreography, updateChoreography } from "../api";
@@ -19,29 +19,7 @@ const ChoreographyDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!Number.isFinite(choreographyId)) {
-      setError("Invalid choreography ID");
-      return;
-    }
-    
-    // Check if we should start in edit mode
-    const state = location.state as { editMode?: boolean } | null;
-    if (state?.editMode) {
-      setView('edit');
-    }
-    
-    loadChoreography();
-  }, [choreographyId, location.state]);
-
-  useEffect(() => {
-    // Clear location state after using it
-    if (location.state?.editMode) {
-      globalThis.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
-
-  const loadChoreography = async () => {
+  const loadChoreography = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -53,7 +31,29 @@ const ChoreographyDetail: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [choreographyId]);
+
+  useEffect(() => {
+    if (!Number.isFinite(choreographyId)) {
+      setError("Invalid choreography ID");
+      return;
+    }
+
+    // Check if we should start in edit mode
+    const state = location.state as { editMode?: boolean } | null;
+    if (state?.editMode) {
+      setView('edit');
+    }
+
+    void loadChoreography();
+  }, [choreographyId, location.state, loadChoreography]);
+
+  useEffect(() => {
+    // Clear location state after using it
+    if (location.state?.editMode) {
+      globalThis.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleEdit = () => {
     setView('edit');

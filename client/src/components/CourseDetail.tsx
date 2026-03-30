@@ -1,6 +1,6 @@
 import "../styles/CourseDetail.css";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -35,15 +35,7 @@ const CourseDetail: React.FC = () => {
     )
   );
 
-  useEffect(() => {
-    if (!Number.isFinite(parsedGroupId) || !Number.isFinite(parsedCourseId)) {
-      setError("Invalid route parameters");
-      return;
-    }
-    void loadData();
-  }, [parsedGroupId, parsedCourseId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -87,9 +79,17 @@ const CourseDetail: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [parsedGroupId, parsedCourseId, selectedSession]);
 
-  const handleCreateSession = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!Number.isFinite(parsedGroupId) || !Number.isFinite(parsedCourseId)) {
+      setError("Invalid route parameters");
+      return;
+    }
+    void loadData();
+  }, [parsedGroupId, parsedCourseId, loadData]);
+
+  const handleCreateSession = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!newSessionDate) {
       setError("Session date is required");
@@ -161,7 +161,7 @@ const CourseDetail: React.FC = () => {
     setSelectedChoreographyId(matchedChoreography ? String(matchedChoreography.id) : "");
   };
 
-  const handleAddChoreography = async (e: React.FormEvent) => {
+  const handleAddChoreography = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedSession || !selectedChoreographyId) {
       setError("Please select a choreography");

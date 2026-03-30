@@ -1,6 +1,6 @@
 import "../styles/DanceGroupDetail.css";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -27,15 +27,7 @@ const DanceGroupDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!Number.isFinite(parsedGroupId)) {
-      setError("Invalid dance group id");
-      return;
-    }
-    void loadData();
-  }, [parsedGroupId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -59,7 +51,15 @@ const DanceGroupDetail: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [parsedGroupId]);
+
+  useEffect(() => {
+    if (!Number.isFinite(parsedGroupId)) {
+      setError("Invalid dance group id");
+      return;
+    }
+    void loadData();
+  }, [parsedGroupId, loadData]);
 
   const handleDeleteCourse = async (courseId: number) => {
     if (!confirm("Are you sure you want to delete this course and all related sessions?")) {
