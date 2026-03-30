@@ -1,3 +1,5 @@
+import "../styles/ChoreographyDetail.css";
+
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -115,6 +117,7 @@ const ChoreographyDetail: React.FC = () => {
           choreography={choreography}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          videoEmbedMode="all"
         />
       ) : (
         <ChoreographyForm

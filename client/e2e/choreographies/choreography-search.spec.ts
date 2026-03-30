@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { APIRequestContext, expect, test } from "@playwright/test";
 
 import { API_BASE, createChoreographyViaApi } from "../helpers/api";
 
@@ -49,29 +49,38 @@ test.describe("Choreography Search", () => {
 
 test.describe("Choreography Search API — bracket-notation array params", () => {
   test("level[]= filters return only matching levels", async ({ request }) => {
-    // Seed: one Beginner, one Advanced
-    await createChoreographyViaApi(request, "_E2E Beginner Dance");
-    const advRes = await request.post(`${API_BASE}/choreographies`, {
-      data: { name: "_E2E Advanced Dance", level: "Advanced", step_figures: ["Pivot"], count: 48 },
+    const runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    const beginnerName = `_E2E Beginner Dance ${runId}`;
+    const intermediateName = `_E2E Intermediate Dance ${runId}`;
+
+    // Seed: one Beginner, one Intermediate
+    await ensureLevel(request, "Intermediate");
+    await createChoreographyViaApi(request, beginnerName);
+    const intermediateRes = await request.post(`${API_BASE}/choreographies`, {
+      data: { name: intermediateName, level: "Intermediate", step_figures: ["Pivot"], count: 48 },
     });
-    expect(advRes.ok()).toBeTruthy();
+    expect(intermediateRes.ok()).toBeTruthy();
 
     const res = await request.get(
-      `${API_BASE}/choreographies/search?level[]=Beginner&level[]=Advanced&search=_E2E`,
+      `${API_BASE}/choreographies/search?level[]=Beginner&level[]=Intermediate&search=${encodeURIComponent(runId)}`,
     );
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
     const names: string[] = body.data.map((c: { name: string }) => c.name).sort();
-    expect(names).toEqual(["_E2E Advanced Dance", "_E2E Beginner Dance"]);
+    expect(names).toEqual([beginnerName, intermediateName].sort());
   });
 
   test("step_figures[]= with exact mode returns only subset-matching choreos", async ({ request }) => {
+    const runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    const vineOnlyName = `_E2E Vine Only ${runId}`;
+    const vinePivotName = `_E2E Vine Pivot ${runId}`;
+
     // Seed: Vine only; Vine + Pivot
     await request.post(`${API_BASE}/choreographies`, {
-      data: { name: "_E2E Vine Only", level: "Beginner", step_figures: ["Vine"], count: 32 },
+      data: { name: vineOnlyName, level: "Beginner", step_figures: ["Vine"], count: 32 },
     });
     await request.post(`${API_BASE}/choreographies`, {
-      data: { name: "_E2E Vine Pivot", level: "Beginner", step_figures: ["Vine", "Pivot"], count: 32 },
+      data: { name: vinePivotName, level: "Beginner", step_figures: ["Vine", "Pivot"], count: 32 },
     });
 
     // Exact mode with [Vine, Pivot] — "Vine Only" has Pivot not in its figures → excluded
@@ -80,30 +89,44 @@ test.describe("Choreography Search API — bracket-notation array params", () =>
     // "Vine Pivot" has {Vine, Pivot} ⊆ {Vine, Pivot} ✓
     // Both should match. Use [Vine] only to exclude "Vine Pivot".
     const res = await request.get(
-      `${API_BASE}/choreographies/search?step_figures[]=Vine&step_figures_match_mode=exact&search=_E2E`,
+      `${API_BASE}/choreographies/search?step_figures[]=Vine&step_figures_match_mode=exact&search=${encodeURIComponent(runId)}`,
     );
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
     const names: string[] = body.data.map((c: { name: string }) => c.name);
-    expect(names).toContain("_E2E Vine Only");
-    expect(names).not.toContain("_E2E Vine Pivot");
+    expect(names).toContain(vineOnlyName);
+    expect(names).not.toContain(vinePivotName);
   });
 
   test("combined level[]= and step_figures[]= filters work together", async ({ request }) => {
+    const runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    const beginnerName = `_E2E B Vine ${runId}`;
+    const intermediateName = `_E2E I Vine ${runId}`;
+
+    await ensureLevel(request, "Intermediate");
     await request.post(`${API_BASE}/choreographies`, {
-      data: { name: "_E2E B Vine", level: "Beginner", step_figures: ["Vine"], count: 32 },
+      data: { name: beginnerName, level: "Beginner", step_figures: ["Vine"], count: 32 },
     });
     await request.post(`${API_BASE}/choreographies`, {
-      data: { name: "_E2E I Vine", level: "Intermediate", step_figures: ["Vine"], count: 32 },
+      data: { name: intermediateName, level: "Intermediate", step_figures: ["Vine"], count: 32 },
     });
 
     const res = await request.get(
-      `${API_BASE}/choreographies/search?level[]=Beginner&step_figures[]=Vine&step_figures_match_mode=any&search=_E2E`,
+      `${API_BASE}/choreographies/search?level[]=Beginner&step_figures[]=Vine&step_figures_match_mode=any&search=${encodeURIComponent(runId)}`,
     );
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
     const names: string[] = body.data.map((c: { name: string }) => c.name);
-    expect(names).toContain("_E2E B Vine");
-    expect(names).not.toContain("_E2E I Vine");
+    expect(names).toContain(beginnerName);
+    expect(names).not.toContain(intermediateName);
   });
 });
+
+async function ensureLevel(request: APIRequestContext, name: string) {
+  const response = await request.post(`${API_BASE}/levels`, {
+    data: { name },
+  });
+
+  // 201: created, 400: already exists
+  expect([201, 400]).toContain(response.status());
+}

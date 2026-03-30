@@ -1,0 +1,9 @@
+.choreography-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.choreography-detail > .btn-back {
+  align-self: flex-start;
+}

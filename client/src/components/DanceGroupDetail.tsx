@@ -9,6 +9,7 @@ import {
 } from "../api";
 import { Choreography, DanceCourse, DanceGroup, LearnedChoreography, Session } from "../types";
 import { CourseStatus, getBerlinTodayIso, getCourseStatus, getCourseStatusLabel } from "../utils/courseStatus";
+import { getYouTubePlaylistEmbedUrl } from "../utils/youtube";
 
 const DanceGroupDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -202,6 +203,7 @@ const DanceGroupDetail: React.FC = () => {
         {filteredCourses.map((course) => {
           const courseSessions = sessionsByCourseId[course.id] ?? [];
           const courseStatus = getCourseStatus(course, courseSessions, berlinTodayIso);
+          const playlistEmbedUrl = getYouTubePlaylistEmbedUrl(course.youtube_playlist_url);
 
           return (
             <div key={course.id} className="course-item">
@@ -237,6 +239,20 @@ const DanceGroupDetail: React.FC = () => {
                     </a>
                   )}
                 </div>
+                {playlistEmbedUrl && (
+                  <div className="playlist-embed-block">
+                    <div className="playlist-embed-wrapper">
+                      <iframe
+                        src={playlistEmbedUrl}
+                        title={`YouTube playlist for course ${course.semester}`}
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="course-actions">
                 <button

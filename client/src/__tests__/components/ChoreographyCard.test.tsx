@@ -56,6 +56,51 @@ describe('ChoreographyCard', () => {
     );
   });
 
+  it('embeds only one YouTube video in default single mode (demo has priority)', () => {
+    render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          demo_video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          tutorial_video_url: 'https://youtu.be/9bZkp7q19f0',
+        })}
+      />,
+    );
+
+    expect(screen.getByTitle('Demo video for Neon Waltz')).toBeInTheDocument();
+    expect(screen.queryByTitle('Tutorial video for Neon Waltz')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /watch demo/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /watch tutorial/i })).not.toBeInTheDocument();
+  });
+
+  it('embeds tutorial in single mode when demo URL is missing', () => {
+    render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          demo_video_url: undefined,
+          tutorial_video_url: 'https://youtu.be/9bZkp7q19f0',
+        })}
+      />,
+    );
+
+    expect(screen.getByTitle('Tutorial video for Neon Waltz')).toBeInTheDocument();
+    expect(screen.queryByTitle('Demo video for Neon Waltz')).not.toBeInTheDocument();
+  });
+
+  it('embeds both YouTube videos in all mode', () => {
+    render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          demo_video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          tutorial_video_url: 'https://youtu.be/9bZkp7q19f0',
+        })}
+        videoEmbedMode="all"
+      />,
+    );
+
+    expect(screen.getByTitle('Demo video for Neon Waltz')).toBeInTheDocument();
+    expect(screen.getByTitle('Tutorial video for Neon Waltz')).toBeInTheDocument();
+  });
+
   it('calls onSelect when clicking the card body', () => {
     const onSelect = vi.fn();
 
@@ -68,6 +113,16 @@ describe('ChoreographyCard', () => {
 
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith(42);
+  });
+
+  it('does not call onSelect when clicking links inside the card', () => {
+    const onSelect = vi.fn();
+
+    render(<ChoreographyCard choreography={makeChoreography()} onSelect={onSelect} />);
+
+    fireEvent.click(screen.getByRole('link', { name: /view step sheet/i }));
+
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it('calls onEdit and onDelete without triggering onSelect', () => {

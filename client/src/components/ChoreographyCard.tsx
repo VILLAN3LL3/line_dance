@@ -3,12 +3,14 @@ import "../styles/ChoreographyCard.css";
 import React from "react";
 
 import { Choreography } from "../types";
+import { getYouTubeVideoEmbedUrl } from "../utils/youtube";
 
 interface ChoreographyCardProps {
   choreography: Choreography;
   onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
   onSelect?: (id: number) => void;
+  videoEmbedMode?: "single" | "all";
 }
 
 export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
@@ -16,12 +18,34 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   onEdit,
   onDelete,
   onSelect,
+  videoEmbedMode = "single",
 }) => {
+  const demoEmbedUrl = getYouTubeVideoEmbedUrl(choreography.demo_video_url);
+  const tutorialEmbedUrl = getYouTubeVideoEmbedUrl(choreography.tutorial_video_url);
+  const primaryEmbedUrl = demoEmbedUrl || tutorialEmbedUrl;
+  const primaryEmbedLabel = demoEmbedUrl ? "Demo Video:" : "Tutorial Video:";
+  const primaryEmbedTitle = demoEmbedUrl
+    ? `Demo video for ${choreography.name}`
+    : `Tutorial video for ${choreography.name}`;
+  const cardClassName =
+    videoEmbedMode === "all" ? "choreography-card card-detail-video-layout" : "choreography-card";
+  const handleContentLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
+  };
+
   return (
-    <button
-      className="choreography-card"
+    <div
+      className={cardClassName}
       onClick={() => onSelect?.(choreography.id)}
-      >
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect?.(choreography.id);
+        }
+      }}
+    >
       <div className="card-header">
         <h3>{choreography.name}</h3>
         <span className={`level-badge level-${choreography.level.toLowerCase()}`}>
@@ -69,22 +93,89 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
         )}
 
         {choreography.step_sheet_link && (
-          <a href={choreography.step_sheet_link} target="_blank" rel="noopener noreferrer" className="step-sheet-link">
+          <a
+            href={choreography.step_sheet_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="step-sheet-link"
+            onClick={handleContentLinkClick}
+          >
             🦶 View Step Sheet
           </a>
         )}
 
-        {choreography.demo_video_url && (
-          <a href={choreography.demo_video_url} target="_blank" rel="noopener noreferrer" className="step-sheet-link">
+        {videoEmbedMode === "single" && primaryEmbedUrl ? (
+          <div className="video-embed-block">
+            <strong>{primaryEmbedLabel}</strong>
+            <div className="video-embed-wrapper">
+              <iframe
+                src={primaryEmbedUrl}
+                title={primaryEmbedTitle}
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        ) : choreography.demo_video_url ? (
+          <a
+            href={choreography.demo_video_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="step-sheet-link"
+            onClick={handleContentLinkClick}
+          >
             🎬 Watch Demo
           </a>
-        )}
+        ) : null}
 
-        {choreography.tutorial_video_url && (
-          <a href={choreography.tutorial_video_url} target="_blank" rel="noopener noreferrer" className="step-sheet-link">
+        {videoEmbedMode === "single" && primaryEmbedUrl ? null : choreography.tutorial_video_url ? (
+          <a
+            href={choreography.tutorial_video_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="step-sheet-link"
+            onClick={handleContentLinkClick}
+          >
             🎓 Watch Tutorial
           </a>
-        )}
+        ) : null}
+
+        {videoEmbedMode === "all" && (demoEmbedUrl || tutorialEmbedUrl) ? (
+          <div className="video-embeds-row">
+            {demoEmbedUrl ? (
+              <div className="video-embed-block">
+                <strong>Demo Video:</strong>
+                <div className="video-embed-wrapper">
+                  <iframe
+                    src={demoEmbedUrl}
+                    title={`Demo video for ${choreography.name}`}
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            ) : null}
+            {tutorialEmbedUrl ? (
+              <div className="video-embed-block">
+                <strong>Tutorial Video:</strong>
+                <div className="video-embed-wrapper">
+                  <iframe
+                    src={tutorialEmbedUrl}
+                    title={`Tutorial video for ${choreography.name}`}
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <div className="card-actions">
@@ -99,6 +190,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
           </button>
         )}
       </div>
-    </button>
+    </div>
   );
 };

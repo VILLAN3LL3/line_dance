@@ -44,6 +44,7 @@ describe('DanceGroupDetail', () => {
         dance_group_name: 'Group One',
         semester: 'WS 2024',
         start_date: '2020-01-01',
+        youtube_playlist_url: 'https://www.youtube.com/playlist?list=PL1234567890',
         created_at: '2024-01-01',
       },
       {
@@ -115,5 +116,11 @@ describe('DanceGroupDetail', () => {
     await waitFor(() => {
       expect(addGroupLevel).toHaveBeenCalledWith(1, 'Advanced');
     });
+  });
+
+  it('embeds the YouTube playlist when present on a course', async () => {
+    renderWithRoute();
+
+    expect(await screen.findByTitle('YouTube playlist for course WS 2024')).toBeInTheDocument();
   });
 });
