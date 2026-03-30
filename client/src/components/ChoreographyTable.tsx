@@ -33,6 +33,11 @@ const compareOptionalNumber = (a: number | undefined, b: number | undefined): nu
   return a - b;
 };
 
+const compareBooleanFlag = (a: boolean, b: boolean): number => {
+  if (a === b) return 0;
+  return a ? -1 : 1;
+};
+
 export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
   choreographies,
   onEdit,
@@ -89,12 +94,12 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
         case 'restart': {
           const aValue = Boolean(a.restart_information);
           const bValue = Boolean(b.restart_information);
-          return Number(aValue === bValue ? 0 : aValue ? -1 : 1) * multiplier;
+          return compareBooleanFlag(aValue, bValue) * multiplier;
         }
         case 'tag': {
           const aValue = Boolean(a.tag_information);
           const bValue = Boolean(b.tag_information);
-          return Number(aValue === bValue ? 0 : aValue ? -1 : 1) * multiplier;
+          return compareBooleanFlag(aValue, bValue) * multiplier;
         }
         default:
           return 0;
