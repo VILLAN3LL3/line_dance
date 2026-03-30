@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
 import swaggerUi from 'swagger-ui-express';
 import { getDatabase, closeDatabase } from './db.js';
 import { runMigrations } from './migrations/index.js';
@@ -11,10 +10,15 @@ import { getDanceGroups, createDanceGroup, getDanceGroupById, updateDanceGroup, 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Express 5 changed the default query parser to 'simple' (native querystring),
+// which doesn't expand key[] notation into arrays. Set it back to 'extended'
+// (qs library) so array params like level[]=Beginner work correctly.
+app.set('query parser', 'extended');
+
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, { explorer: true }));
 
 app.get('/api/openapi.json', (req, res) => {

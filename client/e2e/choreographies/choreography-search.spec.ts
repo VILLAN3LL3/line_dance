@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { API_BASE, createChoreographyViaApi } from "../helpers/api";
 
 test.describe("Choreography Search", () => {
   test("create, filter, and open a choreography", async ({ page }) => {
@@ -35,5 +36,73 @@ test.describe("Choreography Search", () => {
 
     await resultCard.click();
     await expect(page.getByRole("button", { name: /Back to List/i })).toBeVisible();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// API-level regression: bracket-notation array params reach the server correctly
+// ---------------------------------------------------------------------------
+// These tests call the backend API directly with raw bracket-notation query
+// strings (level[]=, step_figures[]= ) — the same format the frontend sends.
+// They would have caught the Express 5 query-parser regression immediately.
+
+test.describe("Choreography Search API — bracket-notation array params", () => {
+  test("level[]= filters return only matching levels", async ({ request }) => {
+    // Seed: one Beginner, one Advanced
+    await createChoreographyViaApi(request, "_E2E Beginner Dance");
+    const advRes = await request.post(`${API_BASE}/choreographies`, {
+      data: { name: "_E2E Advanced Dance", level: "Advanced", step_figures: ["Pivot"], count: 48 },
+    });
+    expect(advRes.ok()).toBeTruthy();
+
+    const res = await request.get(
+      `${API_BASE}/choreographies/search?level[]=Beginner&level[]=Advanced&search=_E2E`,
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    const names: string[] = body.data.map((c: { name: string }) => c.name).sort();
+    expect(names).toEqual(["_E2E Advanced Dance", "_E2E Beginner Dance"]);
+  });
+
+  test("step_figures[]= with exact mode returns only subset-matching choreos", async ({ request }) => {
+    // Seed: Vine only; Vine + Pivot
+    await request.post(`${API_BASE}/choreographies`, {
+      data: { name: "_E2E Vine Only", level: "Beginner", step_figures: ["Vine"], count: 32 },
+    });
+    await request.post(`${API_BASE}/choreographies`, {
+      data: { name: "_E2E Vine Pivot", level: "Beginner", step_figures: ["Vine", "Pivot"], count: 32 },
+    });
+
+    // Exact mode with [Vine, Pivot] — "Vine Only" has Pivot not in its figures → excluded
+    // Wait, exact mode means ALL choreo figures must be IN the selection.
+    // "Vine Only" has {Vine} ⊆ {Vine, Pivot} ✓
+    // "Vine Pivot" has {Vine, Pivot} ⊆ {Vine, Pivot} ✓
+    // Both should match. Use [Vine] only to exclude "Vine Pivot".
+    const res = await request.get(
+      `${API_BASE}/choreographies/search?step_figures[]=Vine&step_figures_match_mode=exact&search=_E2E`,
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    const names: string[] = body.data.map((c: { name: string }) => c.name);
+    expect(names).toContain("_E2E Vine Only");
+    expect(names).not.toContain("_E2E Vine Pivot");
+  });
+
+  test("combined level[]= and step_figures[]= filters work together", async ({ request }) => {
+    await request.post(`${API_BASE}/choreographies`, {
+      data: { name: "_E2E B Vine", level: "Beginner", step_figures: ["Vine"], count: 32 },
+    });
+    await request.post(`${API_BASE}/choreographies`, {
+      data: { name: "_E2E I Vine", level: "Intermediate", step_figures: ["Vine"], count: 32 },
+    });
+
+    const res = await request.get(
+      `${API_BASE}/choreographies/search?level[]=Beginner&step_figures[]=Vine&step_figures_match_mode=any&search=_E2E`,
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    const names: string[] = body.data.map((c: { name: string }) => c.name);
+    expect(names).toContain("_E2E B Vine");
+    expect(names).not.toContain("_E2E I Vine");
   });
 });

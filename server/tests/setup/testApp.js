@@ -4,7 +4,6 @@
  * Does NOT start a real server – consumed by supertest directly.
  */
 import express from 'express';
-import bodyParser from 'body-parser';
 import {
   getDanceGroups,
   createDanceGroup,
@@ -35,7 +34,7 @@ import {
 import { openApiSpec } from '../../openapi.js';
 
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
 
 // Dance Groups
 app.get('/api/dance-groups', getDanceGroups);

@@ -4,7 +4,6 @@
  * Does NOT start a real server – consumed by supertest directly.
  */
 import express from 'express';
-import bodyParser from 'body-parser';
 import {
   createChoreography,
   getChoreographies,
@@ -25,7 +24,10 @@ import {
 } from '../../routes/choreographies.js';
 
 const app = express();
-app.use(bodyParser.json());
+// Mirror the production setting so bracket-notation array params (level[]=, step_figures[]=)
+// are parsed correctly by the qs library, matching real browser request behaviour.
+app.set('query parser', 'extended');
+app.use(express.json());
 
 // Specific paths before parameterised /:id to avoid 'search' being treated as an id
 app.get('/api/choreographies/search', searchChoreographies);

@@ -23,6 +23,13 @@ async function search(params) {
   return request(app).get('/api/choreographies/search').query(params);
 }
 
+// Sends the query as a raw URL string, bypassing supertest's .query() serialization.
+// This exercises the actual Express query parser with bracket-notation arrays
+// (e.g. level[]=Beginner&level[]=Advanced) exactly as a browser would send them.
+async function searchRaw(queryString) {
+  return request(app).get(`/api/choreographies/search?${queryString}`);
+}
+
 // Seed helpers
 async function seedDances() {
   // Returns IDs in order: [waltz, tango, cha_cha]
@@ -296,6 +303,55 @@ describe('GET /api/choreographies/search — pagination', () => {
   it('returns the second page correctly', async () => {
     await seedDances();
     const res = await search({ sort_field: 'name', sort_direction: 'asc', page: 2, limit: 2 });
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Waltz in the Rain');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Query-parser regression — bracket notation (e.g. level[]=, step_figures[]= )
+// ---------------------------------------------------------------------------
+// These tests send raw URL strings so that the Express query parser is exercised
+// with the same bracket-notation format that browsers / the frontend actually use.
+// Using supertest's .query([...]) would bypass this layer because supertest
+// serialises the array without brackets (level=Beginner&level=Advanced), which
+// works even with Express 5's default 'simple' parser.
+
+describe('GET /api/choreographies/search — bracket-notation query parser regression', () => {
+  it('filters by multiple levels sent as level[]=', async () => {
+    await seedDances();
+    const res = await searchRaw('level[]=Beginner&level[]=Advanced');
+    expect(res.status).toBe(200);
+    const names = res.body.data.map((c) => c.name).sort();
+    expect(names).toEqual(['Argentine Tango', 'Waltz in the Rain']);
+  });
+
+  it('filters by multiple step_figures sent as step_figures[]= in "all" mode', async () => {
+    await seedDances();
+    // Only Waltz has both Rock Step AND Weave
+    const res = await searchRaw(
+      'step_figures[]=Rock%20Step&step_figures[]=Weave&step_figures_match_mode=all',
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Waltz in the Rain');
+  });
+
+  it('filters by multiple step_figures sent as step_figures[]= in "exact" mode', async () => {
+    await seedDances();
+    const res = await searchRaw(
+      'step_figures[]=Rock%20Step&step_figures[]=Weave&step_figures_match_mode=exact',
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Waltz in the Rain');
+  });
+
+  it('combines level[]= and max_count filters correctly', async () => {
+    await seedDances();
+    // Beginner (32 counts) and Advanced (48 counts); max_count=32 excludes Advanced
+    const res = await searchRaw('level[]=Beginner&level[]=Advanced&max_count=32');
+    expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
     expect(res.body.data[0].name).toBe('Waltz in the Rain');
   });
