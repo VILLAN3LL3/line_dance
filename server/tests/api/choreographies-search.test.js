@@ -182,6 +182,73 @@ describe('GET /api/choreographies/search — step_figures "exact" mode', () => {
     expect(res.body.data).toHaveLength(1);
     expect(res.body.data[0].name).toBe('Waltz in the Rain');
   });
+
+  it('normalizes array-valued match mode and still applies exact semantics', async () => {
+    await seedDances();
+    const res = await search({
+      step_figures: ['Rock Step', 'Weave'],
+      // Simulates duplicate query params where parser yields an array value.
+      step_figures_match_mode: ['all', 'exact'],
+    });
+
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Waltz in the Rain');
+  });
+
+  it('is monotonic: adding another step figure cannot remove results in exact mode', async () => {
+    await seedDances();
+
+    const base = await searchRaw(
+      'level[]=Beginner&max_count=32&step_figures[]=Rock%20Step&step_figures[]=Weave&step_figures_match_mode=exact',
+    );
+    const expanded = await searchRaw(
+      'level[]=Beginner&max_count=32&step_figures[]=Rock%20Step&step_figures[]=Weave&step_figures[]=Kick&step_figures_match_mode=exact',
+    );
+
+    const baseIds = new Set(base.body.data.map((c) => c.id));
+    const expandedIds = new Set(expanded.body.data.map((c) => c.id));
+
+    for (const id of baseIds) {
+      expect(expandedIds.has(id)).toBe(true);
+    }
+  });
+
+  it('handles object-like step_figures payloads (from large [] query arrays) in exact mode', async () => {
+    await seedDances();
+
+    // Simulates qs parsing when many step_figures[]=... values are passed.
+    const objectLikeFigures = {
+      0: 'Rock Step',
+      1: 'Weave',
+      2: 'Point',
+      3: 'Heel Switch',
+      4: 'Heel Bounce',
+      5: 'Hitch',
+      6: 'Coaster Step',
+      7: 'Pivot',
+      8: 'Brush',
+      9: 'Diagonal Step',
+      10: 'Hip Bump',
+      11: 'Hip Sway',
+      12: 'Swivel',
+      13: 'Rocking Chair',
+      14: 'Scuff',
+      15: 'Drag',
+      16: 'Knee Pop',
+      17: 'Cross Step',
+      18: 'Shoop',
+      19: 'Flick',
+      20: 'Grapevine',
+    };
+
+    const res = await search({
+      step_figures: objectLikeFigures,
+      step_figures_match_mode: 'exact',
+    });
+
+    // Waltz has {Rock Step, Weave}, which is a subset of the provided selection.
+    expect(res.body.data.some((c) => c.name === 'Waltz in the Rain')).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------

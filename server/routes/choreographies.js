@@ -555,12 +555,27 @@ function normalizeQueryParam(param) {
   if (Array.isArray(param)) {
     return param;
   }
+  if (param && typeof param === 'object') {
+    return Object.values(param)
+      .filter((value) => value !== undefined && value !== null)
+      .map((value) => String(value));
+  }
   return param ? [param] : [];
+}
+
+function normalizeMatchMode(rawMode) {
+  const modeValue = Array.isArray(rawMode) ? rawMode[rawMode.length - 1] : rawMode;
+  if (typeof modeValue !== 'string') {
+    return 'all';
+  }
+
+  const normalized = modeValue.trim().toLowerCase();
+  return ['all', 'any', 'exact'].includes(normalized) ? normalized : 'all';
 }
 
 function buildStepFiguresFilter(step_figures, step_figures_match_mode, without_step_figures) {
   const result = { joins: [], conditions: [], groupBy: '', having: '', havingParams: [], params: [] };
-  const matchMode = step_figures_match_mode || 'all';
+  const matchMode = normalizeMatchMode(step_figures_match_mode);
   const noStepFigures = without_step_figures === 'true' || without_step_figures === true;
 
   if (noStepFigures) {
