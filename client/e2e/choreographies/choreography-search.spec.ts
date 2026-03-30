@@ -66,8 +66,10 @@ test.describe("Choreography Search API — bracket-notation array params", () =>
     );
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
-    const names: string[] = body.data.map((c: { name: string }) => c.name).sort();
-    expect(names).toEqual([beginnerName, intermediateName].sort());
+    const names: string[] = body.data
+      .map((c: { name: string }) => c.name)
+      .sort((a: string, b: string) => a.localeCompare(b));
+    expect(names).toEqual([beginnerName, intermediateName].sort((a: string, b: string) => a.localeCompare(b)));
   });
 
   test("step_figures[]= with exact mode returns only subset-matching choreos", async ({ request }) => {

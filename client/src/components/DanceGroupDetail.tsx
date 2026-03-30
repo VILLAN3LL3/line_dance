@@ -106,7 +106,7 @@ const DanceGroupDetail: React.FC = () => {
     }
   };
 
-  const handleAddLevel = async (e: React.FormEvent) => {
+  const handleAddLevel = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!newLevel.trim()) {
       setError("Level name is required");

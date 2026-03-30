@@ -4,6 +4,15 @@ import QRCode from 'qrcode';
 
 const dbName = 'danceGroups';
 
+function captureError(error) {
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
+
+  const details = error instanceof Error ? (error.stack || error.message) : String(error);
+  process.stderr.write(`[dance-groups] ${details}\n`);
+}
+
 export function escapeVCardValue(value) {
   return String(value ?? '')
     .replaceAll('\\', String.raw`\\`)
@@ -23,8 +32,8 @@ export async function getDanceGroups(req, res) {
     );
     res.json(rows);
   } catch (error) {
-    console.error('Error fetching dance groups:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch dance groups' });
   }
 }
 
@@ -50,11 +59,11 @@ export async function createDanceGroup(req, res) {
 
     res.status(201).json(group);
   } catch (error) {
+    captureError(error);
     if (error.message?.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ error: 'A dance group with that name already exists' });
     }
-    console.error('Error creating dance group:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to create dance group' });
   }
 }
 
@@ -73,8 +82,8 @@ export async function getDanceGroupById(req, res) {
 
     res.json(group);
   } catch (error) {
-    console.error('Error fetching dance group:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch dance group' });
   }
 }
 
@@ -111,11 +120,11 @@ export async function updateDanceGroup(req, res) {
 
     res.json(updated);
   } catch (error) {
+    captureError(error);
     if (error.message?.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ error: 'A dance group with that name already exists' });
     }
-    console.error('Error updating dance group:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to update dance group' });
   }
 }
 
@@ -134,8 +143,8 @@ export async function deleteDanceGroup(req, res) {
 
     res.json({ message: 'Dance group deleted successfully' });
   } catch (error) {
-    console.error('Error deleting dance group:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to delete dance group' });
   }
 }
 
@@ -150,8 +159,8 @@ export async function getTrainers(req, res) {
     );
     res.json(rows);
   } catch (error) {
-    console.error('Error fetching trainers:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch trainers' });
   }
 }
 
@@ -183,11 +192,11 @@ export async function createTrainer(req, res) {
 
     res.status(201).json(trainer);
   } catch (error) {
+    captureError(error);
     if (error.message?.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ error: 'A trainer with that email already exists' });
     }
-    console.error('Error creating trainer:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to create trainer' });
   }
 }
 
@@ -230,11 +239,11 @@ export async function updateTrainer(req, res) {
 
     res.json(updated);
   } catch (error) {
+    captureError(error);
     if (error.message?.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ error: 'A trainer with that email already exists' });
     }
-    console.error('Error updating trainer:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to update trainer' });
   }
 }
 
@@ -261,8 +270,8 @@ export async function deleteTrainer(req, res) {
 
     res.json({ message: 'Trainer deleted successfully' });
   } catch (error) {
-    console.error('Error deleting trainer:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to delete trainer' });
   }
 }
 
@@ -289,8 +298,8 @@ export async function getDanceCourses(req, res) {
     const rows = await allQuery(query, params, dbName);
     res.json(rows);
   } catch (error) {
-    console.error('Error fetching dance courses:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch dance courses' });
   }
 }
 
@@ -354,11 +363,11 @@ export async function createDanceCourse(req, res) {
 
     res.status(201).json(course);
   } catch (error) {
+    captureError(error);
     if (error.message?.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ error: 'A course for this group and semester already exists' });
     }
-    console.error('Error creating dance course:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to create dance course' });
   }
 }
 
@@ -409,8 +418,8 @@ export async function updateDanceCourse(req, res) {
 
     res.json(updated);
   } catch (error) {
-    console.error('Error updating dance course:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to update dance course' });
   }
 }
 
@@ -429,8 +438,8 @@ export async function deleteDanceCourse(req, res) {
 
     res.json({ message: 'Dance course deleted successfully' });
   } catch (error) {
-    console.error('Error deleting dance course:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to delete dance course' });
   }
 }
 
@@ -684,8 +693,8 @@ export async function exportDanceCoursePdf(req, res) {
 
     doc.end();
   } catch (error) {
-    console.error('Error exporting dance course PDF:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to export PDF' });
   }
 }
 
@@ -711,8 +720,8 @@ export async function getSessions(req, res) {
     const rows = await allQuery(query, params, dbName);
     res.json(rows);
   } catch (error) {
-    console.error('Error fetching sessions:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch sessions' });
   }
 }
 
@@ -753,8 +762,8 @@ export async function createSession(req, res) {
 
     res.status(201).json(session);
   } catch (error) {
-    console.error('Error creating session:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to create session' });
   }
 }
 
@@ -795,8 +804,8 @@ export async function updateSession(req, res) {
 
     res.json(updated);
   } catch (error) {
-    console.error('Error updating session:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to update session' });
   }
 }
 
@@ -815,8 +824,8 @@ export async function deleteSession(req, res) {
 
     res.json({ message: 'Session deleted successfully' });
   } catch (error) {
-    console.error('Error deleting session:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to delete session' });
   }
 }
 
@@ -841,8 +850,8 @@ export async function getSessionChoreographies(req, res) {
 
     res.json(rows);
   } catch (error) {
-    console.error('Error fetching session choreographies:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch session choreographies' });
   }
 }
 
@@ -881,11 +890,11 @@ export async function addChoreographyToSession(req, res) {
 
     res.status(201).json(choreography);
   } catch (error) {
+    captureError(error);
     if (error.message?.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ error: 'Choreography already added to this session' });
     }
-    console.error('Error adding choreography to session:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to add choreography to session' });
   }
 }
 
@@ -904,8 +913,8 @@ export async function removeChoreographyFromSession(req, res) {
 
     res.json({ message: 'Choreography removed from session successfully' });
   } catch (error) {
-    console.error('Error removing choreography from session:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to remove choreography from session' });
   }
 }
 
@@ -928,8 +937,8 @@ export async function getLearnedChoreographies(req, res) {
     const rows = await allQuery(query, params, dbName);
     res.json(rows);
   } catch (error) {
-    console.error('Error fetching learned choreographies:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch learned choreographies' });
   }
 }
 
@@ -952,8 +961,8 @@ export async function getGroupLevels(req, res) {
     const levels = rows.map((row) => row.level);
     res.json(levels);
   } catch (error) {
-    console.error('Error fetching group levels:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch group levels' });
   }
 }
 
@@ -989,8 +998,8 @@ export async function addGroupLevel(req, res) {
 
     res.status(201).json({ level: level.trim() });
   } catch (error) {
-    console.error('Error adding group level:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to add group level' });
   }
 }
 
@@ -1014,7 +1023,7 @@ export async function removeGroupLevel(req, res) {
 
     res.json({ message: 'Level removed successfully' });
   } catch (error) {
-    console.error('Error removing group level:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to remove group level' });
   }
 }

@@ -2,6 +2,15 @@ import { runQuery, getQuery, allQuery } from '../db.js';
 
 let savedFiltersTableReady = false;
 
+function captureError(error) {
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
+
+  const details = error instanceof Error ? (error.stack || error.message) : String(error);
+  process.stderr.write(`[choreographies] ${details}\n`);
+}
+
 async function ensureSavedFiltersTable() {
   if (savedFiltersTableReady) {
     return;
@@ -62,7 +71,7 @@ function parseStoredFilters(storedValue) {
     const parsed = JSON.parse(storedValue || '{}');
     return normalizeSavedFilters(parsed);
   } catch (error) {
-    console.warn('Invalid saved filter JSON detected, returning empty filter set', error);
+    captureError(error);
     return {};
   }
 }
@@ -85,8 +94,8 @@ export async function getSavedFilterConfigurations(req, res) {
       updated_at: row.updated_at,
     })));
   } catch (error) {
-    console.error('Error loading saved filter configurations:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to load configurations' });
   }
 }
 
@@ -130,8 +139,8 @@ export async function saveFilterConfiguration(req, res) {
       message: 'Filter configuration saved successfully',
     });
   } catch (error) {
-    console.error('Error saving filter configuration:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to save configuration' });
   }
 }
 
@@ -199,11 +208,11 @@ export async function updateSavedFilterConfiguration(req, res) {
       message: 'Filter configuration updated successfully',
     });
   } catch (error) {
+    captureError(error);
     if (error.message?.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ error: 'A configuration with that name already exists' });
     }
-    console.error('Error updating filter configuration:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to update configuration' });
   }
 }
 
@@ -227,8 +236,8 @@ export async function deleteSavedFilterConfiguration(req, res) {
 
     res.json({ message: 'Filter configuration deleted successfully' });
   } catch (error) {
-    console.error('Error deleting filter configuration:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to delete configuration' });
   }
 }
 
@@ -259,8 +268,8 @@ export async function createChoreography(req, res) {
 
     res.status(201).json({ id: choreography_id, message: 'Choreography created successfully' });
   } catch (error) {
-    console.error('Error creating choreography:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to create choreography' });
   }
 }
 
@@ -292,8 +301,8 @@ export async function getChoreographies(req, res) {
       }
     });
   } catch (error) {
-    console.error('Error fetching choreographies:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch choreographies' });
   }
 }
 
@@ -311,8 +320,8 @@ export async function getChoreographyById(req, res) {
     const enriched = await enrichChoreography(choreography);
     res.json(enriched);
   } catch (error) {
-    console.error('Error fetching choreography:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch choreography' });
   }
 }
 
@@ -350,8 +359,8 @@ export async function updateChoreography(req, res) {
     await cleanupOrphanedRecords();
     res.json({ id: choreography_id, message: 'Choreography updated successfully' });
   } catch (error) {
-    console.error('Error updating choreography:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to update choreography' });
   }
 }
 
@@ -401,7 +410,7 @@ async function cleanupOrphanedRecords() {
       `DELETE FROM choreography_step_figures WHERE choreography_id NOT IN (SELECT id FROM choreographies)`
     );
   } catch (error) {
-    console.error('Error cleaning up orphaned records:', error);
+    captureError(error);
     // Don't throw - this is a cleanup operation and shouldn't break the main operation
   }
 }
@@ -426,8 +435,8 @@ export async function deleteChoreography(req, res) {
 
     res.json({ message: 'Choreography deleted successfully' });
   } catch (error) {
-    console.error('Error deleting choreography:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to delete choreography' });
   }
 }
 
@@ -546,8 +555,8 @@ export async function searchChoreographies(req, res) {
       }
     });
   } catch (error) {
-    console.error('Error searching choreographies:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to search choreographies' });
   }
 }
 
@@ -558,13 +567,13 @@ function normalizeQueryParam(param) {
   if (param && typeof param === 'object') {
     return Object.values(param)
       .filter((value) => value !== undefined && value !== null)
-      .map((value) => String(value));
+      .map(String);
   }
   return param ? [param] : [];
 }
 
 function normalizeMatchMode(rawMode) {
-  const modeValue = Array.isArray(rawMode) ? rawMode[rawMode.length - 1] : rawMode;
+  const modeValue = Array.isArray(rawMode) ? rawMode.at(-1) : rawMode;
   if (typeof modeValue !== 'string') {
     return 'all';
   }
@@ -725,8 +734,8 @@ export async function getLevels(req, res) {
     const levels = await allQuery('SELECT id, name FROM levels ORDER BY id');
     res.json(levels);
   } catch (error) {
-    console.error('Error fetching levels:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch levels' });
   }
 }
 
@@ -735,8 +744,8 @@ export async function getTags(req, res) {
     const tags = await allQuery('SELECT name FROM tags ORDER BY name');
     res.json(tags.map(t => t.name));
   } catch (error) {
-    console.error('Error fetching tags:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch tags' });
   }
 }
 
@@ -745,8 +754,8 @@ export async function getAuthors(req, res) {
     const authors = await allQuery('SELECT name FROM authors ORDER BY name');
     res.json(authors.map(a => a.name));
   } catch (error) {
-    console.error('Error fetching authors:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch authors' });
   }
 }
 
@@ -765,11 +774,11 @@ export async function addLevel(req, res) {
 
     res.status(201).json({ id: result.id, name: name.trim() });
   } catch (error) {
+    captureError(error);
     if (error.message.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ error: 'This level already exists' });
     }
-    console.error('Error adding level:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to add level' });
   }
 }
 
@@ -778,8 +787,8 @@ export async function getStepFigures(req, res) {
     const figures = await allQuery('SELECT name FROM step_figures ORDER BY name');
     res.json(figures.map(f => f.name));
   } catch (error) {
-    console.error('Error fetching step figures:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch step figures' });
   }
 }
 
@@ -789,7 +798,7 @@ export async function getMaxChoreographyCount(req, res) {
     const maxCount = result?.max_count || 0;
     res.json({ max_count: maxCount });
   } catch (error) {
-    console.error('Error fetching max choreography count:', error);
-    res.status(500).json({ error: error.message });
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch max choreography count' });
   }
 }

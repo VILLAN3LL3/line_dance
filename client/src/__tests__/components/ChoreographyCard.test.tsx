@@ -101,15 +101,12 @@ describe('ChoreographyCard', () => {
     expect(screen.getByTitle('Tutorial video for Neon Waltz')).toBeInTheDocument();
   });
 
-  it('calls onSelect when clicking the card body', () => {
+  it('calls onSelect when clicking the open button', () => {
     const onSelect = vi.fn();
 
     render(<ChoreographyCard choreography={makeChoreography()} onSelect={onSelect} />);
 
-    const card = screen.getAllByText('Neon Waltz')[0].closest('.choreography-card');
-    if (card) {
-      fireEvent.click(card);
-    }
+    fireEvent.click(screen.getByRole('button', { name: /open/i }));
 
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith(42);

@@ -253,7 +253,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
     if (filters) {
       filterSyncRef.current = true;
       setSearchTerm(filters.search || '');
-      setSelectedLevel(Array.isArray(filters.level) ? filters.level : (filters.level ? [filters.level] : []));
+      setSelectedLevel(Array.isArray(filters.level) ? filters.level : []);
       setMaxCount(filters.max_count ?? maxCountLimit);
       setSelectedFigures(filters.step_figures || []);
       setStepFiguresMatchMode(filters.step_figures_match_mode || 'all');
@@ -577,21 +577,27 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
           )}
 
           <div className="filter-group">
-            <label>Level:</label>
+            <label htmlFor="level-input">Level:</label>
             <div className="filter-input-container">
               <input
+                id="level-input"
                 type="text"
                 value={inputLevel}
                 onChange={handleLevelInput}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLevelFromInput())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addLevelFromInput();
+                  }
+                }}
                 placeholder="Add level..."
                 list="levels-list"
                 autoComplete="off"
                 disabled={isLoading}
               />
               <datalist id="levels-list">
-                {levelOptions.map((level, index) => (
-                  <option key={index} value={level} />
+                {levelOptions.map((level) => (
+                  <option key={level} value={level} />
                 ))}
               </datalist>
               <button
@@ -604,8 +610,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
               </button>
             </div>
             <div className="filter-tags">
-              {selectedLevel.map((level, index) => (
-                <span key={index} className="filter-tag">
+              {selectedLevel.map((level) => (
+                <span key={level} className="filter-tag">
                   {level}
                   <button
                     type="button"
@@ -640,7 +646,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
           </div>
 
           <div className="filter-group">
-            <label>Step Figures:</label>
+            <label htmlFor="figure-input">Step Figures:</label>
             <div className="filter-checkbox">
               <label>
                 <input
@@ -656,15 +662,22 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                   }}
                   disabled={isLoading}
                 />
+                {' '}
                 Search choreographies without step figures
               </label>
             </div>
             <div className="filter-input-container">
               <input
+                id="figure-input"
                 type="text"
                 value={inputFigure}
                 onChange={handleFigureInput}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFigureFromInput())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addFigureFromInput();
+                  }
+                }}
                 placeholder={withoutStepFigures ? 'Readonly: using without-step-figures filter' : 'Add step figure...'}
                 list="figures-list"
                 autoComplete="off"
@@ -672,12 +685,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                 disabled={isLoading || withoutStepFigures}
               />
               <datalist id="figures-list">
-                {figureOptions.map((figure, index) => (
-                  <option key={index} value={figure} />
+                {figureOptions.map((figure) => (
+                  <option key={figure} value={figure} />
                 ))}
               </datalist>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => addFigureFromInput()}
                 className="btn-add-filter"
                 disabled={isLoading || withoutStepFigures}
@@ -687,7 +700,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
             </div>
             {selectedFigures.length > 0 && (
               <div className="filter-mode-toggle">
-                <label>Match Mode:</label>
+                <span>Match Mode:</span>
                 <div className="match-mode-radios" role="radiogroup" aria-label="Step figure match mode">
                   <label className={`match-mode-option mode-all ${stepFiguresMatchMode === 'all' ? 'active' : ''}`}>
                     <input
@@ -698,6 +711,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                       onChange={() => setStepFiguresMatchMode('all')}
                       disabled={isLoading}
                     />
+                    {' '}
                     AND (all selected)
                   </label>
                   <label className={`match-mode-option mode-any ${stepFiguresMatchMode === 'any' ? 'active' : ''}`}>
@@ -709,6 +723,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                       onChange={() => setStepFiguresMatchMode('any')}
                       disabled={isLoading}
                     />
+                    {' '}
                     OR (any selected)
                   </label>
                   <label className={`match-mode-option mode-exact ${stepFiguresMatchMode === 'exact' ? 'active' : ''}`}>
@@ -720,14 +735,15 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                       onChange={() => setStepFiguresMatchMode('exact')}
                       disabled={isLoading}
                     />
+                    {' '}
                     EXACT (only selected)
                   </label>
                 </div>
               </div>
             )}
             <div className="filter-tags">
-              {selectedFigures.map((figure, index) => (
-                <span key={index} className="filter-tag">
+              {selectedFigures.map((figure) => (
+                <span key={figure} className="filter-tag">
                   {figure}
                   <button
                     type="button"
@@ -743,25 +759,31 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
           </div>
 
           <div className="filter-group">
-            <label>Tags:</label>
+            <label htmlFor="tag-input">Tags:</label>
             <div className="filter-input-container">
               <input
+                id="tag-input"
                 type="text"
                 value={inputTag}
                 onChange={handleTagInput}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTagFromInput())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTagFromInput();
+                  }
+                }}
                 placeholder="Add tag..."
                 list="tags-list"
                 autoComplete="off"
                 disabled={isLoading}
               />
               <datalist id="tags-list">
-                {tagOptions.map((tag, index) => (
-                  <option key={index} value={tag} />
+                {tagOptions.map((tag) => (
+                  <option key={tag} value={tag} />
                 ))}
               </datalist>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => addTagFromInput()}
                 className="btn-add-filter"
                 disabled={isLoading}
@@ -770,8 +792,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
               </button>
             </div>
             <div className="filter-tags">
-              {selectedTags.map((tag, index) => (
-                <span key={index} className="filter-tag">
+              {selectedTags.map((tag) => (
+                <span key={tag} className="filter-tag">
                   {tag}
                   <button
                     type="button"
@@ -787,25 +809,31 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
           </div>
 
           <div className="filter-group">
-            <label>Authors:</label>
+            <label htmlFor="author-input">Authors:</label>
             <div className="filter-input-container">
               <input
+                id="author-input"
                 type="text"
                 value={inputAuthor}
                 onChange={handleAuthorInput}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAuthorFromInput())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addAuthorFromInput();
+                  }
+                }}
                 placeholder="Add author..."
                 list="authors-list"
                 autoComplete="off"
                 disabled={isLoading}
               />
               <datalist id="authors-list">
-                {authorOptions.map((author, index) => (
-                  <option key={index} value={author} />
+                {authorOptions.map((author) => (
+                  <option key={author} value={author} />
                 ))}
               </datalist>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => addAuthorFromInput()}
                 className="btn-add-filter"
                 disabled={isLoading}
@@ -814,8 +842,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
               </button>
             </div>
             <div className="filter-tags">
-              {selectedAuthors.map((author, index) => (
-                <span key={index} className="filter-tag">
+              {selectedAuthors.map((author) => (
+                <span key={author} className="filter-tag">
                   {author}
                   <button
                     type="button"

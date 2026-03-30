@@ -29,28 +29,30 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
     : `Tutorial video for ${choreography.name}`;
   const cardClassName =
     videoEmbedMode === "all" ? "choreography-card card-detail-video-layout" : "choreography-card";
+  const showPrimaryEmbed = videoEmbedMode === "single" && Boolean(primaryEmbedUrl);
+  const showDemoLink = !showPrimaryEmbed && Boolean(choreography.demo_video_url);
+  const showTutorialLink = !showPrimaryEmbed && Boolean(choreography.tutorial_video_url);
+  const showAllEmbeds = videoEmbedMode === "all" && (Boolean(demoEmbedUrl) || Boolean(tutorialEmbedUrl));
   const handleContentLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();
   };
 
   return (
-    <div
-      className={cardClassName}
-      onClick={() => onSelect?.(choreography.id)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onSelect?.(choreography.id);
-        }
-      }}
-    >
+    <div className={cardClassName}>
       <div className="card-header">
         <h3>{choreography.name}</h3>
         <span className={`level-badge level-${choreography.level.toLowerCase()}`}>
           {choreography.level}
         </span>
+        {onSelect && (
+          <button
+            type="button"
+            onClick={() => onSelect(choreography.id)}
+            className="btn-small btn-edit"
+          >
+            Open
+          </button>
+        )}
       </div>
 
       <div className="card-content">
@@ -104,7 +106,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
           </a>
         )}
 
-        {videoEmbedMode === "single" && primaryEmbedUrl ? (
+        {showPrimaryEmbed && primaryEmbedUrl && (
           <div className="video-embed-block">
             <strong>{primaryEmbedLabel}</strong>
             <div className="video-embed-wrapper">
@@ -118,7 +120,9 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
               />
             </div>
           </div>
-        ) : choreography.demo_video_url ? (
+        )}
+
+        {showDemoLink && choreography.demo_video_url && (
           <a
             href={choreography.demo_video_url}
             target="_blank"
@@ -128,9 +132,9 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
           >
             🎬 Watch Demo
           </a>
-        ) : null}
+        )}
 
-        {videoEmbedMode === "single" && primaryEmbedUrl ? null : choreography.tutorial_video_url ? (
+        {showTutorialLink && choreography.tutorial_video_url && (
           <a
             href={choreography.tutorial_video_url}
             target="_blank"
@@ -140,11 +144,11 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
           >
             🎓 Watch Tutorial
           </a>
-        ) : null}
+        )}
 
-        {videoEmbedMode === "all" && (demoEmbedUrl || tutorialEmbedUrl) ? (
+        {showAllEmbeds && (
           <div className="video-embeds-row">
-            {demoEmbedUrl ? (
+            {demoEmbedUrl && (
               <div className="video-embed-block">
                 <strong>Demo Video:</strong>
                 <div className="video-embed-wrapper">
@@ -158,8 +162,8 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
                   />
                 </div>
               </div>
-            ) : null}
-            {tutorialEmbedUrl ? (
+            )}
+            {tutorialEmbedUrl && (
               <div className="video-embed-block">
                 <strong>Tutorial Video:</strong>
                 <div className="video-embed-wrapper">
@@ -173,9 +177,9 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
                   />
                 </div>
               </div>
-            ) : null}
+            )}
           </div>
-        ) : null}
+        )}
       </div>
 
       <div className="card-actions">

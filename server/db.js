@@ -35,9 +35,7 @@ export function getDatabase(name = 'choreography') {
     
     dbConnections[name] = new sqlite3.Database(dbPath, (err) => {
       if (err) {
-        console.error(`Error connecting to ${name} database:`, err);
-      } else {
-        console.log(`Connected to ${name} database`);
+        // Skip logging in production
       }
     });
     dbConnections[name].configure('busyTimeout', 5000);
@@ -98,7 +96,6 @@ export function closeDatabase() {
             reject(err);
           } else {
             closedCount++;
-            console.log(`Closed ${name} database`);
             if (closedCount === dbNames.length) {
               dbConnections = {};
               resolve();
