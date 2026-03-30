@@ -2,6 +2,8 @@ const YOUTUBE_HOSTS = new Set([
   "youtube.com",
   "www.youtube.com",
   "m.youtube.com",
+  "music.youtube.com",
+  "www.music.youtube.com",
   "youtu.be",
   "www.youtu.be",
   "youtube-nocookie.com",
@@ -13,8 +15,19 @@ function parseUrl(rawUrl?: string): URL | null {
     return null;
   }
 
+  // Accept copied iframe snippets from YouTube's share dialog.
+  const iframeSrcMatch = rawUrl.match(/src\s*=\s*"([^"]+)"/i);
+  const candidate = iframeSrcMatch?.[1] ?? rawUrl;
+
+  // Decode common HTML entities so query params like &amp;list= are parsed correctly.
+  const normalized = candidate
+    .trim()
+    .replace(/&amp;/gi, "&")
+    .replace(/&#38;/g, "&")
+    .replace(/&quot;/gi, '"');
+
   try {
-    return new URL(rawUrl.trim());
+    return new URL(normalized);
   } catch {
     return null;
   }
@@ -66,7 +79,7 @@ export function getYouTubeVideoEmbedUrl(rawUrl?: string): string | null {
   return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
 }
 
-export function getYouTubePlaylistEmbedUrl(rawUrl?: string): string | null {
+export function getYouTubePlaylistPageUrl(rawUrl?: string): string | null {
   const url = parseUrl(rawUrl);
   if (!url || !isYouTubeHost(url.hostname)) {
     return null;
@@ -77,5 +90,5 @@ export function getYouTubePlaylistEmbedUrl(rawUrl?: string): string | null {
     return null;
   }
 
-  return `https://www.youtube.com/embed/videoseries?list=${encodeURIComponent(playlistId)}`;
+  return `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId)}`;
 }

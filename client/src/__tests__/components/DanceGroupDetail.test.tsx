@@ -118,9 +118,13 @@ describe('DanceGroupDetail', () => {
     });
   });
 
-  it('embeds the YouTube playlist when present on a course', async () => {
+  it('shows a YouTube playlist link when present on a course', async () => {
     renderWithRoute();
 
-    expect(await screen.findByTitle('YouTube playlist for course WS 2024')).toBeInTheDocument();
+    const youtubeLink = await screen.findByRole('link', { name: '🔗 YouTube' });
+    expect(youtubeLink).toHaveAttribute(
+      'href',
+      'https://www.youtube.com/playlist?list=PL1234567890',
+    );
   });
 });
