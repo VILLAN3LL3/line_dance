@@ -1,6 +1,6 @@
 import "../styles/ChoreographyForm.css";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { getAuthors, getLevels, getStepFigures, getTags } from "../api";
 import { ChoreographyFormData } from "../types";
@@ -36,32 +36,37 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const [tagsFromDb, setTagsFromDb] = useState<string[]>([]);
   const [figuresFromDb, setFiguresFromDb] = useState<string[]>([]);
 
-  const loadReferenceData = useCallback(async () => {
-    try {
-      const [fetchedLevels, fetchedAuthors, fetchedTags, fetchedFigures] = await Promise.all([
-        getLevels(),
-        getAuthors(),
-        getTags(),
-        getStepFigures(),
-      ]);
-
-      setLevels(fetchedLevels);
-      setAuthorsFromDb(fetchedAuthors);
-      setTagsFromDb(fetchedTags);
-      setFiguresFromDb(fetchedFigures);
-
-      // Set default level if not set
-      if (!formData.level && fetchedLevels.length > 0) {
-        setFormData(prev => ({ ...prev, level: fetchedLevels[0].name }));
-      }
-    } catch (error) {
-      console.error('Error loading reference data:', error);
-    }
-  }, [formData.level]);
-
   useEffect(() => {
+    let isActive = true;
+
+    const loadReferenceData = async () => {
+      try {
+        const [fetchedLevels, fetchedAuthors, fetchedTags, fetchedFigures] = await Promise.all([
+          getLevels(),
+          getAuthors(),
+          getTags(),
+          getStepFigures(),
+        ]);
+
+        if (!isActive) {
+          return;
+        }
+
+        setLevels(fetchedLevels);
+        setAuthorsFromDb(fetchedAuthors);
+        setTagsFromDb(fetchedTags);
+        setFiguresFromDb(fetchedFigures);
+      } catch (error) {
+        console.error('Error loading reference data:', error);
+      }
+    };
+
     void loadReferenceData();
-  }, [loadReferenceData]);
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>

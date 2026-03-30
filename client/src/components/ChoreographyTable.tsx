@@ -2,8 +2,6 @@ import "../styles/ChoreographyTable.css";
 
 import React, { useEffect, useMemo, useState } from "react";
 
-import { ColumnDef, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
-
 import { getStepFigures } from "../api";
 import { Choreography } from "../types";
 
@@ -15,10 +13,24 @@ interface ChoreographyTableProps {
   isLoading?: boolean;
 }
 
-const getSortIndicator = (sortState: string | false | undefined): string => {
-  if (sortState === 'asc') return ' ⇧';
-  if (sortState === 'desc') return ' ⇩';
-  return '';
+type SortField = 'name' | 'level' | 'count' | 'wall_count' | 'creation_year' | 'restart' | 'tag';
+type SortDirection = 'asc' | 'desc';
+
+const getSortIndicator = (
+  activeField: SortField,
+  field: SortField,
+  direction: SortDirection
+): string => {
+  if (activeField !== field) return '';
+  if (direction === 'asc') return ' ⇧';
+  return ' ⇩';
+};
+
+const compareOptionalNumber = (a: number | undefined, b: number | undefined): number => {
+  if (a === undefined && b === undefined) return 0;
+  if (a === undefined) return 1;
+  if (b === undefined) return -1;
+  return a - b;
 };
 
 export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
@@ -28,7 +40,11 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
   onSelect,
   isLoading = false,
 }) => {
+  "use no memo";
+
   const [allStepFigures, setAllStepFigures] = useState<string[]>([]);
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   // Fetch all step figures on mount
   useEffect(() => {
@@ -44,66 +60,49 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
     fetchStepFigures();
   }, []);
 
-  // Define columns
-  const columns: ColumnDef<Choreography>[] = useMemo(() => [
-    {
-      id: 'name',
-      header: 'Name',
-      accessorKey: 'name',
-    },
-    {
-      id: 'level',
-      header: 'Level',
-      accessorKey: 'level',
-    },
-    {
-      id: 'count',
-      header: 'Count',
-      accessorKey: 'count',
-    },
-    {
-      id: 'wall_count',
-      header: 'Walls',
-      accessorKey: 'wall_count',
-    },
-    {
-      id: 'creation_year',
-      header: 'Year',
-      accessorKey: 'creation_year',
-    },
-    {
-      id: 'tags',
-      header: 'Tags',
-      accessorKey: 'tags',
-      cell: ({ getValue }) => (getValue() as string[]).join(', '),
-    },
-    {
-      id: 'restart',
-      header: 'Restart',
-      accessorFn: (row: Choreography) => row.restart_information ? '✅' : '',
-    },
-    {
-      id: 'tag',
-      header: 'Tag',
-      accessorFn: (row: Choreography) => row.tag_information ? '✅' : '',
-    },
-    ...allStepFigures.map(fig => ({
-      id: fig,
-      header: fig,
-      accessorFn: (row: Choreography) => row.step_figures.includes(fig) ? '✅' : '',
-    })),
-    {
-      id: 'actions',
-      header: 'Actions',
-    },
-  ], [allStepFigures]);
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((previous) => (previous === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
 
-  const table = useReactTable({
-    data: choreographies,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
+    setSortField(field);
+    setSortDirection('asc');
+  };
+
+  const sortedChoreographies = useMemo(() => {
+    const multiplier = sortDirection === 'asc' ? 1 : -1;
+    const items = [...choreographies];
+
+    items.sort((a, b) => {
+      switch (sortField) {
+        case 'name':
+          return a.name.localeCompare(b.name) * multiplier;
+        case 'level':
+          return a.level.localeCompare(b.level) * multiplier;
+        case 'count':
+          return compareOptionalNumber(a.count, b.count) * multiplier;
+        case 'wall_count':
+          return compareOptionalNumber(a.wall_count, b.wall_count) * multiplier;
+        case 'creation_year':
+          return compareOptionalNumber(a.creation_year, b.creation_year) * multiplier;
+        case 'restart': {
+          const aValue = Boolean(a.restart_information);
+          const bValue = Boolean(b.restart_information);
+          return Number(aValue === bValue ? 0 : aValue ? -1 : 1) * multiplier;
+        }
+        case 'tag': {
+          const aValue = Boolean(a.tag_information);
+          const bValue = Boolean(b.tag_information);
+          return Number(aValue === bValue ? 0 : aValue ? -1 : 1) * multiplier;
+        }
+        default:
+          return 0;
+      }
+    });
+
+    return items;
+  }, [choreographies, sortDirection, sortField]);
 
   return (
     <div className="choreography-table-wrapper">
@@ -111,27 +110,27 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
         <table className="choreography-table">
           <thead>
             <tr>
-              <th className="sortable" onClick={() => table.getColumn('name')?.toggleSorting()}>
-                Name{getSortIndicator(table.getColumn('name')?.getIsSorted())}
+              <th className="sortable" onClick={() => toggleSort('name')}>
+                Name{getSortIndicator(sortField, 'name', sortDirection)}
               </th>
-              <th className="sortable" onClick={() => table.getColumn('level')?.toggleSorting()}>
-                Level{getSortIndicator(table.getColumn('level')?.getIsSorted())}
+              <th className="sortable" onClick={() => toggleSort('level')}>
+                Level{getSortIndicator(sortField, 'level', sortDirection)}
               </th>
-              <th className="sortable" onClick={() => table.getColumn('count')?.toggleSorting()}>
-                Count{getSortIndicator(table.getColumn('count')?.getIsSorted())}
+              <th className="sortable" onClick={() => toggleSort('count')}>
+                Count{getSortIndicator(sortField, 'count', sortDirection)}
               </th>
-              <th className="sortable" onClick={() => table.getColumn('wall_count')?.toggleSorting()}>
-                Walls{getSortIndicator(table.getColumn('wall_count')?.getIsSorted())}
+              <th className="sortable" onClick={() => toggleSort('wall_count')}>
+                Walls{getSortIndicator(sortField, 'wall_count', sortDirection)}
               </th>
-              <th className="sortable" onClick={() => table.getColumn('creation_year')?.toggleSorting()}>
-                Year{getSortIndicator(table.getColumn('creation_year')?.getIsSorted())}
+              <th className="sortable" onClick={() => toggleSort('creation_year')}>
+                Year{getSortIndicator(sortField, 'creation_year', sortDirection)}
               </th>
               <th>Tags</th>
-              <th className="figure-column sortable" onClick={() => table.getColumn('restart')?.toggleSorting()}>
-                Restart{getSortIndicator(table.getColumn('restart')?.getIsSorted())}
+              <th className="figure-column sortable" onClick={() => toggleSort('restart')}>
+                Restart{getSortIndicator(sortField, 'restart', sortDirection)}
               </th>
-              <th className="figure-column sortable" onClick={() => table.getColumn('tag')?.toggleSorting()}>
-                Tag{getSortIndicator(table.getColumn('tag')?.getIsSorted())}
+              <th className="figure-column sortable" onClick={() => toggleSort('tag')}>
+                Tag{getSortIndicator(sortField, 'tag', sortDirection)}
               </th>
               {allStepFigures.map(figure => (
                 <th key={figure} className="figure-column" title={figure}>
@@ -142,8 +141,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
             </tr>
           </thead>
           <tbody>
-            {table.getRowModel().rows.map(row => {
-              const choreo = row.original;
+            {sortedChoreographies.map(choreo => {
               return (
                 <tr key={choreo.id} className="choreography-row" onClick={() => onSelect?.(choreo.id)}>
                   <td className="name-cell">
