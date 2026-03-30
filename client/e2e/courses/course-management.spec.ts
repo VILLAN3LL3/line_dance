@@ -18,22 +18,32 @@ test.describe("Course Management", () => {
     await expect(page.locator(".session-item")).toHaveCount(1);
 
     await page.getByRole("button", { name: /Manage/i }).click();
+    await expect(page.getByRole("heading", { name: /Choreographies for/i })).toBeVisible();
+    await expect(page.locator(".loading")).toHaveCount(0);
     await expect(page.getByPlaceholder(/Search choreography by name/i)).toBeEnabled();
     await page.getByPlaceholder(/Search choreography by name/i).fill(`${choreoName} (Beginner)`);
     await expect(page.getByRole("button", { name: /Add to Session/i })).toBeEnabled();
     await page.getByRole("button", { name: /Add to Session/i }).click();
-    await expect(page.locator(".choreography-item", { hasText: choreoName })).toBeVisible({ timeout: 30_000 });
+
+    const sessionChoreographyItem = page.locator(".choreography-item", { hasText: choreoName });
+    await expect(sessionChoreographyItem).toHaveCount(1, { timeout: 30_000 });
+    await expect(page.locator(".loading")).toHaveCount(0, { timeout: 30_000 });
+
+    const removeButton = sessionChoreographyItem.getByRole("button", { name: /^Remove$/i });
+    await expect(removeButton).toBeEnabled({ timeout: 30_000 });
 
     page.once("dialog", async (dialog) => {
       await dialog.accept();
     });
-    await page.getByRole("button", { name: /^Remove$/i }).click();
-    await expect(page.locator(".choreography-item", { hasText: choreoName })).toHaveCount(0);
+    await removeButton.click();
+    await expect(page.locator(".loading")).toHaveCount(0, { timeout: 30_000 });
+    await expect(sessionChoreographyItem).toHaveCount(0, { timeout: 30_000 });
 
     page.once("dialog", async (dialog) => {
       await dialog.accept();
     });
     await page.getByRole("button", { name: /^Delete$/i }).click();
+    await expect(page.locator(".loading")).toHaveCount(0, { timeout: 30_000 });
     await expect(page.locator(".session-item")).toHaveCount(0, { timeout: 30_000 });
     await expect(page.getByRole("heading", { name: /Choreographies for/i })).toHaveCount(0);
     await expect(page.locator(".empty-state", { hasText: /No sessions yet/i })).toBeVisible();
