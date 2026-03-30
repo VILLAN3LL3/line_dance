@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: ["**"]
 
+permissions:
+  contents: read
+  checks: write
+  statuses: write
+
 jobs:
   server-test:
     name: Server – Test
