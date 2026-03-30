@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+
 import { API_BASE, createChoreographyViaApi } from "../helpers/api";
 
 test.describe("Choreography Search", () => {
