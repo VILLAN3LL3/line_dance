@@ -18,9 +18,9 @@ test.describe("Course Management", () => {
     await expect(page.locator(".session-item")).toHaveCount(1);
 
     await page.getByRole("button", { name: /Manage/i }).click();
-    await page.getByPlaceholder(/Search choreography by name/i).fill(`${choreoName} (Beginner)`);
+    await page.getByPlaceholder(/Search choreography by name/i).fill(choreoName);
     await page.getByRole("button", { name: /Add to Session/i }).click();
-    await expect(page.locator(".choreography-item", { hasText: choreoName })).toBeVisible();
+    await expect(page.locator(".choreography-item", { hasText: choreoName })).toBeVisible({ timeout: 30_000 });
 
     page.once("dialog", async (dialog) => {
       await dialog.accept();

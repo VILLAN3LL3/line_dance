@@ -35,7 +35,7 @@ test.describe("Choreography Search", () => {
     const resultCard = page.locator(".choreography-card", { hasText: name }).first();
     await expect(resultCard).toBeVisible({ timeout: 30_000 });
 
-    await resultCard.click();
+    await resultCard.getByRole("button", { name: /^Open$/i }).click();
     await expect(page.getByRole("button", { name: /Back to List/i })).toBeVisible();
   });
 });
@@ -125,10 +125,17 @@ test.describe("Choreography Search API — bracket-notation array params", () =>
 });
 
 async function ensureLevel(request: APIRequestContext, name: string) {
-  const response = await request.post(`${API_BASE}/levels`, {
+  const levelsResponse = await request.get(`${API_BASE}/levels`);
+  expect(levelsResponse.ok()).toBeTruthy();
+
+  const levels: Array<{ name: string }> = await levelsResponse.json();
+  if (levels.some((level) => level.name === name)) {
+    return;
+  }
+
+  const createResponse = await request.post(`${API_BASE}/levels`, {
     data: { name },
   });
 
-  // 201: created, 400: already exists
-  expect([201, 400]).toContain(response.status());
+  expect(createResponse.status()).toBe(201);
 }
