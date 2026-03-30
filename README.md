@@ -315,7 +315,7 @@ The server also runs migrations on startup before registering routes.
 ## Development Notes
 
 - The backend uses Express, SQLite3, PDFKit, and QRCode generation.
-- The frontend uses React 18, React Router, Axios, and Vite.
+- The frontend uses React, React Router, Axios, and Vite.
 - If backend code changes and you are not using `npm run dev`, restart the server manually.
 
 ## License
