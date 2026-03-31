@@ -1,6 +1,6 @@
 import "../styles/App.css";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { createChoreography, deleteChoreography, searchChoreographies, updateChoreography } from "../api";
@@ -15,6 +15,7 @@ type View = 'list' | 'create' | 'edit' | 'detail';
 export const App: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const routeInitialFilters = (location.state as { initialFilters?: SearchFilters } | null)?.initialFilters;
 
   // Initialize display mode from localStorage
   const getInitialDisplayMode = () => {
@@ -25,9 +26,8 @@ export const App: React.FC = () => {
   // Initialize filters from location state or localStorage
   const getInitialFilters = useCallback((): SearchFilters => {
     // Check if we have initial filters from location state
-    const state = location.state as { initialFilters?: SearchFilters } | null;
-    if (state?.initialFilters) {
-      return state.initialFilters;
+    if (routeInitialFilters) {
+      return routeInitialFilters;
     }
 
     // Otherwise use localStorage
@@ -40,7 +40,7 @@ export const App: React.FC = () => {
       }
     }
     return {};
-  }, [location.state]);
+  }, [routeInitialFilters]);
 
   const [view, setView] = useState<View>('list');
   const [displayMode, setDisplayMode] = useState<'card' | 'table'>(getInitialDisplayMode);
@@ -50,18 +50,26 @@ export const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [currentFilters, setCurrentFilters] = useState(getInitialFilters);
+  const lastInitialLoadSignatureRef = useRef<string | null>(null);
 
   // Load choreographies on mount or when location changes
   useEffect(() => {
     const initialFilters = getInitialFilters();
+    const loadSignature = JSON.stringify(initialFilters);
+
+    if (lastInitialLoadSignatureRef.current === loadSignature) {
+      return;
+    }
+
+    lastInitialLoadSignatureRef.current = loadSignature;
     setCurrentFilters(initialFilters);
     loadChoreographies(initialFilters, true);
     
     // Clear location state after using it
-    if (location.state?.initialFilters) {
+    if (routeInitialFilters) {
       globalThis.history.replaceState({}, document.title);
     }
-  }, [getInitialFilters, location.state]);
+  }, [getInitialFilters, routeInitialFilters, location.key]);
 
   // Save display mode to localStorage when it changes
   useEffect(() => {

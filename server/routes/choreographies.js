@@ -447,8 +447,9 @@ function buildFilterConditions(filterObj) {
   const joins = [];
 
   if (search) {
-    conditions.push('c.name LIKE ?');
-    params.push(`%${search}%`);
+    // Normalize smart/curly apostrophes in both source and query for consistent title matching.
+    conditions.push("REPLACE(REPLACE(c.name, char(8217), ''''), char(8216), '''') LIKE ?");
+    params.push(`%${normalizeSearchText(search)}%`);
   }
 
   if (level) {
@@ -580,6 +581,16 @@ function normalizeMatchMode(rawMode) {
 
   const normalized = modeValue.trim().toLowerCase();
   return ['all', 'any', 'exact'].includes(normalized) ? normalized : 'all';
+}
+
+function normalizeSearchText(rawText) {
+  if (typeof rawText !== 'string') {
+    return '';
+  }
+
+  return rawText
+    .replaceAll(/[\u2018\u2019]/g, "'")
+    .trim();
 }
 
 function buildStepFiguresFilter(step_figures, step_figures_match_mode, without_step_figures) {

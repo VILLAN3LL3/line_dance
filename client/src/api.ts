@@ -13,6 +13,23 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
+const inFlightChoreographySearches = new Map<string, Promise<PaginatedResponse<Choreography>>>();
+
+function buildSearchRequestKey(filters: SearchFilters): string {
+  const entries = Object.entries(filters)
+    .filter(([, value]) => value !== undefined && value !== null)
+    .sort(([left], [right]) => left.localeCompare(right));
+
+  return entries
+    .map(([key, value]) => {
+      if (Array.isArray(value)) {
+        return `${key}=[${value.join(',')}]`;
+      }
+      return `${key}=${String(value)}`;
+    })
+    .join('&');
+}
+
 export async function fetchChoreographies(
   page: number = 1,
   limit: number = 20
@@ -31,10 +48,23 @@ export async function fetchChoreography(id: number): Promise<Choreography> {
 export async function searchChoreographies(
   filters: SearchFilters
 ): Promise<PaginatedResponse<Choreography>> {
-  const response = await api.get('/choreographies/search', {
-    params: filters,
-  });
-  return response.data;
+  const requestKey = buildSearchRequestKey(filters);
+  const existingRequest = inFlightChoreographySearches.get(requestKey);
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const request = api
+    .get('/choreographies/search', {
+      params: filters,
+    })
+    .then((response) => response.data)
+    .finally(() => {
+      inFlightChoreographySearches.delete(requestKey);
+    });
+
+  inFlightChoreographySearches.set(requestKey, request);
+  return request;
 }
 
 export async function createChoreography(

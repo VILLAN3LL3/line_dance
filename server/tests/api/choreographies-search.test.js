@@ -97,6 +97,16 @@ describe('GET /api/choreographies/search — search param', () => {
     const res = await search({ search: 'Polka' });
     expect(res.body.data).toEqual([]);
   });
+
+  it('matches titles when query uses straight apostrophe and stored title uses curly apostrophe', async () => {
+    const curlyTitle = 'We can\u2019t wait';
+    await post({ name: curlyTitle, level: 'Beginner' });
+
+    const res = await search({ search: "We can't wait" });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe(curlyTitle);
+  });
 });
 
 // ---------------------------------------------------------------------------
