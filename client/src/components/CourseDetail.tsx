@@ -24,6 +24,7 @@ const CourseDetail: React.FC = () => {
   const [selectedChoreographyQuery, setSelectedChoreographyQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const selectedSessionId = selectedSession?.id ?? null;
 
   const getChoreographyOptionLabel = (choreography: Choreography) => (
     `${choreography.name} (${choreography.level})`
@@ -60,10 +61,9 @@ const CourseDetail: React.FC = () => {
       setSessions(sessionsData);
       setAvailableChoreographies(choreosData.data);
 
-      if (selectedSession) {
-        const refreshedSelectedSession = sessionsData.find((item) => item.id === selectedSession.id) ?? null;
+      if (selectedSessionId !== null) {
+        const refreshedSelectedSession = sessionsData.find((item) => item.id === selectedSessionId) ?? null;
         if (refreshedSelectedSession) {
-          setSelectedSession(refreshedSelectedSession);
           const choreosInSession = await getSessionChoreographies(refreshedSelectedSession.id);
           setSessionChoreographies(choreosInSession);
         } else {
@@ -79,7 +79,7 @@ const CourseDetail: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [parsedGroupId, parsedCourseId, selectedSession]);
+  }, [parsedGroupId, parsedCourseId, selectedSessionId]);
 
   useEffect(() => {
     if (!Number.isFinite(parsedGroupId) || !Number.isFinite(parsedCourseId)) {
