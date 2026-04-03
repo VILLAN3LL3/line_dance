@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 
 import { getAuthors, getLevels, getStepFigures, getTags } from "../api";
 import { ChoreographyFormData } from "../types";
+import { UrlInput } from "./UrlInput";
 
 interface ChoreographyFormProps {
   initialData?: ChoreographyFormData;
@@ -35,7 +36,6 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const [authorsFromDb, setAuthorsFromDb] = useState<string[]>([]);
   const [tagsFromDb, setTagsFromDb] = useState<string[]>([]);
   const [figuresFromDb, setFiguresFromDb] = useState<string[]>([]);
-
   useEffect(() => {
     let isActive = true;
 
@@ -291,8 +291,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
         <div className="form-group">
           <label htmlFor="step_sheet_link">Step Sheet Link</label>
-          <input
-            type="url"
+          <UrlInput
             id="step_sheet_link"
             name="step_sheet_link"
             value={formData.step_sheet_link || ''}
@@ -303,8 +302,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
         <div className="form-group">
           <label htmlFor="demo_video_url">Demo Video URL</label>
-          <input
-            type="url"
+          <UrlInput
             id="demo_video_url"
             name="demo_video_url"
             value={formData.demo_video_url || ''}
@@ -315,8 +313,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
         <div className="form-group">
           <label htmlFor="tutorial_video_url">Tutorial Video URL</label>
-          <input
-            type="url"
+          <UrlInput
             id="tutorial_video_url"
             name="tutorial_video_url"
             value={formData.tutorial_video_url || ''}

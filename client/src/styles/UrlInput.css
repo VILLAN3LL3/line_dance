@@ -1,0 +1,41 @@
+.url-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.url-input-wrapper input[type="url"] {
+  flex: 1;
+  padding-right: 34px;
+}
+
+.url-status-indicator {
+  position: absolute;
+  right: 10px;
+  font-size: 16px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.url-status-indicator.ok {
+  color: #22a06b;
+}
+
+.url-status-indicator.error {
+  color: #e5484d;
+}
+
+.url-status-indicator.checking {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ddd;
+  border-top-color: #888;
+  border-radius: 50%;
+  animation: url-spin 0.7s linear infinite;
+}
+
+@keyframes url-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { createDanceCourse, getDanceCourses, getDanceGroup, getTrainers, updateDanceCourse } from "../api";
+import { UrlInput } from "./UrlInput";
 import { DanceCourse, DanceGroup, Trainer } from "../types";
 
 const CourseFormPage: React.FC = () => {
@@ -195,9 +196,9 @@ const CourseFormPage: React.FC = () => {
 
         <div className="course-form-field">
           <label htmlFor="course-youtube">YouTube Playlist URL</label>
-          <input
+          <UrlInput
             id="course-youtube"
-            type="url"
+            name="youtube_playlist_url"
             value={youtubePlaylistUrl}
             onChange={(e) => setYoutubePlaylistUrl(e.target.value)}
             disabled={isLoading}
@@ -206,9 +207,9 @@ const CourseFormPage: React.FC = () => {
 
         <div className="course-form-field">
           <label htmlFor="course-copperknob">Copperknob List URL</label>
-          <input
+          <UrlInput
             id="course-copperknob"
-            type="url"
+            name="copperknob_list_url"
             value={copperknobListUrl}
             onChange={(e) => setCopperknobListUrl(e.target.value)}
             disabled={isLoading}
@@ -217,9 +218,9 @@ const CourseFormPage: React.FC = () => {
 
         <div className="course-form-field">
           <label htmlFor="course-spotify">Spotify Playlist URL</label>
-          <input
+          <UrlInput
             id="course-spotify"
-            type="url"
+            name="spotify_playlist_url"
             value={spotifyPlaylistUrl}
             onChange={(e) => setSpotifyPlaylistUrl(e.target.value)}
             disabled={isLoading}
