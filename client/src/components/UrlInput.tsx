@@ -2,6 +2,8 @@ import "../styles/UrlInput.css";
 
 import React, { useState } from "react";
 
+import { checkUrl } from "../api";
+
 interface UrlInputProps {
   id: string;
   name: string;
@@ -37,8 +39,8 @@ export const UrlInput: React.FC<UrlInputProps> = ({ id, name, value, onChange, p
 
     setStatus('checking');
     try {
-      await fetch(trimmed, { mode: 'no-cors', signal: AbortSignal.timeout(5000) });
-      setStatus('ok');
+      const result = await checkUrl(trimmed);
+      setStatus(result.ok ? 'ok' : 'error');
     } catch {
       setStatus('error');
     }

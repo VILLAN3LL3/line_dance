@@ -1,15 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
+import { checkUrl } from "../../api";
 import { UrlInput } from "../../components/UrlInput";
 
-// ---------------------------------------------------------------------------
-// fetch mock
-// ---------------------------------------------------------------------------
+vi.mock('../../api', () => ({
+  checkUrl: vi.fn(),
+  searchChoreographies: vi.fn(),
+  inFlightChoreographySearches: new Map(),
+}));
 
-const mockFetch = vi.fn();
-vi.stubGlobal('fetch', mockFetch);
+const mockCheckUrl = checkUrl as Mock;
 
 function renderUrlInput(value = '') {
   const onChange = vi.fn();
@@ -48,7 +50,7 @@ describe('UrlInput — idle state', () => {
   });
 
   it('clears any indicator when the input is focused', async () => {
-    mockFetch.mockResolvedValueOnce(new Response());
+    mockCheckUrl.mockResolvedValueOnce({ ok: true, status: 200 });
     renderUrlInput('https://example.com');
 
     fireEvent.blur(getInput());
@@ -79,7 +81,7 @@ describe('UrlInput — invalid URL format', () => {
     fireEvent.blur(getInput());
 
     await waitFor(() => expect(screen.getByLabelText('URL not reachable')).toBeInTheDocument());
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockCheckUrl).not.toHaveBeenCalled();
   });
 });
 
@@ -88,30 +90,34 @@ describe('UrlInput — invalid URL format', () => {
 // ---------------------------------------------------------------------------
 
 describe('UrlInput — reachability check success', () => {
-  it('shows tick mark after fetch resolves for a valid URL', async () => {
-    mockFetch.mockResolvedValueOnce(new Response());
+  it('shows tick mark when checkUrl returns ok', async () => {
+    mockCheckUrl.mockResolvedValueOnce({ ok: true, status: 200 });
     renderUrlInput('https://example.com');
 
     fireEvent.blur(getInput());
 
     await waitFor(() => expect(screen.getByLabelText('URL reachable')).toBeInTheDocument());
-    expect(mockFetch).toHaveBeenCalledWith(
-      'https://example.com',
-      expect.objectContaining({ mode: 'no-cors' }),
-    );
+    expect(mockCheckUrl).toHaveBeenCalledWith('https://example.com');
   });
 
-  it('passes the exact trimmed URL to fetch', async () => {
-    mockFetch.mockResolvedValueOnce(new Response());
+  it('passes the exact trimmed URL to checkUrl', async () => {
+    mockCheckUrl.mockResolvedValueOnce({ ok: true, status: 200 });
     renderUrlInput('  https://example.com/path  ');
 
     fireEvent.blur(getInput());
 
     await waitFor(() => expect(screen.getByLabelText('URL reachable')).toBeInTheDocument());
-    expect(mockFetch).toHaveBeenCalledWith(
-      'https://example.com/path',
-      expect.anything(),
-    );
+    expect(mockCheckUrl).toHaveBeenCalledWith('https://example.com/path');
+  });
+
+  it('shows tick for cross-origin URLs with CORS restrictions (e.g. copperknob)', async () => {
+    mockCheckUrl.mockResolvedValueOnce({ ok: true, status: 200 });
+    renderUrlInput('https://www.copperknob.co.uk/stepsheets/example');
+
+    fireEvent.blur(getInput());
+
+    await waitFor(() => expect(screen.getByLabelText('URL reachable')).toBeInTheDocument());
+    expect(mockCheckUrl).toHaveBeenCalledWith('https://www.copperknob.co.uk/stepsheets/example');
   });
 });
 
@@ -120,8 +126,18 @@ describe('UrlInput — reachability check success', () => {
 // ---------------------------------------------------------------------------
 
 describe('UrlInput — reachability check failure', () => {
-  it('shows error indicator when fetch throws (network error / timeout)', async () => {
-    mockFetch.mockRejectedValueOnce(new TypeError('network error'));
+  it('shows error indicator when the server responds with a non-ok status (e.g. 404)', async () => {
+    mockCheckUrl.mockResolvedValueOnce({ ok: false, status: 404 });
+    renderUrlInput('https://example.com/missing');
+
+    fireEvent.blur(getInput());
+
+    await waitFor(() => expect(screen.getByLabelText('URL not reachable')).toBeInTheDocument());
+    expect(screen.queryByLabelText('URL reachable')).toBeNull();
+  });
+
+  it('shows error indicator when checkUrl throws (network error / timeout)', async () => {
+    mockCheckUrl.mockRejectedValueOnce(new Error('network error'));
     renderUrlInput('https://example.com');
 
     fireEvent.blur(getInput());

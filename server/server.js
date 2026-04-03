@@ -6,6 +6,7 @@ import { runMigrations } from './migrations/index.js';
 import { openApiSpec } from './openapi.js';
 import { createChoreography, getChoreographies, getChoreographyById, updateChoreography, deleteChoreography, searchChoreographies, getLevels, addLevel, getTags, getStepFigures, getAuthors, getSavedFilterConfigurations, saveFilterConfiguration, updateSavedFilterConfiguration, deleteSavedFilterConfiguration, getMaxChoreographyCount } from './routes/choreographies.js';
 import { getDanceGroups, createDanceGroup, getDanceGroupById, updateDanceGroup, deleteDanceGroup, getTrainers, createTrainer, updateTrainer, deleteTrainer, getDanceCourses, createDanceCourse, updateDanceCourse, deleteDanceCourse, exportDanceCoursePdf, getSessions, createSession, updateSession, deleteSession, getSessionChoreographies, addChoreographyToSession, removeChoreographyFromSession, getLearnedChoreographies, getGroupLevels, addGroupLevel, removeGroupLevel } from './routes/dance-groups.js';
+import { checkUrl } from './routes/url-check.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -91,6 +92,9 @@ app.delete('/api/dance-groups/:groupId/levels/:level', removeGroupLevel);
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+
+// URL reachability check (server-side proxy, avoids CORS)
+app.get('/api/url-check', checkUrl);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

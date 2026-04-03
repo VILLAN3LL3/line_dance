@@ -153,6 +153,11 @@ export async function deleteSavedFilterConfiguration(id: number): Promise<{ mess
   return response.data;
 }
 
+export async function checkUrl(url: string): Promise<{ ok: boolean; status: number | null }> {
+  const response = await api.get('/url-check', { params: { url } });
+  return response.data;
+}
+
 // Dance Groups API
 
 export async function getDanceGroups(): Promise<DanceGroup[]> {
