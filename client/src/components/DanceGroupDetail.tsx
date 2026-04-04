@@ -4,16 +4,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  addGroupLevel,
-  deleteDanceCourse,
-  exportDanceCoursePdf,
-  fetchChoreographies,
-  getDanceCourses,
-  getDanceGroup,
-  getGroupLevels,
-  getLearnedChoreographies,
-  getSessions,
-  removeGroupLevel,
+  addGroupLevel, deleteDanceCourse, exportDanceCoursePdf, fetchChoreographies, getDanceCourses, getDanceGroup, getGroupLevels,
+  getLearnedChoreographies, getSessions, removeGroupLevel
 } from "../api";
 import { Choreography, DanceCourse, DanceGroup, LearnedChoreography, Session } from "../types";
 import { DanceGroupCoursesSection } from "./DanceGroupCoursesSection";

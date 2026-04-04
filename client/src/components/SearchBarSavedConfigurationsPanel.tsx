@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import {
-  deleteSavedFilterConfiguration,
-  getSavedFilterConfigurations,
-  saveFilterConfiguration,
-  updateSavedFilterConfiguration,
+  deleteSavedFilterConfiguration, getSavedFilterConfigurations, saveFilterConfiguration, updateSavedFilterConfiguration
 } from "../api";
 import { SavedFilterConfiguration, SearchFilters } from "../types";
 
