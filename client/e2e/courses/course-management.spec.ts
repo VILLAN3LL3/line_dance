@@ -20,12 +20,16 @@ test.describe("Course Management", () => {
       "2025-01-10",
     );
 
+    const futureSessionDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+
     await page.goto(`/admin/groups/${groupId}/courses/${courseId}`);
     await expect(
       page.getByRole("heading", { name: new RegExp(`Course: ${courseId}`) }),
     ).toBeVisible();
 
-    await page.locator(".session-form input[type='date']").fill("2025-03-10");
+    await page.locator(".session-form input[type='date']").fill(futureSessionDate);
     await page.getByRole("button", { name: /Add Session/i }).click();
     await expect(page.locator(".session-item")).toHaveCount(1);
 

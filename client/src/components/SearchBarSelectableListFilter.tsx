@@ -10,7 +10,7 @@ interface SearchBarSelectableListFilterProps {
   placeholder: string;
   isLoading: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onAddFromInput: () => void;
+  onAddFromInput: (value?: string) => void;
   onToggleValue: (value: string) => void;
 }
 
@@ -38,7 +38,7 @@ export const SearchBarSelectableListFilter: React.FC<SearchBarSelectableListFilt
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
-            onAddFromInput();
+            onAddFromInput(inputValue);
           }
         }}
         placeholder={placeholder}
@@ -53,7 +53,7 @@ export const SearchBarSelectableListFilter: React.FC<SearchBarSelectableListFilt
       </datalist>
       <button
         type="button"
-        onClick={onAddFromInput}
+        onClick={() => onAddFromInput(inputValue)}
         className="btn-add-filter"
         disabled={isLoading}
       >

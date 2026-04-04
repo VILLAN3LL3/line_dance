@@ -1,8 +1,12 @@
 import "../styles/SearchBar.css";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-import { getAuthors, getLevels, getMaxChoreographyCount, getStepFigures, getTags } from "../api";
+import {
+  defaultSearchBarFilterValues,
+  searchBarValuesFromFilters,
+  useSearchBarFilters,
+} from "../hooks/useSearchBarFilters";
 import { SearchFilters } from "../types";
 import { SearchBarAdvancedFilters } from "./SearchBarAdvancedFilters";
 
@@ -12,71 +16,23 @@ interface SearchBarProps {
   isLoading?: boolean;
 }
 
-interface FilterValues {
-  searchTerm: string;
-  selectedLevel: string[];
-  maxCount: number;
-  selectedFigures: string[];
-  stepFiguresMatchMode: "all" | "any" | "exact";
-  withoutStepFigures: boolean;
-  selectedTags: string[];
-  selectedAuthors: string[];
-  inputLevel: string;
-  inputFigure: string;
-  inputTag: string;
-  inputAuthor: string;
-}
-
-const defaultFilterValues = (maxCountLimit = 0): FilterValues => ({
-  searchTerm: "",
-  selectedLevel: [],
-  maxCount: maxCountLimit,
-  selectedFigures: [],
-  stepFiguresMatchMode: "all",
-  withoutStepFigures: false,
-  selectedTags: [],
-  selectedAuthors: [],
-  inputLevel: "",
-  inputFigure: "",
-  inputTag: "",
-  inputAuthor: "",
-});
-
-const valuesFromFilters = (filters: SearchFilters, maxCountLimit: number): FilterValues => ({
-  searchTerm: filters.search || "",
-  selectedLevel: Array.isArray(filters.level) ? filters.level : [],
-  maxCount: filters.max_count ?? maxCountLimit,
-  selectedFigures: filters.step_figures || [],
-  stepFiguresMatchMode: filters.step_figures_match_mode || "all",
-  withoutStepFigures: !!filters.without_step_figures,
-  selectedTags: filters.tags || [],
-  selectedAuthors: filters.authors || [],
-  inputLevel: "",
-  inputFigure: "",
-  inputTag: "",
-  inputAuthor: "",
-});
+const EMPTY_FILTERS: SearchFilters = {};
 
 export const SearchBar: React.FC<SearchBarProps> = ({
   onSearch,
-  filters = {},
+  filters = EMPTY_FILTERS,
   isLoading = false,
 }) => {
-  const [values, setValues] = useState<FilterValues>(() => defaultFilterValues());
-  const [maxCountLimit, setMaxCountLimit] = useState<number>(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [levelOptions, setLevelOptions] = useState<string[]>([]);
-  const [figureOptions, setFigureOptions] = useState<string[]>([]);
-  const [tagOptions, setTagOptions] = useState<string[]>([]);
-  const [authorOptions, setAuthorOptions] = useState<string[]>([]);
-
-  // Sync filter values from parent when the filters prop changes.
-  // Uses the "store information from previous renders" pattern to avoid setState-in-effect.
-  const [prevFilters, setPrevFilters] = useState(filters);
-  if (prevFilters !== filters) {
-    setPrevFilters(filters);
-    setValues(valuesFromFilters(filters, maxCountLimit));
-  }
+  const {
+    values,
+    setValues,
+    maxCountLimit,
+    levelOptions,
+    figureOptions,
+    tagOptions,
+    authorOptions,
+  } = useSearchBarFilters(filters);
 
   const buildFilters = (): SearchFilters => ({
     search: values.searchTerm || undefined,
@@ -96,55 +52,18 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   });
 
   const applyLoadedFilters = async (loadedFilters: SearchFilters) => {
-    setValues(valuesFromFilters(loadedFilters, maxCountLimit));
+    setValues(searchBarValuesFromFilters(loadedFilters, maxCountLimit));
     await onSearch(loadedFilters);
   };
 
   const handleClearAllFilters = async () => {
-    setValues(defaultFilterValues(maxCountLimit));
+    setValues(defaultSearchBarFilterValues(maxCountLimit));
     await onSearch({});
   };
 
   const handleSearch = async () => {
     await onSearch(buildFilters());
   };
-
-  useEffect(() => {
-    const loadFilters = async () => {
-      try {
-        const [levels, figures, tags, authors] = await Promise.all([
-          getLevels(),
-          getStepFigures(),
-          getTags(),
-          getAuthors(),
-        ]);
-
-        const maxExistingCount = await getMaxChoreographyCount();
-
-        setLevelOptions(levels.map((l) => l.name));
-        setFigureOptions(figures);
-        setTagOptions(tags);
-        setAuthorOptions(authors);
-        setMaxCountLimit(maxExistingCount);
-        setValues((prev) => ({
-          ...prev,
-          maxCount:
-            prev.maxCount > 0 && prev.maxCount <= maxExistingCount
-              ? prev.maxCount
-              : maxExistingCount,
-        }));
-      } catch (error) {
-        console.error("Error loading search filters:", error);
-        setLevelOptions([]);
-        setFigureOptions([]);
-        setTagOptions([]);
-        setAuthorOptions([]);
-        setMaxCountLimit(0);
-      }
-    };
-
-    loadFilters();
-  }, []);
 
   const toggleFigure = (figure: string) => {
     if (values.withoutStepFigures) return;

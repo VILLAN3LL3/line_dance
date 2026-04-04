@@ -10,10 +10,9 @@ import {
   updateChoreography,
 } from "../api";
 import { Choreography, ChoreographyFormData, SearchFilters } from "../types";
-import { ChoreographyCard } from "./ChoreographyCard";
-import { ChoreographyForm } from "./ChoreographyForm";
-import { ChoreographyTable } from "./ChoreographyTable";
-import { SearchBar } from "./SearchBar";
+import { AppDetailView } from "./AppDetailView";
+import { AppFormView } from "./AppFormView";
+import { AppListView } from "./AppListView";
 
 type View = "list" | "create" | "edit" | "detail";
 
@@ -173,67 +172,23 @@ export const App: React.FC = () => {
     }
   };
 
-  const renderContent = () => {
-    if (isLoading) {
-      return <div className="loading">Loading choreographies...</div>;
-    }
-
-    if (choreographies.length === 0) {
-      return (
-        <div className="empty-state">
-          <p>No choreographies found. Start by adding one!</p>
-        </div>
-      );
-    }
-
-    if (displayMode === "card") {
-      return (
-        <>
-          <div className="choreographies-grid">
-            {choreographies.map((choreo) => (
-              <ChoreographyCard
-                key={choreo.id}
-                choreography={choreo}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onSelect={handleSelectChoreography}
-              />
-            ))}
-          </div>
-
-          {pagination.totalPages > 1 && (
-            <div className="pagination">
-              <button
-                disabled={pagination.page === 1 || isLoading}
-                onClick={() => loadChoreographies(currentFilters)}
-              >
-                Previous
-              </button>
-              <span>
-                Page {pagination.page} of {pagination.totalPages}
-              </span>
-              <button
-                disabled={pagination.page === pagination.totalPages || isLoading}
-                onClick={() => loadChoreographies(currentFilters)}
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </>
-      );
-    }
-
-    return (
-      <ChoreographyTable
-        choreographies={choreographies}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onSelect={handleSelectChoreography}
-        isLoading={isLoading}
-      />
-    );
-  };
+  const selectedChoreographyFormData = selectedChoreography
+    ? {
+        name: selectedChoreography.name,
+        step_sheet_link: selectedChoreography.step_sheet_link,
+        demo_video_url: selectedChoreography.demo_video_url,
+        tutorial_video_url: selectedChoreography.tutorial_video_url,
+        count: selectedChoreography.count,
+        wall_count: selectedChoreography.wall_count,
+        level: selectedChoreography.level,
+        creation_year: selectedChoreography.creation_year,
+        tag_information: selectedChoreography.tag_information,
+        restart_information: selectedChoreography.restart_information,
+        authors: selectedChoreography.authors,
+        tags: selectedChoreography.tags,
+        step_figures: selectedChoreography.step_figures,
+      }
+    : undefined;
 
   return (
     <div className="app">
@@ -247,78 +202,49 @@ export const App: React.FC = () => {
       {error && <div className="error-message">{error}</div>}
 
       {view === "list" && (
-        <div className="list-view">
-          <SearchBar onSearch={handleSearch} filters={currentFilters} isLoading={isLoading} />
-
-          <div className="view-toggle">
-            <button
-              className={`view-toggle-btn ${displayMode === "card" ? "active" : ""}`}
-              onClick={() => setDisplayMode("card")}
-              title="Card view"
-            >
-              📇 Cards
-            </button>
-            <button
-              className={`view-toggle-btn ${displayMode === "table" ? "active" : ""}`}
-              onClick={() => setDisplayMode("table")}
-              title="Table view"
-            >
-              📊 Table
-            </button>
-          </div>
-
-          {renderContent()}
-        </div>
+        <AppListView
+          choreographies={choreographies}
+          currentFilters={currentFilters}
+          displayMode={displayMode}
+          isLoading={isLoading}
+          pagination={{ page: pagination.page, totalPages: pagination.totalPages }}
+          onSearch={handleSearch}
+          onDisplayModeChange={setDisplayMode}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onSelect={handleSelectChoreography}
+          onReload={() => loadChoreographies(currentFilters)}
+        />
       )}
 
       {view === "create" && (
-        <div className="form-view">
-          <h2>Add New Choreography</h2>
-          <ChoreographyForm
-            onSubmit={handleCreate}
-            isLoading={isLoading}
-            onCancel={() => setView("list")}
-          />
-        </div>
+        <AppFormView
+          title="Add New Choreography"
+          onSubmit={handleCreate}
+          isLoading={isLoading}
+          onCancel={() => setView("list")}
+        />
       )}
 
       {view === "edit" && selectedChoreography && (
-        <div className="form-view">
-          <h2>Edit Choreography: {selectedChoreography.name}</h2>
-          <ChoreographyForm
-            initialData={{
-              name: selectedChoreography.name,
-              step_sheet_link: selectedChoreography.step_sheet_link,
-              demo_video_url: selectedChoreography.demo_video_url,
-              tutorial_video_url: selectedChoreography.tutorial_video_url,
-              count: selectedChoreography.count,
-              wall_count: selectedChoreography.wall_count,
-              level: selectedChoreography.level,
-              creation_year: selectedChoreography.creation_year,
-              tag_information: selectedChoreography.tag_information,
-              restart_information: selectedChoreography.restart_information,
-              authors: selectedChoreography.authors,
-              tags: selectedChoreography.tags,
-              step_figures: selectedChoreography.step_figures,
-            }}
-            onSubmit={handleUpdate}
-            isLoading={isLoading}
-            onCancel={() => returnToList()}
-          />
-        </div>
+        <AppFormView
+          title={`Edit Choreography: ${selectedChoreography.name}`}
+          initialData={selectedChoreographyFormData}
+          onSubmit={handleUpdate}
+          isLoading={isLoading}
+          onCancel={() => {
+            void returnToList();
+          }}
+        />
       )}
 
       {view === "detail" && selectedChoreography && (
-        <div className="detail-view">
-          <button onClick={() => setView("list")} className="btn-back">
-            ← Back to List
-          </button>
-          <ChoreographyCard
-            choreography={selectedChoreography}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        </div>
+        <AppDetailView
+          choreography={selectedChoreography}
+          onBack={() => setView("list")}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       )}
     </div>
   );

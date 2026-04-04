@@ -8,7 +8,7 @@ interface SearchBarStepFiguresFilterProps {
   stepFiguresMatchMode: "all" | "any" | "exact";
   isLoading: boolean;
   onFigureInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onAddFigureFromInput: () => void;
+  onAddFigureFromInput: (value?: string) => void;
   onToggleFigure: (figure: string) => void;
   onWithoutStepFiguresChange: (checked: boolean) => void;
   onStepFiguresMatchModeChange: (mode: "all" | "any" | "exact") => void;
@@ -49,7 +49,7 @@ export const SearchBarStepFiguresFilter: React.FC<SearchBarStepFiguresFilterProp
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
-            onAddFigureFromInput();
+            onAddFigureFromInput(inputFigure);
           }
         }}
         placeholder={
@@ -67,7 +67,7 @@ export const SearchBarStepFiguresFilter: React.FC<SearchBarStepFiguresFilterProp
       </datalist>
       <button
         type="button"
-        onClick={onAddFigureFromInput}
+        onClick={() => onAddFigureFromInput(inputFigure)}
         className="btn-add-filter"
         disabled={isLoading || withoutStepFigures}
       >
