@@ -29,16 +29,12 @@ async function ensureMigrationTable() {
       applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
     [],
-    dbName
+    dbName,
   );
 }
 
 async function hasMigration(id) {
-  const row = await getQuery(
-    `SELECT id FROM schema_migrations WHERE id = ?`,
-    [id],
-    dbName
-  );
+  const row = await getQuery(`SELECT id FROM schema_migrations WHERE id = ?`, [id], dbName);
   return Boolean(row);
 }
 
@@ -49,7 +45,7 @@ async function ensureColumnExists(tableName, columnName, columnDefinition) {
     await runQuery(
       `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`,
       [],
-      dbName
+      dbName,
     );
   }
 }
@@ -65,7 +61,7 @@ const migrations = [
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await runQuery(
@@ -78,7 +74,7 @@ const migrations = [
           FOREIGN KEY (dance_group_id) REFERENCES dance_groups(id) ON DELETE CASCADE
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await runQuery(
@@ -90,7 +86,7 @@ const migrations = [
           FOREIGN KEY (dance_course_id) REFERENCES dance_courses(id) ON DELETE CASCADE
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await runQuery(
@@ -103,7 +99,7 @@ const migrations = [
           UNIQUE(session_id, choreography_id)
         )`,
         [],
-        dbName
+        dbName,
       );
     },
   },
@@ -118,7 +114,7 @@ const migrations = [
           FOREIGN KEY (dance_group_id) REFERENCES dance_groups(id) ON DELETE CASCADE
         )`,
         [],
-        dbName
+        dbName,
       );
     },
   },
@@ -149,14 +145,14 @@ const migrations = [
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await ensureColumnExists('dance_courses', 'trainer_id', 'INTEGER');
       await runQuery(
         `CREATE INDEX IF NOT EXISTS idx_dance_courses_trainer_id ON dance_courses(trainer_id)`,
         [],
-        dbName
+        dbName,
       );
     },
   },
@@ -174,11 +170,7 @@ export async function runDanceGroupsMigrations() {
     await runQuery('BEGIN IMMEDIATE TRANSACTION', [], dbName);
     try {
       await migration.up();
-      await runQuery(
-        `INSERT INTO schema_migrations (id) VALUES (?)`,
-        [migration.id],
-        dbName
-      );
+      await runQuery(`INSERT INTO schema_migrations (id) VALUES (?)`, [migration.id], dbName);
       await runQuery('COMMIT', [], dbName);
       console.log(`Applied migration: ${migration.id}`);
     } catch (error) {

@@ -112,9 +112,7 @@ describe('PUT /api/dance-groups/:id', () => {
   it('returns 400 on name clash with another group', async () => {
     await request(app).post('/api/dance-groups').send({ name: 'Group A' });
     const b = await request(app).post('/api/dance-groups').send({ name: 'Group B' });
-    const res = await request(app)
-      .put(`/api/dance-groups/${b.body.id}`)
-      .send({ name: 'Group A' });
+    const res = await request(app).put(`/api/dance-groups/${b.body.id}`).send({ name: 'Group A' });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/already exists/i);
   });
@@ -191,36 +189,24 @@ describe('Group Levels API', () => {
   });
 
   it('returns levels in alphabetical order', async () => {
-    await request(app)
-      .post(`/api/dance-groups/${groupId}/levels`)
-      .send({ level: 'Intermediate' });
-    await request(app)
-      .post(`/api/dance-groups/${groupId}/levels`)
-      .send({ level: 'Advanced' });
-    await request(app)
-      .post(`/api/dance-groups/${groupId}/levels`)
-      .send({ level: 'Beginner' });
+    await request(app).post(`/api/dance-groups/${groupId}/levels`).send({ level: 'Intermediate' });
+    await request(app).post(`/api/dance-groups/${groupId}/levels`).send({ level: 'Advanced' });
+    await request(app).post(`/api/dance-groups/${groupId}/levels`).send({ level: 'Beginner' });
 
     const res = await request(app).get(`/api/dance-groups/${groupId}/levels`);
     expect(res.body).toEqual(['Advanced', 'Beginner', 'Intermediate']);
   });
 
   it('is idempotent – adding a duplicate level does not create a second entry', async () => {
-    await request(app)
-      .post(`/api/dance-groups/${groupId}/levels`)
-      .send({ level: 'Beginner' });
-    await request(app)
-      .post(`/api/dance-groups/${groupId}/levels`)
-      .send({ level: 'Beginner' });
+    await request(app).post(`/api/dance-groups/${groupId}/levels`).send({ level: 'Beginner' });
+    await request(app).post(`/api/dance-groups/${groupId}/levels`).send({ level: 'Beginner' });
 
     const res = await request(app).get(`/api/dance-groups/${groupId}/levels`);
     expect(res.body).toHaveLength(1);
   });
 
   it('removes a level from the group', async () => {
-    await request(app)
-      .post(`/api/dance-groups/${groupId}/levels`)
-      .send({ level: 'Beginner' });
+    await request(app).post(`/api/dance-groups/${groupId}/levels`).send({ level: 'Beginner' });
 
     await request(app).delete(`/api/dance-groups/${groupId}/levels/Beginner`);
 
@@ -236,16 +222,12 @@ describe('Group Levels API', () => {
   });
 
   it('returns 400 for empty level name', async () => {
-    const res = await request(app)
-      .post(`/api/dance-groups/${groupId}/levels`)
-      .send({ level: '' });
+    const res = await request(app).post(`/api/dance-groups/${groupId}/levels`).send({ level: '' });
     expect(res.status).toBe(400);
   });
 
   it('trims whitespace from level name', async () => {
-    await request(app)
-      .post(`/api/dance-groups/${groupId}/levels`)
-      .send({ level: '  Beginner  ' });
+    await request(app).post(`/api/dance-groups/${groupId}/levels`).send({ level: '  Beginner  ' });
     const res = await request(app).get(`/api/dance-groups/${groupId}/levels`);
     expect(res.body[0]).toBe('Beginner');
   });

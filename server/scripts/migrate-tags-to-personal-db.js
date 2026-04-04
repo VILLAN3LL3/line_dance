@@ -41,11 +41,9 @@ function all(db, sql, params = []) {
 }
 
 async function tableExists(db, tableName) {
-  const rows = await all(
-    db,
-    `SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`,
-    [tableName]
-  );
+  const rows = await all(db, `SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`, [
+    tableName,
+  ]);
   return rows.length > 0;
 }
 
@@ -63,15 +61,21 @@ async function main() {
   const target = await open(targetPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE);
 
   // Create schema in target
-  await run(target, `CREATE TABLE IF NOT EXISTS tags (
+  await run(
+    target,
+    `CREATE TABLE IF NOT EXISTS tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
-  )`);
-  await run(target, `CREATE TABLE IF NOT EXISTS choreography_tags (
+  )`,
+  );
+  await run(
+    target,
+    `CREATE TABLE IF NOT EXISTS choreography_tags (
     choreography_id INTEGER NOT NULL,
     tag_id INTEGER NOT NULL,
     PRIMARY KEY (choreography_id, tag_id)
-  )`);
+  )`,
+  );
 
   const hasLegacyTags = await tableExists(source, 'tags');
   const hasLegacyJunction = await tableExists(source, 'choreography_tags');
@@ -92,7 +96,11 @@ async function main() {
 
     const junctions = await all(source, 'SELECT choreography_id, tag_id FROM choreography_tags');
     for (const row of junctions) {
-      await run(target, 'INSERT OR IGNORE INTO choreography_tags (choreography_id, tag_id) VALUES (?, ?)', [row.choreography_id, row.tag_id]);
+      await run(
+        target,
+        'INSERT OR IGNORE INTO choreography_tags (choreography_id, tag_id) VALUES (?, ?)',
+        [row.choreography_id, row.tag_id],
+      );
     }
     console.log(`Migrated ${junctions.length} choreography_tags row(s).`);
 

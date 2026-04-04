@@ -9,16 +9,12 @@ async function ensureMigrationTable() {
       applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
     [],
-    dbName
+    dbName,
   );
 }
 
 async function hasMigration(id) {
-  const row = await getQuery(
-    `SELECT id FROM schema_migrations WHERE id = ?`,
-    [id],
-    dbName
-  );
+  const row = await getQuery(`SELECT id FROM schema_migrations WHERE id = ?`, [id], dbName);
   return Boolean(row);
 }
 
@@ -32,7 +28,7 @@ const migrations = [
           name TEXT NOT NULL UNIQUE
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await runQuery(
@@ -53,7 +49,7 @@ const migrations = [
           FOREIGN KEY (level_id) REFERENCES levels(id)
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await runQuery(
@@ -62,7 +58,7 @@ const migrations = [
           name TEXT NOT NULL UNIQUE
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await runQuery(
@@ -74,7 +70,7 @@ const migrations = [
           FOREIGN KEY (author_id) REFERENCES authors(id)
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await runQuery(
@@ -83,7 +79,7 @@ const migrations = [
           name TEXT NOT NULL UNIQUE
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await runQuery(
@@ -95,7 +91,7 @@ const migrations = [
           FOREIGN KEY (step_figure_id) REFERENCES step_figures(id)
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await runQuery(
@@ -104,7 +100,7 @@ const migrations = [
           name TEXT NOT NULL UNIQUE
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await runQuery(
@@ -114,7 +110,7 @@ const migrations = [
           PRIMARY KEY (choreography_id, tag_id)
         )`,
         [],
-        dbName
+        dbName,
       );
     },
   },
@@ -136,7 +132,7 @@ const migrations = [
           name TEXT NOT NULL UNIQUE
         )`,
         [],
-        dbName
+        dbName,
       );
 
       await runQuery(
@@ -146,18 +142,18 @@ const migrations = [
           PRIMARY KEY (choreography_id, tag_id)
         )`,
         [],
-        dbName
+        dbName,
       );
 
       const legacyTagsTable = await getQuery(
         `SELECT name FROM main.sqlite_master WHERE type = 'table' AND name = 'tags'`,
         [],
-        dbName
+        dbName,
       );
       const legacyJunctionTable = await getQuery(
         `SELECT name FROM main.sqlite_master WHERE type = 'table' AND name = 'choreography_tags'`,
         [],
-        dbName
+        dbName,
       );
 
       if (legacyTagsTable && legacyJunctionTable) {
@@ -165,14 +161,14 @@ const migrations = [
           `INSERT OR IGNORE INTO personal_tags.tags (id, name)
            SELECT id, name FROM main.tags`,
           [],
-          dbName
+          dbName,
         );
 
         await runQuery(
           `INSERT OR IGNORE INTO personal_tags.choreography_tags (choreography_id, tag_id)
            SELECT choreography_id, tag_id FROM main.choreography_tags`,
           [],
-          dbName
+          dbName,
         );
       }
     },
@@ -191,11 +187,7 @@ export async function runChoreographyMigrations() {
     await runQuery('BEGIN IMMEDIATE TRANSACTION', [], dbName);
     try {
       await migration.up();
-      await runQuery(
-        `INSERT INTO schema_migrations (id) VALUES (?)`,
-        [migration.id],
-        dbName
-      );
+      await runQuery(`INSERT INTO schema_migrations (id) VALUES (?)`, [migration.id], dbName);
       await runQuery('COMMIT', [], dbName);
       console.log(`Applied migration: ${migration.id}`);
     } catch (error) {

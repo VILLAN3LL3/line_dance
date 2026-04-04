@@ -56,13 +56,18 @@ describe('GET /api/url-check — HEAD succeeds', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true, status: 200 });
     expect(mockFetch).toHaveBeenCalledOnce();
-    expect(mockFetch).toHaveBeenCalledWith('https://example.com', expect.objectContaining({ method: 'HEAD' }));
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://example.com',
+      expect.objectContaining({ method: 'HEAD' }),
+    );
   });
 
   it('returns ok:false when HEAD returns 404', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
 
-    const res = await request(app).get('/api/url-check').query({ url: 'https://example.com/missing' });
+    const res = await request(app)
+      .get('/api/url-check')
+      .query({ url: 'https://example.com/missing' });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: false, status: 404 });
@@ -87,7 +92,8 @@ describe('GET /api/url-check — HEAD 405 falls back to GET', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true, status: 200 });
     expect(mockFetch).toHaveBeenCalledTimes(2);
-    expect(mockFetch).toHaveBeenNthCalledWith(2,
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
       'https://www.copperknob.co.uk/stepsheets/CJ5VSPX/afire-with-desire',
       expect.objectContaining({ method: 'GET' }),
     );
@@ -123,7 +129,9 @@ describe('GET /api/url-check — YouTube oEmbed validation', () => {
     // Must call oEmbed, not the original watch URL
     expect(mockFetch).toHaveBeenCalledOnce();
     expect(mockFetch.mock.calls[0][0]).toContain('youtube.com/oembed');
-    expect(mockFetch.mock.calls[0][0]).toContain(encodeURIComponent('https://www.youtube.com/watch?v=yIe9HTIOSl4'));
+    expect(mockFetch.mock.calls[0][0]).toContain(
+      encodeURIComponent('https://www.youtube.com/watch?v=yIe9HTIOSl4'),
+    );
   });
 
   it('returns ok:false for a YouTube URL with an invalid video ID', async () => {

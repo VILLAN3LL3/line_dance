@@ -42,7 +42,12 @@ describe('GET /api/choreographies', () => {
   });
 
   it('returns created choreographies with enriched fields', async () => {
-    await createChoreo({ name: 'My Dance', authors: ['Jane'], tags: ['fun'], step_figures: ['Mambo'] });
+    await createChoreo({
+      name: 'My Dance',
+      authors: ['Jane'],
+      tags: ['fun'],
+      step_figures: ['Mambo'],
+    });
 
     const res = await request(app).get('/api/choreographies');
     expect(res.status).toBe(200);
@@ -82,18 +87,14 @@ describe('POST /api/choreographies', () => {
   });
 
   it('returns 400 when name is missing', async () => {
-    const res = await request(app)
-      .post('/api/choreographies')
-      .send({ level: 'Beginner' });
+    const res = await request(app).post('/api/choreographies').send({ level: 'Beginner' });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/required/i);
   });
 
   it('returns 400 when level is missing', async () => {
-    const res = await request(app)
-      .post('/api/choreographies')
-      .send({ name: 'No Level Dance' });
+    const res = await request(app).post('/api/choreographies').send({ name: 'No Level Dance' });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/required/i);
@@ -122,7 +123,12 @@ describe('POST /api/choreographies', () => {
   it('attaches tags and step_figures to the choreography', async () => {
     const create = await request(app)
       .post('/api/choreographies')
-      .send({ name: 'Tagged Dance', level: 'Beginner', tags: ['fun'], step_figures: ['Cha Cha', 'Mambo'] });
+      .send({
+        name: 'Tagged Dance',
+        level: 'Beginner',
+        tags: ['fun'],
+        step_figures: ['Cha Cha', 'Mambo'],
+      });
 
     const res = await request(app).get(`/api/choreographies/${create.body.id}`);
     expect(res.body.tags).toEqual(['fun']);
@@ -176,7 +182,11 @@ describe('PUT /api/choreographies/:id', () => {
   });
 
   it('replaces authors on update', async () => {
-    const created = await createChoreo({ name: 'Change Me', level: 'Beginner', authors: ['Alice'] });
+    const created = await createChoreo({
+      name: 'Change Me',
+      level: 'Beginner',
+      authors: ['Alice'],
+    });
 
     await request(app)
       .put(`/api/choreographies/${created.id}`)
@@ -187,7 +197,11 @@ describe('PUT /api/choreographies/:id', () => {
   });
 
   it('replaces step_figures on update', async () => {
-    const created = await createChoreo({ name: 'Move Me', level: 'Beginner', step_figures: ['Mambo'] });
+    const created = await createChoreo({
+      name: 'Move Me',
+      level: 'Beginner',
+      step_figures: ['Mambo'],
+    });
 
     await request(app)
       .put(`/api/choreographies/${created.id}`)
@@ -228,12 +242,10 @@ describe('PUT /api/choreographies/:id', () => {
       level: 'Beginner',
     });
 
-    const update = await request(app)
-      .put(`/api/choreographies/${created.id}`)
-      .send({
-        name: 'Level Update',
-        level: 'Advanced',
-      });
+    const update = await request(app).put(`/api/choreographies/${created.id}`).send({
+      name: 'Level Update',
+      level: 'Advanced',
+    });
 
     expect(update.status).toBe(200);
 
@@ -287,8 +299,9 @@ describe('DELETE /api/choreographies/:id', () => {
     const created2 = await createChoreo({ name: 'Other', level: 'Beginner' });
 
     // Delete choreography that owns the author
-    const firstId = (await request(app).get('/api/choreographies?limit=100'))
-      .body.data.find((c) => c.name === 'With Author').id;
+    const firstId = (await request(app).get('/api/choreographies?limit=100')).body.data.find(
+      (c) => c.name === 'With Author',
+    ).id;
     await request(app).delete(`/api/choreographies/${firstId}`);
 
     const authors = await request(app).get('/api/authors');
@@ -330,14 +343,14 @@ describe('tags storage separation', () => {
       `SELECT name
        FROM main.sqlite_master
        WHERE type = 'table'
-         AND name IN ('tags', 'choreography_tags')`
+         AND name IN ('tags', 'choreography_tags')`,
     );
 
     const personalTables = await allQuery(
       `SELECT name
        FROM personal_tags.sqlite_master
        WHERE type = 'table'
-         AND name IN ('tags', 'choreography_tags')`
+         AND name IN ('tags', 'choreography_tags')`,
     );
 
     expect(mainTables).toEqual([]);

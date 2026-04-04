@@ -16,9 +16,7 @@ beforeEach(async () => {
 // ---------------------------------------------------------------------------
 
 async function createGroupAndCourse(groupName = 'Session Test Group') {
-  const group = await request(app)
-    .post('/api/dance-groups')
-    .send({ name: groupName });
+  const group = await request(app).post('/api/dance-groups').send({ name: groupName });
   const course = await request(app).post('/api/dance-courses').send({
     dance_group_id: group.body.id,
     semester: 'WS 2025',
@@ -98,18 +96,14 @@ describe('POST /api/sessions', () => {
   });
 
   it('returns 400 when dance_course_id is missing', async () => {
-    const res = await request(app)
-      .post('/api/sessions')
-      .send({ session_date: '2025-01-15' });
+    const res = await request(app).post('/api/sessions').send({ session_date: '2025-01-15' });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/required/i);
   });
 
   it('returns 400 when session_date is missing', async () => {
     const { course } = await createGroupAndCourse();
-    const res = await request(app)
-      .post('/api/sessions')
-      .send({ dance_course_id: course.id });
+    const res = await request(app).post('/api/sessions').send({ dance_course_id: course.id });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/required/i);
   });
@@ -138,9 +132,7 @@ describe('PUT /api/sessions/:id', () => {
   });
 
   it('returns 404 for non-existent session', async () => {
-    const res = await request(app)
-      .put('/api/sessions/99999')
-      .send({ session_date: '2025-01-15' });
+    const res = await request(app).put('/api/sessions/99999').send({ session_date: '2025-01-15' });
     expect(res.status).toBe(404);
     expect(res.body.error).toMatch(/not found/i);
   });
@@ -151,9 +143,7 @@ describe('PUT /api/sessions/:id', () => {
       .post('/api/sessions')
       .send({ dance_course_id: course.id, session_date: '2025-01-15' });
 
-    const res = await request(app)
-      .put(`/api/sessions/${created.body.id}`)
-      .send({});
+    const res = await request(app).put(`/api/sessions/${created.body.id}`).send({});
     expect(res.status).toBe(400);
   });
 });
@@ -186,9 +176,7 @@ describe('DELETE /api/sessions/:id', () => {
 
     await request(app).delete(`/api/sessions/${session.body.id}`);
 
-    const res = await request(app).get(
-      `/api/session-choreographies?session_id=${session.body.id}`,
-    );
+    const res = await request(app).get(`/api/session-choreographies?session_id=${session.body.id}`);
     expect(res.body).toHaveLength(0);
   });
 });
@@ -216,9 +204,7 @@ describe('Session Choreographies API', () => {
     });
 
     it('returns empty array for a session with no choreographies', async () => {
-      const res = await request(app).get(
-        `/api/session-choreographies?session_id=${session.id}`,
-      );
+      const res = await request(app).get(`/api/session-choreographies?session_id=${session.id}`);
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
     });
@@ -228,9 +214,7 @@ describe('Session Choreographies API', () => {
         .post('/api/session-choreographies')
         .send({ session_id: session.id, choreography_id: 101 });
 
-      const res = await request(app).get(
-        `/api/session-choreographies?session_id=${session.id}`,
-      );
+      const res = await request(app).get(`/api/session-choreographies?session_id=${session.id}`);
       expect(res.body).toHaveLength(1);
       expect(res.body[0].choreography_id).toBe(101);
     });
@@ -304,9 +288,7 @@ describe('Session Choreographies API', () => {
         .post('/api/session-choreographies')
         .send({ session_id: session.id, choreography_id: 42 });
 
-      const res = await request(app).delete(
-        `/api/session-choreographies/${added.body.id}`,
-      );
+      const res = await request(app).delete(`/api/session-choreographies/${added.body.id}`);
       expect(res.status).toBe(200);
       expect(res.body.message).toMatch(/removed/i);
     });
@@ -324,9 +306,7 @@ describe('Session Choreographies API', () => {
 
 describe('GET /api/learned-choreographies', () => {
   it('returns learned choreographies for a group with past sessions', async () => {
-    const group = await request(app)
-      .post('/api/dance-groups')
-      .send({ name: 'Learned Group' });
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Learned Group' });
     const course = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.body.id,
       semester: 'WS 2024',
@@ -352,9 +332,7 @@ describe('GET /api/learned-choreographies', () => {
   });
 
   it('counts multiple sessions for the same choreography in one group', async () => {
-    const group = await request(app)
-      .post('/api/dance-groups')
-      .send({ name: 'Count Group' });
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Count Group' });
     const course = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.body.id,
       semester: 'WS 2024',
@@ -382,9 +360,7 @@ describe('GET /api/learned-choreographies', () => {
   });
 
   it('returns choreography with times_danced = 0 when all sessions are in the future', async () => {
-    const group = await request(app)
-      .post('/api/dance-groups')
-      .send({ name: 'Future Group' });
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Future Group' });
     const course = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.body.id,
       semester: 'WS 2026',
@@ -444,9 +420,7 @@ describe('GET /api/learned-choreographies', () => {
   });
 
   it('returns empty for a group with no session choreographies', async () => {
-    const group = await request(app)
-      .post('/api/dance-groups')
-      .send({ name: 'Empty Group' });
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Empty Group' });
     const res = await request(app).get(
       `/api/learned-choreographies?dance_group_id=${group.body.id}`,
     );
@@ -483,9 +457,7 @@ describe('GET /api/learned-choreographies', () => {
       .post('/api/session-choreographies')
       .send({ session_id: s2.body.id, choreography_id: 20 });
 
-    const res = await request(app).get(
-      `/api/learned-choreographies?dance_group_id=${g1.body.id}`,
-    );
+    const res = await request(app).get(`/api/learned-choreographies?dance_group_id=${g1.body.id}`);
     expect(res.body).toHaveLength(1);
     expect(res.body[0].choreography_id).toBe(10);
   });

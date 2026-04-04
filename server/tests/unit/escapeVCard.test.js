@@ -27,13 +27,17 @@ describe('escapeVCardValue', () => {
   });
 
   it(String.raw`escapes a newline as literal \n`, () => {
-    expect(escapeVCardValue(String.raw`line1
-line2`)).toBe(String.raw`line1\nline2`);
+    expect(
+      escapeVCardValue(String.raw`line1
+line2`),
+    ).toBe(String.raw`line1\nline2`);
   });
 
   it('escapes multiple special characters in one string', () => {
-    expect(escapeVCardValue(String.raw`a;b,c\d
-e`)).toBe(String.raw`a\;b\,c\\d\ne`);
+    expect(
+      escapeVCardValue(String.raw`a;b,c\d
+e`),
+    ).toBe(String.raw`a\;b\,c\\d\ne`);
   });
 
   it('coerces a number to string before escaping', () => {
@@ -45,8 +49,10 @@ e`)).toBe(String.raw`a\;b\,c\\d\ne`);
   });
 
   it('handles a string with only special characters', () => {
-    expect(escapeVCardValue(String.raw`;,\
-`)).toBe(String.raw`\;\,\\\n`);
+    expect(
+      escapeVCardValue(String.raw`;,\
+`),
+    ).toBe(String.raw`\;\,\\\n`);
   });
 
   it('handles an email-style string with no escaping needed', () => {

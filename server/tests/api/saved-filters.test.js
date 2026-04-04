@@ -16,9 +16,7 @@ beforeEach(async () => {
 // ---------------------------------------------------------------------------
 
 async function createConfig(name, filters = {}) {
-  return request(app)
-    .post('/api/saved-filters')
-    .send({ name, filters });
+  return request(app).post('/api/saved-filters').send({ name, filters });
 }
 
 // ---------------------------------------------------------------------------
@@ -147,9 +145,7 @@ describe('PATCH /api/saved-filters/:id', () => {
   });
 
   it('returns 404 for a non-existent configuration', async () => {
-    const res = await request(app)
-      .patch('/api/saved-filters/99999')
-      .send({ name: 'Ghost' });
+    const res = await request(app).patch('/api/saved-filters/99999').send({ name: 'Ghost' });
 
     expect(res.status).toBe(404);
   });
@@ -157,9 +153,7 @@ describe('PATCH /api/saved-filters/:id', () => {
   it('returns 400 when neither name nor filters is provided', async () => {
     const created = await createConfig('Unchanged');
 
-    const res = await request(app)
-      .patch(`/api/saved-filters/${created.body.id}`)
-      .send({});
+    const res = await request(app).patch(`/api/saved-filters/${created.body.id}`).send({});
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/nothing to update/i);

@@ -53,13 +53,15 @@ describe('normalizeSavedFilters', () => {
   // ---------------------------------------------------------------------------
 
   it('keeps a non-empty level array', () => {
-    expect(normalizeSavedFilters({ level: ['Beginner', 'Advanced'] }))
-      .toEqual({ level: ['Beginner', 'Advanced'] });
+    expect(normalizeSavedFilters({ level: ['Beginner', 'Advanced'] })).toEqual({
+      level: ['Beginner', 'Advanced'],
+    });
   });
 
   it('filters empty strings out of the level array', () => {
-    expect(normalizeSavedFilters({ level: ['Beginner', '', '  '] }))
-      .toEqual({ level: ['Beginner'] });
+    expect(normalizeSavedFilters({ level: ['Beginner', '', '  '] })).toEqual({
+      level: ['Beginner'],
+    });
   });
 
   it('omits level when the array is empty', () => {
@@ -75,8 +77,9 @@ describe('normalizeSavedFilters', () => {
   // ---------------------------------------------------------------------------
 
   it('keeps a non-empty step_figures array', () => {
-    expect(normalizeSavedFilters({ step_figures: ['Cha Cha', 'Mambo'] }))
-      .toEqual({ step_figures: ['Cha Cha', 'Mambo'] });
+    expect(normalizeSavedFilters({ step_figures: ['Cha Cha', 'Mambo'] })).toEqual({
+      step_figures: ['Cha Cha', 'Mambo'],
+    });
   });
 
   it('omits step_figures when the array is empty after filtering', () => {
@@ -88,18 +91,21 @@ describe('normalizeSavedFilters', () => {
   // ---------------------------------------------------------------------------
 
   it('keeps "all" as step_figures_match_mode', () => {
-    expect(normalizeSavedFilters({ step_figures_match_mode: 'all' }))
-      .toEqual({ step_figures_match_mode: 'all' });
+    expect(normalizeSavedFilters({ step_figures_match_mode: 'all' })).toEqual({
+      step_figures_match_mode: 'all',
+    });
   });
 
   it('keeps "any" as step_figures_match_mode', () => {
-    expect(normalizeSavedFilters({ step_figures_match_mode: 'any' }))
-      .toEqual({ step_figures_match_mode: 'any' });
+    expect(normalizeSavedFilters({ step_figures_match_mode: 'any' })).toEqual({
+      step_figures_match_mode: 'any',
+    });
   });
 
   it('keeps "exact" as step_figures_match_mode', () => {
-    expect(normalizeSavedFilters({ step_figures_match_mode: 'exact' }))
-      .toEqual({ step_figures_match_mode: 'exact' });
+    expect(normalizeSavedFilters({ step_figures_match_mode: 'exact' })).toEqual({
+      step_figures_match_mode: 'exact',
+    });
   });
 
   it('omits step_figures_match_mode for an unrecognised value', () => {
@@ -111,8 +117,9 @@ describe('normalizeSavedFilters', () => {
   // ---------------------------------------------------------------------------
 
   it('keeps without_step_figures when exactly true', () => {
-    expect(normalizeSavedFilters({ without_step_figures: true }))
-      .toEqual({ without_step_figures: true });
+    expect(normalizeSavedFilters({ without_step_figures: true })).toEqual({
+      without_step_figures: true,
+    });
   });
 
   it('omits without_step_figures for the string "true"', () => {
@@ -128,8 +135,9 @@ describe('normalizeSavedFilters', () => {
   // ---------------------------------------------------------------------------
 
   it('keeps a non-empty tags array', () => {
-    expect(normalizeSavedFilters({ tags: ['fun', 'competition'] }))
-      .toEqual({ tags: ['fun', 'competition'] });
+    expect(normalizeSavedFilters({ tags: ['fun', 'competition'] })).toEqual({
+      tags: ['fun', 'competition'],
+    });
   });
 
   it('omits tags when the array is empty', () => {
@@ -141,8 +149,7 @@ describe('normalizeSavedFilters', () => {
   // ---------------------------------------------------------------------------
 
   it('keeps a non-empty authors array', () => {
-    expect(normalizeSavedFilters({ authors: ['Jane Smith'] }))
-      .toEqual({ authors: ['Jane Smith'] });
+    expect(normalizeSavedFilters({ authors: ['Jane Smith'] })).toEqual({ authors: ['Jane Smith'] });
   });
 
   it('omits authors when the array is empty', () => {

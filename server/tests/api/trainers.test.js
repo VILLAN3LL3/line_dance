@@ -68,9 +68,7 @@ describe('POST /api/trainers', () => {
   });
 
   it('returns 400 when name is missing', async () => {
-    const res = await request(app)
-      .post('/api/trainers')
-      .send({ phone: '1', email: 'x@x.com' });
+    const res = await request(app).post('/api/trainers').send({ phone: '1', email: 'x@x.com' });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/name.*required/i);
   });
@@ -83,17 +81,13 @@ describe('POST /api/trainers', () => {
   });
 
   it('returns 400 when phone is missing', async () => {
-    const res = await request(app)
-      .post('/api/trainers')
-      .send({ name: 'X', email: 'x@x.com' });
+    const res = await request(app).post('/api/trainers').send({ name: 'X', email: 'x@x.com' });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/phone.*required/i);
   });
 
   it('returns 400 when email is missing', async () => {
-    const res = await request(app)
-      .post('/api/trainers')
-      .send({ name: 'X', phone: '1' });
+    const res = await request(app).post('/api/trainers').send({ name: 'X', phone: '1' });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/email.*required/i);
   });
@@ -198,9 +192,7 @@ describe('DELETE /api/trainers/:id', () => {
 
     await request(app).delete(`/api/trainers/${trainer.body.id}`);
 
-    const courses = await request(app).get(
-      `/api/dance-courses?dance_group_id=${group.body.id}`,
-    );
+    const courses = await request(app).get(`/api/dance-courses?dance_group_id=${group.body.id}`);
     const updated = courses.body.find((c) => c.id === course.body.id);
     expect(updated.trainer_id).toBeNull();
     expect(updated.trainer_name).toBeNull();

@@ -94,15 +94,46 @@ export const openApiSpec = {
         summary: 'Search choreographies',
         parameters: [
           { name: 'search', in: 'query', schema: { type: 'string' } },
-          { name: 'level', in: 'query', schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] } },
-          { name: 'step_figures', in: 'query', schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] } },
-          { name: 'step_figures_match_mode', in: 'query', schema: { type: 'string', enum: ['all', 'any', 'exact'] } },
+          {
+            name: 'level',
+            in: 'query',
+            schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
+          },
+          {
+            name: 'step_figures',
+            in: 'query',
+            schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
+          },
+          {
+            name: 'step_figures_match_mode',
+            in: 'query',
+            schema: { type: 'string', enum: ['all', 'any', 'exact'] },
+          },
           { name: 'without_step_figures', in: 'query', schema: { type: 'boolean' } },
-          { name: 'tags', in: 'query', schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] } },
-          { name: 'authors', in: 'query', schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] } },
+          {
+            name: 'tags',
+            in: 'query',
+            schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
+          },
+          {
+            name: 'authors',
+            in: 'query',
+            schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
+          },
           { name: 'max_count', in: 'query', schema: { type: 'integer', minimum: 0 } },
-          { name: 'sort_field', in: 'query', schema: { type: 'string', enum: ['name', 'level', 'count', 'wall_count', 'creation_year'] } },
-          { name: 'sort_direction', in: 'query', schema: { type: 'string', enum: ['asc', 'desc'] } },
+          {
+            name: 'sort_field',
+            in: 'query',
+            schema: {
+              type: 'string',
+              enum: ['name', 'level', 'count', 'wall_count', 'creation_year'],
+            },
+          },
+          {
+            name: 'sort_direction',
+            in: 'query',
+            schema: { type: 'string', enum: ['asc', 'desc'] },
+          },
           { $ref: '#/components/parameters/Page' },
           { $ref: '#/components/parameters/Limit' },
         ],
@@ -311,7 +342,10 @@ export const openApiSpec = {
             description: 'Saved filters',
             content: {
               'application/json': {
-                schema: { type: 'array', items: { $ref: '#/components/schemas/SavedFilterConfiguration' } },
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/SavedFilterConfiguration' },
+                },
               },
             },
           },
@@ -820,7 +854,10 @@ export const openApiSpec = {
             description: 'Session choreographies',
             content: {
               'application/json': {
-                schema: { type: 'array', items: { $ref: '#/components/schemas/SessionChoreography' } },
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/SessionChoreography' },
+                },
               },
             },
           },
@@ -891,7 +928,10 @@ export const openApiSpec = {
             description: 'Learned choreographies view rows',
             content: {
               'application/json': {
-                schema: { type: 'array', items: { $ref: '#/components/schemas/LearnedChoreography' } },
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/LearnedChoreography' },
+                },
               },
             },
           },

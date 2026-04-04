@@ -9,7 +9,7 @@ function captureError(error) {
     return;
   }
 
-  const details = error instanceof Error ? (error.stack || error.message) : String(error);
+  const details = error instanceof Error ? error.stack || error.message : String(error);
   process.stderr.write(`[dance-groups] ${details}\n`);
 }
 
@@ -28,7 +28,7 @@ export async function getDanceGroups(req, res) {
     const rows = await allQuery(
       `SELECT id, name, created_at FROM dance_groups ORDER BY name ASC`,
       [],
-      dbName
+      dbName,
     );
     res.json(rows);
   } catch (error) {
@@ -40,7 +40,7 @@ export async function getDanceGroups(req, res) {
 export async function createDanceGroup(req, res) {
   try {
     const { name } = req.body;
-    
+
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'Name is required' });
     }
@@ -48,13 +48,13 @@ export async function createDanceGroup(req, res) {
     const result = await runQuery(
       `INSERT INTO dance_groups (name) VALUES (?)`,
       [name.trim()],
-      dbName
+      dbName,
     );
 
     const group = await getQuery(
       `SELECT id, name, created_at FROM dance_groups WHERE id = ?`,
       [result.id],
-      dbName
+      dbName,
     );
 
     res.status(201).json(group);
@@ -73,7 +73,7 @@ export async function getDanceGroupById(req, res) {
     const group = await getQuery(
       `SELECT id, name, created_at FROM dance_groups WHERE id = ?`,
       [id],
-      dbName
+      dbName,
     );
 
     if (!group) {
@@ -96,26 +96,18 @@ export async function updateDanceGroup(req, res) {
       return res.status(400).json({ error: 'Name is required' });
     }
 
-    const existing = await getQuery(
-      `SELECT id FROM dance_groups WHERE id = ?`,
-      [id],
-      dbName
-    );
+    const existing = await getQuery(`SELECT id FROM dance_groups WHERE id = ?`, [id], dbName);
 
     if (!existing) {
       return res.status(404).json({ error: 'Dance group not found' });
     }
 
-    await runQuery(
-      `UPDATE dance_groups SET name = ? WHERE id = ?`,
-      [name.trim(), id],
-      dbName
-    );
+    await runQuery(`UPDATE dance_groups SET name = ? WHERE id = ?`, [name.trim(), id], dbName);
 
     const updated = await getQuery(
       `SELECT id, name, created_at FROM dance_groups WHERE id = ?`,
       [id],
-      dbName
+      dbName,
     );
 
     res.json(updated);
@@ -131,11 +123,7 @@ export async function updateDanceGroup(req, res) {
 export async function deleteDanceGroup(req, res) {
   try {
     const { id } = req.params;
-    const result = await runQuery(
-      `DELETE FROM dance_groups WHERE id = ?`,
-      [id],
-      dbName
-    );
+    const result = await runQuery(`DELETE FROM dance_groups WHERE id = ?`, [id], dbName);
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Dance group not found' });
@@ -155,7 +143,7 @@ export async function getTrainers(req, res) {
     const rows = await allQuery(
       `SELECT id, name, phone, email, created_at FROM trainers ORDER BY LOWER(name) ASC`,
       [],
-      dbName
+      dbName,
     );
     res.json(rows);
   } catch (error) {
@@ -181,13 +169,13 @@ export async function createTrainer(req, res) {
     const result = await runQuery(
       `INSERT INTO trainers (name, phone, email) VALUES (?, ?, ?)`,
       [name.trim(), phone.trim(), email.trim()],
-      dbName
+      dbName,
     );
 
     const trainer = await getQuery(
       `SELECT id, name, phone, email, created_at FROM trainers WHERE id = ?`,
       [result.id],
-      dbName
+      dbName,
     );
 
     res.status(201).json(trainer);
@@ -215,11 +203,7 @@ export async function updateTrainer(req, res) {
       return res.status(400).json({ error: 'Email is required' });
     }
 
-    const existing = await getQuery(
-      `SELECT id FROM trainers WHERE id = ?`,
-      [id],
-      dbName
-    );
+    const existing = await getQuery(`SELECT id FROM trainers WHERE id = ?`, [id], dbName);
 
     if (!existing) {
       return res.status(404).json({ error: 'Trainer not found' });
@@ -228,13 +212,13 @@ export async function updateTrainer(req, res) {
     await runQuery(
       `UPDATE trainers SET name = ?, phone = ?, email = ? WHERE id = ?`,
       [name.trim(), phone.trim(), email.trim(), id],
-      dbName
+      dbName,
     );
 
     const updated = await getQuery(
       `SELECT id, name, phone, email, created_at FROM trainers WHERE id = ?`,
       [id],
-      dbName
+      dbName,
     );
 
     res.json(updated);
@@ -252,17 +236,9 @@ export async function deleteTrainer(req, res) {
     const { id } = req.params;
 
     // Keep courses intact by removing trainer assignment first.
-    await runQuery(
-      `UPDATE dance_courses SET trainer_id = NULL WHERE trainer_id = ?`,
-      [id],
-      dbName
-    );
+    await runQuery(`UPDATE dance_courses SET trainer_id = NULL WHERE trainer_id = ?`, [id], dbName);
 
-    const result = await runQuery(
-      `DELETE FROM trainers WHERE id = ?`,
-      [id],
-      dbName
-    );
+    const result = await runQuery(`DELETE FROM trainers WHERE id = ?`, [id], dbName);
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Trainer not found' });
@@ -280,8 +256,8 @@ export async function deleteTrainer(req, res) {
 export async function getDanceCourses(req, res) {
   try {
     const { dance_group_id } = req.query;
-    
-  let query = `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
+
+    let query = `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
                  t.name as trainer_name, t.phone as trainer_phone, t.email as trainer_email
                  FROM dance_courses dc
                  LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
@@ -305,7 +281,16 @@ export async function getDanceCourses(req, res) {
 
 export async function createDanceCourse(req, res) {
   try {
-  const { id, dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id } = req.body;
+    const {
+      id,
+      dance_group_id,
+      semester,
+      start_date,
+      youtube_playlist_url,
+      copperknob_list_url,
+      spotify_playlist_url,
+      trainer_id,
+    } = req.body;
 
     if (!dance_group_id || !semester) {
       return res.status(400).json({ error: 'Dance group ID and semester are required' });
@@ -315,7 +300,7 @@ export async function createDanceCourse(req, res) {
     const group = await getQuery(
       `SELECT id FROM dance_groups WHERE id = ?`,
       [dance_group_id],
-      dbName
+      dbName,
     );
 
     if (!group) {
@@ -323,11 +308,7 @@ export async function createDanceCourse(req, res) {
     }
 
     if (trainer_id !== null && trainer_id !== undefined && trainer_id !== '') {
-      const trainer = await getQuery(
-        `SELECT id FROM trainers WHERE id = ?`,
-        [trainer_id],
-        dbName
-      );
+      const trainer = await getQuery(`SELECT id FROM trainers WHERE id = ?`, [trainer_id], dbName);
       if (!trainer) {
         return res.status(404).json({ error: 'Trainer not found' });
       }
@@ -337,28 +318,45 @@ export async function createDanceCourse(req, res) {
 
     let result;
     if (id) {
-       result = await runQuery(
-         `INSERT INTO dance_courses (id, dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-         [id, dance_group_id, semester, start_date || null, youtube_playlist_url || null, copperknob_list_url || null, spotify_playlist_url || null, normalizedTrainerId],
-        dbName
+      result = await runQuery(
+        `INSERT INTO dance_courses (id, dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          dance_group_id,
+          semester,
+          start_date || null,
+          youtube_playlist_url || null,
+          copperknob_list_url || null,
+          spotify_playlist_url || null,
+          normalizedTrainerId,
+        ],
+        dbName,
       );
     } else {
-       result = await runQuery(
-         `INSERT INTO dance_courses (dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-         [dance_group_id, semester, start_date || null, youtube_playlist_url || null, copperknob_list_url || null, spotify_playlist_url || null, normalizedTrainerId],
-        dbName
+      result = await runQuery(
+        `INSERT INTO dance_courses (dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          dance_group_id,
+          semester,
+          start_date || null,
+          youtube_playlist_url || null,
+          copperknob_list_url || null,
+          spotify_playlist_url || null,
+          normalizedTrainerId,
+        ],
+        dbName,
       );
     }
 
     const course = await getQuery(
-       `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
+      `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
        t.name as trainer_name, t.phone as trainer_phone, t.email as trainer_email
        FROM dance_courses dc
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
        LEFT JOIN trainers t ON dc.trainer_id = t.id
        WHERE dc.id = ?`,
       [result.id],
-      dbName
+      dbName,
     );
 
     res.status(201).json(course);
@@ -374,24 +372,23 @@ export async function createDanceCourse(req, res) {
 export async function updateDanceCourse(req, res) {
   try {
     const { id } = req.params;
-  const { semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id } = req.body;
+    const {
+      semester,
+      start_date,
+      youtube_playlist_url,
+      copperknob_list_url,
+      spotify_playlist_url,
+      trainer_id,
+    } = req.body;
 
-    const existing = await getQuery(
-      `SELECT id FROM dance_courses WHERE id = ?`,
-      [id],
-      dbName
-    );
+    const existing = await getQuery(`SELECT id FROM dance_courses WHERE id = ?`, [id], dbName);
 
     if (!existing) {
       return res.status(404).json({ error: 'Dance course not found' });
     }
 
     if (trainer_id !== null && trainer_id !== undefined && trainer_id !== '') {
-      const trainer = await getQuery(
-        `SELECT id FROM trainers WHERE id = ?`,
-        [trainer_id],
-        dbName
-      );
+      const trainer = await getQuery(`SELECT id FROM trainers WHERE id = ?`, [trainer_id], dbName);
       if (!trainer) {
         return res.status(404).json({ error: 'Trainer not found' });
       }
@@ -400,20 +397,28 @@ export async function updateDanceCourse(req, res) {
     const normalizedTrainerId = trainer_id ? Number.parseInt(String(trainer_id), 10) : null;
 
     await runQuery(
-       `UPDATE dance_courses SET semester = ?, start_date = ?, youtube_playlist_url = ?, copperknob_list_url = ?, spotify_playlist_url = ?, trainer_id = ? WHERE id = ?`,
-       [semester, start_date || null, youtube_playlist_url || null, copperknob_list_url || null, spotify_playlist_url || null, normalizedTrainerId, id],
-      dbName
+      `UPDATE dance_courses SET semester = ?, start_date = ?, youtube_playlist_url = ?, copperknob_list_url = ?, spotify_playlist_url = ?, trainer_id = ? WHERE id = ?`,
+      [
+        semester,
+        start_date || null,
+        youtube_playlist_url || null,
+        copperknob_list_url || null,
+        spotify_playlist_url || null,
+        normalizedTrainerId,
+        id,
+      ],
+      dbName,
     );
 
     const updated = await getQuery(
-       `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
+      `SELECT dc.id, dc.dance_group_id, dc.semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
        t.name as trainer_name, t.phone as trainer_phone, t.email as trainer_email
        FROM dance_courses dc
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
        LEFT JOIN trainers t ON dc.trainer_id = t.id
        WHERE dc.id = ?`,
       [id],
-      dbName
+      dbName,
     );
 
     res.json(updated);
@@ -426,11 +431,7 @@ export async function updateDanceCourse(req, res) {
 export async function deleteDanceCourse(req, res) {
   try {
     const { id } = req.params;
-    const result = await runQuery(
-      `DELETE FROM dance_courses WHERE id = ?`,
-      [id],
-      dbName
-    );
+    const result = await runQuery(`DELETE FROM dance_courses WHERE id = ?`, [id], dbName);
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Dance course not found' });
@@ -455,7 +456,7 @@ export async function exportDanceCoursePdf(req, res) {
        LEFT JOIN trainers t ON dc.trainer_id = t.id
        WHERE dc.id = ?`,
       [id],
-      dbName
+      dbName,
     );
 
     if (!course) {
@@ -466,7 +467,7 @@ export async function exportDanceCoursePdf(req, res) {
     const sessions = await allQuery(
       `SELECT session_date FROM sessions WHERE dance_course_id = ? ORDER BY session_date ASC`,
       [id],
-      dbName
+      dbName,
     );
 
     const links = [
@@ -483,7 +484,7 @@ export async function exportDanceCoursePdf(req, res) {
           margin: 1,
           width: 220,
         }),
-      }))
+      })),
     );
 
     const hasTrainer = Boolean(course.trainer_id);
@@ -528,24 +529,28 @@ export async function exportDanceCoursePdf(req, res) {
     // Friendly header panel
     const headerY = doc.y;
     const headerHeight = 88;
-    doc.roundedRect(leftMargin, headerY, contentWidth, headerHeight, 10)
+    doc
+      .roundedRect(leftMargin, headerY, contentWidth, headerHeight, 10)
       .fillAndStroke(colors.headerBg, colors.headerBorder);
 
-    doc.fillColor(colors.title)
+    doc
+      .fillColor(colors.title)
       .fontSize(24)
       .text(`${course.dance_group_name ?? 'Dance Group'}`, leftMargin, headerY + 16, {
         width: contentWidth,
         align: 'center',
       });
 
-    doc.fillColor(colors.subtitle)
+    doc
+      .fillColor(colors.subtitle)
       .fontSize(14)
       .text(`Kurs ${course.id} (${course.semester})`, leftMargin, headerY + 50, {
         width: contentWidth,
         align: 'center',
       });
 
-    doc.fillColor(colors.muted)
+    doc
+      .fillColor(colors.muted)
       .fontSize(10)
       .text(`Erstellt am ${new Date().toLocaleDateString('de-DE')}`, leftMargin, headerY + 70, {
         width: contentWidth,
@@ -556,9 +561,10 @@ export async function exportDanceCoursePdf(req, res) {
     doc.y = headerY + headerHeight + 18;
 
     // Session dates section
-    const sessionDatesText = sessions.length > 0
-      ? sessions.map((s) => new Date(s.session_date).toLocaleDateString('de-DE')).join(', ')
-      : 'Keine Termine hinterlegt.';
+    const sessionDatesText =
+      sessions.length > 0
+        ? sessions.map((s) => new Date(s.session_date).toLocaleDateString('de-DE')).join(', ')
+        : 'Keine Termine hinterlegt.';
     const sessionsTextWidth = contentWidth - 24;
     const sessionsTextY = doc.y + 32;
     doc.fontSize(11);
@@ -569,18 +575,22 @@ export async function exportDanceCoursePdf(req, res) {
     });
     const sessionsBoxY = doc.y;
     const sessionsBottomPadding = 8;
-    const sessionsBoxHeight = (sessionsTextY - sessionsBoxY) + sessionsTextHeight + sessionsBottomPadding;
+    const sessionsBoxHeight =
+      sessionsTextY - sessionsBoxY + sessionsTextHeight + sessionsBottomPadding;
 
-    doc.roundedRect(leftMargin, sessionsBoxY, contentWidth, sessionsBoxHeight, 8)
+    doc
+      .roundedRect(leftMargin, sessionsBoxY, contentWidth, sessionsBoxHeight, 8)
       .fillAndStroke('#F8FAFC', '#E2E8F0');
 
-    doc.fillColor(colors.title)
+    doc
+      .fillColor(colors.title)
       .fontSize(12)
       .text('Termine', leftMargin + 12, sessionsBoxY + 10, {
         width: contentWidth - 24,
       });
 
-    doc.fillColor(colors.subtitle)
+    doc
+      .fillColor(colors.subtitle)
       .fontSize(11)
       .text(sessionDatesText, leftMargin + 12, sessionsTextY, {
         width: sessionsTextWidth,
@@ -594,25 +604,26 @@ export async function exportDanceCoursePdf(req, res) {
     const trainerQrX = leftMargin + contentWidth - trainerQrSize - 12;
     const trainerQrY = trainerBoxY + 20;
 
-    doc.roundedRect(leftMargin, trainerBoxY, contentWidth, trainerBoxHeight, 8)
+    doc
+      .roundedRect(leftMargin, trainerBoxY, contentWidth, trainerBoxHeight, 8)
       .fillAndStroke('#F8FAFC', '#E2E8F0');
 
-    doc.fillColor(colors.title)
+    doc
+      .fillColor(colors.title)
       .fontSize(12)
       .text('Kursleitung', leftMargin + 12, trainerBoxY + 10, {
         width: contentWidth - 24,
       });
 
     if (hasTrainer) {
-      doc.fillColor(colors.subtitle)
-        .fontSize(11);
+      doc.fillColor(colors.subtitle).fontSize(11);
 
-      doc.font('Helvetica-Bold')
-        .text(course.trainer_name, leftMargin + 12, trainerBoxY + 30, {
-          width: contentWidth - trainerQrSize - 34,
-        });
+      doc.font('Helvetica-Bold').text(course.trainer_name, leftMargin + 12, trainerBoxY + 30, {
+        width: contentWidth - trainerQrSize - 34,
+      });
 
-      doc.font('Helvetica')
+      doc
+        .font('Helvetica')
         .text(`Telefon: ${course.trainer_phone}`, leftMargin + 12, trainerBoxY + 48, {
           width: contentWidth - trainerQrSize - 34,
         })
@@ -621,18 +632,21 @@ export async function exportDanceCoursePdf(req, res) {
         });
 
       doc.image(trainerQr, trainerQrX, trainerQrY, { fit: [trainerQrSize, trainerQrSize] });
-      doc.roundedRect(trainerQrX - 2, trainerQrY - 2, trainerQrSize + 4, trainerQrSize + 4, 4)
+      doc
+        .roundedRect(trainerQrX - 2, trainerQrY - 2, trainerQrSize + 4, trainerQrSize + 4, 4)
         .lineWidth(1)
         .stroke('#CBD5E1');
 
-      doc.fillColor(colors.muted)
+      doc
+        .fillColor(colors.muted)
         .fontSize(9)
         .text('vCard', trainerQrX, trainerQrY + trainerQrSize + 3, {
           width: trainerQrSize,
           align: 'center',
         });
     } else {
-      doc.fillColor(colors.muted)
+      doc
+        .fillColor(colors.muted)
         .fontSize(11)
         .text('Kein Trainer fuer diesen Kurs hinterlegt.', leftMargin + 12, trainerBoxY + 48, {
           width: contentWidth - 24,
@@ -642,9 +656,9 @@ export async function exportDanceCoursePdf(req, res) {
     doc.y = trainerBoxY + trainerBoxHeight + 14;
 
     if (linksWithQr.length === 0) {
-      doc.roundedRect(leftMargin, doc.y, contentWidth, 56, 8)
-        .fillAndStroke('#FFF7ED', '#FED7AA');
-      doc.fillColor('#9A3412')
+      doc.roundedRect(leftMargin, doc.y, contentWidth, 56, 8).fillAndStroke('#FFF7ED', '#FED7AA');
+      doc
+        .fillColor('#9A3412')
         .fontSize(12)
         .text('Keine Playlist-Links fuer diesen Kurs hinterlegt.', leftMargin, doc.y - 40, {
           width: contentWidth,
@@ -674,10 +688,12 @@ export async function exportDanceCoursePdf(req, res) {
       const qrX = cardX + (cardWidth - qrSize) / 2;
       const qrY = cardY + labelHeight + cardPadding;
 
-      doc.roundedRect(cardX, cardY, cardWidth, cardHeight, 10)
+      doc
+        .roundedRect(cardX, cardY, cardWidth, cardHeight, 10)
         .fillAndStroke(colors.cardBg, colors.cardBorder);
 
-      doc.fillColor(colors.subtitle)
+      doc
+        .fillColor(colors.subtitle)
         .fontSize(13)
         .text(entry.label, cardX, cardY + 10, {
           width: cardWidth,
@@ -686,7 +702,8 @@ export async function exportDanceCoursePdf(req, res) {
 
       doc.image(entry.qr, qrX, qrY, { fit: [qrSize, qrSize] });
 
-      doc.roundedRect(qrX - 3, qrY - 3, qrSize + 6, qrSize + 6, 6)
+      doc
+        .roundedRect(qrX - 3, qrY - 3, qrSize + 6, qrSize + 6, 6)
         .lineWidth(1)
         .stroke('#E5E7EB');
     });
@@ -737,7 +754,7 @@ export async function createSession(req, res) {
     const course = await getQuery(
       `SELECT id FROM dance_courses WHERE id = ?`,
       [dance_course_id],
-      dbName
+      dbName,
     );
 
     if (!course) {
@@ -747,7 +764,7 @@ export async function createSession(req, res) {
     const result = await runQuery(
       `INSERT INTO sessions (dance_course_id, session_date) VALUES (?, ?)`,
       [dance_course_id, session_date],
-      dbName
+      dbName,
     );
 
     const session = await getQuery(
@@ -757,7 +774,7 @@ export async function createSession(req, res) {
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
        WHERE s.id = ?`,
       [result.id],
-      dbName
+      dbName,
     );
 
     res.status(201).json(session);
@@ -776,21 +793,13 @@ export async function updateSession(req, res) {
       return res.status(400).json({ error: 'Session date is required' });
     }
 
-    const existing = await getQuery(
-      `SELECT id FROM sessions WHERE id = ?`,
-      [id],
-      dbName
-    );
+    const existing = await getQuery(`SELECT id FROM sessions WHERE id = ?`, [id], dbName);
 
     if (!existing) {
       return res.status(404).json({ error: 'Session not found' });
     }
 
-    await runQuery(
-      `UPDATE sessions SET session_date = ? WHERE id = ?`,
-      [session_date, id],
-      dbName
-    );
+    await runQuery(`UPDATE sessions SET session_date = ? WHERE id = ?`, [session_date, id], dbName);
 
     const updated = await getQuery(
       `SELECT s.id, s.dance_course_id, s.session_date, s.created_at, dc.semester, dg.name as dance_group_name
@@ -799,7 +808,7 @@ export async function updateSession(req, res) {
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
        WHERE s.id = ?`,
       [id],
-      dbName
+      dbName,
     );
 
     res.json(updated);
@@ -812,11 +821,7 @@ export async function updateSession(req, res) {
 export async function deleteSession(req, res) {
   try {
     const { id } = req.params;
-    const result = await runQuery(
-      `DELETE FROM sessions WHERE id = ?`,
-      [id],
-      dbName
-    );
+    const result = await runQuery(`DELETE FROM sessions WHERE id = ?`, [id], dbName);
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Session not found' });
@@ -845,7 +850,7 @@ export async function getSessionChoreographies(req, res) {
        WHERE sc.session_id = ?
        ORDER BY sc.created_at DESC`,
       [session_id],
-      dbName
+      dbName,
     );
 
     res.json(rows);
@@ -864,11 +869,7 @@ export async function addChoreographyToSession(req, res) {
     }
 
     // Verify session exists
-    const session = await getQuery(
-      `SELECT id FROM sessions WHERE id = ?`,
-      [session_id],
-      dbName
-    );
+    const session = await getQuery(`SELECT id FROM sessions WHERE id = ?`, [session_id], dbName);
 
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
@@ -877,7 +878,7 @@ export async function addChoreographyToSession(req, res) {
     const result = await runQuery(
       `INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, ?)`,
       [session_id, choreography_id],
-      dbName
+      dbName,
     );
 
     const choreography = await getQuery(
@@ -885,7 +886,7 @@ export async function addChoreographyToSession(req, res) {
        FROM session_choreographies
        WHERE id = ?`,
       [result.id],
-      dbName
+      dbName,
     );
 
     res.status(201).json(choreography);
@@ -901,11 +902,7 @@ export async function addChoreographyToSession(req, res) {
 export async function removeChoreographyFromSession(req, res) {
   try {
     const { id } = req.params;
-    const result = await runQuery(
-      `DELETE FROM session_choreographies WHERE id = ?`,
-      [id],
-      dbName
-    );
+    const result = await runQuery(`DELETE FROM session_choreographies WHERE id = ?`, [id], dbName);
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Session choreography not found' });
@@ -955,7 +952,7 @@ export async function getGroupLevels(req, res) {
     const rows = await allQuery(
       `SELECT level FROM group_levels WHERE dance_group_id = ? ORDER BY level`,
       [Number.parseInt(groupId, 10)],
-      dbName
+      dbName,
     );
 
     const levels = rows.map((row) => row.level);
@@ -983,7 +980,7 @@ export async function addGroupLevel(req, res) {
     const group = await getQuery(
       `SELECT id FROM dance_groups WHERE id = ?`,
       [Number.parseInt(groupId, 10)],
-      dbName
+      dbName,
     );
 
     if (!group) {
@@ -993,7 +990,7 @@ export async function addGroupLevel(req, res) {
     await runQuery(
       `INSERT OR IGNORE INTO group_levels (dance_group_id, level) VALUES (?, ?)`,
       [Number.parseInt(groupId, 10), level.trim()],
-      dbName
+      dbName,
     );
 
     res.status(201).json({ level: level.trim() });
@@ -1018,7 +1015,7 @@ export async function removeGroupLevel(req, res) {
     await runQuery(
       `DELETE FROM group_levels WHERE dance_group_id = ? AND level = ?`,
       [Number.parseInt(groupId, 10), level.trim()],
-      dbName
+      dbName,
     );
 
     res.json({ message: 'Level removed successfully' });

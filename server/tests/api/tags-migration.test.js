@@ -22,11 +22,16 @@ async function createLegacyChoreographyDatabase() {
   await run(db, "ATTACH DATABASE ':memory:' AS personal_tags");
 
   // Simulate pre-split schema/data in main DB.
-  await run(db, `CREATE TABLE levels (
+  await run(
+    db,
+    `CREATE TABLE levels (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
-  )`);
-  await run(db, `CREATE TABLE choreographies (
+  )`,
+  );
+  await run(
+    db,
+    `CREATE TABLE choreographies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     step_sheet_link TEXT,
@@ -41,30 +46,36 @@ async function createLegacyChoreographyDatabase() {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (level_id) REFERENCES levels(id)
-  )`);
-  await run(db, `CREATE TABLE tags (
+  )`,
+  );
+  await run(
+    db,
+    `CREATE TABLE tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
-  )`);
-  await run(db, `CREATE TABLE choreography_tags (
+  )`,
+  );
+  await run(
+    db,
+    `CREATE TABLE choreography_tags (
     choreography_id INTEGER NOT NULL,
     tag_id INTEGER NOT NULL,
     PRIMARY KEY (choreography_id, tag_id)
-  )`);
+  )`,
+  );
 
   const level = await run(db, `INSERT INTO levels (name) VALUES ('Beginner')`);
   const choreo = await run(
     db,
     `INSERT INTO choreographies (name, level_id, count, wall_count)
      VALUES ('Legacy Tagged Dance', ?, 32, 4)`,
-    [level.id]
+    [level.id],
   );
   const tag = await run(db, `INSERT INTO tags (name) VALUES ('legacy-tag')`);
-  await run(
-    db,
-    `INSERT INTO choreography_tags (choreography_id, tag_id) VALUES (?, ?)`,
-    [choreo.id, tag.id]
-  );
+  await run(db, `INSERT INTO choreography_tags (choreography_id, tag_id) VALUES (?, ?)`, [
+    choreo.id,
+    tag.id,
+  ]);
 
   setDatabaseConnection('choreography', db);
   await runChoreographyMigrations();
@@ -97,7 +108,9 @@ describe('Choreography tags migration regression', () => {
     await runChoreographyMigrations();
 
     const tagCount = await getQuery('SELECT COUNT(*) as count FROM personal_tags.tags');
-    const mappingCount = await getQuery('SELECT COUNT(*) as count FROM personal_tags.choreography_tags');
+    const mappingCount = await getQuery(
+      'SELECT COUNT(*) as count FROM personal_tags.choreography_tags',
+    );
     const tagRows = await allQuery('SELECT name FROM personal_tags.tags ORDER BY name');
 
     expect(tagCount?.count).toBe(1);

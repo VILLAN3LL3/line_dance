@@ -85,15 +85,21 @@ export async function setupChoreographyTestDb() {
   });
 
   // Create tags schema in the attached personal_tags database
-  await run(testDb, `CREATE TABLE IF NOT EXISTS personal_tags.tags (
+  await run(
+    testDb,
+    `CREATE TABLE IF NOT EXISTS personal_tags.tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
-  )`);
-  await run(testDb, `CREATE TABLE IF NOT EXISTS personal_tags.choreography_tags (
+  )`,
+  );
+  await run(
+    testDb,
+    `CREATE TABLE IF NOT EXISTS personal_tags.choreography_tags (
     choreography_id INTEGER NOT NULL,
     tag_id INTEGER NOT NULL,
     PRIMARY KEY (choreography_id, tag_id)
-  )`);
+  )`,
+  );
 
   for (const level of DEFAULT_LEVELS) {
     await run(testDb, 'INSERT OR IGNORE INTO levels (name) VALUES (?)', [level]);
