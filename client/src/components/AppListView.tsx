@@ -55,7 +55,6 @@ export const AppListView: React.FC<AppListViewProps> = ({
               choreography={choreography}
               onEdit={onEdit}
               onDelete={onDelete}
-              onSelect={onSelect}
             />
           ))}
         </div>

@@ -9,7 +9,6 @@ interface ChoreographyCardProps {
   choreography: Choreography;
   onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
-  onSelect?: (id: number) => void;
   videoEmbedMode?: "single" | "all";
 }
 
@@ -17,7 +16,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   choreography,
   onEdit,
   onDelete,
-  onSelect,
   videoEmbedMode = "single",
 }) => {
   const demoEmbedUrl = getYouTubeVideoEmbedUrl(choreography.demo_video_url);
