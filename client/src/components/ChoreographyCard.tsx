@@ -45,15 +45,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
         <span className={`level-badge level-${choreography.level.toLowerCase()}`}>
           {choreography.level}
         </span>
-        {onSelect && (
-          <button
-            type="button"
-            onClick={() => onSelect(choreography.id)}
-            className="btn-small btn-edit"
-          >
-            Open
-          </button>
-        )}
       </div>
 
       <div className="card-content">
