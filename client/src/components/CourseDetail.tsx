@@ -4,11 +4,19 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  addChoreographyToSession, createSession, deleteSession, fetchChoreographies, getDanceCourses, getSessionChoreographies, getSessions,
-  removeChoreographyFromSession
+  addChoreographyToSession,
+  createSession,
+  deleteSession,
+  fetchChoreographies,
+  getDanceCourses,
+  getSessionChoreographies,
+  getSessions,
+  removeChoreographyFromSession,
 } from "../api";
+import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
+import CourseDetailSessionsSection from "./CourseDetailSessionsSection";
 import { Choreography, DanceCourse, Session, SessionChoreography } from "../types";
-import { getBerlinTodayIso, getSessionBadgeLabel, getSessionBadgeStatus } from "../utils/courseStatus";
+import { getBerlinTodayIso } from "../utils/courseStatus";
 
 const CourseDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -36,60 +44,6 @@ const CourseDetail: React.FC = () => {
 
     return session.session_date.slice(0, 10) >= berlinTodayIso;
   });
-
-  let sessionsContent: React.ReactNode;
-  if (sessions.length === 0) {
-    sessionsContent = <div className="empty-state">No sessions yet</div>;
-  } else if (visibleSessions.length === 0) {
-    sessionsContent = <div className="empty-state">No planned sessions</div>;
-  } else {
-    sessionsContent = (
-      <div className="sessions-list">
-        {visibleSessions.map((session) => {
-          const sessionBadgeStatus = getSessionBadgeStatus(session.session_date, berlinTodayIso);
-
-          return (
-            <div
-              key={session.id}
-              className={`session-item ${selectedSession?.id === session.id ? "active" : ""}`}
-            >
-              <div className="session-info">
-                <h4>
-                  {new Date(session.session_date).toLocaleDateString()}
-                  {sessionBadgeStatus && (
-                    <span className={`session-status-badge session-status-${sessionBadgeStatus}`}>
-                      {getSessionBadgeLabel(sessionBadgeStatus)}
-                    </span>
-                  )}
-                </h4>
-                <p>
-                  {new Date(session.session_date).toLocaleDateString("de-DE", {
-                    weekday: "long",
-                  })}
-                </p>
-              </div>
-              <div className="session-actions">
-                <button
-                  onClick={() => handleSelectSession(session)}
-                  className={`btn-secondary ${selectedSession?.id === session.id ? "active" : ""}`}
-                  disabled={isLoading}
-                >
-                  {selectedSession?.id === session.id ? "✓ " : ""}Manage
-                </button>
-                <button
-                  onClick={() => handleDeleteSession(session.id)}
-                  className="btn-delete"
-                  disabled={isLoading}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
 
   const getChoreographyOptionLabel = (choreography: Choreography) =>
     `${choreography.name} (${choreography.level})`;
@@ -292,115 +246,35 @@ const CourseDetail: React.FC = () => {
       {error && <div className="error-message">{error}</div>}
 
       <div className="detail-content">
-        <section className="section">
-          <div className="session-header-row">
-            <h3>Sessions</h3>
-            <label className="status-filter">
-              <input
-                type="checkbox"
-                checked={showPassedSessions}
-                onChange={(event) => setShowPassedSessions(event.target.checked)}
-                disabled={isLoading}
-              />{" "}
-              Show passed sessions
-            </label>
-          </div>
-
-          <form onSubmit={handleCreateSession} className="session-form">
-            <input
-              type="date"
-              value={newSessionDate}
-              onChange={(e) => setNewSessionDate(e.target.value)}
-              disabled={isLoading}
-              required
-            />
-            <button type="submit" className="btn-primary" disabled={isLoading}>
-              + Add Session
-            </button>
-          </form>
-
-          {isLoading && <div className="loading">Loading...</div>}
-
-          {sessionsContent}
-        </section>
+        <CourseDetailSessionsSection
+          sessions={sessions}
+          visibleSessions={visibleSessions}
+          selectedSessionId={selectedSessionId}
+          berlinTodayIso={berlinTodayIso}
+          isLoading={isLoading}
+          showPassedSessions={showPassedSessions}
+          newSessionDate={newSessionDate}
+          onToggleShowPassedSessions={setShowPassedSessions}
+          onNewSessionDateChange={setNewSessionDate}
+          onCreateSession={handleCreateSession}
+          onSelectSession={handleSelectSession}
+          onDeleteSession={handleDeleteSession}
+        />
 
         {selectedSession && (
-          <section className="section">
-            <h3>
-              Choreographies for {new Date(selectedSession.session_date).toLocaleDateString()}
-            </h3>
-
-            <form onSubmit={handleAddChoreography} className="choreo-form">
-              <div className="choreo-autocomplete">
-                <input
-                  type="text"
-                  value={selectedChoreographyQuery}
-                  onChange={handleChoreographyInputChange}
-                  list="session-choreography-options"
-                  placeholder="Search choreography by name..."
-                  className="choreo-autocomplete-input"
-                  disabled={isLoading}
-                />
-                <datalist id="session-choreography-options">
-                  {selectableChoreographies.map((choreography) => (
-                    <option
-                      key={choreography.id}
-                      value={getChoreographyOptionLabel(choreography)}
-                    />
-                  ))}
-                </datalist>
-              </div>
-              <button
-                type="submit"
-                className="btn-primary"
-                disabled={isLoading || !selectedChoreographyId}
-              >
-                + Add to Session
-              </button>
-            </form>
-
-            {!isLoading && selectableChoreographies.length === 0 && (
-              <p className="choreo-autocomplete-hint">
-                All choreographies are already in this session.
-              </p>
-            )}
-
-            {!isLoading && selectableChoreographies.length > 0 && (
-              <p className="choreo-autocomplete-hint">
-                Start typing to autocomplete a choreography name.
-              </p>
-            )}
-
-            {sessionChoreographies.length === 0 ? (
-              <div className="empty-state">No choreographies in this session yet</div>
-            ) : (
-              <div className="choreographies-list">
-                {sessionChoreographies.map((sessionChoreography) => {
-                  const choreography = availableChoreographies.find(
-                    (item) => item.id === sessionChoreography.choreography_id,
-                  );
-
-                  return (
-                    <div key={sessionChoreography.id} className="choreography-item">
-                      <div className="choreo-info">
-                        <h4>{choreography?.name}</h4>
-                        <p>{choreography?.level}</p>
-                      </div>
-                      <button
-                        onClick={() =>
-                          handleRemoveChoreography(sessionChoreography.choreography_id)
-                        }
-                        className="btn-delete"
-                        disabled={isLoading}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+          <CourseDetailChoreographiesSection
+            selectedSession={selectedSession}
+            isLoading={isLoading}
+            selectedChoreographyId={selectedChoreographyId}
+            selectedChoreographyQuery={selectedChoreographyQuery}
+            selectableChoreographies={selectableChoreographies}
+            sessionChoreographies={sessionChoreographies}
+            availableChoreographies={availableChoreographies}
+            getChoreographyOptionLabel={getChoreographyOptionLabel}
+            onChoreographyInputChange={handleChoreographyInputChange}
+            onAddChoreography={handleAddChoreography}
+            onRemoveChoreography={handleRemoveChoreography}
+          />
         )}
       </div>
     </div>
