@@ -13,10 +13,10 @@ import {
   getSessions,
   removeChoreographyFromSession,
 } from "../api";
-import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
-import CourseDetailSessionsSection from "./CourseDetailSessionsSection";
 import { Choreography, DanceCourse, Session, SessionChoreography } from "../types";
 import { getBerlinTodayIso } from "../utils/courseStatus";
+import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
+import CourseDetailSessionsSection from "./CourseDetailSessionsSection";
 
 const CourseDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -236,7 +236,7 @@ const CourseDetail: React.FC = () => {
     <div className="course-detail">
       <div className="detail-header">
         <button onClick={() => navigate(`/admin/groups/${parsedGroupId}`)} className="btn-back">
-          ← Back
+          Back
         </button>
         <h2>
           Course: {course?.id} ({course?.semester ?? "Unknown Semester"})

@@ -63,6 +63,17 @@ describe("SearchBar", () => {
       expect(getTags).toHaveBeenCalledTimes(1);
       expect(getAuthors).toHaveBeenCalledTimes(1);
       expect(getMaxChoreographyCount).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("loads saved configurations when the saved configurations panel is opened", async () => {
+    const onSearch = vi.fn().mockResolvedValue(undefined);
+    render(<SearchBar onSearch={onSearch} filters={{}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
+    fireEvent.click(screen.getByRole("button", { name: /saved configurations/i }));
+
+    await waitFor(() => {
       expect(getSavedFilterConfigurations).toHaveBeenCalledTimes(1);
     });
   });

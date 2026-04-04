@@ -135,7 +135,7 @@ describe("DanceGroupDetail", () => {
   it("shows a YouTube playlist link when present on a course", async () => {
     renderWithRoute();
 
-    const youtubeLink = await screen.findByRole("link", { name: "🔗 YouTube" });
+    const youtubeLink = await screen.findByRole("link", { name: "Link: YouTube" });
     expect(youtubeLink).toHaveAttribute(
       "href",
       "https://www.youtube.com/playlist?list=PL1234567890",
