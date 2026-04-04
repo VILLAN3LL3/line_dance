@@ -50,7 +50,7 @@ export async function searchChoreographies(
 ): Promise<PaginatedResponse<Choreography>> {
   const requestKey = buildSearchRequestKey(filters);
   const existingRequest = inFlightChoreographySearches.get(requestKey);
-  if (existingRequest) {
+  if (existingRequest !== undefined) {
     return existingRequest;
   }
 

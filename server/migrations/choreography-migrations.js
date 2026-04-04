@@ -1,4 +1,4 @@
-import { getQuery, runQuery } from '../db.js';
+import { getQuery, runQuery } from '../scripts/db.js';
 
 const dbName = 'choreography';
 
@@ -99,7 +99,7 @@ const migrations = [
       );
 
       await runQuery(
-        `CREATE TABLE IF NOT EXISTS tags (
+        `CREATE TABLE IF NOT EXISTS personal_tags.tags (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL UNIQUE
         )`,
@@ -108,12 +108,10 @@ const migrations = [
       );
 
       await runQuery(
-        `CREATE TABLE IF NOT EXISTS choreography_tags (
+        `CREATE TABLE IF NOT EXISTS personal_tags.choreography_tags (
           choreography_id INTEGER NOT NULL,
           tag_id INTEGER NOT NULL,
-          PRIMARY KEY (choreography_id, tag_id),
-          FOREIGN KEY (choreography_id) REFERENCES choreographies(id) ON DELETE CASCADE,
-          FOREIGN KEY (tag_id) REFERENCES tags(id)
+          PRIMARY KEY (choreography_id, tag_id)
         )`,
         [],
         dbName
@@ -127,6 +125,56 @@ const migrations = [
       await runQuery(`INSERT OR IGNORE INTO levels (name) VALUES ('Intermediate')`, [], dbName);
       await runQuery(`INSERT OR IGNORE INTO levels (name) VALUES ('Advanced')`, [], dbName);
       await runQuery(`INSERT OR IGNORE INTO levels (name) VALUES ('Experienced')`, [], dbName);
+    },
+  },
+  {
+    id: '003_ensure_personal_tags_schema_and_backfill',
+    up: async () => {
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS personal_tags.tags (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL UNIQUE
+        )`,
+        [],
+        dbName
+      );
+
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS personal_tags.choreography_tags (
+          choreography_id INTEGER NOT NULL,
+          tag_id INTEGER NOT NULL,
+          PRIMARY KEY (choreography_id, tag_id)
+        )`,
+        [],
+        dbName
+      );
+
+      const legacyTagsTable = await getQuery(
+        `SELECT name FROM main.sqlite_master WHERE type = 'table' AND name = 'tags'`,
+        [],
+        dbName
+      );
+      const legacyJunctionTable = await getQuery(
+        `SELECT name FROM main.sqlite_master WHERE type = 'table' AND name = 'choreography_tags'`,
+        [],
+        dbName
+      );
+
+      if (legacyTagsTable && legacyJunctionTable) {
+        await runQuery(
+          `INSERT OR IGNORE INTO personal_tags.tags (id, name)
+           SELECT id, name FROM main.tags`,
+          [],
+          dbName
+        );
+
+        await runQuery(
+          `INSERT OR IGNORE INTO personal_tags.choreography_tags (choreography_id, tag_id)
+           SELECT choreography_id, tag_id FROM main.choreography_tags`,
+          [],
+          dbName
+        );
+      }
     },
   },
 ];

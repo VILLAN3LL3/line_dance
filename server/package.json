@@ -2,19 +2,16 @@
   "name": "line-dance-api",
   "version": "1.0.0",
   "description": "Line Dance Choreography Search API",
-  "main": "server.js",
+  "main": "scripts/server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node scripts/server.js",
+    "dev": "nodemon scripts/server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "migrate": "node migrations/run-migrations.js",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "init-db": "node init-db.js",
-    "init-dance-groups-db": "node init-dance-groups-db.js",
-    "init-all": "npm run init-db && npm run init-dance-groups-db"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "cors": "^2.8.5",

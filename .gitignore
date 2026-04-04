@@ -5,7 +5,8 @@ build/
 .DS_Store
 .env
 .env.local
-dance_groups.db
+*.db
+!server/data/line_dance.db
 *.db-journal
 raw_data/
 src/**/*.js

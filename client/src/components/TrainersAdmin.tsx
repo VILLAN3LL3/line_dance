@@ -37,7 +37,7 @@ const TrainersAdmin: React.FC = () => {
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!newName.trim() || !newPhone.trim() || !newEmail.trim()) {
       setError("Name, phone, and email are required");

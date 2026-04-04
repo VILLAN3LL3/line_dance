@@ -1,4 +1,4 @@
-import { runQuery, getQuery, allQuery } from '../db.js';
+import { runQuery, getQuery, allQuery } from '../scripts/db.js';
 
 let savedFiltersTableReady = false;
 
@@ -264,7 +264,7 @@ export async function createChoreography(req, res) {
 
     await insertRelationship(choreography_id, authors, getAuthorId, 'choreography_authors', 'author_id', 'authors');
     await insertRelationship(choreography_id, step_figures, getStepFigureId, 'choreography_step_figures', 'step_figure_id', 'step_figures');
-    await insertRelationship(choreography_id, tags, getTagId, 'choreography_tags', 'tag_id', 'tags');
+    await insertRelationship(choreography_id, tags, getTagId, 'personal_tags.choreography_tags', 'tag_id', 'personal_tags.tags');
 
     res.status(201).json({ id: choreography_id, message: 'Choreography created successfully' });
   } catch (error) {
@@ -354,7 +354,7 @@ export async function updateChoreography(req, res) {
 
     await deleteAndReinsertRelationships(choreography_id, authors, 'choreography_authors', 'author_id', 'authors', getAuthorId);
     await deleteAndReinsertRelationships(choreography_id, step_figures, 'choreography_step_figures', 'step_figure_id', 'step_figures', getStepFigureId);
-    await deleteAndReinsertRelationships(choreography_id, tags, 'choreography_tags', 'tag_id', 'tags', getTagId);
+    await deleteAndReinsertRelationships(choreography_id, tags, 'personal_tags.choreography_tags', 'tag_id', 'personal_tags.tags', getTagId);
 
     await cleanupOrphanedRecords();
     res.json({ id: choreography_id, message: 'Choreography updated successfully' });
@@ -377,9 +377,9 @@ async function cleanupOrphanedRecords() {
 
     // Delete orphaned tags (not used by any choreography)
     await runQuery(
-      `DELETE FROM tags
+      `DELETE FROM personal_tags.tags
        WHERE id NOT IN (
-         SELECT DISTINCT tag_id FROM choreography_tags WHERE tag_id IS NOT NULL
+         SELECT DISTINCT tag_id FROM personal_tags.choreography_tags WHERE tag_id IS NOT NULL
        )`
     );
 
@@ -404,7 +404,7 @@ async function cleanupOrphanedRecords() {
       `DELETE FROM choreography_authors WHERE choreography_id NOT IN (SELECT id FROM choreographies)`
     );
     await runQuery(
-      `DELETE FROM choreography_tags WHERE choreography_id NOT IN (SELECT id FROM choreographies)`
+      `DELETE FROM personal_tags.choreography_tags WHERE choreography_id NOT IN (SELECT id FROM choreographies)`
     );
     await runQuery(
       `DELETE FROM choreography_step_figures WHERE choreography_id NOT IN (SELECT id FROM choreographies)`
@@ -421,7 +421,7 @@ export async function deleteChoreography(req, res) {
 
     // Remove join table entries first
     await runQuery('DELETE FROM choreography_authors WHERE choreography_id = ?', [choreography_id]);
-    await runQuery('DELETE FROM choreography_tags WHERE choreography_id = ?', [choreography_id]);
+    await runQuery('DELETE FROM personal_tags.choreography_tags WHERE choreography_id = ?', [choreography_id]);
     await runQuery('DELETE FROM choreography_step_figures WHERE choreography_id = ?', [choreography_id]);
 
     const result = await runQuery('DELETE FROM choreographies WHERE id = ?', [choreography_id]);
@@ -464,7 +464,7 @@ function buildFilterConditions(filterObj) {
   conditions.push(...stepFilter.conditions);
   params.push(...stepFilter.params);
 
-  const tagsFilter = buildRelationshipFilter(tags, 'choreography_tags', 'tag_id', 'tags');
+  const tagsFilter = buildRelationshipFilter(tags, 'personal_tags.choreography_tags', 'tag_id', 'personal_tags.tags');
   joins.push(...tagsFilter.joins);
   conditions.push(...tagsFilter.conditions);
   params.push(...tagsFilter.params);
@@ -704,8 +704,8 @@ async function enrichChoreography(choreography) {
   );
 
   const tags = await allQuery(
-    `SELECT t.name FROM tags t
-     INNER JOIN choreography_tags ct ON t.id = ct.tag_id
+    `SELECT t.name FROM personal_tags.tags t
+     INNER JOIN personal_tags.choreography_tags ct ON t.id = ct.tag_id
      WHERE ct.choreography_id = ?`,
     [choreography.id]
   );
@@ -736,7 +736,7 @@ async function getStepFigureId(name) {
 }
 
 async function getTagId(name) {
-  const result = await getQuery('SELECT id FROM tags WHERE name = ?', [name]);
+  const result = await getQuery('SELECT id FROM personal_tags.tags WHERE name = ?', [name]);
   return result ? result.id : null;
 }
 
@@ -752,7 +752,7 @@ export async function getLevels(req, res) {
 
 export async function getTags(req, res) {
   try {
-    const tags = await allQuery('SELECT name FROM tags ORDER BY name');
+    const tags = await allQuery('SELECT name FROM personal_tags.tags ORDER BY name');
     res.json(tags.map(t => t.name));
   } catch (error) {
     captureError(error);

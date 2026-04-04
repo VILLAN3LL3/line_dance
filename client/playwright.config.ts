@@ -31,6 +31,7 @@ export default defineConfig({
         PORT: String(e2eApiPort),
         CHOREOGRAPHY_DB_PATH: ":memory:",
         DANCE_GROUPS_DB_PATH: ":memory:",
+        TAGS_DB_PATH: ":memory:",
       },
       reuseExistingServer: false,
       timeout: 120_000,

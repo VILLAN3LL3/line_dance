@@ -1,4 +1,4 @@
-import { runQuery, getQuery, allQuery } from '../db.js';
+import { runQuery, getQuery, allQuery } from '../scripts/db.js';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 

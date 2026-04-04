@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupChoreographyTestDb, clearChoreographyTables } from '../setup/testChoreographyDb.js';
 import app from '../setup/testChoreographyApp.js';
+import { allQuery } from '../../scripts/db.js';
 
 beforeAll(async () => {
   await setupChoreographyTestDb();
@@ -316,6 +317,31 @@ describe('DELETE /api/choreographies/:id', () => {
     expect(tags.body).toEqual([]);
     expect(figures.body).toEqual([]);
     expect(levels.body).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Database separation regression
+// ---------------------------------------------------------------------------
+
+describe('tags storage separation', () => {
+  it('stores tags tables only in personal_tags schema, not in main schema', async () => {
+    const mainTables = await allQuery(
+      `SELECT name
+       FROM main.sqlite_master
+       WHERE type = 'table'
+         AND name IN ('tags', 'choreography_tags')`
+    );
+
+    const personalTables = await allQuery(
+      `SELECT name
+       FROM personal_tags.sqlite_master
+       WHERE type = 'table'
+         AND name IN ('tags', 'choreography_tags')`
+    );
+
+    expect(mainTables).toEqual([]);
+    expect(personalTables.map((row) => row.name).sort()).toEqual(['choreography_tags', 'tags']);
   });
 });
 

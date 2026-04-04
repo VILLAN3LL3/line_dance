@@ -4,7 +4,7 @@
  * Call setupTestDb() in beforeAll and clearAllTables() in beforeEach.
  */
 import sqlite3 from 'sqlite3';
-import { setDatabaseConnection } from '../../db.js';
+import { setDatabaseConnection } from '../../scripts/db.js';
 import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.js';
 
 let testDb = null;

@@ -1,4 +1,4 @@
-import { allQuery, getQuery, runQuery } from '../db.js';
+import { allQuery, getQuery, runQuery } from '../scripts/db.js';
 
 const dbName = 'danceGroups';
 

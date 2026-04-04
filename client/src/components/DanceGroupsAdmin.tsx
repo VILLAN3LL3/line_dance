@@ -39,7 +39,7 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!newGroupName.trim()) {
       setError("Group name is required");

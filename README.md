@@ -84,14 +84,16 @@ line_dance/
 │   │   └── styles/
 ├── raw_data/                # CSV source files
 ├── server/                  # Express + SQLite backend
-│   ├── db.js
-│   ├── init-db.js
-│   ├── init-dance-groups-db.js
 │   ├── migrations/
+│   ├── scripts/
+│   │   ├── db.js
+│   │   ├── openapi.js
+│   │   └── server.js
 │   ├── routes/
-│   ├── server.js
-│   ├── line_dance.db
-│   └── dance_groups.db
+│   └── data/
+│       ├── line_dance.db
+│       ├── dance_groups.db
+│       └── personal_tags.db
 └── README.md
 ```
 
@@ -124,18 +126,17 @@ cd ../client
 npm install
 ```
 
-### Initialize The Dance Group Database
+### Initialize Databases
 
 From the `server` directory:
 
 ```bash
-npm run init-dance-groups-db
 npm run migrate
 ```
 
 The choreography database file `line_dance.db` is checked into the repository.
 
-The commands above create or refresh `dance_groups.db` for:
+The migration command above creates or refreshes schema for:
 
 - dance groups
 - dance courses
@@ -170,10 +171,7 @@ Run these from `server/package.json`:
 
 - `npm start` - start the API server
 - `npm run dev` - start the API server with nodemon
-- `npm run init-db` - initialize the choreography database
-- `npm run init-dance-groups-db` - initialize the dance-groups database
-- `npm run init-all` - initialize both databases (optional convenience script)
-- `npm run migrate` - run dance-group database migrations
+- `npm run migrate` - run all server database migrations
 - `npm test` - run server tests with Vitest
 - `npm run test:watch` - run server tests in watch mode
 

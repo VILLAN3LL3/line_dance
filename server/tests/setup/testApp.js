@@ -31,7 +31,7 @@ import {
   addGroupLevel,
   removeGroupLevel,
 } from '../../routes/dance-groups.js';
-import { openApiSpec } from '../../openapi.js';
+import { openApiSpec } from '../../scripts/openapi.js';
 
 const app = express();
 app.use(express.json());

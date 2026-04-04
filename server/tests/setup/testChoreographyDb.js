@@ -1,10 +1,10 @@
 /**
  * Creates and manages an in-memory SQLite database for choreography integration tests.
- * The schema matches init-db.js exactly.
+ * The schema mirrors the active choreography migration setup.
  * Call setupChoreographyTestDb() in beforeAll and clearChoreographyTables() in beforeEach.
  */
 import sqlite3 from 'sqlite3';
-import { setDatabaseConnection } from '../../db.js';
+import { setDatabaseConnection } from '../../scripts/db.js';
 
 let testDb = null;
 
@@ -67,19 +67,6 @@ CREATE TABLE IF NOT EXISTS choreography_step_figures (
   FOREIGN KEY (choreography_id) REFERENCES choreographies(id) ON DELETE CASCADE,
   FOREIGN KEY (step_figure_id) REFERENCES step_figures(id)
 );
-
-CREATE TABLE IF NOT EXISTS tags (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS choreography_tags (
-  choreography_id INTEGER NOT NULL,
-  tag_id INTEGER NOT NULL,
-  PRIMARY KEY (choreography_id, tag_id),
-  FOREIGN KEY (choreography_id) REFERENCES choreographies(id) ON DELETE CASCADE,
-  FOREIGN KEY (tag_id) REFERENCES tags(id)
-);
 `;
 
 export async function setupChoreographyTestDb() {
@@ -87,12 +74,26 @@ export async function setupChoreographyTestDb() {
 
   await run(testDb, 'PRAGMA foreign_keys = ON');
 
+  // Attach a separate in-memory database for personal tags
+  await run(testDb, "ATTACH DATABASE ':memory:' AS personal_tags");
+
   await new Promise((resolve, reject) => {
     testDb.exec(SCHEMA, (err) => {
       if (err) reject(err);
       else resolve();
     });
   });
+
+  // Create tags schema in the attached personal_tags database
+  await run(testDb, `CREATE TABLE IF NOT EXISTS personal_tags.tags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
+  )`);
+  await run(testDb, `CREATE TABLE IF NOT EXISTS personal_tags.choreography_tags (
+    choreography_id INTEGER NOT NULL,
+    tag_id INTEGER NOT NULL,
+    PRIMARY KEY (choreography_id, tag_id)
+  )`);
 
   for (const level of DEFAULT_LEVELS) {
     await run(testDb, 'INSERT OR IGNORE INTO levels (name) VALUES (?)', [level]);
@@ -103,10 +104,12 @@ export async function setupChoreographyTestDb() {
 }
 
 export async function clearChoreographyTables() {
-  // Delete choreographies first — FK ON DELETE CASCADE removes junction rows
+  // Delete choreography_tags from personal_tags DB first (no cross-DB FK cascade)
+  await run(testDb, 'DELETE FROM personal_tags.choreography_tags');
+  // Delete choreographies — FK ON DELETE CASCADE removes choreography_authors and choreography_step_figures
   await run(testDb, 'DELETE FROM choreographies');
   await run(testDb, 'DELETE FROM authors');
-  await run(testDb, 'DELETE FROM tags');
+  await run(testDb, 'DELETE FROM personal_tags.tags');
   await run(testDb, 'DELETE FROM step_figures');
   await run(testDb, 'DELETE FROM levels');
 

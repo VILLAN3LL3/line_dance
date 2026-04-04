@@ -2,11 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import { getDatabase, closeDatabase } from './db.js';
-import { runMigrations } from './migrations/index.js';
+import { runMigrations } from '../migrations/index.js';
 import { openApiSpec } from './openapi.js';
-import { createChoreography, getChoreographies, getChoreographyById, updateChoreography, deleteChoreography, searchChoreographies, getLevels, addLevel, getTags, getStepFigures, getAuthors, getSavedFilterConfigurations, saveFilterConfiguration, updateSavedFilterConfiguration, deleteSavedFilterConfiguration, getMaxChoreographyCount } from './routes/choreographies.js';
-import { getDanceGroups, createDanceGroup, getDanceGroupById, updateDanceGroup, deleteDanceGroup, getTrainers, createTrainer, updateTrainer, deleteTrainer, getDanceCourses, createDanceCourse, updateDanceCourse, deleteDanceCourse, exportDanceCoursePdf, getSessions, createSession, updateSession, deleteSession, getSessionChoreographies, addChoreographyToSession, removeChoreographyFromSession, getLearnedChoreographies, getGroupLevels, addGroupLevel, removeGroupLevel } from './routes/dance-groups.js';
-import { checkUrl } from './routes/url-check.js';
+import { createChoreography, getChoreographies, getChoreographyById, updateChoreography, deleteChoreography, searchChoreographies, getLevels, addLevel, getTags, getStepFigures, getAuthors, getSavedFilterConfigurations, saveFilterConfiguration, updateSavedFilterConfiguration, deleteSavedFilterConfiguration, getMaxChoreographyCount } from '../routes/choreographies.js';
+import { getDanceGroups, createDanceGroup, getDanceGroupById, updateDanceGroup, deleteDanceGroup, getTrainers, createTrainer, updateTrainer, deleteTrainer, getDanceCourses, createDanceCourse, updateDanceCourse, deleteDanceCourse, exportDanceCoursePdf, getSessions, createSession, updateSession, deleteSession, getSessionChoreographies, addChoreographyToSession, removeChoreographyFromSession, getLearnedChoreographies, getGroupLevels, addGroupLevel, removeGroupLevel } from '../routes/dance-groups.js';
+import { checkUrl } from '../routes/url-check.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
