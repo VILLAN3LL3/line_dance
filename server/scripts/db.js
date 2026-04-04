@@ -11,7 +11,7 @@ const isInMemorySafetyMode = [
   process.env.CHOREOGRAPHY_DB_PATH,
   process.env.DANCE_GROUPS_DB_PATH,
   process.env.TAGS_DB_PATH,
-].some((value) => value === ':memory:');
+].includes(':memory:');
 
 function resolveDatabasePath(inputPath, fallbackFileName) {
   if (inputPath === ':memory:') {

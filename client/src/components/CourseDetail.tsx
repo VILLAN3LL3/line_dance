@@ -4,16 +4,11 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  addChoreographyToSession,
-  createSession,
-  deleteSession,
-  fetchChoreographies,
-  getDanceCourses,
-  getSessionChoreographies,
-  getSessions,
-  removeChoreographyFromSession,
+  addChoreographyToSession, createSession, deleteSession, fetchChoreographies, getDanceCourses, getSessionChoreographies, getSessions,
+  removeChoreographyFromSession
 } from "../api";
 import { Choreography, DanceCourse, Session, SessionChoreography } from "../types";
+import { getBerlinTodayIso, getSessionBadgeLabel, getSessionBadgeStatus } from "../utils/courseStatus";
 
 const CourseDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -26,11 +21,75 @@ const CourseDetail: React.FC = () => {
   const [sessionChoreographies, setSessionChoreographies] = useState<SessionChoreography[]>([]);
   const [availableChoreographies, setAvailableChoreographies] = useState<Choreography[]>([]);
   const [newSessionDate, setNewSessionDate] = useState("");
+  const [showPassedSessions, setShowPassedSessions] = useState(false);
   const [selectedChoreographyId, setSelectedChoreographyId] = useState<string>("");
   const [selectedChoreographyQuery, setSelectedChoreographyQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const selectedSessionId = selectedSession?.id ?? null;
+  const berlinTodayIso = getBerlinTodayIso();
+
+  const visibleSessions = sessions.filter((session) => {
+    if (showPassedSessions) {
+      return true;
+    }
+
+    return session.session_date.slice(0, 10) >= berlinTodayIso;
+  });
+
+  let sessionsContent: React.ReactNode;
+  if (sessions.length === 0) {
+    sessionsContent = <div className="empty-state">No sessions yet</div>;
+  } else if (visibleSessions.length === 0) {
+    sessionsContent = <div className="empty-state">No planned sessions</div>;
+  } else {
+    sessionsContent = (
+      <div className="sessions-list">
+        {visibleSessions.map((session) => {
+          const sessionBadgeStatus = getSessionBadgeStatus(session.session_date, berlinTodayIso);
+
+          return (
+            <div
+              key={session.id}
+              className={`session-item ${selectedSession?.id === session.id ? "active" : ""}`}
+            >
+              <div className="session-info">
+                <h4>
+                  {new Date(session.session_date).toLocaleDateString()}
+                  {sessionBadgeStatus && (
+                    <span className={`session-status-badge session-status-${sessionBadgeStatus}`}>
+                      {getSessionBadgeLabel(sessionBadgeStatus)}
+                    </span>
+                  )}
+                </h4>
+                <p>
+                  {new Date(session.session_date).toLocaleDateString("de-DE", {
+                    weekday: "long",
+                  })}
+                </p>
+              </div>
+              <div className="session-actions">
+                <button
+                  onClick={() => handleSelectSession(session)}
+                  className={`btn-secondary ${selectedSession?.id === session.id ? "active" : ""}`}
+                  disabled={isLoading}
+                >
+                  {selectedSession?.id === session.id ? "✓ " : ""}Manage
+                </button>
+                <button
+                  onClick={() => handleDeleteSession(session.id)}
+                  className="btn-delete"
+                  disabled={isLoading}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   const getChoreographyOptionLabel = (choreography: Choreography) =>
     `${choreography.name} (${choreography.level})`;
@@ -234,7 +293,18 @@ const CourseDetail: React.FC = () => {
 
       <div className="detail-content">
         <section className="section">
-          <h3>Sessions</h3>
+          <div className="session-header-row">
+            <h3>Sessions</h3>
+            <label className="status-filter">
+              <input
+                type="checkbox"
+                checked={showPassedSessions}
+                onChange={(event) => setShowPassedSessions(event.target.checked)}
+                disabled={isLoading}
+              />{" "}
+              Show passed sessions
+            </label>
+          </div>
 
           <form onSubmit={handleCreateSession} className="session-form">
             <input
@@ -251,43 +321,7 @@ const CourseDetail: React.FC = () => {
 
           {isLoading && <div className="loading">Loading...</div>}
 
-          {sessions.length === 0 ? (
-            <div className="empty-state">No sessions yet</div>
-          ) : (
-            <div className="sessions-list">
-              {sessions.map((session) => (
-                <div
-                  key={session.id}
-                  className={`session-item ${selectedSession?.id === session.id ? "active" : ""}`}
-                >
-                  <div className="session-info">
-                    <h4>{new Date(session.session_date).toLocaleDateString()}</h4>
-                    <p>
-                      {new Date(session.session_date).toLocaleDateString("de-DE", {
-                        weekday: "long",
-                      })}
-                    </p>
-                  </div>
-                  <div className="session-actions">
-                    <button
-                      onClick={() => handleSelectSession(session)}
-                      className={`btn-secondary ${selectedSession?.id === session.id ? "active" : ""}`}
-                      disabled={isLoading}
-                    >
-                      {selectedSession?.id === session.id ? "✓ " : ""}Manage
-                    </button>
-                    <button
-                      onClick={() => handleDeleteSession(session.id)}
-                      className="btn-delete"
-                      disabled={isLoading}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {sessionsContent}
         </section>
 
         {selectedSession && (

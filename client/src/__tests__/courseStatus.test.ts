@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  getBerlinTodayIso,
-  getCourseStatus,
-  getCourseStatusLabel,
-  normalizeDate,
+  getBerlinTodayIso, getCourseStatus, getCourseStatusLabel, getSessionBadgeLabel, getSessionBadgeStatus, normalizeDate
 } from "../utils/courseStatus";
 
 import type { DanceCourse, Session } from "../types";
@@ -75,6 +72,34 @@ describe("getCourseStatusLabel", () => {
 
   it('returns "Passed" for passed', () => {
     expect(getCourseStatusLabel("passed")).toBe("Passed");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Session badge helpers
+// ---------------------------------------------------------------------------
+
+describe("getSessionBadgeStatus", () => {
+  it('returns "planned" when session is in the future', () => {
+    expect(getSessionBadgeStatus(TOMORROW, TODAY)).toBe("planned");
+  });
+
+  it('returns "passed" when session is in the past', () => {
+    expect(getSessionBadgeStatus(YESTERDAY, TODAY)).toBe("passed");
+  });
+
+  it("returns null for sessions happening today", () => {
+    expect(getSessionBadgeStatus(TODAY, TODAY)).toBeNull();
+  });
+});
+
+describe("getSessionBadgeLabel", () => {
+  it('returns "Planned" for planned', () => {
+    expect(getSessionBadgeLabel("planned")).toBe("Planned");
+  });
+
+  it('returns "Passed" for passed', () => {
+    expect(getSessionBadgeLabel("passed")).toBe("Passed");
   });
 });
 

@@ -4,14 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import {
-  addChoreographyToSession,
-  createSession,
-  deleteSession,
-  fetchChoreographies,
-  getDanceCourses,
-  getSessionChoreographies,
-  getSessions,
-  removeChoreographyFromSession,
+  addChoreographyToSession, createSession, deleteSession, fetchChoreographies, getDanceCourses, getSessionChoreographies, getSessions,
+  removeChoreographyFromSession
 } from "../../api";
 import CourseDetail from "../../components/CourseDetail";
 
@@ -40,6 +34,20 @@ describe("CourseDetail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    const berlinTodayIso = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Berlin",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+
+    const yesterday = new Date(`${berlinTodayIso}T12:00:00`);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const tomorrow = new Date(`${berlinTodayIso}T12:00:00`);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const toIsoDate = (date: Date) => date.toISOString().slice(0, 10);
+
     vi.mocked(getDanceCourses).mockResolvedValue([
       {
         id: 7,
@@ -53,7 +61,15 @@ describe("CourseDetail", () => {
       {
         id: 11,
         dance_course_id: 7,
-        session_date: "2025-01-15",
+        session_date: toIsoDate(yesterday),
+        dance_group_name: "Group Two",
+        semester: "WS 2025",
+        created_at: "2024-01-01",
+      },
+      {
+        id: 12,
+        dance_course_id: 7,
+        session_date: toIsoDate(tomorrow),
         dance_group_name: "Group Two",
         semester: "WS 2025",
         created_at: "2024-01-01",
@@ -121,7 +137,7 @@ describe("CourseDetail", () => {
 
     await screen.findByText(/Course: 7/);
 
-    fireEvent.click(screen.getByRole("button", { name: /manage/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /manage/i })[0]);
 
     const input = screen.getByPlaceholderText("Search choreography by name...");
     fireEvent.change(input, { target: { value: "Dance One (Beginner)" } });
@@ -132,7 +148,20 @@ describe("CourseDetail", () => {
     fireEvent.click(addButton);
 
     await waitFor(() => {
-      expect(addChoreographyToSession).toHaveBeenCalledWith(11, 101);
+      expect(addChoreographyToSession).toHaveBeenCalledWith(12, 101);
     });
+  });
+
+  it("shows planned sessions by default and can include passed sessions", async () => {
+    renderWithRoute();
+
+    await screen.findByText(/Course: 7/);
+
+    expect(screen.getByText("Planned")).toBeInTheDocument();
+    expect(screen.queryByText("Passed")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Show passed sessions" }));
+
+    expect(await screen.findByText("Passed")).toBeInTheDocument();
   });
 });
