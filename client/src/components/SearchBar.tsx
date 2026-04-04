@@ -3,8 +3,15 @@ import "../styles/SearchBar.css";
 import React, { useEffect, useRef, useState } from "react";
 
 import {
-  deleteSavedFilterConfiguration, getAuthors, getLevels, getMaxChoreographyCount, getSavedFilterConfigurations, getStepFigures, getTags,
-  saveFilterConfiguration, updateSavedFilterConfiguration
+  deleteSavedFilterConfiguration,
+  getAuthors,
+  getLevels,
+  getMaxChoreographyCount,
+  getSavedFilterConfigurations,
+  getStepFigures,
+  getTags,
+  saveFilterConfiguration,
+  updateSavedFilterConfiguration,
 } from "../api";
 import { SavedFilterConfiguration, SearchFilters } from "../types";
 
@@ -14,8 +21,12 @@ interface SearchBarProps {
   isLoading?: boolean;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, isLoading = false }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+export const SearchBar: React.FC<SearchBarProps> = ({
+  onSearch,
+  filters = {},
+  isLoading = false,
+}) => {
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string[]>([]);
   const [maxCount, setMaxCount] = useState<number>(0);
   const [maxCountLimit, setMaxCountLimit] = useState<number>(0);
@@ -23,7 +34,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
   const [withoutStepFigures, setWithoutStepFigures] = useState(false);
-  const [stepFiguresMatchMode, setStepFiguresMatchMode] = useState<'all' | 'any' | 'exact'>('all');
+  const [stepFiguresMatchMode, setStepFiguresMatchMode] = useState<"all" | "any" | "exact">("all");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showSavedConfigurations, setShowSavedConfigurations] = useState(false);
   const [levelOptions, setLevelOptions] = useState<string[]>([]);
@@ -32,45 +43,46 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
   const [authorOptions, setAuthorOptions] = useState<string[]>([]);
   const filterSyncRef = useRef(false);
   const [savedConfigurations, setSavedConfigurations] = useState<SavedFilterConfiguration[]>([]);
-  const [selectedConfigurationId, setSelectedConfigurationId] = useState('');
-  const [configurationName, setConfigurationName] = useState('');
+  const [selectedConfigurationId, setSelectedConfigurationId] = useState("");
+  const [configurationName, setConfigurationName] = useState("");
   const [isSavingConfiguration, setIsSavingConfiguration] = useState(false);
   const [isUpdatingConfiguration, setIsUpdatingConfiguration] = useState(false);
   const [isDeletingConfiguration, setIsDeletingConfiguration] = useState(false);
   const [isLoadingConfigurations, setIsLoadingConfigurations] = useState(false);
   const [configurationMessage, setConfigurationMessage] = useState<string | null>(null);
   const [configurationError, setConfigurationError] = useState<string | null>(null);
-  
+
   // Input states for autocomplete
-  const [inputLevel, setInputLevel] = useState('');
-  const [inputFigure, setInputFigure] = useState('');
-  const [inputTag, setInputTag] = useState('');
-  const [inputAuthor, setInputAuthor] = useState('');
+  const [inputLevel, setInputLevel] = useState("");
+  const [inputFigure, setInputFigure] = useState("");
+  const [inputTag, setInputTag] = useState("");
+  const [inputAuthor, setInputAuthor] = useState("");
 
   const buildFilters = (): SearchFilters => ({
     search: searchTerm || undefined,
     level: selectedLevel.length > 0 ? selectedLevel : undefined,
     max_count: maxCountLimit > 0 ? maxCount : undefined,
     step_figures: !withoutStepFigures && selectedFigures.length > 0 ? selectedFigures : undefined,
-    step_figures_match_mode: !withoutStepFigures && selectedFigures.length > 0 ? stepFiguresMatchMode : undefined,
+    step_figures_match_mode:
+      !withoutStepFigures && selectedFigures.length > 0 ? stepFiguresMatchMode : undefined,
     without_step_figures: withoutStepFigures || undefined,
     tags: selectedTags.length > 0 ? selectedTags : undefined,
     authors: selectedAuthors.length > 0 ? selectedAuthors : undefined,
   });
 
   const applyLoadedFilters = async (loadedFilters: SearchFilters) => {
-    setSearchTerm(loadedFilters.search || '');
+    setSearchTerm(loadedFilters.search || "");
     setSelectedLevel(loadedFilters.level || []);
     setMaxCount(loadedFilters.max_count ?? maxCountLimit);
     setWithoutStepFigures(!!loadedFilters.without_step_figures);
-    setSelectedFigures(loadedFilters.without_step_figures ? [] : (loadedFilters.step_figures || []));
-    setStepFiguresMatchMode(loadedFilters.step_figures_match_mode || 'all');
+    setSelectedFigures(loadedFilters.without_step_figures ? [] : loadedFilters.step_figures || []);
+    setStepFiguresMatchMode(loadedFilters.step_figures_match_mode || "all");
     setSelectedTags(loadedFilters.tags || []);
     setSelectedAuthors(loadedFilters.authors || []);
-    setInputLevel('');
-    setInputFigure('');
-    setInputTag('');
-    setInputAuthor('');
+    setInputLevel("");
+    setInputFigure("");
+    setInputTag("");
+    setInputAuthor("");
 
     await onSearch(loadedFilters);
   };
@@ -81,32 +93,31 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
       const configurations = await getSavedFilterConfigurations();
       setSavedConfigurations(configurations);
     } catch (error) {
-      console.error('Error loading saved filter configurations:', error);
-      setConfigurationError('Failed to load saved filter configurations');
+      console.error("Error loading saved filter configurations:", error);
+      setConfigurationError("Failed to load saved filter configurations");
     } finally {
       setIsLoadingConfigurations(false);
     }
   };
 
-  const getSelectedConfiguration = () => (
-    savedConfigurations.find(config => String(config.id) === selectedConfigurationId) || null
-  );
+  const getSelectedConfiguration = () =>
+    savedConfigurations.find((config) => String(config.id) === selectedConfigurationId) || null;
 
   const handleClearAllFilters = async () => {
     // Reset all filter states to initial values
-    setSearchTerm('');
+    setSearchTerm("");
     setSelectedLevel([]);
     setSelectedFigures([]);
     setSelectedTags([]);
     setSelectedAuthors([]);
     setMaxCount(maxCountLimit);
     setWithoutStepFigures(false);
-    setStepFiguresMatchMode('all');
-    setInputLevel('');
-    setInputFigure('');
-    setInputTag('');
-    setInputAuthor('');
-    
+    setStepFiguresMatchMode("all");
+    setInputLevel("");
+    setInputFigure("");
+    setInputTag("");
+    setInputAuthor("");
+
     // Apply the cleared filters
     await onSearch({});
   };
@@ -119,7 +130,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
   const handleSaveConfiguration = async () => {
     const name = configurationName.trim();
     if (!name) {
-      setConfigurationError('Please enter a name for this filter configuration');
+      setConfigurationError("Please enter a name for this filter configuration");
       setConfigurationMessage(null);
       return;
     }
@@ -134,8 +145,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
       setConfigurationMessage(`Saved "${saved.name}"`);
       await loadSavedConfigurations();
     } catch (error) {
-      console.error('Error saving filter configuration:', error);
-      setConfigurationError('Failed to save filter configuration');
+      console.error("Error saving filter configuration:", error);
+      setConfigurationError("Failed to save filter configuration");
     } finally {
       setIsSavingConfiguration(false);
     }
@@ -143,14 +154,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
 
   const handleLoadConfiguration = async () => {
     if (!selectedConfigurationId) {
-      setConfigurationError('Please select a saved configuration to load');
+      setConfigurationError("Please select a saved configuration to load");
       setConfigurationMessage(null);
       return;
     }
 
-    const selected = savedConfigurations.find(config => String(config.id) === selectedConfigurationId);
+    const selected = savedConfigurations.find(
+      (config) => String(config.id) === selectedConfigurationId,
+    );
     if (!selected) {
-      setConfigurationError('Selected configuration could not be found');
+      setConfigurationError("Selected configuration could not be found");
       setConfigurationMessage(null);
       return;
     }
@@ -163,7 +176,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
   const handleUpdateLoadedConfiguration = async () => {
     const selected = getSelectedConfiguration();
     if (!selected) {
-      setConfigurationError('Please select a saved configuration first');
+      setConfigurationError("Please select a saved configuration first");
       setConfigurationMessage(null);
       return;
     }
@@ -178,8 +191,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
       setConfigurationMessage(`Updated "${updated.name}"`);
       await loadSavedConfigurations();
     } catch (error) {
-      console.error('Error updating saved filter configuration:', error);
-      setConfigurationError('Failed to update the selected configuration');
+      console.error("Error updating saved filter configuration:", error);
+      setConfigurationError("Failed to update the selected configuration");
     } finally {
       setIsUpdatingConfiguration(false);
     }
@@ -188,14 +201,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
   const handleRenameConfiguration = async () => {
     const selected = getSelectedConfiguration();
     if (!selected) {
-      setConfigurationError('Please select a saved configuration first');
+      setConfigurationError("Please select a saved configuration first");
       setConfigurationMessage(null);
       return;
     }
 
     const newName = configurationName.trim();
     if (!newName) {
-      setConfigurationError('Please enter a new name before renaming');
+      setConfigurationError("Please enter a new name before renaming");
       setConfigurationMessage(null);
       return;
     }
@@ -211,8 +224,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
       setConfigurationMessage(`Renamed to "${updated.name}"`);
       await loadSavedConfigurations();
     } catch (error) {
-      console.error('Error renaming saved filter configuration:', error);
-      setConfigurationError('Failed to rename the selected configuration');
+      console.error("Error renaming saved filter configuration:", error);
+      setConfigurationError("Failed to rename the selected configuration");
     } finally {
       setIsUpdatingConfiguration(false);
     }
@@ -221,7 +234,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
   const handleDeleteConfiguration = async () => {
     const selected = getSelectedConfiguration();
     if (!selected) {
-      setConfigurationError('Please select a saved configuration first');
+      setConfigurationError("Please select a saved configuration first");
       setConfigurationMessage(null);
       return;
     }
@@ -236,13 +249,13 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
     setConfigurationMessage(null);
     try {
       await deleteSavedFilterConfiguration(selected.id);
-      setSelectedConfigurationId('');
-      setConfigurationName('');
+      setSelectedConfigurationId("");
+      setConfigurationName("");
       setConfigurationMessage(`Deleted "${selected.name}"`);
       await loadSavedConfigurations();
     } catch (error) {
-      console.error('Error deleting saved filter configuration:', error);
-      setConfigurationError('Failed to delete the selected configuration');
+      console.error("Error deleting saved filter configuration:", error);
+      setConfigurationError("Failed to delete the selected configuration");
     } finally {
       setIsDeletingConfiguration(false);
     }
@@ -252,11 +265,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
     // Sync filter values from parent state when changing views
     if (filters) {
       filterSyncRef.current = true;
-      setSearchTerm(filters.search || '');
+      setSearchTerm(filters.search || "");
       setSelectedLevel(Array.isArray(filters.level) ? filters.level : []);
       setMaxCount(filters.max_count ?? maxCountLimit);
       setSelectedFigures(filters.step_figures || []);
-      setStepFiguresMatchMode(filters.step_figures_match_mode || 'all');
+      setStepFiguresMatchMode(filters.step_figures_match_mode || "all");
       setWithoutStepFigures(!!filters.without_step_figures);
       setSelectedTags(filters.tags || []);
       setSelectedAuthors(filters.authors || []);
@@ -268,8 +281,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
       return () => clearTimeout(reset);
     }
   }, [filters, maxCountLimit]);
-
-
 
   useEffect(() => {
     const loadFilters = async () => {
@@ -283,7 +294,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
 
         const maxExistingCount = await getMaxChoreographyCount();
 
-        setLevelOptions(levels.map(l => l.name));
+        setLevelOptions(levels.map((l) => l.name));
         setFigureOptions(figures);
         setTagOptions(tags);
         setAuthorOptions(authors);
@@ -295,7 +306,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
           return maxExistingCount;
         });
       } catch (error) {
-        console.error('Error loading search filters:', error);
+        console.error("Error loading search filters:", error);
         setLevelOptions([]);
         setFigureOptions([]);
         setTagOptions([]);
@@ -313,7 +324,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
   }, []);
 
   useEffect(() => {
-    const selected = savedConfigurations.find(config => String(config.id) === selectedConfigurationId) || null;
+    const selected =
+      savedConfigurations.find((config) => String(config.id) === selectedConfigurationId) || null;
     if (selected) {
       setConfigurationName(selected.name);
     }
@@ -332,20 +344,20 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
     if (withoutStepFigures) {
       return;
     }
-    setSelectedFigures(prev =>
-      prev.includes(figure) ? prev.filter(f => f !== figure) : [...prev, figure]
+    setSelectedFigures((prev) =>
+      prev.includes(figure) ? prev.filter((f) => f !== figure) : [...prev, figure],
     );
   };
 
   const toggleTag = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
   const toggleAuthor = (author: string) => {
-    setSelectedAuthors(prev =>
-      prev.includes(author) ? prev.filter(a => a !== author) : [...prev, author]
+    setSelectedAuthors((prev) =>
+      prev.includes(author) ? prev.filter((a) => a !== author) : [...prev, author],
     );
   };
 
@@ -357,7 +369,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
     const trimmed = value.trim();
     if (trimmed && !selectedFigures.includes(trimmed)) {
       setSelectedFigures([...selectedFigures, trimmed]);
-      setInputFigure('');
+      setInputFigure("");
     }
   };
 
@@ -366,7 +378,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
     const trimmed = value.trim();
     if (trimmed && !selectedTags.includes(trimmed)) {
       setSelectedTags([...selectedTags, trimmed]);
-      setInputTag('');
+      setInputTag("");
     }
   };
 
@@ -375,19 +387,19 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
     const trimmed = value.trim();
     if (trimmed && !selectedAuthors.includes(trimmed)) {
       setSelectedAuthors([...selectedAuthors, trimmed]);
-      setInputAuthor('');
+      setInputAuthor("");
     }
   };
 
   const toggleLevel = (level: string) => {
-    setSelectedLevel(prev =>
-      prev.includes(level) ? prev.filter(l => l !== level) : [...prev, level]
+    setSelectedLevel((prev) =>
+      prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level],
     );
   };
 
   const isDatalistSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputType = (e.nativeEvent as InputEvent).inputType;
-    return inputType === 'insertReplacementText' || inputType === 'insertFromDrop';
+    return inputType === "insertReplacementText" || inputType === "insertFromDrop";
   };
 
   const addLevelFromInput = (levelValue?: string) => {
@@ -395,7 +407,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
     const trimmed = value.trim();
     if (trimmed && !selectedLevel.includes(trimmed)) {
       setSelectedLevel([...selectedLevel, trimmed]);
-      setInputLevel('');
+      setInputLevel("");
     }
   };
 
@@ -465,9 +477,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
           type="text"
           placeholder="Search choreographies by name..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
               handleSearch();
             }
           }}
@@ -482,7 +494,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
         onClick={() => setShowAdvanced(!showAdvanced)}
         className="btn-toggle-advanced"
       >
-        {showAdvanced ? '▼' : '▶'} Advanced Filters
+        {showAdvanced ? "▼" : "▶"} Advanced Filters
       </button>
 
       {showAdvanced && (
@@ -492,7 +504,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
             onClick={() => setShowSavedConfigurations(!showSavedConfigurations)}
             className="btn-toggle-saved-configs"
           >
-            {showSavedConfigurations ? '▼' : '▶'} Saved Configurations
+            {showSavedConfigurations ? "▼" : "▶"} Saved Configurations
           </button>
 
           {showSavedConfigurations && (
@@ -511,9 +523,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                   type="button"
                   onClick={handleSaveConfiguration}
                   className="btn-primary"
-                  disabled={isLoading || isSavingConfiguration || isUpdatingConfiguration || isDeletingConfiguration}
+                  disabled={
+                    isLoading ||
+                    isSavingConfiguration ||
+                    isUpdatingConfiguration ||
+                    isDeletingConfiguration
+                  }
                 >
-                  {isSavingConfiguration ? 'Saving...' : 'Save Current Filters'}
+                  {isSavingConfiguration ? "Saving..." : "Save Current Filters"}
                 </button>
               </div>
 
@@ -525,10 +542,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                     setConfigurationError(null);
                     setConfigurationMessage(null);
                   }}
-                  disabled={isLoading || isLoadingConfigurations || isUpdatingConfiguration || isDeletingConfiguration || savedConfigurations.length === 0}
+                  disabled={
+                    isLoading ||
+                    isLoadingConfigurations ||
+                    isUpdatingConfiguration ||
+                    isDeletingConfiguration ||
+                    savedConfigurations.length === 0
+                  }
                 >
                   <option value="">Select saved configuration...</option>
-                  {savedConfigurations.map(config => (
+                  {savedConfigurations.map((config) => (
                     <option key={config.id} value={String(config.id)}>
                       {config.name}
                     </option>
@@ -538,7 +561,13 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                   type="button"
                   onClick={handleLoadConfiguration}
                   className="btn-secondary"
-                  disabled={isLoading || isLoadingConfigurations || isUpdatingConfiguration || isDeletingConfiguration || !selectedConfigurationId}
+                  disabled={
+                    isLoading ||
+                    isLoadingConfigurations ||
+                    isUpdatingConfiguration ||
+                    isDeletingConfiguration ||
+                    !selectedConfigurationId
+                  }
                 >
                   Load Selected
                 </button>
@@ -549,15 +578,27 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                   type="button"
                   onClick={handleUpdateLoadedConfiguration}
                   className="btn-secondary"
-                  disabled={isLoading || isSavingConfiguration || isUpdatingConfiguration || isDeletingConfiguration || !selectedConfigurationId}
+                  disabled={
+                    isLoading ||
+                    isSavingConfiguration ||
+                    isUpdatingConfiguration ||
+                    isDeletingConfiguration ||
+                    !selectedConfigurationId
+                  }
                 >
-                  {isUpdatingConfiguration ? 'Working...' : 'Update Loaded'}
+                  {isUpdatingConfiguration ? "Working..." : "Update Loaded"}
                 </button>
                 <button
                   type="button"
                   onClick={handleRenameConfiguration}
                   className="btn-secondary"
-                  disabled={isLoading || isSavingConfiguration || isUpdatingConfiguration || isDeletingConfiguration || !selectedConfigurationId}
+                  disabled={
+                    isLoading ||
+                    isSavingConfiguration ||
+                    isUpdatingConfiguration ||
+                    isDeletingConfiguration ||
+                    !selectedConfigurationId
+                  }
                 >
                   Rename Selected
                 </button>
@@ -565,13 +606,21 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                   type="button"
                   onClick={handleDeleteConfiguration}
                   className="btn-delete"
-                  disabled={isLoading || isSavingConfiguration || isUpdatingConfiguration || isDeletingConfiguration || !selectedConfigurationId}
+                  disabled={
+                    isLoading ||
+                    isSavingConfiguration ||
+                    isUpdatingConfiguration ||
+                    isDeletingConfiguration ||
+                    !selectedConfigurationId
+                  }
                 >
-                  {isDeletingConfiguration ? 'Deleting...' : 'Delete Selected'}
+                  {isDeletingConfiguration ? "Deleting..." : "Delete Selected"}
                 </button>
               </div>
 
-              {configurationMessage && <p className="saved-filters-message">{configurationMessage}</p>}
+              {configurationMessage && (
+                <p className="saved-filters-message">{configurationMessage}</p>
+              )}
               {configurationError && <p className="saved-filters-error">{configurationError}</p>}
             </div>
           )}
@@ -585,7 +634,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                 value={inputLevel}
                 onChange={handleLevelInput}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     addLevelFromInput();
                   }
@@ -640,7 +689,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                 disabled={isLoading || maxCountLimit === 0}
               />
               <span className="max-count-value">
-                {maxCountLimit === 0 || maxCount >= maxCountLimit ? `No limit (max ${maxCountLimit})` : `≤ ${maxCount}`}
+                {maxCountLimit === 0 || maxCount >= maxCountLimit
+                  ? `No limit (max ${maxCountLimit})`
+                  : `≤ ${maxCount}`}
               </span>
             </div>
           </div>
@@ -657,12 +708,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                     setWithoutStepFigures(checked);
                     if (checked) {
                       setSelectedFigures([]);
-                      setInputFigure('');
+                      setInputFigure("");
                     }
                   }}
                   disabled={isLoading}
-                />
-                {' '}
+                />{" "}
                 Search choreographies without step figures
               </label>
             </div>
@@ -673,12 +723,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                 value={inputFigure}
                 onChange={handleFigureInput}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     addFigureFromInput();
                   }
                 }}
-                placeholder={withoutStepFigures ? 'Readonly: using without-step-figures filter' : 'Add step figure...'}
+                placeholder={
+                  withoutStepFigures
+                    ? "Readonly: using without-step-figures filter"
+                    : "Add step figure..."
+                }
                 list="figures-list"
                 autoComplete="off"
                 readOnly={withoutStepFigures}
@@ -701,41 +755,48 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
             {selectedFigures.length > 0 && (
               <div className="filter-mode-toggle">
                 <span>Match Mode:</span>
-                <div className="match-mode-radios" role="radiogroup" aria-label="Step figure match mode">
-                  <label className={`match-mode-option mode-all ${stepFiguresMatchMode === 'all' ? 'active' : ''}`}>
+                <div
+                  className="match-mode-radios"
+                  role="radiogroup"
+                  aria-label="Step figure match mode"
+                >
+                  <label
+                    className={`match-mode-option mode-all ${stepFiguresMatchMode === "all" ? "active" : ""}`}
+                  >
                     <input
                       type="radio"
                       name="step-figures-match-mode"
                       value="all"
-                      checked={stepFiguresMatchMode === 'all'}
-                      onChange={() => setStepFiguresMatchMode('all')}
+                      checked={stepFiguresMatchMode === "all"}
+                      onChange={() => setStepFiguresMatchMode("all")}
                       disabled={isLoading}
-                    />
-                    {' '}
+                    />{" "}
                     AND (all selected)
                   </label>
-                  <label className={`match-mode-option mode-any ${stepFiguresMatchMode === 'any' ? 'active' : ''}`}>
+                  <label
+                    className={`match-mode-option mode-any ${stepFiguresMatchMode === "any" ? "active" : ""}`}
+                  >
                     <input
                       type="radio"
                       name="step-figures-match-mode"
                       value="any"
-                      checked={stepFiguresMatchMode === 'any'}
-                      onChange={() => setStepFiguresMatchMode('any')}
+                      checked={stepFiguresMatchMode === "any"}
+                      onChange={() => setStepFiguresMatchMode("any")}
                       disabled={isLoading}
-                    />
-                    {' '}
+                    />{" "}
                     OR (any selected)
                   </label>
-                  <label className={`match-mode-option mode-exact ${stepFiguresMatchMode === 'exact' ? 'active' : ''}`}>
+                  <label
+                    className={`match-mode-option mode-exact ${stepFiguresMatchMode === "exact" ? "active" : ""}`}
+                  >
                     <input
                       type="radio"
                       name="step-figures-match-mode"
                       value="exact"
-                      checked={stepFiguresMatchMode === 'exact'}
-                      onChange={() => setStepFiguresMatchMode('exact')}
+                      checked={stepFiguresMatchMode === "exact"}
+                      onChange={() => setStepFiguresMatchMode("exact")}
                       disabled={isLoading}
-                    />
-                    {' '}
+                    />{" "}
                     EXACT (only selected)
                   </label>
                 </div>
@@ -767,7 +828,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                 value={inputTag}
                 onChange={handleTagInput}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     addTagFromInput();
                   }
@@ -817,7 +878,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
                 value={inputAuthor}
                 onChange={handleAuthorInput}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     addAuthorFromInput();
                   }
@@ -862,12 +923,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, filters = {}, is
 
       {showAdvanced && (
         <div className="search-actions">
-          <button
-            type="button"
-            onClick={handleSearch}
-            className="btn-primary"
-            disabled={isLoading}
-          >
+          <button type="button" onClick={handleSearch} className="btn-primary" disabled={isLoading}>
             Apply Filters
           </button>
           <button

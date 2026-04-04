@@ -49,12 +49,12 @@ export interface SearchFilters {
   level?: string[];
   max_count?: number;
   step_figures?: string[];
-  step_figures_match_mode?: 'all' | 'any' | 'exact';
+  step_figures_match_mode?: "all" | "any" | "exact";
   without_step_figures?: boolean;
   tags?: string[];
   authors?: string[];
   sort_field?: string;
-  sort_direction?: 'asc' | 'desc';
+  sort_direction?: "asc" | "desc";
   page?: number;
   limit?: number;
 }
@@ -67,7 +67,7 @@ export interface SavedFilterConfiguration {
   updated_at: string;
 }
 
-export type Level = 'Beginner' | 'Intermediate' | 'Advanced' | 'Experienced';
+export type Level = "Beginner" | "Intermediate" | "Advanced" | "Experienced";
 
 // Dance Groups Types
 export interface DanceGroup {

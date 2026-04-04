@@ -38,7 +38,7 @@ export async function createTrainerViaApi(
   request: APIRequestContext,
   name: string,
   email: string,
-  phone = "+1 555 000 0000"
+  phone = "+1 555 000 0000",
 ) {
   const response = await request.post(`${API_BASE}/trainers`, {
     data: { name, email, phone },
@@ -54,7 +54,7 @@ export async function createDanceCourseViaApi(
   danceGroupId: number,
   semester: string,
   startDate: string,
-  trainerId?: number
+  trainerId?: number,
 ) {
   const response = await request.post(`${API_BASE}/dance-courses`, {
     data: {
@@ -73,7 +73,7 @@ export async function createDanceCourseViaApi(
 export async function createSessionViaApi(
   request: APIRequestContext,
   danceCourseId: number,
-  sessionDate: string
+  sessionDate: string,
 ) {
   const response = await request.post(`${API_BASE}/sessions`, {
     data: {
@@ -90,7 +90,7 @@ export async function createSessionViaApi(
 export async function addSessionChoreographyViaApi(
   request: APIRequestContext,
   sessionId: number,
-  choreographyId: number
+  choreographyId: number,
 ) {
   const response = await request.post(`${API_BASE}/session-choreographies`, {
     data: {
@@ -102,7 +102,11 @@ export async function addSessionChoreographyViaApi(
   await expectOk(response);
 }
 
-export async function addGroupLevelViaApi(request: APIRequestContext, danceGroupId: number, level: string) {
+export async function addGroupLevelViaApi(
+  request: APIRequestContext,
+  danceGroupId: number,
+  level: string,
+) {
   const response = await request.post(`${API_BASE}/dance-groups/${danceGroupId}/levels`, {
     data: { level },
   });

@@ -69,10 +69,14 @@ test.describe("Choreography Search API — bracket-notation array params", () =>
     const names: string[] = body.data
       .map((c: { name: string }) => c.name)
       .sort((a: string, b: string) => a.localeCompare(b));
-    expect(names).toEqual([beginnerName, intermediateName].sort((a: string, b: string) => a.localeCompare(b)));
+    expect(names).toEqual(
+      [beginnerName, intermediateName].sort((a: string, b: string) => a.localeCompare(b)),
+    );
   });
 
-  test("step_figures[]= with exact mode returns only subset-matching choreos", async ({ request }) => {
+  test("step_figures[]= with exact mode returns only subset-matching choreos", async ({
+    request,
+  }) => {
     const runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
     const vineOnlyName = `_E2E Vine Only ${runId}`;
     const vinePivotName = `_E2E Vine Pivot ${runId}`;

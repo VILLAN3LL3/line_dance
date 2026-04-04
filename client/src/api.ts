@@ -1,13 +1,21 @@
 import axios from "axios";
 
 import {
-  Choreography, ChoreographyFormData, DanceCourse, DanceGroup, LearnedChoreography, PaginatedResponse, SavedFilterConfiguration,
-  SearchFilters, Session, SessionChoreography
+  Choreography,
+  ChoreographyFormData,
+  DanceCourse,
+  DanceGroup,
+  LearnedChoreography,
+  PaginatedResponse,
+  SavedFilterConfiguration,
+  SearchFilters,
+  Session,
+  SessionChoreography,
 } from "./types";
 
 import type { Trainer } from "./types";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -23,18 +31,18 @@ function buildSearchRequestKey(filters: SearchFilters): string {
   return entries
     .map(([key, value]) => {
       if (Array.isArray(value)) {
-        return `${key}=[${value.join(',')}]`;
+        return `${key}=[${value.join(",")}]`;
       }
       return `${key}=${String(value)}`;
     })
-    .join('&');
+    .join("&");
 }
 
 export async function fetchChoreographies(
   page: number = 1,
-  limit: number = 20
+  limit: number = 20,
 ): Promise<PaginatedResponse<Choreography>> {
-  const response = await api.get('/choreographies', {
+  const response = await api.get("/choreographies", {
     params: { page, limit },
   });
   return response.data;
@@ -46,7 +54,7 @@ export async function fetchChoreography(id: number): Promise<Choreography> {
 }
 
 export async function searchChoreographies(
-  filters: SearchFilters
+  filters: SearchFilters,
 ): Promise<PaginatedResponse<Choreography>> {
   const requestKey = buildSearchRequestKey(filters);
   const existingRequest = inFlightChoreographySearches.get(requestKey);
@@ -55,7 +63,7 @@ export async function searchChoreographies(
   }
 
   const request = api
-    .get('/choreographies/search', {
+    .get("/choreographies/search", {
       params: filters,
     })
     .then((response) => response.data)
@@ -68,15 +76,15 @@ export async function searchChoreographies(
 }
 
 export async function createChoreography(
-  data: ChoreographyFormData
+  data: ChoreographyFormData,
 ): Promise<{ id: number; message: string }> {
-  const response = await api.post('/choreographies', data);
+  const response = await api.post("/choreographies", data);
   return response.data;
 }
 
 export async function updateChoreography(
   id: number,
-  data: Partial<ChoreographyFormData>
+  data: Partial<ChoreographyFormData>,
 ): Promise<{ id: number; message: string }> {
   const response = await api.put(`/choreographies/${id}`, data);
   return response.data;
@@ -88,23 +96,23 @@ export async function deleteChoreography(id: number): Promise<{ message: string 
 }
 
 export async function getLevels(): Promise<{ id: number; name: string }[]> {
-  const response = await api.get('/levels');
+  const response = await api.get("/levels");
   return response.data;
 }
 
 export async function getTags(): Promise<string[]> {
-  const response = await api.get('/tags');
+  const response = await api.get("/tags");
   return response.data;
 }
 
 export async function getAuthors(): Promise<string[]> {
-  const response = await api.get('/authors');
+  const response = await api.get("/authors");
   return response.data;
 }
 
 export async function addLevel(name: string): Promise<{ id: number; name: string }> {
   try {
-    const response = await api.post('/levels', { name });
+    const response = await api.post("/levels", { name });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.data?.error) {
@@ -115,25 +123,25 @@ export async function addLevel(name: string): Promise<{ id: number; name: string
 }
 
 export async function getStepFigures(): Promise<string[]> {
-  const response = await api.get('/step_figures');
+  const response = await api.get("/step_figures");
   return response.data;
 }
 
 export async function getMaxChoreographyCount(): Promise<number> {
-  const response = await api.get('/choreographies/max-count');
+  const response = await api.get("/choreographies/max-count");
   return response.data?.max_count || 0;
 }
 
 export async function getSavedFilterConfigurations(): Promise<SavedFilterConfiguration[]> {
-  const response = await api.get('/saved-filters');
+  const response = await api.get("/saved-filters");
   return response.data;
 }
 
 export async function saveFilterConfiguration(
   name: string,
-  filters: SearchFilters
+  filters: SearchFilters,
 ): Promise<SavedFilterConfiguration> {
-  const response = await api.post('/saved-filters', { name, filters });
+  const response = await api.post("/saved-filters", { name, filters });
   return response.data;
 }
 
@@ -142,7 +150,7 @@ export async function updateSavedFilterConfiguration(
   payload: {
     name?: string;
     filters?: SearchFilters;
-  }
+  },
 ): Promise<SavedFilterConfiguration> {
   const response = await api.patch(`/saved-filters/${id}`, payload);
   return response.data;
@@ -154,14 +162,14 @@ export async function deleteSavedFilterConfiguration(id: number): Promise<{ mess
 }
 
 export async function checkUrl(url: string): Promise<{ ok: boolean; status: number | null }> {
-  const response = await api.get('/url-check', { params: { url } });
+  const response = await api.get("/url-check", { params: { url } });
   return response.data;
 }
 
 // Dance Groups API
 
 export async function getDanceGroups(): Promise<DanceGroup[]> {
-  const response = await api.get('/dance-groups');
+  const response = await api.get("/dance-groups");
   return response.data;
 }
 
@@ -171,7 +179,7 @@ export async function getDanceGroup(id: number): Promise<DanceGroup> {
 }
 
 export async function createDanceGroup(name: string): Promise<DanceGroup> {
-  const response = await api.post('/dance-groups', { name });
+  const response = await api.post("/dance-groups", { name });
   return response.data;
 }
 
@@ -188,16 +196,21 @@ export async function deleteDanceGroup(id: number): Promise<{ message: string }>
 // Trainers API
 
 export async function getTrainers(): Promise<Trainer[]> {
-  const response = await api.get('/trainers');
+  const response = await api.get("/trainers");
   return response.data;
 }
 
 export async function createTrainer(name: string, phone: string, email: string): Promise<Trainer> {
-  const response = await api.post('/trainers', { name, phone, email });
+  const response = await api.post("/trainers", { name, phone, email });
   return response.data;
 }
 
-export async function updateTrainer(id: number, name: string, phone: string, email: string): Promise<Trainer> {
+export async function updateTrainer(
+  id: number,
+  name: string,
+  phone: string,
+  email: string,
+): Promise<Trainer> {
   const response = await api.put(`/trainers/${id}`, { name, phone, email });
   return response.data;
 }
@@ -210,7 +223,7 @@ export async function deleteTrainer(id: number): Promise<{ message: string }> {
 // Dance Courses API
 
 export async function getDanceCourses(danceGroupId?: number): Promise<DanceCourse[]> {
-  const response = await api.get('/dance-courses', {
+  const response = await api.get("/dance-courses", {
     params: danceGroupId ? { dance_group_id: danceGroupId } : {},
   });
   return response.data;
@@ -226,7 +239,7 @@ export async function createDanceCourse(payload: {
   spotifyPlaylistUrl?: string;
   trainerId?: number;
 }): Promise<DanceCourse> {
-  const response = await api.post('/dance-courses', {
+  const response = await api.post("/dance-courses", {
     id: payload.id,
     dance_group_id: payload.danceGroupId,
     semester: payload.semester,
@@ -246,7 +259,7 @@ export async function updateDanceCourse(
   youtubePlaylistUrl?: string,
   copperknobListUrl?: string,
   spotifyPlaylistUrl?: string,
-  trainerId?: number
+  trainerId?: number,
 ): Promise<DanceCourse> {
   const response = await api.put(`/dance-courses/${id}`, {
     semester,
@@ -266,7 +279,7 @@ export async function deleteDanceCourse(id: number): Promise<{ message: string }
 
 export async function exportDanceCoursePdf(id: number): Promise<Blob> {
   const response = await api.get(`/dance-courses/${id}/export-pdf`, {
-    responseType: 'blob',
+    responseType: "blob",
   });
   return response.data;
 }
@@ -274,17 +287,14 @@ export async function exportDanceCoursePdf(id: number): Promise<Blob> {
 // Sessions API
 
 export async function getSessions(danceCoursesId?: number): Promise<Session[]> {
-  const response = await api.get('/sessions', {
+  const response = await api.get("/sessions", {
     params: danceCoursesId ? { dance_course_id: danceCoursesId } : {},
   });
   return response.data;
 }
 
-export async function createSession(
-  danceCourseId: number,
-  sessionDate: string
-): Promise<Session> {
-  const response = await api.post('/sessions', {
+export async function createSession(danceCourseId: number, sessionDate: string): Promise<Session> {
+  const response = await api.post("/sessions", {
     dance_course_id: danceCourseId,
     session_date: sessionDate,
   });
@@ -304,7 +314,7 @@ export async function deleteSession(id: number): Promise<{ message: string }> {
 // Session Choreographies API
 
 export async function getSessionChoreographies(sessionId: number): Promise<SessionChoreography[]> {
-  const response = await api.get('/session-choreographies', {
+  const response = await api.get("/session-choreographies", {
     params: { session_id: sessionId },
   });
   return response.data;
@@ -312,9 +322,9 @@ export async function getSessionChoreographies(sessionId: number): Promise<Sessi
 
 export async function addChoreographyToSession(
   sessionId: number,
-  choreographyId: number
+  choreographyId: number,
 ): Promise<SessionChoreography> {
-  const response = await api.post('/session-choreographies', {
+  const response = await api.post("/session-choreographies", {
     session_id: sessionId,
     choreography_id: choreographyId,
   });
@@ -328,8 +338,10 @@ export async function removeChoreographyFromSession(id: number): Promise<{ messa
 
 // Learned Choreographies API
 
-export async function getLearnedChoreographies(danceGroupId?: number): Promise<LearnedChoreography[]> {
-  const response = await api.get('/learned-choreographies', {
+export async function getLearnedChoreographies(
+  danceGroupId?: number,
+): Promise<LearnedChoreography[]> {
+  const response = await api.get("/learned-choreographies", {
     params: danceGroupId ? { dance_group_id: danceGroupId } : {},
   });
   return response.data;
@@ -347,7 +359,10 @@ export async function addGroupLevel(groupId: number, level: string): Promise<{ l
   return response.data;
 }
 
-export async function removeGroupLevel(groupId: number, level: string): Promise<{ message: string }> {
+export async function removeGroupLevel(
+  groupId: number,
+  level: string,
+): Promise<{ message: string }> {
   const response = await api.delete(`/dance-groups/${groupId}/levels/${encodeURIComponent(level)}`);
   return response.data;
 }

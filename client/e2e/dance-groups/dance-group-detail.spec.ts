@@ -1,8 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 import {
-  addGroupLevelViaApi, addSessionChoreographyViaApi, createChoreographyViaApi, createDanceCourseViaApi, createDanceGroupViaApi,
-  createSessionViaApi
+  addGroupLevelViaApi,
+  addSessionChoreographyViaApi,
+  createChoreographyViaApi,
+  createDanceCourseViaApi,
+  createDanceGroupViaApi,
+  createSessionViaApi,
 } from "../helpers/api";
 
 test.describe("Dance Group Detail", () => {
@@ -58,8 +62,18 @@ test.describe("Dance Group Detail", () => {
     const passedSemester = `PASS-${now}`;
 
     await createDanceCourseViaApi(request, groupId, runningSemester, "2020-01-10");
-    const plannedCourseId = await createDanceCourseViaApi(request, groupId, plannedSemester, "2099-01-10");
-    const passedCourseId = await createDanceCourseViaApi(request, groupId, passedSemester, "2020-01-01");
+    const plannedCourseId = await createDanceCourseViaApi(
+      request,
+      groupId,
+      plannedSemester,
+      "2099-01-10",
+    );
+    const passedCourseId = await createDanceCourseViaApi(
+      request,
+      groupId,
+      passedSemester,
+      "2020-01-01",
+    );
     await createSessionViaApi(request, passedCourseId, "2000-01-01");
     expect(plannedCourseId).toBeGreaterThan(0);
 
@@ -78,7 +92,10 @@ test.describe("Dance Group Detail", () => {
     page.once("dialog", async (dialog) => {
       await dialog.accept();
     });
-    await page.locator(".course-item", { hasText: plannedSemester }).getByRole("button", { name: /^Delete$/i }).click();
+    await page
+      .locator(".course-item", { hasText: plannedSemester })
+      .getByRole("button", { name: /^Delete$/i })
+      .click();
     await expect(page.getByText(plannedSemester)).toHaveCount(0);
   });
 });

@@ -3,12 +3,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import {
-  deleteSavedFilterConfiguration, getAuthors, getLevels, getMaxChoreographyCount, getSavedFilterConfigurations, getStepFigures, getTags,
-  saveFilterConfiguration, updateSavedFilterConfiguration
+  deleteSavedFilterConfiguration,
+  getAuthors,
+  getLevels,
+  getMaxChoreographyCount,
+  getSavedFilterConfigurations,
+  getStepFigures,
+  getTags,
+  saveFilterConfiguration,
+  updateSavedFilterConfiguration,
 } from "../../api";
 import { SearchBar } from "../../components/SearchBar";
 
-vi.mock('../../api', () => ({
+vi.mock("../../api", () => ({
   getLevels: vi.fn(),
   getStepFigures: vi.fn(),
   getTags: vi.fn(),
@@ -20,33 +27,33 @@ vi.mock('../../api', () => ({
   deleteSavedFilterConfiguration: vi.fn(),
 }));
 
-describe('SearchBar', () => {
+describe("SearchBar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getLevels).mockResolvedValue([{ id: 1, name: 'Beginner' }]);
-    vi.mocked(getStepFigures).mockResolvedValue(['Mambo']);
-    vi.mocked(getTags).mockResolvedValue(['classic']);
-    vi.mocked(getAuthors).mockResolvedValue(['Alice']);
+    vi.mocked(getLevels).mockResolvedValue([{ id: 1, name: "Beginner" }]);
+    vi.mocked(getStepFigures).mockResolvedValue(["Mambo"]);
+    vi.mocked(getTags).mockResolvedValue(["classic"]);
+    vi.mocked(getAuthors).mockResolvedValue(["Alice"]);
     vi.mocked(getMaxChoreographyCount).mockResolvedValue(64);
     vi.mocked(getSavedFilterConfigurations).mockResolvedValue([]);
     vi.mocked(saveFilterConfiguration).mockResolvedValue({
       id: 1,
-      name: 'My Filters',
-      filters: { search: 'abc' },
-      created_at: '2024-01-01',
-      updated_at: '2024-01-01',
+      name: "My Filters",
+      filters: { search: "abc" },
+      created_at: "2024-01-01",
+      updated_at: "2024-01-01",
     });
     vi.mocked(updateSavedFilterConfiguration).mockResolvedValue({
       id: 1,
-      name: 'My Filters',
+      name: "My Filters",
       filters: {},
-      created_at: '2024-01-01',
-      updated_at: '2024-01-01',
+      created_at: "2024-01-01",
+      updated_at: "2024-01-01",
     });
-    vi.mocked(deleteSavedFilterConfiguration).mockResolvedValue({ message: 'ok' });
+    vi.mocked(deleteSavedFilterConfiguration).mockResolvedValue({ message: "ok" });
   });
 
-  it('loads filter metadata on mount', async () => {
+  it("loads filter metadata on mount", async () => {
     const onSearch = vi.fn().mockResolvedValue(undefined);
     render(<SearchBar onSearch={onSearch} filters={{}} />);
 
@@ -60,27 +67,25 @@ describe('SearchBar', () => {
     });
   });
 
-  it('triggers search when user presses Enter in search input', async () => {
+  it("triggers search when user presses Enter in search input", async () => {
     const onSearch = vi.fn().mockResolvedValue(undefined);
     render(<SearchBar onSearch={onSearch} filters={{}} />);
 
-    const input = screen.getByPlaceholderText('Search choreographies by name...');
-    fireEvent.change(input, { target: { value: 'Tango' } });
-    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+    const input = screen.getByPlaceholderText("Search choreographies by name...");
+    fireEvent.change(input, { target: { value: "Tango" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
 
     await waitFor(() => {
-      expect(onSearch).toHaveBeenCalledWith(
-        expect.objectContaining({ search: 'Tango' }),
-      );
+      expect(onSearch).toHaveBeenCalledWith(expect.objectContaining({ search: "Tango" }));
     });
   });
 
-  it('clears all filters via Advanced panel action', async () => {
+  it("clears all filters via Advanced panel action", async () => {
     const onSearch = vi.fn().mockResolvedValue(undefined);
     render(<SearchBar onSearch={onSearch} filters={{}} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /advanced filters/i }));
-    fireEvent.click(screen.getByRole('button', { name: /clear all filters/i }));
+    fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
+    fireEvent.click(screen.getByRole("button", { name: /clear all filters/i }));
 
     await waitFor(() => {
       expect(onSearch).toHaveBeenCalledWith({});

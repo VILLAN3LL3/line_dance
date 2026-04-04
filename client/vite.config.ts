@@ -7,29 +7,29 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
-    hmr: true
+    hmr: true,
   },
-  cacheDir: 'node_modules/.vite',
+  cacheDir: "node_modules/.vite",
   build: {
-    outDir: 'dist',
-    minify: 'esbuild',
+    outDir: "dist",
+    minify: "esbuild",
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          if (id.includes('react') || id.includes('react-dom')) {
-            return 'vendor';
+          if (id.includes("react") || id.includes("react-dom")) {
+            return "vendor";
           }
-        }
-      }
+        },
+      },
     },
     cssCodeSplit: true,
-    write: false
+    write: false,
   },
   esbuild: {
-    sourcemap: false
+    sourcemap: false,
   },
-  publicDir: 'public',
+  publicDir: "public",
   optimizeDeps: {
-    include: []
-  }
+    include: [],
+  },
 });

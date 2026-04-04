@@ -15,7 +15,7 @@ const ChoreographyDetail: React.FC = () => {
   const choreographyId = Number(id);
 
   const [choreography, setChoreography] = useState<Choreography | null>(null);
-  const [view, setView] = useState<'view' | 'edit'>('view');
+  const [view, setView] = useState<"view" | "edit">("view");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +42,7 @@ const ChoreographyDetail: React.FC = () => {
     // Check if we should start in edit mode
     const state = location.state as { editMode?: boolean } | null;
     if (state?.editMode) {
-      setView('edit');
+      setView("edit");
     }
 
     void loadChoreography();
@@ -56,7 +56,7 @@ const ChoreographyDetail: React.FC = () => {
   }, [location.state]);
 
   const handleEdit = () => {
-    setView('edit');
+    setView("edit");
   };
 
   const handleDelete = async () => {
@@ -83,7 +83,7 @@ const ChoreographyDetail: React.FC = () => {
     try {
       await updateChoreography(choreographyId, data);
       await loadChoreography();
-      setView('view');
+      setView("view");
     } catch (err) {
       setError("Failed to update choreography");
       console.error(err);
@@ -112,7 +112,7 @@ const ChoreographyDetail: React.FC = () => {
 
       {error && <div className="error-message">{error}</div>}
 
-      {view === 'view' ? (
+      {view === "view" ? (
         <ChoreographyCard
           choreography={choreography}
           onEdit={handleEdit}
@@ -124,7 +124,7 @@ const ChoreographyDetail: React.FC = () => {
           initialData={choreography}
           onSubmit={handleSubmit}
           isLoading={isLoading}
-          onCancel={() => setView('view')}
+          onCancel={() => setView("view")}
         />
       )}
     </div>

@@ -4,11 +4,24 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  addGroupLevel, deleteDanceCourse, exportDanceCoursePdf, fetchChoreographies, getDanceCourses, getDanceGroup, getGroupLevels,
-  getLearnedChoreographies, getSessions, removeGroupLevel
+  addGroupLevel,
+  deleteDanceCourse,
+  exportDanceCoursePdf,
+  fetchChoreographies,
+  getDanceCourses,
+  getDanceGroup,
+  getGroupLevels,
+  getLearnedChoreographies,
+  getSessions,
+  removeGroupLevel,
 } from "../api";
 import { Choreography, DanceCourse, DanceGroup, LearnedChoreography, Session } from "../types";
-import { CourseStatus, getBerlinTodayIso, getCourseStatus, getCourseStatusLabel } from "../utils/courseStatus";
+import {
+  CourseStatus,
+  getBerlinTodayIso,
+  getCourseStatus,
+  getCourseStatusLabel,
+} from "../utils/courseStatus";
 import { getYouTubePlaylistPageUrl } from "../utils/youtube";
 
 const DanceGroupDetail: React.FC = () => {
@@ -31,14 +44,15 @@ const DanceGroupDetail: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [groupData, coursesData, sessionsData, learnedData, choreosData, levelsData] = await Promise.all([
-        getDanceGroup(parsedGroupId),
-        getDanceCourses(parsedGroupId),
-        getSessions(),
-        getLearnedChoreographies(parsedGroupId),
-        fetchChoreographies(1, 10000),
-        getGroupLevels(parsedGroupId),
-      ]);
+      const [groupData, coursesData, sessionsData, learnedData, choreosData, levelsData] =
+        await Promise.all([
+          getDanceGroup(parsedGroupId),
+          getDanceCourses(parsedGroupId),
+          getSessions(),
+          getLearnedChoreographies(parsedGroupId),
+          fetchChoreographies(1, 10000),
+          getGroupLevels(parsedGroupId),
+        ]);
       setGroup(groupData);
       setCourses(coursesData);
       setSessions(sessionsData);
@@ -155,9 +169,10 @@ const DanceGroupDetail: React.FC = () => {
           return learned.first_learned_date < berlinTodayIso;
         })
         .flatMap(
-          (learned) => choreographies.find((c) => c.id === learned.choreography_id)?.step_figures ?? []
-        )
-    )
+          (learned) =>
+            choreographies.find((c) => c.id === learned.choreography_id)?.step_figures ?? [],
+        ),
+    ),
   ).sort((a, b) => a.localeCompare(b));
 
   const handleSearchChoreographies = () => {
@@ -210,21 +225,21 @@ const DanceGroupDetail: React.FC = () => {
               <div className="course-info">
                 <h4>
                   {course.id} <span className="course-semester">({course.semester})</span>
-                  <span
-                    className={`course-status-badge course-status-${courseStatus}`}
-                  >
+                  <span className={`course-status-badge course-status-${courseStatus}`}>
                     {getCourseStatusLabel(courseStatus)}
                   </span>
                 </h4>
-                {course.start_date && <p>Started: {new Date(course.start_date).toLocaleDateString()}</p>}
-                {course.trainer_name && (
-                  <p>
-                    Trainer: {course.trainer_name}
-                  </p>
+                {course.start_date && (
+                  <p>Started: {new Date(course.start_date).toLocaleDateString()}</p>
                 )}
+                {course.trainer_name && <p>Trainer: {course.trainer_name}</p>}
                 <div className="course-links">
                   {course.youtube_playlist_url && (
-                    <a href={playlistPageUrl ?? course.youtube_playlist_url} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={playlistPageUrl ?? course.youtube_playlist_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       🔗 YouTube
                     </a>
                   )}
@@ -256,7 +271,9 @@ const DanceGroupDetail: React.FC = () => {
                   📅 Manage Sessions
                 </button>
                 <button
-                  onClick={() => navigate(`/admin/groups/${parsedGroupId}/courses/${course.id}/edit`)}
+                  onClick={() =>
+                    navigate(`/admin/groups/${parsedGroupId}/courses/${course.id}/edit`)
+                  }
                   className="btn-edit"
                   disabled={isLoading}
                 >
@@ -343,8 +360,8 @@ const DanceGroupDetail: React.FC = () => {
                 new Set(
                   choreographies
                     .map((c) => c.level)
-                    .filter((level) => !groupLevels.includes(level))
-                )
+                    .filter((level) => !groupLevels.includes(level)),
+                ),
               )
                 .sort((a, b) => a.localeCompare(b))
                 .map((level) => (
@@ -421,23 +438,31 @@ const DanceGroupDetail: React.FC = () => {
                 </thead>
                 <tbody>
                   {[...learnedChoreographies]
-                    .sort((a, b) => new Date(a.first_learned_date).getTime() - new Date(b.first_learned_date).getTime())
+                    .sort(
+                      (a, b) =>
+                        new Date(a.first_learned_date).getTime() -
+                        new Date(b.first_learned_date).getTime(),
+                    )
                     .map((learned) => {
-                      const choreography = choreographies.find((c) => c.id === learned.choreography_id);
+                      const choreography = choreographies.find(
+                        (c) => c.id === learned.choreography_id,
+                      );
                       return (
                         <tr
                           key={`${learned.dance_group_id}-${learned.choreography_id}`}
                           onClick={() => navigate(`/choreographies/${learned.choreography_id}`)}
                           className="clickable-row"
                         >
-                          <td>{choreography?.name ?? `Unknown (ID: ${learned.choreography_id})`}</td>
+                          <td>
+                            {choreography?.name ?? `Unknown (ID: ${learned.choreography_id})`}
+                          </td>
                           <td>{choreography?.level ?? "N/A"}</td>
                           <td>{learned.times_danced}</td>
                           <td>{new Date(learned.first_learned_date).toLocaleDateString()}</td>
                           <td>{new Date(learned.last_danced_date).toLocaleDateString()}</td>
                         </tr>
                       );
-                  })}
+                    })}
                 </tbody>
               </table>
             </div>

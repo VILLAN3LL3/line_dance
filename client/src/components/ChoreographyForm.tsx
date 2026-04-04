@@ -41,13 +41,12 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
     const loadReferenceData = async () => {
       try {
-        const [fetchedLevels, fetchedAuthors, fetchedTags, fetchedFigures] =
-          await Promise.all([
-            getLevels(),
-            getAuthors(),
-            getTags(),
-            getStepFigures(),
-          ]);
+        const [fetchedLevels, fetchedAuthors, fetchedTags, fetchedFigures] = await Promise.all([
+          getLevels(),
+          getAuthors(),
+          getTags(),
+          getStepFigures(),
+        ]);
 
         if (!isActive) {
           return;
@@ -70,9 +69,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
     if (type === "checkbox") {
@@ -82,10 +79,8 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
         [name]: isChecked,
       }));
     } else {
-      const isNumericField =
-        name === "count" || name === "wall_count" || name === "creation_year";
-      const parsedValue =
-        isNumericField && value ? Number.parseInt(value, 10) : undefined;
+      const isNumericField = name === "count" || name === "wall_count" || name === "creation_year";
+      const parsedValue = isNumericField && value ? Number.parseInt(value, 10) : undefined;
       const finalValue = isNumericField ? parsedValue : value;
 
       setFormData((prev) => ({
@@ -145,17 +140,13 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const removeFigure = (figureToRemove: string) => {
     setFormData((prev) => ({
       ...prev,
-      step_figures: prev.step_figures.filter(
-        (figure) => figure !== figureToRemove,
-      ),
+      step_figures: prev.step_figures.filter((figure) => figure !== figureToRemove),
     }));
   };
 
   const isDatalistSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputType = (e.nativeEvent as InputEvent).inputType;
-    return (
-      inputType === "insertReplacementText" || inputType === "insertFromDrop"
-    );
+    return inputType === "insertReplacementText" || inputType === "insertFromDrop";
   };
 
   const handleAuthorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -224,11 +215,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
   const handleTagBlur = () => {
     const normalized = currentTag.trim();
-    if (
-      normalized &&
-      tagsFromDb.includes(normalized) &&
-      !formData.tags.includes(normalized)
-    ) {
+    if (normalized && tagsFromDb.includes(normalized) && !formData.tags.includes(normalized)) {
       addTag(normalized);
     }
   };
@@ -262,13 +249,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
         <div className="form-group">
           <label htmlFor="level">Level *</label>
-          <select
-            id="level"
-            name="level"
-            value={formData.level}
-            onChange={handleChange}
-            required
-          >
+          <select id="level" name="level" value={formData.level} onChange={handleChange} required>
             <option value="">Select a level</option>
             {levels.map((level) => (
               <option key={level.id} value={level.name}>
@@ -338,11 +319,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
                 <option key={author} value={author} />
               ))}
             </datalist>
-            <button
-              type="button"
-              onClick={() => addAuthor()}
-              className="btn-add"
-            >
+            <button type="button" onClick={() => addAuthor()} className="btn-add">
               Add Author
             </button>
           </div>
@@ -350,11 +327,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
             {formData.authors.map((author) => (
               <span key={author} className="tag">
                 {author}
-                <button
-                  type="button"
-                  onClick={() => removeAuthor(author)}
-                  className="btn-remove"
-                >
+                <button type="button" onClick={() => removeAuthor(author)} className="btn-remove">
                   ×
                 </button>
               </span>
@@ -395,53 +368,45 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           />
         </div>
 
-      <div className="form-section">
-        <h3>Step Figures</h3>
-        <div className="form-group form-input-row">
-          <input
-            type="text"
-            value={currentFigure}
-            onChange={handleFigureChange}
-            onBlur={handleFigureBlur}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addFigure();
-              }
-            }}
-            placeholder={
-              currentFigure
-                ? ""
-                : "Step figure name (e.g., Vine, Shuffle, Grapevine)"
-            }
-            list="figures-list"
-          />
-          <datalist id="figures-list">
-            {figuresFromDb.map((figure) => (
-              <option key={figure} value={figure} />
+        <div className="form-section">
+          <h3>Step Figures</h3>
+          <div className="form-group form-input-row">
+            <input
+              type="text"
+              value={currentFigure}
+              onChange={handleFigureChange}
+              onBlur={handleFigureBlur}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addFigure();
+                }
+              }}
+              placeholder={currentFigure ? "" : "Step figure name (e.g., Vine, Shuffle, Grapevine)"}
+              list="figures-list"
+            />
+            <datalist id="figures-list">
+              {figuresFromDb.map((figure) => (
+                <option key={figure} value={figure} />
+              ))}
+            </datalist>
+            <button type="button" onClick={() => addFigure()} className="btn-add">
+              Add Figure
+            </button>
+          </div>
+          <div className="tags-container">
+            {formData.step_figures.map((figure) => (
+              <span key={figure} className="tag">
+                {figure}
+                <button type="button" onClick={() => removeFigure(figure)} className="btn-remove">
+                  ×
+                </button>
+              </span>
             ))}
-          </datalist>
-          <button type="button" onClick={() => addFigure()} className="btn-add">
-            Add Figure
-          </button>
+          </div>
         </div>
-        <div className="tags-container">
-          {formData.step_figures.map((figure) => (
-            <span key={figure} className="tag">
-              {figure}
-              <button
-                type="button"
-                onClick={() => removeFigure(figure)}
-                className="btn-remove"
-              >
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
-      </div>
 
-       <div className="form-group">
+        <div className="form-group">
           <label htmlFor="tag_information">Tag Information</label>
           <textarea
             id="tag_information"
@@ -478,9 +443,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
                 addTag();
               }
             }}
-            placeholder={
-              currentTag ? "" : "Tag (e.g., Country, Western, Urban)"
-            }
+            placeholder={currentTag ? "" : "Tag (e.g., Country, Western, Urban)"}
             list="tags-list"
           />
           <datalist id="tags-list">
@@ -496,11 +459,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           {formData.tags.map((tag) => (
             <span key={tag} className="tag">
               {tag}
-              <button
-                type="button"
-                onClick={() => removeTag(tag)}
-                className="btn-remove"
-              >
+              <button type="button" onClick={() => removeTag(tag)} className="btn-remove">
                 ×
               </button>
             </span>
@@ -513,11 +472,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           {isLoading ? "Saving..." : "Save Choreography"}
         </button>
         {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="btn-small btn-edit"
-          >
+          <button type="button" onClick={onCancel} className="btn-small btn-edit">
             Cancel
           </button>
         )}

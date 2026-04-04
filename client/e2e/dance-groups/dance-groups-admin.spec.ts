@@ -42,7 +42,10 @@ test.describe("Dance Groups Admin", () => {
     page.once("dialog", async (dialog) => {
       await dialog.accept();
     });
-    await page.locator(".group-card", { hasText: updatedName }).getByRole("button", { name: /^Delete$/i }).click();
+    await page
+      .locator(".group-card", { hasText: updatedName })
+      .getByRole("button", { name: /^Delete$/i })
+      .click();
     await expect(page.locator(".group-card", { hasText: updatedName })).toHaveCount(0);
   });
 });

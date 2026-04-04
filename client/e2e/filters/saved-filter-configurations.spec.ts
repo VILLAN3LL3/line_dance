@@ -51,7 +51,10 @@ test.describe("Saved Filter Configurations", () => {
     await expect(page.locator(".filter-tag", { hasText: "Beginner" })).toBeVisible();
 
     await page.getByPlaceholder(/Add tag/i).fill("E2E-Updated");
-    await page.locator(".filter-group", { hasText: /^Tags:/ }).getByRole("button", { name: /^\+$/ }).click();
+    await page
+      .locator(".filter-group", { hasText: /^Tags:/ })
+      .getByRole("button", { name: /^\+$/ })
+      .click();
     await page.getByRole("button", { name: /Update Loaded/i }).click();
     await expect(page.getByText(`Updated "${configName}"`)).toBeVisible();
 

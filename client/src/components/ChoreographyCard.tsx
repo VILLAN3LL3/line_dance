@@ -32,7 +32,8 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   const showPrimaryEmbed = videoEmbedMode === "single" && Boolean(primaryEmbedUrl);
   const showDemoLink = !showPrimaryEmbed && Boolean(choreography.demo_video_url);
   const showTutorialLink = !showPrimaryEmbed && Boolean(choreography.tutorial_video_url);
-  const showAllEmbeds = videoEmbedMode === "all" && (Boolean(demoEmbedUrl) || Boolean(tutorialEmbedUrl));
+  const showAllEmbeds =
+    videoEmbedMode === "all" && (Boolean(demoEmbedUrl) || Boolean(tutorialEmbedUrl));
   const handleContentLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();
   };
@@ -56,13 +57,25 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       </div>
 
       <div className="card-content">
-        {choreography.count && <p><strong>Count:</strong> {choreography.count}</p>}
-        {choreography.wall_count && <p><strong>Wall:</strong> {choreography.wall_count}</p>}
-        {choreography.creation_year && <p><strong>Year:</strong> {choreography.creation_year}</p>}
+        {choreography.count && (
+          <p>
+            <strong>Count:</strong> {choreography.count}
+          </p>
+        )}
+        {choreography.wall_count && (
+          <p>
+            <strong>Wall:</strong> {choreography.wall_count}
+          </p>
+        )}
+        {choreography.creation_year && (
+          <p>
+            <strong>Year:</strong> {choreography.creation_year}
+          </p>
+        )}
 
         {choreography.authors.length > 0 && (
           <div className="authors">
-            <strong>Authors:</strong> {choreography.authors.join(', ')}
+            <strong>Authors:</strong> {choreography.authors.join(", ")}
           </div>
         )}
 
@@ -75,8 +88,16 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
                   {figure}
                 </span>
               ))}
-              {choreography.restart_information && <span className="info-badge" title="Has restart information">Restart 🔁</span>}
-              {choreography.tag_information && <span className="info-badge" title="Has tag information">Tag 🌉</span>}
+              {choreography.restart_information && (
+                <span className="info-badge" title="Has restart information">
+                  Restart 🔁
+                </span>
+              )}
+              {choreography.tag_information && (
+                <span className="info-badge" title="Has tag information">
+                  Tag 🌉
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -184,12 +205,24 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
 
       <div className="card-actions">
         {onEdit && (
-          <button onClick={(e) => { e.stopPropagation(); onEdit(choreography.id); }} className="btn-small btn-edit">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(choreography.id);
+            }}
+            className="btn-small btn-edit"
+          >
             Edit
           </button>
         )}
         {onDelete && (
-          <button onClick={(e) => { e.stopPropagation(); onDelete(choreography.id); }} className="btn-small btn-delete">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(choreography.id);
+            }}
+            className="btn-small btn-delete"
+          >
             Delete
           </button>
         )}

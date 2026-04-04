@@ -3,24 +3,30 @@ import "../styles/App.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { createChoreography, deleteChoreography, searchChoreographies, updateChoreography } from "../api";
+import {
+  createChoreography,
+  deleteChoreography,
+  searchChoreographies,
+  updateChoreography,
+} from "../api";
 import { Choreography, ChoreographyFormData, SearchFilters } from "../types";
 import { ChoreographyCard } from "./ChoreographyCard";
 import { ChoreographyForm } from "./ChoreographyForm";
 import { ChoreographyTable } from "./ChoreographyTable";
 import { SearchBar } from "./SearchBar";
 
-type View = 'list' | 'create' | 'edit' | 'detail';
+type View = "list" | "create" | "edit" | "detail";
 
 export const App: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const routeInitialFilters = (location.state as { initialFilters?: SearchFilters } | null)?.initialFilters;
+  const routeInitialFilters = (location.state as { initialFilters?: SearchFilters } | null)
+    ?.initialFilters;
 
   // Initialize display mode from localStorage
   const getInitialDisplayMode = () => {
-    const saved = localStorage.getItem('displayMode');
-    return (saved === 'card' || saved === 'table') ? saved : 'card';
+    const saved = localStorage.getItem("displayMode");
+    return saved === "card" || saved === "table" ? saved : "card";
   };
 
   // Initialize filters from location state or localStorage
@@ -31,19 +37,19 @@ export const App: React.FC = () => {
     }
 
     // Otherwise use localStorage
-    const saved = localStorage.getItem('currentFilters');
+    const saved = localStorage.getItem("currentFilters");
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch (error) {
-        console.error('Error parsing saved filters:', error);
+        console.error("Error parsing saved filters:", error);
       }
     }
     return {};
   }, [routeInitialFilters]);
 
-  const [view, setView] = useState<View>('list');
-  const [displayMode, setDisplayMode] = useState<'card' | 'table'>(getInitialDisplayMode);
+  const [view, setView] = useState<View>("list");
+  const [displayMode, setDisplayMode] = useState<"card" | "table">(getInitialDisplayMode);
   const [choreographies, setChoreographies] = useState<Choreography[]>([]);
   const [selectedChoreography, setSelectedChoreography] = useState<Choreography | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +70,7 @@ export const App: React.FC = () => {
     lastInitialLoadSignatureRef.current = loadSignature;
     setCurrentFilters(initialFilters);
     loadChoreographies(initialFilters, true);
-    
+
     // Clear location state after using it
     if (routeInitialFilters) {
       globalThis.history.replaceState({}, document.title);
@@ -73,12 +79,12 @@ export const App: React.FC = () => {
 
   // Save display mode to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem('displayMode', displayMode);
+    localStorage.setItem("displayMode", displayMode);
   }, [displayMode]);
 
   // Save filters to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('currentFilters', JSON.stringify(currentFilters));
+    localStorage.setItem("currentFilters", JSON.stringify(currentFilters));
   }, [currentFilters]);
 
   const loadChoreographies = async (filters: SearchFilters = {}, isInitialLoad = false) => {
@@ -86,14 +92,19 @@ export const App: React.FC = () => {
     setError(null);
     try {
       const result = await searchChoreographies({ ...filters, page: 1, limit: 10000 });
-      
+
       setChoreographies(result.data);
-      setPagination({ page: 1, limit: result.data.length, total: result.data.length, totalPages: 1 });
+      setPagination({
+        page: 1,
+        limit: result.data.length,
+        total: result.data.length,
+        totalPages: 1,
+      });
       if (!isInitialLoad) {
         setCurrentFilters(filters);
       }
     } catch (err) {
-      setError('Failed to load choreographies');
+      setError("Failed to load choreographies");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -101,7 +112,7 @@ export const App: React.FC = () => {
   };
 
   const returnToList = async (filters = currentFilters) => {
-    setView('list');
+    setView("list");
     await loadChoreographies(filters);
   };
 
@@ -115,7 +126,7 @@ export const App: React.FC = () => {
       await createChoreography(formData);
       await returnToList();
     } catch (err) {
-      setError('Failed to create choreography');
+      setError("Failed to create choreography");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -133,7 +144,7 @@ export const App: React.FC = () => {
       await updateChoreography(selectedChoreography.id, formData);
       await returnToList();
     } catch (err) {
-      setError('Failed to update choreography');
+      setError("Failed to update choreography");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -141,13 +152,13 @@ export const App: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this choreography?')) return;
+    if (!confirm("Are you sure you want to delete this choreography?")) return;
     setIsLoading(true);
     try {
       await deleteChoreography(id);
       await returnToList();
     } catch (err) {
-      setError('Failed to delete choreography');
+      setError("Failed to delete choreography");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -155,10 +166,10 @@ export const App: React.FC = () => {
   };
 
   const handleSelectChoreography = (id: number) => {
-    const choreo = choreographies.find(c => c.id === id);
+    const choreo = choreographies.find((c) => c.id === id);
     if (choreo) {
       setSelectedChoreography(choreo);
-      setView('detail');
+      setView("detail");
     }
   };
 
@@ -166,7 +177,7 @@ export const App: React.FC = () => {
     if (isLoading) {
       return <div className="loading">Loading choreographies...</div>;
     }
-    
+
     if (choreographies.length === 0) {
       return (
         <div className="empty-state">
@@ -174,12 +185,12 @@ export const App: React.FC = () => {
         </div>
       );
     }
-    
-    if (displayMode === 'card') {
+
+    if (displayMode === "card") {
       return (
         <>
           <div className="choreographies-grid">
-            {choreographies.map(choreo => (
+            {choreographies.map((choreo) => (
               <ChoreographyCard
                 key={choreo.id}
                 choreography={choreo}
@@ -189,7 +200,7 @@ export const App: React.FC = () => {
               />
             ))}
           </div>
-          
+
           {pagination.totalPages > 1 && (
             <div className="pagination">
               <button
@@ -212,7 +223,7 @@ export const App: React.FC = () => {
         </>
       );
     }
-    
+
     return (
       <ChoreographyTable
         choreographies={choreographies}
@@ -228,53 +239,50 @@ export const App: React.FC = () => {
     <div className="app">
       <header className="app-header">
         <h2>Choreography Search</h2>
-        <button
-          onClick={() => setView('create')}
-          disabled={isLoading || view !== 'list'}
-        >
+        <button onClick={() => setView("create")} disabled={isLoading || view !== "list"}>
           + Add New Choreography
         </button>
       </header>
 
       {error && <div className="error-message">{error}</div>}
 
-      {view === 'list' && (
+      {view === "list" && (
         <div className="list-view">
           <SearchBar onSearch={handleSearch} filters={currentFilters} isLoading={isLoading} />
-          
+
           <div className="view-toggle">
             <button
-              className={`view-toggle-btn ${displayMode === 'card' ? 'active' : ''}`}
-              onClick={() => setDisplayMode('card')}
+              className={`view-toggle-btn ${displayMode === "card" ? "active" : ""}`}
+              onClick={() => setDisplayMode("card")}
               title="Card view"
             >
               📇 Cards
             </button>
             <button
-              className={`view-toggle-btn ${displayMode === 'table' ? 'active' : ''}`}
-              onClick={() => setDisplayMode('table')}
+              className={`view-toggle-btn ${displayMode === "table" ? "active" : ""}`}
+              onClick={() => setDisplayMode("table")}
               title="Table view"
             >
               📊 Table
             </button>
           </div>
-          
+
           {renderContent()}
         </div>
       )}
 
-      {view === 'create' && (
+      {view === "create" && (
         <div className="form-view">
           <h2>Add New Choreography</h2>
           <ChoreographyForm
             onSubmit={handleCreate}
             isLoading={isLoading}
-            onCancel={() => setView('list')}
+            onCancel={() => setView("list")}
           />
         </div>
       )}
 
-      {view === 'edit' && selectedChoreography && (
+      {view === "edit" && selectedChoreography && (
         <div className="form-view">
           <h2>Edit Choreography: {selectedChoreography.name}</h2>
           <ChoreographyForm
@@ -300,9 +308,9 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {view === 'detail' && selectedChoreography && (
+      {view === "detail" && selectedChoreography && (
         <div className="detail-view">
-          <button onClick={() => setView('list')} className="btn-back">
+          <button onClick={() => setView("list")} className="btn-back">
             ← Back to List
           </button>
           <ChoreographyCard

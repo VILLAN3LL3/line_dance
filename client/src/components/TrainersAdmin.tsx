@@ -95,7 +95,11 @@ const TrainersAdmin: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this trainer? Assigned courses will keep their data but no trainer assignment.")) {
+    if (
+      !confirm(
+        "Delete this trainer? Assigned courses will keep their data but no trainer assignment.",
+      )
+    ) {
       return;
     }
 
@@ -181,10 +185,20 @@ const TrainersAdmin: React.FC = () => {
                       disabled={isLoading}
                     />
                     <div className="trainer-actions">
-                      <button type="button" className="btn-primary" onClick={() => handleUpdate(trainer.id)} disabled={isLoading}>
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        onClick={() => handleUpdate(trainer.id)}
+                        disabled={isLoading}
+                      >
                         Save
                       </button>
-                      <button type="button" className="btn-secondary" onClick={cancelEdit} disabled={isLoading}>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={cancelEdit}
+                        disabled={isLoading}
+                      >
                         Cancel
                       </button>
                     </div>
@@ -197,10 +211,20 @@ const TrainersAdmin: React.FC = () => {
                       <p>{trainer.email}</p>
                     </div>
                     <div className="trainer-actions">
-                      <button type="button" className="btn-edit" onClick={() => startEdit(trainer)} disabled={isLoading}>
+                      <button
+                        type="button"
+                        className="btn-edit"
+                        onClick={() => startEdit(trainer)}
+                        disabled={isLoading}
+                      >
                         ✏️ Edit
                       </button>
-                      <button type="button" className="btn-delete" onClick={() => handleDelete(trainer.id)} disabled={isLoading}>
+                      <button
+                        type="button"
+                        className="btn-delete"
+                        onClick={() => handleDelete(trainer.id)}
+                        disabled={isLoading}
+                      >
                         Delete
                       </button>
                     </div>

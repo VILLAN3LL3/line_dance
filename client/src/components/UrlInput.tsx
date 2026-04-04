@@ -13,36 +13,43 @@ interface UrlInputProps {
   disabled?: boolean;
 }
 
-type UrlCheckStatus = 'idle' | 'checking' | 'ok' | 'error';
+type UrlCheckStatus = "idle" | "checking" | "ok" | "error";
 
-export const UrlInput: React.FC<UrlInputProps> = ({ id, name, value, onChange, placeholder, disabled }) => {
-  const [status, setStatus] = useState<UrlCheckStatus>('idle');
+export const UrlInput: React.FC<UrlInputProps> = ({
+  id,
+  name,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+}) => {
+  const [status, setStatus] = useState<UrlCheckStatus>("idle");
 
   const handleFocus = () => {
-    setStatus('idle');
+    setStatus("idle");
   };
 
   const handleBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const trimmed = e.target.value.trim();
 
     if (!trimmed) {
-      setStatus('idle');
+      setStatus("idle");
       return;
     }
 
     try {
       new URL(trimmed);
     } catch {
-      setStatus('error');
+      setStatus("error");
       return;
     }
 
-    setStatus('checking');
+    setStatus("checking");
     try {
       const result = await checkUrl(trimmed);
-      setStatus(result.ok ? 'ok' : 'error');
+      setStatus(result.ok ? "ok" : "error");
     } catch {
-      setStatus('error');
+      setStatus("error");
     }
   };
 
@@ -59,9 +66,19 @@ export const UrlInput: React.FC<UrlInputProps> = ({ id, name, value, onChange, p
         placeholder={placeholder}
         disabled={disabled}
       />
-      {status === 'checking' && <span className="url-status-indicator checking" aria-label="Checking URL" />}
-      {status === 'ok' && <span className="url-status-indicator ok" aria-label="URL reachable">✓</span>}
-      {status === 'error' && <span className="url-status-indicator error" aria-label="URL not reachable">✗</span>}
+      {status === "checking" && (
+        <span className="url-status-indicator checking" aria-label="Checking URL" />
+      )}
+      {status === "ok" && (
+        <span className="url-status-indicator ok" aria-label="URL reachable">
+          ✓
+        </span>
+      )}
+      {status === "error" && (
+        <span className="url-status-indicator error" aria-label="URL not reachable">
+          ✗
+        </span>
+      )}
     </div>
   );
 };

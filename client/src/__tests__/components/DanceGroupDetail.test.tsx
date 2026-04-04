@@ -4,22 +4,30 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import {
-  addGroupLevel, deleteDanceCourse, exportDanceCoursePdf, fetchChoreographies, getDanceCourses, getDanceGroup, getGroupLevels,
-  getLearnedChoreographies, getSessions, removeGroupLevel
+  addGroupLevel,
+  deleteDanceCourse,
+  exportDanceCoursePdf,
+  fetchChoreographies,
+  getDanceCourses,
+  getDanceGroup,
+  getGroupLevels,
+  getLearnedChoreographies,
+  getSessions,
+  removeGroupLevel,
 } from "../../api";
 import DanceGroupDetail from "../../components/DanceGroupDetail";
 
 const mockNavigate = vi.fn();
 
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
   return {
     ...actual,
     useNavigate: () => mockNavigate,
   };
 });
 
-vi.mock('../../api', () => ({
+vi.mock("../../api", () => ({
   addGroupLevel: vi.fn(),
   deleteDanceCourse: vi.fn(),
   exportDanceCoursePdf: vi.fn(),
@@ -32,28 +40,32 @@ vi.mock('../../api', () => ({
   removeGroupLevel: vi.fn(),
 }));
 
-describe('DanceGroupDetail', () => {
+describe("DanceGroupDetail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(getDanceGroup).mockResolvedValue({ id: 1, name: 'Group One', created_at: '2024-01-01' });
+    vi.mocked(getDanceGroup).mockResolvedValue({
+      id: 1,
+      name: "Group One",
+      created_at: "2024-01-01",
+    });
     vi.mocked(getDanceCourses).mockResolvedValue([
       {
         id: 1,
         dance_group_id: 1,
-        dance_group_name: 'Group One',
-        semester: 'WS 2024',
-        start_date: '2020-01-01',
-        youtube_playlist_url: 'https://www.youtube.com/playlist?list=PL1234567890',
-        created_at: '2024-01-01',
+        dance_group_name: "Group One",
+        semester: "WS 2024",
+        start_date: "2020-01-01",
+        youtube_playlist_url: "https://www.youtube.com/playlist?list=PL1234567890",
+        created_at: "2024-01-01",
       },
       {
         id: 2,
         dance_group_id: 1,
-        dance_group_name: 'Group One',
-        semester: 'WS 2099',
-        start_date: '2099-01-01',
-        created_at: '2024-01-01',
+        dance_group_name: "Group One",
+        semester: "WS 2099",
+        start_date: "2099-01-01",
+        created_at: "2024-01-01",
       },
     ]);
     vi.mocked(getSessions).mockResolvedValue([]);
@@ -62,27 +74,29 @@ describe('DanceGroupDetail', () => {
       data: [
         {
           id: 10,
-          name: 'Dance X',
-          level: 'Beginner',
+          name: "Dance X",
+          level: "Beginner",
           authors: [],
           tags: [],
-          step_figures: ['Mambo'],
-          created_at: '2024-01-01',
-          updated_at: '2024-01-01',
+          step_figures: ["Mambo"],
+          created_at: "2024-01-01",
+          updated_at: "2024-01-01",
         },
       ],
       pagination: { page: 1, limit: 10000, total: 1, totalPages: 1 },
     });
-    vi.mocked(getGroupLevels).mockResolvedValue(['Beginner']);
-    vi.mocked(addGroupLevel).mockResolvedValue({ level: 'Beginner' });
-    vi.mocked(removeGroupLevel).mockResolvedValue({ message: 'ok' });
-    vi.mocked(deleteDanceCourse).mockResolvedValue({ message: 'ok' });
-    vi.mocked(exportDanceCoursePdf).mockResolvedValue(new Blob(['pdf'], { type: 'application/pdf' }));
+    vi.mocked(getGroupLevels).mockResolvedValue(["Beginner"]);
+    vi.mocked(addGroupLevel).mockResolvedValue({ level: "Beginner" });
+    vi.mocked(removeGroupLevel).mockResolvedValue({ message: "ok" });
+    vi.mocked(deleteDanceCourse).mockResolvedValue({ message: "ok" });
+    vi.mocked(exportDanceCoursePdf).mockResolvedValue(
+      new Blob(["pdf"], { type: "application/pdf" }),
+    );
   });
 
   function renderWithRoute() {
     return render(
-      <MemoryRouter initialEntries={['/admin/groups/1']}>
+      <MemoryRouter initialEntries={["/admin/groups/1"]}>
         <Routes>
           <Route path="/admin/groups/:groupId" element={<DanceGroupDetail />} />
         </Routes>
@@ -90,41 +104,41 @@ describe('DanceGroupDetail', () => {
     );
   }
 
-  it('shows running courses by default and can include planned courses', async () => {
+  it("shows running courses by default and can include planned courses", async () => {
     renderWithRoute();
 
-    await screen.findByText('Group One');
+    await screen.findByText("Group One");
 
-    expect(screen.getByText('(WS 2024)')).toBeInTheDocument();
-    expect(screen.queryByText('(WS 2099)')).not.toBeInTheDocument();
+    expect(screen.getByText("(WS 2024)")).toBeInTheDocument();
+    expect(screen.queryByText("(WS 2099)")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Planned' }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Planned" }));
 
-    expect(await screen.findByText('(WS 2099)')).toBeInTheDocument();
+    expect(await screen.findByText("(WS 2099)")).toBeInTheDocument();
   });
 
-  it('adds a group level from the level form', async () => {
+  it("adds a group level from the level form", async () => {
     renderWithRoute();
-    await screen.findByText('Group One');
+    await screen.findByText("Group One");
 
     fireEvent.change(
-      screen.getByPlaceholderText('Add a new level (e.g., Beginner, Intermediate)'),
-      { target: { value: 'Advanced' } },
+      screen.getByPlaceholderText("Add a new level (e.g., Beginner, Intermediate)"),
+      { target: { value: "Advanced" } },
     );
-    fireEvent.click(screen.getByRole('button', { name: '+ Add Level' }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Level" }));
 
     await waitFor(() => {
-      expect(addGroupLevel).toHaveBeenCalledWith(1, 'Advanced');
+      expect(addGroupLevel).toHaveBeenCalledWith(1, "Advanced");
     });
   });
 
-  it('shows a YouTube playlist link when present on a course', async () => {
+  it("shows a YouTube playlist link when present on a course", async () => {
     renderWithRoute();
 
-    const youtubeLink = await screen.findByRole('link', { name: '🔗 YouTube' });
+    const youtubeLink = await screen.findByRole("link", { name: "🔗 YouTube" });
     expect(youtubeLink).toHaveAttribute(
-      'href',
-      'https://www.youtube.com/playlist?list=PL1234567890',
+      "href",
+      "https://www.youtube.com/playlist?list=PL1234567890",
     );
   });
 });

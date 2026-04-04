@@ -3,7 +3,13 @@ import "../styles/CourseFormPage.css";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { createDanceCourse, getDanceCourses, getDanceGroup, getTrainers, updateDanceCourse } from "../api";
+import {
+  createDanceCourse,
+  getDanceCourses,
+  getDanceGroup,
+  getTrainers,
+  updateDanceCourse,
+} from "../api";
 import { DanceCourse, DanceGroup, Trainer } from "../types";
 import { UrlInput } from "./UrlInput";
 
@@ -100,7 +106,7 @@ const CourseFormPage: React.FC = () => {
           youtubePlaylistUrl || undefined,
           copperknobListUrl || undefined,
           spotifyPlaylistUrl || undefined,
-          trainerId ? Number.parseInt(trainerId, 10) : undefined
+          trainerId ? Number.parseInt(trainerId, 10) : undefined,
         );
       } else {
         const numericCourseId = courseIdInput ? Number.parseInt(courseIdInput, 10) : undefined;
@@ -128,14 +134,20 @@ const CourseFormPage: React.FC = () => {
   return (
     <div className="course-form-page">
       <div className="course-form-header">
-        <button onClick={() => navigate(`/admin/groups/${parsedGroupId}`)} className="btn-back" disabled={isLoading}>
+        <button
+          onClick={() => navigate(`/admin/groups/${parsedGroupId}`)}
+          className="btn-back"
+          disabled={isLoading}
+        >
           ← Back to Group
         </button>
         <h2>{title}</h2>
       </div>
 
       {group && <p className="course-form-subtitle">Group: {group.name}</p>}
-      {isEditMode && existingCourse && <p className="course-form-subtitle">Editing course #{existingCourse.id}</p>}
+      {isEditMode && existingCourse && (
+        <p className="course-form-subtitle">Editing course #{existingCourse.id}</p>
+      )}
 
       {error && <div className="error-message">{error}</div>}
 

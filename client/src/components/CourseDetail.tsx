@@ -4,8 +4,14 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  addChoreographyToSession, createSession, deleteSession, fetchChoreographies, getDanceCourses, getSessionChoreographies, getSessions,
-  removeChoreographyFromSession
+  addChoreographyToSession,
+  createSession,
+  deleteSession,
+  fetchChoreographies,
+  getDanceCourses,
+  getSessionChoreographies,
+  getSessions,
+  removeChoreographyFromSession,
 } from "../api";
 import { Choreography, DanceCourse, Session, SessionChoreography } from "../types";
 
@@ -26,14 +32,14 @@ const CourseDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const selectedSessionId = selectedSession?.id ?? null;
 
-  const getChoreographyOptionLabel = (choreography: Choreography) => (
-    `${choreography.name} (${choreography.level})`
-  );
+  const getChoreographyOptionLabel = (choreography: Choreography) =>
+    `${choreography.name} (${choreography.level})`;
 
   const selectableChoreographies = availableChoreographies.filter(
-    (choreography) => !sessionChoreographies.some(
-      (sessionChoreography) => sessionChoreography.choreography_id === choreography.id
-    )
+    (choreography) =>
+      !sessionChoreographies.some(
+        (sessionChoreography) => sessionChoreography.choreography_id === choreography.id,
+      ),
   );
 
   const loadData = useCallback(async () => {
@@ -62,7 +68,8 @@ const CourseDetail: React.FC = () => {
       setAvailableChoreographies(choreosData.data);
 
       if (selectedSessionId !== null) {
-        const refreshedSelectedSession = sessionsData.find((item) => item.id === selectedSessionId) ?? null;
+        const refreshedSelectedSession =
+          sessionsData.find((item) => item.id === selectedSessionId) ?? null;
         if (refreshedSelectedSession) {
           const choreosInSession = await getSessionChoreographies(refreshedSelectedSession.id);
           setSessionChoreographies(choreosInSession);
@@ -155,7 +162,8 @@ const CourseDetail: React.FC = () => {
     setSelectedChoreographyQuery(value);
 
     const matchedChoreography = selectableChoreographies.find(
-      (choreography) => getChoreographyOptionLabel(choreography) === value || choreography.name === value
+      (choreography) =>
+        getChoreographyOptionLabel(choreography) === value || choreography.name === value,
     );
 
     setSelectedChoreographyId(matchedChoreography ? String(matchedChoreography.id) : "");
@@ -171,7 +179,10 @@ const CourseDetail: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await addChoreographyToSession(selectedSession.id, Number.parseInt(selectedChoreographyId, 10));
+      await addChoreographyToSession(
+        selectedSession.id,
+        Number.parseInt(selectedChoreographyId, 10),
+      );
       setSelectedChoreographyId("");
       setSelectedChoreographyQuery("");
       const choreosInSession = await getSessionChoreographies(selectedSession.id);
@@ -214,7 +225,9 @@ const CourseDetail: React.FC = () => {
         <button onClick={() => navigate(`/admin/groups/${parsedGroupId}`)} className="btn-back">
           ← Back
         </button>
-        <h2>Course: {course?.id} ({course?.semester ?? "Unknown Semester"})</h2>
+        <h2>
+          Course: {course?.id} ({course?.semester ?? "Unknown Semester"})
+        </h2>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -249,7 +262,11 @@ const CourseDetail: React.FC = () => {
                 >
                   <div className="session-info">
                     <h4>{new Date(session.session_date).toLocaleDateString()}</h4>
-                    <p>{new Date(session.session_date).toLocaleDateString("de-DE", { weekday: "long" })}</p>
+                    <p>
+                      {new Date(session.session_date).toLocaleDateString("de-DE", {
+                        weekday: "long",
+                      })}
+                    </p>
                   </div>
                   <div className="session-actions">
                     <button
@@ -275,7 +292,9 @@ const CourseDetail: React.FC = () => {
 
         {selectedSession && (
           <section className="section">
-            <h3>Choreographies for {new Date(selectedSession.session_date).toLocaleDateString()}</h3>
+            <h3>
+              Choreographies for {new Date(selectedSession.session_date).toLocaleDateString()}
+            </h3>
 
             <form onSubmit={handleAddChoreography} className="choreo-form">
               <div className="choreo-autocomplete">
@@ -290,21 +309,32 @@ const CourseDetail: React.FC = () => {
                 />
                 <datalist id="session-choreography-options">
                   {selectableChoreographies.map((choreography) => (
-                    <option key={choreography.id} value={getChoreographyOptionLabel(choreography)} />
+                    <option
+                      key={choreography.id}
+                      value={getChoreographyOptionLabel(choreography)}
+                    />
                   ))}
                 </datalist>
               </div>
-              <button type="submit" className="btn-primary" disabled={isLoading || !selectedChoreographyId}>
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={isLoading || !selectedChoreographyId}
+              >
                 + Add to Session
               </button>
             </form>
 
             {!isLoading && selectableChoreographies.length === 0 && (
-              <p className="choreo-autocomplete-hint">All choreographies are already in this session.</p>
+              <p className="choreo-autocomplete-hint">
+                All choreographies are already in this session.
+              </p>
             )}
 
             {!isLoading && selectableChoreographies.length > 0 && (
-              <p className="choreo-autocomplete-hint">Start typing to autocomplete a choreography name.</p>
+              <p className="choreo-autocomplete-hint">
+                Start typing to autocomplete a choreography name.
+              </p>
             )}
 
             {sessionChoreographies.length === 0 ? (
@@ -313,7 +343,7 @@ const CourseDetail: React.FC = () => {
               <div className="choreographies-list">
                 {sessionChoreographies.map((sessionChoreography) => {
                   const choreography = availableChoreographies.find(
-                    (item) => item.id === sessionChoreography.choreography_id
+                    (item) => item.id === sessionChoreography.choreography_id,
                   );
 
                   return (
@@ -323,7 +353,9 @@ const CourseDetail: React.FC = () => {
                         <p>{choreography?.level}</p>
                       </div>
                       <button
-                        onClick={() => handleRemoveChoreography(sessionChoreography.choreography_id)}
+                        onClick={() =>
+                          handleRemoveChoreography(sessionChoreography.choreography_id)
+                        }
                         className="btn-delete"
                         disabled={isLoading}
                       >

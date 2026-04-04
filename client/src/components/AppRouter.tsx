@@ -22,17 +22,14 @@ export const AppRouter: React.FC = () => {
           <h1 className="nav-title">Line Dance</h1>
           <ul className="nav-links">
             <li>
-              <Link
-                to="/"
-                className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
-              >
+              <Link to="/" className={`nav-link ${location.pathname === "/" ? "active" : ""}`}>
                 🎵 Choreographies
               </Link>
             </li>
             <li>
               <Link
                 to="/admin"
-                className={`nav-link ${location.pathname.startsWith('/admin') ? 'active' : ''}`}
+                className={`nav-link ${location.pathname.startsWith("/admin") ? "active" : ""}`}
               >
                 👥 Dance Groups
               </Link>
@@ -40,7 +37,7 @@ export const AppRouter: React.FC = () => {
             <li>
               <Link
                 to="/trainers"
-                className={`nav-link ${location.pathname.startsWith('/trainers') ? 'active' : ''}`}
+                className={`nav-link ${location.pathname.startsWith("/trainers") ? "active" : ""}`}
               >
                 🧑‍🏫 Trainers
               </Link>
@@ -69,7 +66,10 @@ export const AppRouter: React.FC = () => {
           <Route path="/admin/groups/new" element={<DanceGroupsAdmin mode="create" />} />
           <Route path="/admin/groups/:groupId" element={<DanceGroupDetail />} />
           <Route path="/admin/groups/:groupId/courses/new" element={<CourseFormPage />} />
-          <Route path="/admin/groups/:groupId/courses/:courseId/edit" element={<CourseFormPage />} />
+          <Route
+            path="/admin/groups/:groupId/courses/:courseId/edit"
+            element={<CourseFormPage />}
+          />
           <Route path="/admin/groups/:groupId/courses/:courseId" element={<CourseDetail />} />
           <Route path="/trainers" element={<TrainersAdmin />} />
         </Routes>

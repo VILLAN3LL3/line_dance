@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { createChoreographyViaApi, createDanceCourseViaApi, createDanceGroupViaApi, createTrainerViaApi } from "../helpers/api";
+import {
+  createChoreographyViaApi,
+  createDanceCourseViaApi,
+  createDanceGroupViaApi,
+  createTrainerViaApi,
+} from "../helpers/api";
 
 test.describe("Course Management", () => {
   test("course detail supports session and choreography lifecycle", async ({ page, request }) => {
@@ -8,10 +13,17 @@ test.describe("Course Management", () => {
     const groupName = `E2E Session Group ${Date.now()}`;
     const choreographyId = await createChoreographyViaApi(request, choreoName);
     const groupId = await createDanceGroupViaApi(request, groupName);
-    const courseId = await createDanceCourseViaApi(request, groupId, `WS${new Date().getFullYear() - 1}`, "2025-01-10");
+    const courseId = await createDanceCourseViaApi(
+      request,
+      groupId,
+      `WS${new Date().getFullYear() - 1}`,
+      "2025-01-10",
+    );
 
     await page.goto(`/admin/groups/${groupId}/courses/${courseId}`);
-    await expect(page.getByRole("heading", { name: new RegExp(`Course: ${courseId}`) })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: new RegExp(`Course: ${courseId}`) }),
+    ).toBeVisible();
 
     await page.locator(".session-form input[type='date']").fill("2025-03-10");
     await page.getByRole("button", { name: /Add Session/i }).click();
@@ -54,7 +66,11 @@ test.describe("Course Management", () => {
   test("course edit updates semester, links, and trainer", async ({ page, request }) => {
     const groupName = `E2E Course Edit Group ${Date.now()}`;
     const trainerName = `E2E Trainer ${Date.now()}`;
-    const trainerId = await createTrainerViaApi(request, trainerName, `trainer.${Date.now()}@example.com`);
+    const trainerId = await createTrainerViaApi(
+      request,
+      trainerName,
+      `trainer.${Date.now()}@example.com`,
+    );
     const groupId = await createDanceGroupViaApi(request, groupName);
     const courseId = await createDanceCourseViaApi(request, groupId, "WS2024", "2024-01-20");
     const newSemester = "SS2026";
