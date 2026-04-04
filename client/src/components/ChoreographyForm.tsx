@@ -4,7 +4,9 @@ import React, { useEffect, useState } from "react";
 
 import { getAuthors, getLevels, getStepFigures, getTags } from "../api";
 import { ChoreographyFormData } from "../types";
-import { UrlInput } from "./UrlInput";
+import { ChoreographyFormBasicSection } from "./ChoreographyFormBasicSection";
+import { ChoreographyFormLinksSection } from "./ChoreographyFormLinksSection";
+import { ChoreographyFormListSection } from "./ChoreographyFormListSection";
 
 interface ChoreographyFormProps {
   initialData?: ChoreographyFormData;
@@ -234,177 +236,50 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
       <div className="form-section">
         <h3>Basic Information</h3>
 
-        <div className="form-group">
-          <label htmlFor="name">Choreography Name *</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            placeholder="Enter choreography name"
-          />
-        </div>
+        <ChoreographyFormBasicSection
+          name={formData.name}
+          level={formData.level}
+          count={formData.count}
+          wall_count={formData.wall_count}
+          creation_year={formData.creation_year}
+          levels={levels}
+          onChange={handleChange}
+        />
 
-        <div className="form-group">
-          <label htmlFor="level">Level *</label>
-          <select id="level" name="level" value={formData.level} onChange={handleChange} required>
-            <option value="">Select a level</option>
-            {levels.map((level) => (
-              <option key={level.id} value={level.name}>
-                {level.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <ChoreographyFormListSection
+          title="Authors"
+          listId="authors-list"
+          inputValue={currentAuthor}
+          options={authorsFromDb}
+          selectedValues={formData.authors}
+          placeholder="Author name"
+          addButtonLabel="Add Author"
+          onInputChange={handleAuthorChange}
+          onInputBlur={handleAuthorBlur}
+          onAdd={() => addAuthor()}
+          onRemove={removeAuthor}
+        />
 
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="count">Count</label>
-            <input
-              type="number"
-              id="count"
-              name="count"
-              value={formData.count || ""}
-              onChange={handleChange}
-              placeholder="e.g., 64"
-            />
-          </div>
+        <ChoreographyFormLinksSection
+          step_sheet_link={formData.step_sheet_link}
+          demo_video_url={formData.demo_video_url}
+          tutorial_video_url={formData.tutorial_video_url}
+          onChange={handleChange}
+        />
 
-          <div className="form-group">
-            <label htmlFor="wall_count">Wall Count</label>
-            <input
-              type="number"
-              id="wall_count"
-              name="wall_count"
-              value={formData.wall_count || ""}
-              onChange={handleChange}
-              placeholder="e.g., 4"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="creation_year">Year Created</label>
-            <input
-              type="number"
-              id="creation_year"
-              name="creation_year"
-              value={formData.creation_year || ""}
-              onChange={handleChange}
-              placeholder="e.g., 2023"
-            />
-          </div>
-        </div>
-
-        <div className="form-section">
-          <h3>Authors</h3>
-          <div className="form-group form-input-row">
-            <input
-              type="text"
-              value={currentAuthor}
-              onChange={handleAuthorChange}
-              onBlur={handleAuthorBlur}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addAuthor();
-                }
-              }}
-              placeholder={currentAuthor ? "" : "Author name"}
-              list="authors-list"
-            />
-            <datalist id="authors-list">
-              {authorsFromDb.map((author) => (
-                <option key={author} value={author} />
-              ))}
-            </datalist>
-            <button type="button" onClick={() => addAuthor()} className="btn-add">
-              Add Author
-            </button>
-          </div>
-          <div className="tags-container">
-            {formData.authors.map((author) => (
-              <span key={author} className="tag">
-                {author}
-                <button type="button" onClick={() => removeAuthor(author)} className="btn-remove">
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="step_sheet_link">Step Sheet Link</label>
-          <UrlInput
-            id="step_sheet_link"
-            name="step_sheet_link"
-            value={formData.step_sheet_link || ""}
-            onChange={handleChange}
-            placeholder="https://example.com/stepsheet"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="demo_video_url">Demo Video URL</label>
-          <UrlInput
-            id="demo_video_url"
-            name="demo_video_url"
-            value={formData.demo_video_url || ""}
-            onChange={handleChange}
-            placeholder="https://youtube.com/..."
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="tutorial_video_url">Tutorial Video URL</label>
-          <UrlInput
-            id="tutorial_video_url"
-            name="tutorial_video_url"
-            value={formData.tutorial_video_url || ""}
-            onChange={handleChange}
-            placeholder="https://youtube.com/..."
-          />
-        </div>
-
-        <div className="form-section">
-          <h3>Step Figures</h3>
-          <div className="form-group form-input-row">
-            <input
-              type="text"
-              value={currentFigure}
-              onChange={handleFigureChange}
-              onBlur={handleFigureBlur}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addFigure();
-                }
-              }}
-              placeholder={currentFigure ? "" : "Step figure name (e.g., Vine, Shuffle, Grapevine)"}
-              list="figures-list"
-            />
-            <datalist id="figures-list">
-              {figuresFromDb.map((figure) => (
-                <option key={figure} value={figure} />
-              ))}
-            </datalist>
-            <button type="button" onClick={() => addFigure()} className="btn-add">
-              Add Figure
-            </button>
-          </div>
-          <div className="tags-container">
-            {formData.step_figures.map((figure) => (
-              <span key={figure} className="tag">
-                {figure}
-                <button type="button" onClick={() => removeFigure(figure)} className="btn-remove">
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
+        <ChoreographyFormListSection
+          title="Step Figures"
+          listId="figures-list"
+          inputValue={currentFigure}
+          options={figuresFromDb}
+          selectedValues={formData.step_figures}
+          placeholder="Step figure name (e.g., Vine, Shuffle, Grapevine)"
+          addButtonLabel="Add Figure"
+          onInputChange={handleFigureChange}
+          onInputBlur={handleFigureBlur}
+          onAdd={() => addFigure()}
+          onRemove={removeFigure}
+        />
 
         <div className="form-group">
           <label htmlFor="tag_information">Tag Information</label>
@@ -430,41 +305,19 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
       </div>
 
       <div className="form-section">
-        <h3>Tags</h3>
-        <div className="form-group form-input-row">
-          <input
-            type="text"
-            value={currentTag}
-            onChange={handleTagChange}
-            onBlur={handleTagBlur}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addTag();
-              }
-            }}
-            placeholder={currentTag ? "" : "Tag (e.g., Country, Western, Urban)"}
-            list="tags-list"
-          />
-          <datalist id="tags-list">
-            {tagsFromDb.map((tag) => (
-              <option key={tag} value={tag} />
-            ))}
-          </datalist>
-          <button type="button" onClick={() => addTag()} className="btn-add">
-            Add Tag
-          </button>
-        </div>
-        <div className="tags-container">
-          {formData.tags.map((tag) => (
-            <span key={tag} className="tag">
-              {tag}
-              <button type="button" onClick={() => removeTag(tag)} className="btn-remove">
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
+        <ChoreographyFormListSection
+          title="Tags"
+          listId="tags-list"
+          inputValue={currentTag}
+          options={tagsFromDb}
+          selectedValues={formData.tags}
+          placeholder="Tag (e.g., Country, Western, Urban)"
+          addButtonLabel="Add Tag"
+          onInputChange={handleTagChange}
+          onInputBlur={handleTagBlur}
+          onAdd={() => addTag()}
+          onRemove={removeTag}
+        />
       </div>
 
       <div className="form-actions">
