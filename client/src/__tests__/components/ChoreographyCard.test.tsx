@@ -106,11 +106,7 @@ describe("ChoreographyCard", () => {
     const onDelete = vi.fn();
 
     render(
-      <ChoreographyCard
-        choreography={makeChoreography()}
-        onEdit={onEdit}
-        onDelete={onDelete}
-      />,
+      <ChoreographyCard choreography={makeChoreography()} onEdit={onEdit} onDelete={onDelete} />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
