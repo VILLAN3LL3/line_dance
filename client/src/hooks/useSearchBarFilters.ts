@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { getAuthors, getLevels, getMaxChoreographyCount, getStepFigures, getTags } from "../api";
 import { SearchFilters } from "../types";
@@ -60,16 +60,12 @@ export const useSearchBarFilters = (filters: SearchFilters = {}) => {
   const [figureOptions, setFigureOptions] = useState<string[]>([]);
   const [tagOptions, setTagOptions] = useState<string[]>([]);
   const [authorOptions, setAuthorOptions] = useState<string[]>([]);
-  const previousFiltersRef = useRef<SearchFilters>(filters);
+  const [previousFilters, setPreviousFilters] = useState<SearchFilters>(filters);
 
-  useEffect(() => {
-    if (previousFiltersRef.current === filters) {
-      return;
-    }
-
-    previousFiltersRef.current = filters;
+  if (previousFilters !== filters) {
+    setPreviousFilters(filters);
     setValues(searchBarValuesFromFilters(filters, maxCountLimit));
-  }, [filters, maxCountLimit]);
+  }
 
   useEffect(() => {
     const loadFilters = async () => {
