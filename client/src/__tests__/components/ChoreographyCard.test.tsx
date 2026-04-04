@@ -101,25 +101,13 @@ describe("ChoreographyCard", () => {
     expect(screen.getByTitle("Tutorial video for Neon Waltz")).toBeInTheDocument();
   });
 
-  it("does not call onSelect when clicking links inside the card", () => {
-    const onSelect = vi.fn();
-
-    render(<ChoreographyCard choreography={makeChoreography()} onSelect={onSelect} />);
-
-    fireEvent.click(screen.getByRole("link", { name: /view step sheet/i }));
-
-    expect(onSelect).not.toHaveBeenCalled();
-  });
-
-  it("calls onEdit and onDelete without triggering onSelect", () => {
-    const onSelect = vi.fn();
+  it("calls onEdit and onDelete", () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
 
     render(
       <ChoreographyCard
         choreography={makeChoreography()}
-        onSelect={onSelect}
         onEdit={onEdit}
         onDelete={onDelete}
       />,
@@ -130,6 +118,5 @@ describe("ChoreographyCard", () => {
 
     expect(onEdit).toHaveBeenCalledWith(42);
     expect(onDelete).toHaveBeenCalledWith(42);
-    expect(onSelect).not.toHaveBeenCalled();
   });
 });

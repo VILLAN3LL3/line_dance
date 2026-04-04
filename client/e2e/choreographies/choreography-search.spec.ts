@@ -3,7 +3,7 @@ import { APIRequestContext, expect, test } from "@playwright/test";
 import { API_BASE, createChoreographyViaApi } from "../helpers/api";
 
 test.describe("Choreography Search", () => {
-  test("create, filter, and open a choreography", async ({ page }) => {
+  test("create, filter, and edit a choreography", async ({ page }) => {
     const name = `E2E Choreo ${Date.now()}`;
 
     await page.goto("/");
@@ -35,8 +35,9 @@ test.describe("Choreography Search", () => {
     const resultCard = page.locator(".choreography-card", { hasText: name }).first();
     await expect(resultCard).toBeVisible({ timeout: 30_000 });
 
-    await resultCard.getByRole("button", { name: /^Open$/i }).click();
-    await expect(page.getByRole("button", { name: /Back to List/i })).toBeVisible();
+    await resultCard.getByRole("button", { name: /^Edit$/i }).click();
+    await expect(page.getByRole("button", { name: /Save Choreography/i })).toBeVisible();
+    await expect(page.getByLabel(/Choreography Name/i)).toHaveValue(name);
   });
 });
 
