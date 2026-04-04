@@ -1,6 +1,6 @@
 import React from "react";
 
-import { UrlInput } from "./UrlInput";
+import { UrlInput } from "../shared/UrlInput";
 
 interface ChoreographyFormLinksSectionProps {
   step_sheet_link?: string;

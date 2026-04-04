@@ -1,9 +1,9 @@
-import "../styles/TrainersAdmin.css";
+import "../../styles/TrainersAdmin.css";
 
 import React, { useEffect, useState } from "react";
 
-import { createTrainer, deleteTrainer, getTrainers, updateTrainer } from "../api";
-import { Trainer } from "../types";
+import { createTrainer, deleteTrainer, getTrainers, updateTrainer } from "../../api";
+import { Trainer } from "../../types";
 
 const TrainersAdmin: React.FC = () => {
   const [trainers, setTrainers] = useState<Trainer[]>([]);

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { getStepFigures } from "../../api";
-import { ChoreographyTable } from "../../components/ChoreographyTable";
+import { ChoreographyTable } from "../../components/choreographies/ChoreographyTable";
 
 import type { Choreography } from "../../types";
 vi.mock("../../api", () => ({

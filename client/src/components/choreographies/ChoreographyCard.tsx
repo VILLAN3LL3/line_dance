@@ -1,9 +1,9 @@
-import "../styles/ChoreographyCard.css";
+import "../../styles/ChoreographyCard.css";
 
 import React from "react";
 
-import { Choreography } from "../types";
-import { getYouTubeVideoEmbedUrl } from "../utils/youtube";
+import { Choreography } from "../../types";
+import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
 
 interface ChoreographyCardProps {
   choreography: Choreography;

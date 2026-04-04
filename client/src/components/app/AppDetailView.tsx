@@ -1,7 +1,7 @@
 import React from "react";
 
-import { Choreography } from "../types";
-import { ChoreographyCard } from "./ChoreographyCard";
+import { Choreography } from "../../types";
+import { ChoreographyCard } from "../choreographies/ChoreographyCard";
 
 interface AppDetailViewProps {
   choreography: Choreography;

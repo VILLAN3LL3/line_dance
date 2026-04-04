@@ -3,13 +3,13 @@ import "../styles/AppRouter.css";
 import React from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 
-import { App as ChoreographySearch } from "./App";
-import ChoreographyDetail from "./ChoreographyDetail";
-import CourseDetail from "./CourseDetail";
-import CourseFormPage from "./CourseFormPage";
-import DanceGroupDetail from "./DanceGroupDetail";
-import { DanceGroupsAdmin } from "./DanceGroupsAdmin";
-import TrainersAdmin from "./TrainersAdmin";
+import { App as ChoreographySearch } from "./app/App";
+import ChoreographyDetail from "./choreographies/ChoreographyDetail";
+import CourseDetail from "./courses/CourseDetail";
+import CourseFormPage from "./courses/CourseFormPage";
+import DanceGroupDetail from "./dance-groups/DanceGroupDetail";
+import { DanceGroupsAdmin } from "./dance-groups/DanceGroupsAdmin";
+import TrainersAdmin from "./trainers/TrainersAdmin";
 
 export const AppRouter: React.FC = () => {
   const location = useLocation();

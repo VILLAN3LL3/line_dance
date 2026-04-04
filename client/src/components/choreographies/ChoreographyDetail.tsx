@@ -1,10 +1,10 @@
-import "../styles/ChoreographyDetail.css";
+import "../../styles/ChoreographyDetail.css";
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { deleteChoreography, fetchChoreography, updateChoreography } from "../api";
-import { Choreography, ChoreographyFormData } from "../types";
+import { deleteChoreography, fetchChoreography, updateChoreography } from "../../api";
+import { Choreography, ChoreographyFormData } from "../../types";
 import { ChoreographyCard } from "./ChoreographyCard";
 import { ChoreographyForm } from "./ChoreographyForm";
 

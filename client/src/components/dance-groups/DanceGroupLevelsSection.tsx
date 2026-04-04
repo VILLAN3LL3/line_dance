@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { Choreography } from "../types";
+import { Choreography } from "../../types";
 
 interface DanceGroupLevelsSectionProps {
   groupLevels: string[];

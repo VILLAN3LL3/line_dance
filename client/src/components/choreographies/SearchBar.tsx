@@ -1,4 +1,4 @@
-import "../styles/SearchBar.css";
+import "../../styles/SearchBar.css";
 
 import React, { useState } from "react";
 
@@ -6,8 +6,8 @@ import {
   defaultSearchBarFilterValues,
   searchBarValuesFromFilters,
   useSearchBarFilters,
-} from "../hooks/useSearchBarFilters";
-import { SearchFilters } from "../types";
+} from "../../hooks/useSearchBarFilters";
+import { SearchFilters } from "../../types";
 import { SearchBarAdvancedFilters } from "./SearchBarAdvancedFilters";
 
 interface SearchBarProps {

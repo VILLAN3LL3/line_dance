@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { checkUrl } from "../../api";
-import { UrlInput } from "../../components/UrlInput";
+import { UrlInput } from "../../components/shared/UrlInput";
 
 vi.mock("../../api", () => ({
   checkUrl: vi.fn(),

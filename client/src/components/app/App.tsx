@@ -1,4 +1,4 @@
-import "../styles/App.css";
+import "../../styles/App.css";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -8,8 +8,8 @@ import {
   deleteChoreography,
   searchChoreographies,
   updateChoreography,
-} from "../api";
-import { Choreography, ChoreographyFormData, SearchFilters } from "../types";
+} from "../../api";
+import { Choreography, ChoreographyFormData, SearchFilters } from "../../types";
 import { AppDetailView } from "./AppDetailView";
 import { AppFormView } from "./AppFormView";
 import { AppListView } from "./AppListView";

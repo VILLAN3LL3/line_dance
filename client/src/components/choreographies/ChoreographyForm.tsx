@@ -1,9 +1,9 @@
-import "../styles/ChoreographyForm.css";
+import "../../styles/ChoreographyForm.css";
 
 import React, { useEffect, useState } from "react";
 
-import { getAuthors, getLevels, getStepFigures, getTags } from "../api";
-import { ChoreographyFormData } from "../types";
+import { getAuthors, getLevels, getStepFigures, getTags } from "../../api";
+import { ChoreographyFormData } from "../../types";
 import { ChoreographyFormBasicSection } from "./ChoreographyFormBasicSection";
 import { ChoreographyFormLinksSection } from "./ChoreographyFormLinksSection";
 import { ChoreographyFormListSection } from "./ChoreographyFormListSection";

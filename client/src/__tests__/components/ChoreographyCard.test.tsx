@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { fireEvent, render, screen } from "@testing-library/react";
 
-import { ChoreographyCard } from "../../components/ChoreographyCard";
+import { ChoreographyCard } from "../../components/choreographies/ChoreographyCard";
 
 import type { Choreography } from "../../types";
 

@@ -1,8 +1,8 @@
 import React from "react";
 
-import { getSessionBadgeLabel, getSessionBadgeStatus } from "../utils/courseStatus";
+import { getSessionBadgeLabel, getSessionBadgeStatus } from "../../utils/courseStatus";
 
-import type { Session } from "../types";
+import type { Session } from "../../types";
 type CourseDetailSessionsSectionProps = {
   sessions: Session[];
   visibleSessions: Session[];

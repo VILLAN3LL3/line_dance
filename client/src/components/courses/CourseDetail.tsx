@@ -1,4 +1,4 @@
-import "../styles/CourseDetail.css";
+import "../../styles/CourseDetail.css";
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -12,9 +12,9 @@ import {
   getSessionChoreographies,
   getSessions,
   removeChoreographyFromSession,
-} from "../api";
-import { Choreography, DanceCourse, Session, SessionChoreography } from "../types";
-import { getBerlinTodayIso } from "../utils/courseStatus";
+} from "../../api";
+import { Choreography, DanceCourse, Session, SessionChoreography } from "../../types";
+import { getBerlinTodayIso } from "../../utils/courseStatus";
 import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
 import CourseDetailSessionsSection from "./CourseDetailSessionsSection";
 

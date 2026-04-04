@@ -1,8 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Choreography, LearnedChoreography } from "../types";
-import { getBerlinTodayIso } from "../utils/courseStatus";
+import { Choreography, LearnedChoreography } from "../../types";
+import { getBerlinTodayIso } from "../../utils/courseStatus";
 
 interface DanceGroupLearnedSectionProps {
   learnedChoreographies: LearnedChoreography[];

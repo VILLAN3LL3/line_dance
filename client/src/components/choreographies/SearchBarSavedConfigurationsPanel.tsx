@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
-import { useSavedFilterConfigurations } from "../hooks/useSavedFilterConfigurations";
-import { SearchFilters } from "../types";
+import { useSavedFilterConfigurations } from "../../hooks/useSavedFilterConfigurations";
+import { SearchFilters } from "../../types";
 
 interface SearchBarSavedConfigurationsPanelProps {
   buildFilters: () => SearchFilters;

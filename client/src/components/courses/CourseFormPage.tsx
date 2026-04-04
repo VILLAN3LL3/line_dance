@@ -1,4 +1,4 @@
-import "../styles/CourseFormPage.css";
+import "../../styles/CourseFormPage.css";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -9,9 +9,9 @@ import {
   getDanceGroup,
   getTrainers,
   updateDanceCourse,
-} from "../api";
-import { DanceCourse, DanceGroup, Trainer } from "../types";
-import { UrlInput } from "./UrlInput";
+} from "../../api";
+import { DanceCourse, DanceGroup, Trainer } from "../../types";
+import { UrlInput } from "../shared/UrlInput";
 
 const CourseFormPage: React.FC = () => {
   const navigate = useNavigate();

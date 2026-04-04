@@ -1,7 +1,7 @@
 import React from "react";
 
-import { ChoreographyFormData } from "../types";
-import { ChoreographyForm } from "./ChoreographyForm";
+import { ChoreographyFormData } from "../../types";
+import { ChoreographyForm } from "../choreographies/ChoreographyForm";
 
 interface AppFormViewProps {
   title: string;

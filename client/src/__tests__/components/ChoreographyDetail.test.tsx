@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import { fetchChoreography } from "../../api";
-import ChoreographyDetail from "../../components/ChoreographyDetail";
+import ChoreographyDetail from "../../components/choreographies/ChoreographyDetail";
 
 const mockNavigate = vi.fn();
 

@@ -1,10 +1,10 @@
-import "../styles/DanceGroupsAdmin.css";
+import "../../styles/DanceGroupsAdmin.css";
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { createDanceGroup, deleteDanceGroup, getDanceGroups, updateDanceGroup } from "../api";
-import { DanceGroup } from "../types";
+import { createDanceGroup, deleteDanceGroup, getDanceGroups, updateDanceGroup } from "../../api";
+import { DanceGroup } from "../../types";
 
 interface DanceGroupsAdminProps {
   mode?: "list" | "create";

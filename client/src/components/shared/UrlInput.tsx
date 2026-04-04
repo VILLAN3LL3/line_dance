@@ -1,8 +1,8 @@
-import "../styles/UrlInput.css";
+import "../../styles/UrlInput.css";
 
 import React, { useState } from "react";
 
-import { checkUrl } from "../api";
+import { checkUrl } from "../../api";
 
 interface UrlInputProps {
   id: string;

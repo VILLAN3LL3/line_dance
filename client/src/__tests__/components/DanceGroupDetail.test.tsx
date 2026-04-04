@@ -15,7 +15,7 @@ import {
   getSessions,
   removeGroupLevel,
 } from "../../api";
-import DanceGroupDetail from "../../components/DanceGroupDetail";
+import DanceGroupDetail from "../../components/dance-groups/DanceGroupDetail";
 
 const mockNavigate = vi.fn();
 

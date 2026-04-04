@@ -1,4 +1,4 @@
-import "../styles/DanceGroupDetail.css";
+import "../../styles/DanceGroupDetail.css";
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -14,8 +14,8 @@ import {
   getLearnedChoreographies,
   getSessions,
   removeGroupLevel,
-} from "../api";
-import { Choreography, DanceCourse, DanceGroup, LearnedChoreography, Session } from "../types";
+} from "../../api";
+import { Choreography, DanceCourse, DanceGroup, LearnedChoreography, Session } from "../../types";
 import { DanceGroupCoursesSection } from "./DanceGroupCoursesSection";
 import { DanceGroupLearnedSection } from "./DanceGroupLearnedSection";
 import { DanceGroupLevelsSection } from "./DanceGroupLevelsSection";

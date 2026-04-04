@@ -10,7 +10,7 @@ import {
   getTrainers,
   updateDanceCourse,
 } from "../../api";
-import CourseFormPage from "../../components/CourseFormPage";
+import CourseFormPage from "../../components/courses/CourseFormPage";
 
 const mockNavigate = vi.fn();
 

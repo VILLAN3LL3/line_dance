@@ -13,7 +13,7 @@ import {
   getSessions,
   removeChoreographyFromSession,
 } from "../../api";
-import CourseDetail from "../../components/CourseDetail";
+import CourseDetail from "../../components/courses/CourseDetail";
 
 const mockNavigate = vi.fn();
 

@@ -1,9 +1,9 @@
 import React from "react";
 
-import { Choreography, SearchFilters } from "../types";
-import { ChoreographyCard } from "./ChoreographyCard";
-import { ChoreographyTable } from "./ChoreographyTable";
-import { SearchBar } from "./SearchBar";
+import { Choreography, SearchFilters } from "../../types";
+import { ChoreographyCard } from "../choreographies/ChoreographyCard";
+import { ChoreographyTable } from "../choreographies/ChoreographyTable";
+import { SearchBar } from "../choreographies/SearchBar";
 
 interface AppListViewProps {
   choreographies: Choreography[];

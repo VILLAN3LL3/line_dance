@@ -1,9 +1,9 @@
-import "../styles/ChoreographyTable.css";
+import "../../styles/ChoreographyTable.css";
 
 import React, { useEffect, useMemo, useState } from "react";
 
-import { getStepFigures } from "../api";
-import { Choreography } from "../types";
+import { getStepFigures } from "../../api";
+import { Choreography } from "../../types";
 
 interface ChoreographyTableProps {
   choreographies: Choreography[];

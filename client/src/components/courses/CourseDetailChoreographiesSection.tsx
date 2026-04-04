@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { Choreography, Session, SessionChoreography } from "../types";
+import type { Choreography, Session, SessionChoreography } from "../../types";
 
 type CourseDetailChoreographiesSectionProps = {
   selectedSession: Session;

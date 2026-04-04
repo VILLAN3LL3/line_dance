@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SearchFilters } from "../types";
+import { SearchFilters } from "../../types";
 import { SearchBarMaxCountFilter } from "./SearchBarMaxCountFilter";
 import { SearchBarSavedConfigurationsPanel } from "./SearchBarSavedConfigurationsPanel";
 import { SearchBarSelectableListFilter } from "./SearchBarSelectableListFilter";

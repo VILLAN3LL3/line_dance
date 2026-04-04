@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { createDanceGroup, deleteDanceGroup, getDanceGroups, updateDanceGroup } from "../../api";
-import { DanceGroupsAdmin } from "../../components/DanceGroupsAdmin";
+import { DanceGroupsAdmin } from "../../components/dance-groups/DanceGroupsAdmin";
 
 const mockNavigate = vi.fn();
 

@@ -13,7 +13,7 @@ import {
   saveFilterConfiguration,
   updateSavedFilterConfiguration,
 } from "../../api";
-import { SearchBar } from "../../components/SearchBar";
+import { SearchBar } from "../../components/choreographies/SearchBar";
 
 vi.mock("../../api", () => ({
   getLevels: vi.fn(),
