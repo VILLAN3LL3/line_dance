@@ -2,14 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { DanceCourse, Session } from "../../types";
-import { EmptyState, LoadingState } from "../shared/ui";
-import {
-  CourseStatus,
-  getBerlinTodayIso,
-  getCourseStatus,
-  getCourseStatusLabel,
-} from "../../utils/courseStatus";
+import { CourseStatus, getBerlinTodayIso, getCourseStatus, getCourseStatusLabel } from "../../utils/courseStatus";
 import { getYouTubePlaylistPageUrl } from "../../utils/youtube";
+import { EmptyState, LoadingState } from "../shared/ui";
 
 interface DanceGroupCoursesSectionProps {
   courses: DanceCourse[];
