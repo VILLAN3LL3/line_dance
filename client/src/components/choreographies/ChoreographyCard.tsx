@@ -78,12 +78,12 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
                 </span>
               ))}
               {choreography.restart_information && (
-                <span className="info-badge" title="Has restart information">
+                <span className="tag-small" title="Has restart information">
                   Restart 🔁
                 </span>
               )}
               {choreography.tag_information && (
-                <span className="info-badge" title="Has tag information">
+                <span className="tag-small" title="Has tag information">
                   Tag 🌉
                 </span>
               )}

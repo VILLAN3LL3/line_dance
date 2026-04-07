@@ -130,7 +130,6 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
               <th className="sortable" onClick={() => toggleSort("creation_year")}>
                 Year{getSortIndicator(sortField, "creation_year", sortDirection)}
               </th>
-              <th>Tags</th>
               <th className="figure-column sortable" onClick={() => toggleSort("restart")}>
                 Restart{getSortIndicator(sortField, "restart", sortDirection)}
               </th>
@@ -160,11 +159,6 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                   <td>{choreo.count || "-"}</td>
                   <td>{choreo.wall_count || "-"}</td>
                   <td>{choreo.creation_year || "-"}</td>
-                  <td>
-                    <div className="tags-cell">
-                      {choreo.tags.length > 0 ? choreo.tags.join(", ") : "-"}
-                    </div>
-                  </td>
                   <td className="figure-cell">{choreo.restart_information ? "✅" : ""}</td>
                   <td className="figure-cell">{choreo.tag_information ? "✅" : ""}</td>
                   {allStepFigures.map((figure) => (

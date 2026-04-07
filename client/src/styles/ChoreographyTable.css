@@ -145,17 +145,6 @@
   white-space: nowrap;
 }
 
-.info-badge {
-  background-color: #edf1f7;
-  color: #4b5568;
-  padding: 2px 6px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-  display: inline-block;
-}
-
 .tags-cell {
   max-width: 250px;
   overflow-y: auto;

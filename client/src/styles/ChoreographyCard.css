@@ -47,25 +47,6 @@
   text-transform: uppercase;
 }
 
-.info-badge {
-  background-color: rgba(255, 255, 255, 0.88);
-  color: #3f485a;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: help;
-  transition: background-color 0.2s ease;
-  white-space: nowrap;
-}
-
-.info-badge:hover {
-  background-color: white;
-}
-
 .level-beginner {
   background-color: #def4ea;
   color: #1f6e4b;
