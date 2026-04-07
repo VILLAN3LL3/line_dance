@@ -1,11 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  createChoreographyViaApi,
-  createDanceCourseViaApi,
-  createDanceGroupViaApi,
-  createTrainerViaApi,
-} from "../helpers/api";
+import { createChoreographyViaApi, createDanceCourseViaApi, createDanceGroupViaApi, createTrainerViaApi } from "../helpers/api";
 
 test.describe("Course Management", () => {
   test("course detail supports session and choreography lifecycle", async ({ page, request }) => {
@@ -93,5 +88,26 @@ test.describe("Course Management", () => {
     await expect(page.getByText(newSemester)).toBeVisible();
     await expect(page.getByText(new RegExp(`Trainer: ${trainerName}`))).toBeVisible();
     await expect(page.getByRole("link", { name: /YouTube/i })).toBeVisible();
+  });
+
+  test("direct create/edit routes initialize form state and allow cancel", async ({
+    page,
+    request,
+  }) => {
+    const groupId = await createDanceGroupViaApi(request, `E2E Direct Route Group ${Date.now()}`);
+    const courseId = await createDanceCourseViaApi(request, groupId, "WS2026", "2026-01-20");
+
+    await page.goto(`/admin/groups/${groupId}/courses/new`);
+    await expect(page.getByRole("heading", { name: /Create Course/i })).toBeVisible();
+    await expect(page.getByText(/Group:/i)).toBeVisible();
+    await page.getByRole("button", { name: /^Cancel$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/admin/groups/${groupId}$`));
+
+    await page.goto(`/admin/groups/${groupId}/courses/${courseId}/edit`);
+    await expect(page.getByRole("heading", { name: /Edit Course/i })).toBeVisible();
+    await expect(page.getByText(new RegExp(`Editing course #${courseId}`))).toBeVisible();
+    await expect(page.getByLabel(/Semester/i)).toHaveValue("WS2026");
+    await page.getByRole("button", { name: /^Cancel$/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/admin/groups/${groupId}$`));
   });
 });
