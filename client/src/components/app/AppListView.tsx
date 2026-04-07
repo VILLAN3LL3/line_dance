@@ -36,6 +36,10 @@ export const AppListView: React.FC<AppListViewProps> = ({
   onSelect,
   onReload,
 }) => {
+  const handleCardEdit = (id: number) => {
+    window.open(`/choreographies/${id}?edit=1`, "_blank", "noopener,noreferrer");
+  };
+
   let content: React.ReactNode;
 
   if (isLoading) {
@@ -50,7 +54,7 @@ export const AppListView: React.FC<AppListViewProps> = ({
             <ChoreographyCard
               key={choreography.id}
               choreography={choreography}
-              onEdit={onEdit}
+              onEdit={handleCardEdit}
               onDelete={onDelete}
             />
           ))}

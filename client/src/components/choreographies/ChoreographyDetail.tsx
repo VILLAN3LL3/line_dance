@@ -14,6 +14,7 @@ const ChoreographyDetail: React.FC = () => {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const choreographyId = Number(id);
+  const isEditQueryMode = new URLSearchParams(location.search).get("edit") === "1";
 
   const [choreography, setChoreography] = useState<Choreography | null>(null);
   const [view, setView] = useState<"view" | "edit">("view");
@@ -42,12 +43,12 @@ const ChoreographyDetail: React.FC = () => {
 
     // Check if we should start in edit mode
     const state = location.state as { editMode?: boolean } | null;
-    if (state?.editMode) {
+    if (state?.editMode || isEditQueryMode) {
       setView("edit");
     }
 
     void loadChoreography();
-  }, [choreographyId, location.state, loadChoreography]);
+  }, [choreographyId, isEditQueryMode, location.state, loadChoreography]);
 
   useEffect(() => {
     // Clear location state after using it
@@ -107,7 +108,7 @@ const ChoreographyDetail: React.FC = () => {
 
   return (
     <div className="choreography-detail">
-      <BackButton onClick={() => navigate(-1)} />
+      {!isEditQueryMode && <BackButton onClick={() => navigate(-1)} />}
 
       {error && <ErrorMessage message={error} />}
 

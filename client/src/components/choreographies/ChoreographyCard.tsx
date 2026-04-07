@@ -11,6 +11,7 @@ interface ChoreographyCardProps {
   onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
   videoEmbedMode?: "single" | "all";
+  openEditInNewTab?: boolean;
 }
 
 export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
@@ -18,6 +19,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   onEdit,
   onDelete,
   videoEmbedMode = "single",
+  openEditInNewTab = false,
 }) => {
   const demoEmbedUrl = getYouTubeVideoEmbedUrl(choreography.demo_video_url);
   const tutorialEmbedUrl = getYouTubeVideoEmbedUrl(choreography.tutorial_video_url);
@@ -163,6 +165,14 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
         <ActionButton
           onClick={(e) => {
             e.stopPropagation();
+            if (openEditInNewTab) {
+              window.open(
+                `/choreographies/${choreography.id}?edit=1`,
+                "_blank",
+                "noopener,noreferrer",
+              );
+              return;
+            }
             onEdit(choreography.id);
           }}
           variant="edit"
