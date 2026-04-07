@@ -3,14 +3,9 @@ import "../../styles/CourseFormPage.css";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import {
-  createDanceCourse,
-  getDanceCourses,
-  getDanceGroup,
-  getTrainers,
-  updateDanceCourse,
-} from "../../api";
+import { createDanceCourse, getDanceCourses, getDanceGroup, getTrainers, updateDanceCourse } from "../../api";
 import { DanceCourse, DanceGroup, Trainer } from "../../types";
+import { ErrorMessage } from "../shared/ui";
 import { UrlInput } from "../shared/UrlInput";
 
 const CourseFormPage: React.FC = () => {
@@ -149,7 +144,7 @@ const CourseFormPage: React.FC = () => {
         <p className="course-form-subtitle">Editing course #{existingCourse.id}</p>
       )}
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <ErrorMessage message={error} />}
 
       <form className="course-form-card" onSubmit={handleSubmit}>
         {!isEditMode && (

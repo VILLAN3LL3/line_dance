@@ -1,5 +1,7 @@
 import React from "react";
 
+import { EmptyState } from "../shared/ui";
+
 import type { Choreography, Session, SessionChoreography } from "../../types";
 
 type CourseDetailChoreographiesSectionProps = {
@@ -70,7 +72,7 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
       )}
 
       {sessionChoreographies.length === 0 ? (
-        <div className="empty-state">No choreographies in this session yet</div>
+        <EmptyState>No choreographies in this session yet</EmptyState>
       ) : (
         <div className="choreographies-list">
           {sessionChoreographies.map((sessionChoreography) => {

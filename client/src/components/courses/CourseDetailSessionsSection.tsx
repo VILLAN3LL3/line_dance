@@ -1,6 +1,7 @@
 import React from "react";
 
 import { getSessionBadgeLabel, getSessionBadgeStatus } from "../../utils/courseStatus";
+import { EmptyState, LoadingState } from "../shared/ui";
 
 import type { Session } from "../../types";
 type CourseDetailSessionsSectionProps = {
@@ -34,9 +35,9 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
 }) => {
   let sessionsContent: React.ReactNode;
   if (sessions.length === 0) {
-    sessionsContent = <div className="empty-state">No sessions yet</div>;
+    sessionsContent = <EmptyState>No sessions yet</EmptyState>;
   } else if (visibleSessions.length === 0) {
-    sessionsContent = <div className="empty-state">No planned sessions</div>;
+    sessionsContent = <EmptyState>No planned sessions</EmptyState>;
   } else {
     sessionsContent = (
       <div className="sessions-list">
@@ -114,7 +115,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
         </button>
       </form>
 
-      {isLoading && <div className="loading">Loading...</div>}
+      {isLoading && <LoadingState />}
 
       {sessionsContent}
     </section>

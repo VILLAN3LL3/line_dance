@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
 import { Choreography } from "../../types";
+import { EmptyState } from "../shared/ui";
 
 interface DanceGroupLevelsSectionProps {
   groupLevels: string[];
@@ -55,7 +56,7 @@ export const DanceGroupLevelsSection: React.FC<DanceGroupLevelsSectionProps> = (
       </form>
 
       {groupLevels.length === 0 ? (
-        <div className="empty-state">No levels configured yet</div>
+        <EmptyState>No levels configured yet</EmptyState>
       ) : (
         <div className="tags-container">
           {groupLevels.map((level) => (

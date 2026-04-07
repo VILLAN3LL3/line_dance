@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 
 import { createTrainer, deleteTrainer, getTrainers, updateTrainer } from "../../api";
 import { Trainer } from "../../types";
+import { EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
 
 const TrainersAdmin: React.FC = () => {
   const [trainers, setTrainers] = useState<Trainer[]>([]);
@@ -122,7 +123,7 @@ const TrainersAdmin: React.FC = () => {
         <h2>Trainer Management</h2>
       </header>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <ErrorMessage message={error} />}
 
       <section className="trainer-section">
         <h3>Add Trainer</h3>
@@ -156,10 +157,10 @@ const TrainersAdmin: React.FC = () => {
 
       <section className="trainer-section">
         <h3>All Trainers</h3>
-        {isLoading && <div className="loading">Loading...</div>}
+        {isLoading && <LoadingState />}
 
         {!isLoading && trainers.length === 0 ? (
-          <div className="empty-state">No trainers yet</div>
+          <EmptyState>No trainers yet</EmptyState>
         ) : (
           <div className="trainers-list">
             {trainers.map((trainer) => (

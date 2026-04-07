@@ -4,6 +4,7 @@ import { Choreography, SearchFilters } from "../../types";
 import { ChoreographyCard } from "../choreographies/ChoreographyCard";
 import { ChoreographyTable } from "../choreographies/ChoreographyTable";
 import { SearchBar } from "../choreographies/SearchBar";
+import { EmptyState, LoadingState } from "../shared/ui";
 
 interface AppListViewProps {
   choreographies: Choreography[];
@@ -38,13 +39,9 @@ export const AppListView: React.FC<AppListViewProps> = ({
   let content: React.ReactNode;
 
   if (isLoading) {
-    content = <div className="loading">Loading choreographies...</div>;
+    content = <LoadingState message="Loading choreographies..." />;
   } else if (choreographies.length === 0) {
-    content = (
-      <div className="empty-state">
-        <p>No choreographies found. Start by adding one!</p>
-      </div>
-    );
+    content = <EmptyState>No choreographies found. Start by adding one!</EmptyState>;
   } else if (displayMode === "card") {
     content = (
       <>

@@ -5,6 +5,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { deleteChoreography, fetchChoreography, updateChoreography } from "../../api";
 import { Choreography, ChoreographyFormData } from "../../types";
+import { EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
 import { ChoreographyCard } from "./ChoreographyCard";
 import { ChoreographyForm } from "./ChoreographyForm";
 
@@ -93,15 +94,15 @@ const ChoreographyDetail: React.FC = () => {
   };
 
   if (isLoading && !choreography) {
-    return <div className="loading">Loading...</div>;
+    return <LoadingState />;
   }
 
   if (error && !choreography) {
-    return <div className="error-message">{error}</div>;
+    return <ErrorMessage message={error} />;
   }
 
   if (!choreography) {
-    return <div className="error-message">Choreography not found</div>;
+    return <EmptyState>Choreography not found</EmptyState>;
   }
 
   return (
@@ -110,7 +111,7 @@ const ChoreographyDetail: React.FC = () => {
         ← Back
       </button>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <ErrorMessage message={error} />}
 
       {view === "view" ? (
         <ChoreographyCard

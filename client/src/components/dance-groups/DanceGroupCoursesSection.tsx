@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { DanceCourse, Session } from "../../types";
+import { EmptyState, LoadingState } from "../shared/ui";
 import {
   CourseStatus,
   getBerlinTodayIso,
@@ -47,9 +48,9 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
 
   let coursesContent: React.ReactNode;
   if (courses.length === 0) {
-    coursesContent = <div className="empty-state">No courses yet</div>;
+    coursesContent = <EmptyState>No courses yet</EmptyState>;
   } else if (filteredCourses.length === 0) {
-    coursesContent = <div className="empty-state">No running courses for the selected filters</div>;
+    coursesContent = <EmptyState>No running courses for the selected filters</EmptyState>;
   } else {
     coursesContent = (
       <div className="courses-list">
@@ -166,7 +167,7 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
         </div>
       </div>
 
-      {isLoading && <div className="loading">Loading...</div>}
+      {isLoading && <LoadingState />}
 
       {coursesContent}
     </section>

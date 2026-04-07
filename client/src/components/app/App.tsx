@@ -3,13 +3,9 @@ import "../../styles/App.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import {
-  createChoreography,
-  deleteChoreography,
-  searchChoreographies,
-  updateChoreography,
-} from "../../api";
+import { createChoreography, deleteChoreography, searchChoreographies, updateChoreography } from "../../api";
 import { Choreography, ChoreographyFormData, SearchFilters } from "../../types";
+import { ErrorMessage } from "../shared/ui";
 import { AppDetailView } from "./AppDetailView";
 import { AppFormView } from "./AppFormView";
 import { AppListView } from "./AppListView";
@@ -199,7 +195,7 @@ export const App: React.FC = () => {
         </button>
       </header>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <ErrorMessage message={error} />}
 
       {view === "list" && (
         <AppListView

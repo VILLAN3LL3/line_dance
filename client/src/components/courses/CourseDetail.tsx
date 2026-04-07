@@ -15,6 +15,7 @@ import {
 } from "../../api";
 import { Choreography, DanceCourse, Session, SessionChoreography } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
+import { ErrorMessage } from "../shared/ui";
 import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
 import CourseDetailSessionsSection from "./CourseDetailSessionsSection";
 
@@ -243,7 +244,7 @@ const CourseDetail: React.FC = () => {
         </h2>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <ErrorMessage message={error} />}
 
       <div className="detail-content">
         <CourseDetailSessionsSection
