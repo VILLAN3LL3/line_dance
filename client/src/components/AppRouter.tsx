@@ -9,6 +9,7 @@ import CourseDetail from "./courses/CourseDetail";
 import CourseFormPage from "./courses/CourseFormPage";
 import DanceGroupDetail from "./dance-groups/DanceGroupDetail";
 import { DanceGroupsAdmin } from "./dance-groups/DanceGroupsAdmin";
+import { ExternalLink } from "./shared/ui";
 import TrainersAdmin from "./trainers/TrainersAdmin";
 
 export const AppRouter: React.FC = () => {
@@ -43,16 +44,14 @@ export const AppRouter: React.FC = () => {
               </Link>
             </li>
             <li>
-              <a
+              <ExternalLink
                 href={swaggerDocsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="nav-icon-link"
                 aria-label="Open API documentation"
                 title="Open API documentation"
               >
                 ℹ️
-              </a>
+              </ExternalLink>
             </li>
           </ul>
         </div>

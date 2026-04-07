@@ -4,7 +4,15 @@ import React, { useEffect, useState } from "react";
 
 import { createTrainer, deleteTrainer, getTrainers, updateTrainer } from "../../api";
 import { Trainer } from "../../types";
-import { ActionGroup, confirmAction, EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
+import {
+  ActionButton,
+  ActionGroup,
+  confirmAction,
+  EmptyState,
+  ErrorMessage,
+  LoadingState,
+  Section,
+} from "../shared/ui";
 
 const TrainersAdmin: React.FC = () => {
   const [trainers, setTrainers] = useState<Trainer[]>([]);
@@ -125,8 +133,7 @@ const TrainersAdmin: React.FC = () => {
 
       {error && <ErrorMessage message={error} />}
 
-      <section className="trainer-section">
-        <h3>Add Trainer</h3>
+      <Section title="Add Trainer" className="trainer-section">
         <form className="trainer-form" onSubmit={handleCreate}>
           <input
             type="text"
@@ -149,14 +156,13 @@ const TrainersAdmin: React.FC = () => {
             onChange={(e) => setNewEmail(e.target.value)}
             disabled={isLoading}
           />
-          <button type="submit" className="btn-primary" disabled={isLoading}>
+          <ActionButton type="submit" variant="primary" disabled={isLoading}>
             + Add Trainer
-          </button>
+          </ActionButton>
         </form>
-      </section>
+      </Section>
 
-      <section className="trainer-section">
-        <h3>All Trainers</h3>
+      <Section title="All Trainers" className="trainer-section">
         {isLoading && <LoadingState />}
 
         {!isLoading && trainers.length === 0 ? (
@@ -186,22 +192,16 @@ const TrainersAdmin: React.FC = () => {
                       disabled={isLoading}
                     />
                     <ActionGroup className="trainer-actions">
-                      <button
-                        type="button"
-                        className="btn-primary"
+                      <ActionButton
+                        variant="primary"
                         onClick={() => handleUpdate(trainer.id)}
                         disabled={isLoading}
                       >
                         Save
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={cancelEdit}
-                        disabled={isLoading}
-                      >
+                      </ActionButton>
+                      <ActionButton variant="secondary" onClick={cancelEdit} disabled={isLoading}>
                         Cancel
-                      </button>
+                      </ActionButton>
                     </ActionGroup>
                   </>
                 ) : (
@@ -212,22 +212,20 @@ const TrainersAdmin: React.FC = () => {
                       <p>{trainer.email}</p>
                     </div>
                     <ActionGroup className="trainer-actions">
-                      <button
-                        type="button"
-                        className="btn-edit"
+                      <ActionButton
+                        variant="edit"
                         onClick={() => startEdit(trainer)}
                         disabled={isLoading}
                       >
                         ✏️ Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-delete"
+                      </ActionButton>
+                      <ActionButton
+                        variant="delete"
                         onClick={() => handleDelete(trainer.id)}
                         disabled={isLoading}
                       >
                         Delete
-                      </button>
+                      </ActionButton>
                     </ActionGroup>
                   </>
                 )}
@@ -235,7 +233,7 @@ const TrainersAdmin: React.FC = () => {
             ))}
           </div>
         )}
-      </section>
+      </Section>
     </div>
   );
 };

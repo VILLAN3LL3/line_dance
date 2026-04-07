@@ -2,6 +2,7 @@ import React, { useState } from "react";
 
 import { useSavedFilterConfigurations } from "../../hooks/useSavedFilterConfigurations";
 import { SearchFilters } from "../../types";
+import { ActionButton } from "../shared/ui";
 
 interface SearchBarSavedConfigurationsPanelProps {
   buildFilters: () => SearchFilters;
@@ -61,14 +62,9 @@ export const SearchBarSavedConfigurationsPanel: React.FC<
               placeholder="Configuration name..."
               disabled={isLoading || isSavingConfiguration}
             />
-            <button
-              type="button"
-              onClick={handleSaveConfiguration}
-              className="btn-primary"
-              disabled={isBusy}
-            >
+            <ActionButton onClick={handleSaveConfiguration} variant="primary" disabled={isBusy}>
               {isSavingConfiguration ? "Saving..." : "Save Current Filters"}
-            </button>
+            </ActionButton>
           </div>
 
           <div className="saved-filters-controls">
@@ -94,41 +90,37 @@ export const SearchBarSavedConfigurationsPanel: React.FC<
                 </option>
               ))}
             </select>
-            <button
-              type="button"
+            <ActionButton
               onClick={handleLoadConfiguration}
-              className="btn-secondary"
+              variant="secondary"
               disabled={isBusy || isLoadingConfigurations || !selectedConfigurationId}
             >
               Load Selected
-            </button>
+            </ActionButton>
           </div>
 
           <div className="saved-filters-actions-row">
-            <button
-              type="button"
+            <ActionButton
               onClick={handleUpdateLoadedConfiguration}
-              className="btn-secondary"
+              variant="secondary"
               disabled={isBusy || !selectedConfigurationId}
             >
               {isUpdatingConfiguration ? "Working..." : "Update Loaded"}
-            </button>
-            <button
-              type="button"
+            </ActionButton>
+            <ActionButton
               onClick={handleRenameConfiguration}
-              className="btn-secondary"
+              variant="secondary"
               disabled={isBusy || !selectedConfigurationId}
             >
               Rename Selected
-            </button>
-            <button
-              type="button"
+            </ActionButton>
+            <ActionButton
               onClick={handleDeleteConfiguration}
-              className="btn-delete"
+              variant="delete"
               disabled={isBusy || !selectedConfigurationId}
             >
               {isDeletingConfiguration ? "Deleting..." : "Delete Selected"}
-            </button>
+            </ActionButton>
           </div>
 
           {configurationMessage && <p className="saved-filters-message">{configurationMessage}</p>}

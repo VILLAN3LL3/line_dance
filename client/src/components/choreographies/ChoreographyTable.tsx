@@ -174,7 +174,8 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                           e.stopPropagation();
                           window.open(choreo.step_sheet_link, "_blank");
                         }}
-                        className="btn-small btn-secondary"
+                        variant="secondary"
+                        className="btn-small"
                         title="Open Step Sheet"
                       >
                         🦶
@@ -186,7 +187,8 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                           e.stopPropagation();
                           window.open(choreo.demo_video_url, "_blank");
                         }}
-                        className="btn-small btn-secondary"
+                        variant="secondary"
+                        className="btn-small"
                         title="Open Demo Video"
                       >
                         🎬
@@ -198,7 +200,8 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                           e.stopPropagation();
                           window.open(choreo.tutorial_video_url || "", "_blank");
                         }}
-                        className="btn-small btn-secondary"
+                        variant="secondary"
+                        className="btn-small"
                         title="Open Tutorial Video"
                       >
                         🎓
@@ -209,7 +212,8 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                         e.stopPropagation();
                         onEdit?.(choreo.id);
                       }}
-                      className="btn-small btn-edit"
+                      variant="edit"
+                      className="btn-small"
                       disabled={isLoading}
                       title="Edit"
                     >
@@ -220,7 +224,8 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                         e.stopPropagation();
                         onDelete?.(choreo.id);
                       }}
-                      className="btn-small btn-delete"
+                      variant="delete"
+                      className="btn-small"
                       disabled={isLoading}
                       title="Delete"
                     >

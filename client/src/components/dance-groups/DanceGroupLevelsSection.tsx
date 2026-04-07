@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { Choreography } from "../../types";
-import { EmptyState, TagGroup } from "../shared/ui";
+import { ActionButton, EmptyState, Section, TagGroup } from "../shared/ui";
 
 interface DanceGroupLevelsSectionProps {
   groupLevels: string[];
@@ -28,8 +28,7 @@ export const DanceGroupLevelsSection: React.FC<DanceGroupLevelsSectionProps> = (
   };
 
   return (
-    <section className="section">
-      <h3>Group Levels</h3>
+    <Section title="Group Levels">
       <form onSubmit={handleSubmit} className="level-form">
         <input
           type="text"
@@ -50,9 +49,9 @@ export const DanceGroupLevelsSection: React.FC<DanceGroupLevelsSectionProps> = (
               <option key={level} value={level} />
             ))}
         </datalist>
-        <button type="submit" className="btn-primary" disabled={isLoading}>
+        <ActionButton type="submit" variant="primary" disabled={isLoading}>
           + Add Level
-        </button>
+        </ActionButton>
       </form>
 
       {groupLevels.length === 0 ? (
@@ -74,6 +73,6 @@ export const DanceGroupLevelsSection: React.FC<DanceGroupLevelsSectionProps> = (
           ))}
         </TagGroup>
       )}
-    </section>
+    </Section>
   );
 };

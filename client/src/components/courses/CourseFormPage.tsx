@@ -11,7 +11,7 @@ import {
   updateDanceCourse,
 } from "../../api";
 import { DanceCourse, DanceGroup, Trainer } from "../../types";
-import { ActionGroup, BackButton, ErrorMessage, FormField } from "../shared/ui";
+import { ActionButton, ActionGroup, BackButton, ErrorMessage, FormField } from "../shared/ui";
 import { UrlInput } from "../shared/UrlInput";
 
 const CourseFormPage: React.FC = () => {
@@ -242,17 +242,17 @@ const CourseFormPage: React.FC = () => {
         </FormField>
 
         <ActionGroup className="course-form-actions">
-          <button type="submit" className="btn-primary" disabled={isLoading}>
+          <ActionButton type="submit" variant="primary" disabled={isLoading}>
             {isEditMode ? "Save Changes" : "Create Course"}
-          </button>
-          <button
+          </ActionButton>
+          <ActionButton
             type="button"
-            className="btn-secondary"
+            variant="secondary"
             onClick={() => navigate(`/admin/groups/${parsedGroupId}`)}
             disabled={isLoading}
           >
             Cancel
-          </button>
+          </ActionButton>
         </ActionGroup>
       </form>
     </div>

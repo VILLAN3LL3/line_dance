@@ -1,7 +1,15 @@
 import React from "react";
 
 import { getSessionBadgeLabel, getSessionBadgeStatus } from "../../utils/courseStatus";
-import { ActionGroup, EmptyState, LoadingState, StatusBadge } from "../shared/ui";
+import {
+  ActionButton,
+  ActionGroup,
+  CheckboxFilter,
+  EmptyState,
+  LoadingState,
+  Section,
+  StatusBadge,
+} from "../shared/ui";
 
 import type { Session } from "../../types";
 
@@ -70,20 +78,21 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                 </p>
               </div>
               <ActionGroup className="session-actions">
-                <button
+                <ActionButton
                   onClick={() => onSelectSession(session)}
-                  className={`btn-secondary ${selectedSessionId === session.id ? "active" : ""}`}
+                  variant="secondary"
+                  className={selectedSessionId === session.id ? "active" : undefined}
                   disabled={isLoading}
                 >
                   {selectedSessionId === session.id ? "✓ " : ""}Manage
-                </button>
-                <button
+                </ActionButton>
+                <ActionButton
                   onClick={() => onDeleteSession(session.id)}
-                  className="btn-delete"
+                  variant="delete"
                   disabled={isLoading}
                 >
                   Delete
-                </button>
+                </ActionButton>
               </ActionGroup>
             </div>
           );
@@ -93,20 +102,18 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
   }
 
   return (
-    <section className="section">
-      <div className="session-header-row">
-        <h3>Sessions</h3>
-        <label className="status-filter">
-          <input
-            type="checkbox"
-            checked={showPassedSessions}
-            onChange={(event) => onToggleShowPassedSessions(event.target.checked)}
-            disabled={isLoading}
-          />{" "}
+    <Section
+      title="Sessions"
+      actions={
+        <CheckboxFilter
+          checked={showPassedSessions}
+          onChange={onToggleShowPassedSessions}
+          disabled={isLoading}
+        >
           Show passed sessions
-        </label>
-      </div>
-
+        </CheckboxFilter>
+      }
+    >
       <form onSubmit={onCreateSession} className="session-form">
         <input
           type="date"
@@ -115,15 +122,15 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
           disabled={isLoading}
           required
         />
-        <button type="submit" className="btn-primary" disabled={isLoading}>
+        <ActionButton type="submit" variant="primary" disabled={isLoading}>
           + Add Session
-        </button>
+        </ActionButton>
       </form>
 
       {isLoading && <LoadingState />}
 
       {sessionsContent}
-    </section>
+    </Section>
   );
 };
 

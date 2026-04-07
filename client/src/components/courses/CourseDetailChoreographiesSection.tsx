@@ -1,6 +1,6 @@
 import React from "react";
 
-import { EmptyState } from "../shared/ui";
+import { ActionButton, EmptyState, Section } from "../shared/ui";
 
 import type { Choreography, Session, SessionChoreography } from "../../types";
 
@@ -32,9 +32,9 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
   onRemoveChoreography,
 }) => {
   return (
-    <section className="section">
-      <h3>Choreographies for {new Date(selectedSession.session_date).toLocaleDateString()}</h3>
-
+    <Section
+      title={`Choreographies for ${new Date(selectedSession.session_date).toLocaleDateString()}`}
+    >
       <form onSubmit={onAddChoreography} className="choreo-form">
         <div className="choreo-autocomplete">
           <input
@@ -52,13 +52,13 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
             ))}
           </datalist>
         </div>
-        <button
+        <ActionButton
           type="submit"
-          className="btn-primary"
+          variant="primary"
           disabled={isLoading || !selectedChoreographyId}
         >
           + Add to Session
-        </button>
+        </ActionButton>
       </form>
 
       {!isLoading && selectableChoreographies.length === 0 && (
@@ -86,19 +86,19 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
                   <h4>{choreography?.name}</h4>
                   <p>{choreography?.level}</p>
                 </div>
-                <button
+                <ActionButton
                   onClick={() => onRemoveChoreography(sessionChoreography.choreography_id)}
-                  className="btn-delete"
+                  variant="delete"
                   disabled={isLoading}
                 >
                   Remove
-                </button>
+                </ActionButton>
               </div>
             );
           })}
         </div>
       )}
-    </section>
+    </Section>
   );
 };
 

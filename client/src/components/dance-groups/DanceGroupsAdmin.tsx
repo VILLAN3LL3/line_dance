@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { createDanceGroup, deleteDanceGroup, getDanceGroups, updateDanceGroup } from "../../api";
 import { DanceGroup } from "../../types";
 import {
+  ActionButton,
   ActionGroup,
   BackButton,
   confirmAction,
@@ -179,30 +180,30 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
                       </>
                     ) : (
                       <>
-                        <button
+                        <ActionButton
                           onClick={() => navigate(`/admin/groups/${group.id}`)}
-                          className="btn-secondary"
+                          variant="secondary"
                           disabled={isLoading}
                         >
                           View Details
-                        </button>
-                        <button
+                        </ActionButton>
+                        <ActionButton
                           onClick={() => {
                             setEditingId(group.id);
                             setEditingName(group.name);
                           }}
-                          className="btn-edit"
+                          variant="edit"
                           disabled={isLoading}
                         >
                           Edit
-                        </button>
-                        <button
+                        </ActionButton>
+                        <ActionButton
                           onClick={() => handleDelete(group.id)}
-                          className="btn-delete"
+                          variant="delete"
                           disabled={isLoading}
                         >
                           Delete
-                        </button>
+                        </ActionButton>
                       </>
                     )}
                   </ActionGroup>
@@ -230,17 +231,17 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
               />
             </FormField>
             <ActionGroup className="form-actions">
-              <button type="submit" className="btn-primary" disabled={isLoading}>
+              <ActionButton type="submit" variant="primary" disabled={isLoading}>
                 {isLoading ? "Creating..." : "Create Group"}
-              </button>
-              <button
+              </ActionButton>
+              <ActionButton
                 type="button"
                 onClick={() => navigate("/admin")}
-                className="btn-secondary"
+                variant="secondary"
                 disabled={isLoading}
               >
                 Cancel
-              </button>
+              </ActionButton>
             </ActionGroup>
           </form>
         </div>

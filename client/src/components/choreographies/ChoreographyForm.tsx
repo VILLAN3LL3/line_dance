@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 
 import { getAuthors, getLevels, getStepFigures, getTags } from "../../api";
 import { ChoreographyFormData } from "../../types";
-import { ActionGroup, FormField } from "../shared/ui";
+import { ActionButton, ActionGroup, FormField } from "../shared/ui";
 import { ChoreographyFormBasicSection } from "./ChoreographyFormBasicSection";
 import { ChoreographyFormLinksSection } from "./ChoreographyFormLinksSection";
 import { ChoreographyFormListSection } from "./ChoreographyFormListSection";
@@ -320,13 +320,13 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
       </div>
 
       <ActionGroup className="form-actions">
-        <button type="submit" className="btn-primary" disabled={isLoading}>
+        <ActionButton type="submit" variant="primary" disabled={isLoading}>
           {isLoading ? "Saving..." : "Save Choreography"}
-        </button>
+        </ActionButton>
         {onCancel && (
-          <button type="button" onClick={onCancel} className="btn-small btn-edit">
+          <ActionButton type="button" onClick={onCancel} variant="edit" className="btn-small">
             Cancel
-          </button>
+          </ActionButton>
         )}
       </ActionGroup>
     </form>

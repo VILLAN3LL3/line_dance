@@ -8,6 +8,7 @@ import {
   useSearchBarFilters,
 } from "../../hooks/useSearchBarFilters";
 import { SearchFilters } from "../../types";
+import { ActionButton } from "../shared/ui";
 import { SearchBarAdvancedFilters } from "./SearchBarAdvancedFilters";
 
 interface SearchBarProps {
@@ -281,17 +282,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
       {showAdvanced && (
         <div className="search-actions">
-          <button type="button" onClick={handleSearch} className="btn-primary" disabled={isLoading}>
+          <ActionButton onClick={handleSearch} variant="primary" disabled={isLoading}>
             Apply Filters
-          </button>
-          <button
-            type="button"
-            onClick={handleClearAllFilters}
-            className="btn-secondary"
-            disabled={isLoading}
-          >
+          </ActionButton>
+          <ActionButton onClick={handleClearAllFilters} variant="secondary" disabled={isLoading}>
             Clear All Filters
-          </button>
+          </ActionButton>
         </div>
       )}
     </div>

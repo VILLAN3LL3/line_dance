@@ -9,7 +9,16 @@ import {
   getCourseStatusLabel,
 } from "../../utils/courseStatus";
 import { getYouTubePlaylistPageUrl } from "../../utils/youtube";
-import { ActionGroup, EmptyState, LoadingState, StatusBadge } from "../shared/ui";
+import {
+  ActionButton,
+  ActionGroup,
+  CheckboxFilter,
+  EmptyState,
+  ExternalLink,
+  LoadingState,
+  Section,
+  StatusBadge,
+} from "../shared/ui";
 
 interface DanceGroupCoursesSectionProps {
   courses: DanceCourse[];
@@ -78,57 +87,49 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
                 {course.trainer_name && <p>Trainer: {course.trainer_name}</p>}
                 <div className="course-links">
                   {course.youtube_playlist_url && (
-                    <a
-                      href={playlistPageUrl ?? course.youtube_playlist_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <ExternalLink href={playlistPageUrl ?? course.youtube_playlist_url}>
                       Link: YouTube
-                    </a>
+                    </ExternalLink>
                   )}
                   {course.copperknob_list_url && (
-                    <a href={course.copperknob_list_url} target="_blank" rel="noopener noreferrer">
-                      Link: Copperknob
-                    </a>
+                    <ExternalLink href={course.copperknob_list_url}>Link: Copperknob</ExternalLink>
                   )}
                   {course.spotify_playlist_url && (
-                    <a href={course.spotify_playlist_url} target="_blank" rel="noopener noreferrer">
-                      Link: Spotify
-                    </a>
+                    <ExternalLink href={course.spotify_playlist_url}>Link: Spotify</ExternalLink>
                   )}
                 </div>
               </div>
               <ActionGroup className="course-actions">
-                <button
+                <ActionButton
                   onClick={() => onExportCoursePdf(course)}
-                  className="btn-secondary"
+                  variant="secondary"
                   disabled={isLoading}
                 >
                   PDF Export
-                </button>
-                <button
+                </ActionButton>
+                <ActionButton
                   onClick={() => navigate(`/admin/groups/${parsedGroupId}/courses/${course.id}`)}
-                  className="btn-secondary"
+                  variant="secondary"
                   disabled={isLoading}
                 >
                   Manage Sessions
-                </button>
-                <button
+                </ActionButton>
+                <ActionButton
                   onClick={() =>
                     navigate(`/admin/groups/${parsedGroupId}/courses/${course.id}/edit`)
                   }
-                  className="btn-edit"
+                  variant="edit"
                   disabled={isLoading}
                 >
                   Edit
-                </button>
-                <button
+                </ActionButton>
+                <ActionButton
                   onClick={() => onDeleteCourse(course.id)}
-                  className="btn-delete"
+                  variant="delete"
                   disabled={isLoading}
                 >
                   Delete
-                </button>
+                </ActionButton>
               </ActionGroup>
             </div>
           );
@@ -137,43 +138,36 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
     );
   }
 
+  const sectionActions = (
+    <div className="course-header-controls">
+      <CheckboxFilter
+        checked={showPlannedCourses}
+        onChange={setShowPlannedCourses}
+        disabled={isLoading}
+      >
+        Planned
+      </CheckboxFilter>
+      <CheckboxFilter
+        checked={showPassedCourses}
+        onChange={setShowPassedCourses}
+        disabled={isLoading}
+      >
+        Passed
+      </CheckboxFilter>
+      <ActionButton
+        variant="primary"
+        onClick={() => navigate(`/admin/groups/${parsedGroupId}/courses/new`)}
+        disabled={isLoading}
+      >
+        + New Course
+      </ActionButton>
+    </div>
+  );
+
   return (
-    <section className="section">
-      <div className="section-header-row">
-        <h3>Dance Courses</h3>
-        <div className="course-header-controls">
-          <label className="status-filter">
-            <input
-              type="checkbox"
-              checked={showPlannedCourses}
-              onChange={(event) => setShowPlannedCourses(event.target.checked)}
-              disabled={isLoading}
-            />{" "}
-            Planned
-          </label>
-          <label className="status-filter">
-            <input
-              type="checkbox"
-              checked={showPassedCourses}
-              onChange={(event) => setShowPassedCourses(event.target.checked)}
-              disabled={isLoading}
-            />{" "}
-            Passed
-          </label>
-          <button
-            className="btn-primary"
-            type="button"
-            onClick={() => navigate(`/admin/groups/${parsedGroupId}/courses/new`)}
-            disabled={isLoading}
-          >
-            + New Course
-          </button>
-        </div>
-      </div>
-
+    <Section title="Dance Courses" actions={sectionActions}>
       {isLoading && <LoadingState />}
-
       {coursesContent}
-    </section>
+    </Section>
   );
 };

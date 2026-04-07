@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Choreography, LearnedChoreography } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
-import { EmptyState, TagGroup } from "../shared/ui";
+import { ActionButton, EmptyState, Section, TagGroup } from "../shared/ui";
 
 interface DanceGroupLearnedSectionProps {
   learnedChoreographies: LearnedChoreography[];
@@ -49,8 +49,7 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
 
   return (
     <div className="learned-sections">
-      <section className="section">
-        <h3>Learned Step Figures</h3>
+      <Section title="Learned Step Figures">
         {learnedStepFigures.length === 0 ? (
           <EmptyState>No step figures learned yet</EmptyState>
         ) : (
@@ -63,20 +62,19 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
               ))}
             </TagGroup>
             <div style={{ marginTop: "15px" }}>
-              <button
+              <ActionButton
                 onClick={handleSearchChoreographies}
-                className="btn-primary"
+                variant="primary"
                 disabled={isLoading}
               >
                 Search Choreographies
-              </button>
+              </ActionButton>
             </div>
           </>
         )}
-      </section>
+      </Section>
 
-      <section className="section">
-        <h3>Learned Choreographies for {groupName}</h3>
+      <Section title={`Learned Choreographies for ${groupName}`}>
         {learnedChoreographies.length === 0 ? (
           <EmptyState>No choreographies learned yet</EmptyState>
         ) : (
@@ -120,7 +118,7 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
             </table>
           </div>
         )}
-      </section>
+      </Section>
     </div>
   );
 };

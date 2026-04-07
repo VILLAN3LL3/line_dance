@@ -4,7 +4,7 @@ import React from "react";
 
 import { Choreography } from "../../types";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
-import { ActionButton, Badge, Card, Tag, TagGroup, YouTubeVideo } from "../shared/ui";
+import { ActionButton, Badge, Card, ExternalLink, Tag, TagGroup, YouTubeVideo } from "../shared/ui";
 
 interface ChoreographyCardProps {
   choreography: Choreography;
@@ -99,15 +99,13 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       )}
 
       {choreography.step_sheet_link && (
-        <a
+        <ExternalLink
           href={choreography.step_sheet_link}
-          target="_blank"
-          rel="noopener noreferrer"
           className="step-sheet-link"
           onClick={handleContentLinkClick}
         >
           🦶 View Step Sheet
-        </a>
+        </ExternalLink>
       )}
 
       {showPrimaryEmbed && primaryEmbedUrl && (
@@ -118,27 +116,23 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       )}
 
       {showDemoLink && choreography.demo_video_url && (
-        <a
+        <ExternalLink
           href={choreography.demo_video_url}
-          target="_blank"
-          rel="noopener noreferrer"
           className="step-sheet-link"
           onClick={handleContentLinkClick}
         >
           🎬 Watch Demo
-        </a>
+        </ExternalLink>
       )}
 
       {showTutorialLink && choreography.tutorial_video_url && (
-        <a
+        <ExternalLink
           href={choreography.tutorial_video_url}
-          target="_blank"
-          rel="noopener noreferrer"
           className="step-sheet-link"
           onClick={handleContentLinkClick}
         >
           🎓 Watch Tutorial
-        </a>
+        </ExternalLink>
       )}
 
       {showAllEmbeds && (
@@ -171,7 +165,8 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
             e.stopPropagation();
             onEdit(choreography.id);
           }}
-          className="btn-small btn-edit"
+          variant="edit"
+          className="btn-small"
         >
           Edit
         </ActionButton>
@@ -182,7 +177,8 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
             e.stopPropagation();
             onDelete(choreography.id);
           }}
-          className="btn-small btn-delete"
+          variant="delete"
+          className="btn-small"
         >
           Delete
         </ActionButton>
