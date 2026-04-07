@@ -5,15 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 import { createDanceGroup, deleteDanceGroup, getDanceGroups, updateDanceGroup } from "../../api";
 import { DanceGroup } from "../../types";
-import {
-  ActionGroup,
-  BackButton,
-  confirmAction,
-  EmptyState,
-  ErrorMessage,
-  FormField,
-  LoadingState,
-} from "../shared/ui";
+import { ActionGroup, BackButton, confirmAction, EmptyState, ErrorMessage, FormField, LoadingState } from "../shared/ui";
 
 interface DanceGroupsAdminProps {
   mode?: "list" | "create";
@@ -127,7 +119,7 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
 
       {mode === "list" && (
         <div className="groups-list-view">
-          {isLoading && <LoadingState>Loading dance groups...</LoadingState>}
+          {isLoading && <LoadingState message="Loading dance groups..." />}
 
           {danceGroups.length === 0 ? (
             <EmptyState>No dance groups yet. Create one to get started!</EmptyState>
