@@ -1,6 +1,6 @@
 import React from "react";
 
-import { AutoCompleteInput, Tag } from "../shared/ui";
+import { AutoCompleteInput, Tag, TagGroup } from "../shared/ui";
 
 interface SearchBarSelectableListFilterProps {
   label: string;
@@ -46,7 +46,7 @@ export const SearchBarSelectableListFilter: React.FC<SearchBarSelectableListFilt
         addButtonClassName="btn-add-filter"
       />
     </div>
-    <div className="filter-tags">
+    <TagGroup className="filter-tags">
       {selectedValues.map((value) => (
         <Tag
           key={value}
@@ -58,6 +58,6 @@ export const SearchBarSelectableListFilter: React.FC<SearchBarSelectableListFilt
           onRemove={() => onToggleValue(value)}
         />
       ))}
-    </div>
+    </TagGroup>
   </div>
 );

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { AutoCompleteInput, Tag } from "../shared/ui";
+import { AutoCompleteInput, FormField, Tag, TagGroup } from "../shared/ui";
 
 interface ChoreographyFormListSectionProps {
   title: string;
@@ -31,7 +31,7 @@ export const ChoreographyFormListSection: React.FC<ChoreographyFormListSectionPr
 }) => (
   <div className="form-section">
     <h3>{title}</h3>
-    <div className="form-group form-input-row">
+    <FormField className="form-group form-input-row">
       <AutoCompleteInput
         listId={listId}
         value={inputValue}
@@ -43,8 +43,8 @@ export const ChoreographyFormListSection: React.FC<ChoreographyFormListSectionPr
         addButtonLabel={addButtonLabel}
         addButtonClassName="btn-add"
       />
-    </div>
-    <div className="tags-container">
+    </FormField>
+    <TagGroup className="tags-container">
       {selectedValues.map((value) => (
         <Tag
           key={value}
@@ -55,6 +55,6 @@ export const ChoreographyFormListSection: React.FC<ChoreographyFormListSectionPr
           onRemove={() => onRemove(value)}
         />
       ))}
-    </div>
+    </TagGroup>
   </div>
 );

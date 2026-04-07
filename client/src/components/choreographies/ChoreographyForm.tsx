@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 
 import { getAuthors, getLevels, getStepFigures, getTags } from "../../api";
 import { ChoreographyFormData } from "../../types";
+import { ActionGroup, FormField } from "../shared/ui";
 import { ChoreographyFormBasicSection } from "./ChoreographyFormBasicSection";
 import { ChoreographyFormLinksSection } from "./ChoreographyFormLinksSection";
 import { ChoreographyFormListSection } from "./ChoreographyFormListSection";
@@ -281,8 +282,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           onRemove={removeFigure}
         />
 
-        <div className="form-group">
-          <label htmlFor="tag_information">Tag Information</label>
+        <FormField label="Tag Information" htmlFor="tag_information" className="form-group">
           <textarea
             id="tag_information"
             name="tag_information"
@@ -290,10 +290,9 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
             onChange={handleChange}
             placeholder="Additional information about tags used in this choreography"
           />
-        </div>
+        </FormField>
 
-        <div className="form-group">
-          <label htmlFor="restart_information">Restart Information</label>
+        <FormField label="Restart Information" htmlFor="restart_information" className="form-group">
           <textarea
             id="restart_information"
             name="restart_information"
@@ -301,7 +300,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
             onChange={handleChange}
             placeholder="Instructions for restarting or resetting the choreography"
           />
-        </div>
+        </FormField>
       </div>
 
       <div className="form-section">
@@ -320,7 +319,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
         />
       </div>
 
-      <div className="form-actions">
+      <ActionGroup className="form-actions">
         <button type="submit" className="btn-primary" disabled={isLoading}>
           {isLoading ? "Saving..." : "Save Choreography"}
         </button>
@@ -329,7 +328,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
             Cancel
           </button>
         )}
-      </div>
+      </ActionGroup>
     </form>
   );
 };

@@ -3,9 +3,14 @@ import "../../styles/App.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { createChoreography, deleteChoreography, searchChoreographies, updateChoreography } from "../../api";
+import {
+  createChoreography,
+  deleteChoreography,
+  searchChoreographies,
+  updateChoreography,
+} from "../../api";
 import { Choreography, ChoreographyFormData, SearchFilters } from "../../types";
-import { ErrorMessage } from "../shared/ui";
+import { confirmAction, ErrorMessage } from "../shared/ui";
 import { AppDetailView } from "./AppDetailView";
 import { AppFormView } from "./AppFormView";
 import { AppListView } from "./AppListView";
@@ -147,7 +152,7 @@ export const App: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this choreography?")) return;
+    if (!confirmAction("Are you sure you want to delete this choreography?")) return;
     setIsLoading(true);
     try {
       await deleteChoreography(id);

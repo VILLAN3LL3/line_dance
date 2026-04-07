@@ -4,7 +4,7 @@ import React from "react";
 
 import { Choreography } from "../../types";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
-import { ActionButton, Badge, Card, Tag, YouTubeVideo } from "../shared/ui";
+import { ActionButton, Badge, Card, Tag, TagGroup, YouTubeVideo } from "../shared/ui";
 
 interface ChoreographyCardProps {
   choreography: Choreography;
@@ -73,7 +73,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       {choreography.step_figures.length > 0 && (
         <div className="step-figures">
           <strong>Step Figures:</strong>
-          <div className="tag-list">
+          <TagGroup className="tag-list">
             {choreography.step_figures.map((figure) => (
               <Tag key={figure} value={figure} className="tag-small" />
             ))}
@@ -83,18 +83,18 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
             {choreography.tag_information && (
               <Tag value="Tag 🌉" className="tag-small" title="Has tag information" />
             )}
-          </div>
+          </TagGroup>
         </div>
       )}
 
       {choreography.tags.length > 0 && (
         <div className="tags">
           <strong>Tags:</strong>
-          <div className="tag-list">
+          <TagGroup className="tag-list">
             {choreography.tags.map((tag) => (
               <Tag key={tag} value={tag} className="tag-small" />
             ))}
-          </div>
+          </TagGroup>
         </div>
       )}
 

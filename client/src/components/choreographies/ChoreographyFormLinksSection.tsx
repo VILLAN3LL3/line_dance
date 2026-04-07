@@ -1,5 +1,6 @@
 import React from "react";
 
+import { FormField } from "../shared/ui";
 import { UrlInput } from "../shared/UrlInput";
 
 interface ChoreographyFormLinksSectionProps {
@@ -18,8 +19,7 @@ export const ChoreographyFormLinksSection: React.FC<ChoreographyFormLinksSection
   onChange,
 }) => (
   <>
-    <div className="form-group">
-      <label htmlFor="step_sheet_link">Step Sheet Link</label>
+    <FormField label="Step Sheet Link" htmlFor="step_sheet_link" className="form-group">
       <UrlInput
         id="step_sheet_link"
         name="step_sheet_link"
@@ -27,10 +27,9 @@ export const ChoreographyFormLinksSection: React.FC<ChoreographyFormLinksSection
         onChange={onChange}
         placeholder="https://example.com/stepsheet"
       />
-    </div>
+    </FormField>
 
-    <div className="form-group">
-      <label htmlFor="demo_video_url">Demo Video URL</label>
+    <FormField label="Demo Video URL" htmlFor="demo_video_url" className="form-group">
       <UrlInput
         id="demo_video_url"
         name="demo_video_url"
@@ -38,10 +37,9 @@ export const ChoreographyFormLinksSection: React.FC<ChoreographyFormLinksSection
         onChange={onChange}
         placeholder="https://youtube.com/..."
       />
-    </div>
+    </FormField>
 
-    <div className="form-group">
-      <label htmlFor="tutorial_video_url">Tutorial Video URL</label>
+    <FormField label="Tutorial Video URL" htmlFor="tutorial_video_url" className="form-group">
       <UrlInput
         id="tutorial_video_url"
         name="tutorial_video_url"
@@ -49,6 +47,6 @@ export const ChoreographyFormLinksSection: React.FC<ChoreographyFormLinksSection
         onChange={onChange}
         placeholder="https://youtube.com/..."
       />
-    </div>
+    </FormField>
   </>
 );

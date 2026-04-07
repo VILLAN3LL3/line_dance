@@ -2,9 +2,14 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { DanceCourse, Session } from "../../types";
-import { CourseStatus, getBerlinTodayIso, getCourseStatus, getCourseStatusLabel } from "../../utils/courseStatus";
+import {
+  CourseStatus,
+  getBerlinTodayIso,
+  getCourseStatus,
+  getCourseStatusLabel,
+} from "../../utils/courseStatus";
 import { getYouTubePlaylistPageUrl } from "../../utils/youtube";
-import { EmptyState, LoadingState } from "../shared/ui";
+import { ActionGroup, EmptyState, LoadingState, StatusBadge } from "../shared/ui";
 
 interface DanceGroupCoursesSectionProps {
   courses: DanceCourse[];
@@ -59,9 +64,13 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
               <div className="course-info">
                 <h4>
                   {course.id} <span className="course-semester">({course.semester})</span>
-                  <span className={`course-status-badge course-status-${courseStatus}`}>
+                  <StatusBadge
+                    status={courseStatus}
+                    className="course-status-badge"
+                    statusPrefix="course-status-"
+                  >
                     {getCourseStatusLabel(courseStatus)}
-                  </span>
+                  </StatusBadge>
                 </h4>
                 {course.start_date && (
                   <p>Started: {new Date(course.start_date).toLocaleDateString()}</p>
@@ -89,7 +98,7 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
                   )}
                 </div>
               </div>
-              <div className="course-actions">
+              <ActionGroup className="course-actions">
                 <button
                   onClick={() => onExportCoursePdf(course)}
                   className="btn-secondary"
@@ -120,7 +129,7 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
                 >
                   Delete
                 </button>
-              </div>
+              </ActionGroup>
             </div>
           );
         })}

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Choreography, LearnedChoreography } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
-import { EmptyState } from "../shared/ui";
+import { EmptyState, TagGroup } from "../shared/ui";
 
 interface DanceGroupLearnedSectionProps {
   learnedChoreographies: LearnedChoreography[];
@@ -55,13 +55,13 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
           <EmptyState>No step figures learned yet</EmptyState>
         ) : (
           <>
-            <div className="tags-container">
+            <TagGroup className="tags-container">
               {learnedStepFigures.map((figure) => (
                 <span key={figure} className="tag">
                   {figure}
                 </span>
               ))}
-            </div>
+            </TagGroup>
             <div style={{ marginTop: "15px" }}>
               <button
                 onClick={handleSearchChoreographies}

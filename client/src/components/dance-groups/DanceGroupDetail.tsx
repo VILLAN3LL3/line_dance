@@ -16,6 +16,7 @@ import {
   removeGroupLevel,
 } from "../../api";
 import { Choreography, DanceCourse, DanceGroup, LearnedChoreography, Session } from "../../types";
+import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
 import { DanceGroupCoursesSection } from "./DanceGroupCoursesSection";
 import { DanceGroupLearnedSection } from "./DanceGroupLearnedSection";
 import { DanceGroupLevelsSection } from "./DanceGroupLevelsSection";
@@ -69,7 +70,7 @@ const DanceGroupDetail: React.FC = () => {
   }, [parsedGroupId, loadData]);
 
   const handleDeleteCourse = async (courseId: number) => {
-    if (!confirm("Are you sure you want to delete this course and all related sessions?")) {
+    if (!confirmAction("Are you sure you want to delete this course and all related sessions?")) {
       return;
     }
 
@@ -128,7 +129,7 @@ const DanceGroupDetail: React.FC = () => {
   };
 
   const handleRemoveLevel = async (level: string) => {
-    if (!confirm(`Remove level "${level}"?`)) {
+    if (!confirmAction(`Remove level "${level}"?`)) {
       return;
     }
 
@@ -156,13 +157,11 @@ const DanceGroupDetail: React.FC = () => {
   return (
     <div className="dance-group-detail">
       <div className="detail-header">
-        <button onClick={() => navigate("/admin")} className="btn-back">
-          Back to Groups
-        </button>
+        <BackButton onClick={() => navigate("/admin")}>Back to Groups</BackButton>
         <h2>{group?.name ?? "Dance Group"}</h2>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <ErrorMessage message={error} />}
 
       <div className="detail-content">
         <DanceGroupCoursesSection

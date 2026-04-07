@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { Choreography } from "../../types";
-import { EmptyState } from "../shared/ui";
+import { EmptyState, TagGroup } from "../shared/ui";
 
 interface DanceGroupLevelsSectionProps {
   groupLevels: string[];
@@ -58,7 +58,7 @@ export const DanceGroupLevelsSection: React.FC<DanceGroupLevelsSectionProps> = (
       {groupLevels.length === 0 ? (
         <EmptyState>No levels configured yet</EmptyState>
       ) : (
-        <div className="tags-container">
+        <TagGroup className="tags-container">
           {groupLevels.map((level) => (
             <span key={level} className="tag">
               {level}
@@ -72,7 +72,7 @@ export const DanceGroupLevelsSection: React.FC<DanceGroupLevelsSectionProps> = (
               </button>
             </span>
           ))}
-        </div>
+        </TagGroup>
       )}
     </section>
   );

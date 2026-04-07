@@ -3,9 +3,15 @@ import "../../styles/CourseFormPage.css";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { createDanceCourse, getDanceCourses, getDanceGroup, getTrainers, updateDanceCourse } from "../../api";
+import {
+  createDanceCourse,
+  getDanceCourses,
+  getDanceGroup,
+  getTrainers,
+  updateDanceCourse,
+} from "../../api";
 import { DanceCourse, DanceGroup, Trainer } from "../../types";
-import { ErrorMessage } from "../shared/ui";
+import { ActionGroup, BackButton, ErrorMessage, FormField } from "../shared/ui";
 import { UrlInput } from "../shared/UrlInput";
 
 const CourseFormPage: React.FC = () => {
@@ -129,13 +135,9 @@ const CourseFormPage: React.FC = () => {
   return (
     <div className="course-form-page">
       <div className="course-form-header">
-        <button
-          onClick={() => navigate(`/admin/groups/${parsedGroupId}`)}
-          className="btn-back"
-          disabled={isLoading}
-        >
+        <BackButton onClick={() => navigate(`/admin/groups/${parsedGroupId}`)} disabled={isLoading}>
           ← Back to Group
-        </button>
+        </BackButton>
         <h2>{title}</h2>
       </div>
 
@@ -148,8 +150,7 @@ const CourseFormPage: React.FC = () => {
 
       <form className="course-form-card" onSubmit={handleSubmit}>
         {!isEditMode && (
-          <div className="course-form-field">
-            <label htmlFor="course-id">Course ID (optional)</label>
+          <FormField label="Course ID (optional)" htmlFor="course-id" className="course-form-field">
             <input
               id="course-id"
               type="number"
@@ -157,11 +158,10 @@ const CourseFormPage: React.FC = () => {
               onChange={(e) => setCourseIdInput(e.target.value)}
               disabled={isLoading}
             />
-          </div>
+          </FormField>
         )}
 
-        <div className="course-form-field">
-          <label htmlFor="course-semester">Semester *</label>
+        <FormField label="Semester *" htmlFor="course-semester" className="course-form-field">
           <input
             id="course-semester"
             type="text"
@@ -171,10 +171,9 @@ const CourseFormPage: React.FC = () => {
             disabled={isLoading}
             required
           />
-        </div>
+        </FormField>
 
-        <div className="course-form-field">
-          <label htmlFor="course-start-date">Start Date</label>
+        <FormField label="Start Date" htmlFor="course-start-date" className="course-form-field">
           <input
             id="course-start-date"
             type="date"
@@ -182,10 +181,9 @@ const CourseFormPage: React.FC = () => {
             onChange={(e) => setStartDate(e.target.value)}
             disabled={isLoading}
           />
-        </div>
+        </FormField>
 
-        <div className="course-form-field">
-          <label htmlFor="course-trainer">Trainer</label>
+        <FormField label="Trainer" htmlFor="course-trainer" className="course-form-field">
           <select
             id="course-trainer"
             value={trainerId}
@@ -199,10 +197,13 @@ const CourseFormPage: React.FC = () => {
               </option>
             ))}
           </select>
-        </div>
+        </FormField>
 
-        <div className="course-form-field">
-          <label htmlFor="course-youtube">YouTube Playlist URL</label>
+        <FormField
+          label="YouTube Playlist URL"
+          htmlFor="course-youtube"
+          className="course-form-field"
+        >
           <UrlInput
             id="course-youtube"
             name="youtube_playlist_url"
@@ -210,10 +211,13 @@ const CourseFormPage: React.FC = () => {
             onChange={(e) => setYoutubePlaylistUrl(e.target.value)}
             disabled={isLoading}
           />
-        </div>
+        </FormField>
 
-        <div className="course-form-field">
-          <label htmlFor="course-copperknob">Copperknob List URL</label>
+        <FormField
+          label="Copperknob List URL"
+          htmlFor="course-copperknob"
+          className="course-form-field"
+        >
           <UrlInput
             id="course-copperknob"
             name="copperknob_list_url"
@@ -221,10 +225,13 @@ const CourseFormPage: React.FC = () => {
             onChange={(e) => setCopperknobListUrl(e.target.value)}
             disabled={isLoading}
           />
-        </div>
+        </FormField>
 
-        <div className="course-form-field">
-          <label htmlFor="course-spotify">Spotify Playlist URL</label>
+        <FormField
+          label="Spotify Playlist URL"
+          htmlFor="course-spotify"
+          className="course-form-field"
+        >
           <UrlInput
             id="course-spotify"
             name="spotify_playlist_url"
@@ -232,9 +239,9 @@ const CourseFormPage: React.FC = () => {
             onChange={(e) => setSpotifyPlaylistUrl(e.target.value)}
             disabled={isLoading}
           />
-        </div>
+        </FormField>
 
-        <div className="course-form-actions">
+        <ActionGroup className="course-form-actions">
           <button type="submit" className="btn-primary" disabled={isLoading}>
             {isEditMode ? "Save Changes" : "Create Course"}
           </button>
@@ -246,7 +253,7 @@ const CourseFormPage: React.FC = () => {
           >
             Cancel
           </button>
-        </div>
+        </ActionGroup>
       </form>
     </div>
   );

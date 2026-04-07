@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 
 import { createTrainer, deleteTrainer, getTrainers, updateTrainer } from "../../api";
 import { Trainer } from "../../types";
-import { EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
+import { ActionGroup, confirmAction, EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
 
 const TrainersAdmin: React.FC = () => {
   const [trainers, setTrainers] = useState<Trainer[]>([]);
@@ -97,7 +97,7 @@ const TrainersAdmin: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     if (
-      !confirm(
+      !confirmAction(
         "Delete this trainer? Assigned courses will keep their data but no trainer assignment.",
       )
     ) {
@@ -185,7 +185,7 @@ const TrainersAdmin: React.FC = () => {
                       onChange={(e) => setEditEmail(e.target.value)}
                       disabled={isLoading}
                     />
-                    <div className="trainer-actions">
+                    <ActionGroup className="trainer-actions">
                       <button
                         type="button"
                         className="btn-primary"
@@ -202,7 +202,7 @@ const TrainersAdmin: React.FC = () => {
                       >
                         Cancel
                       </button>
-                    </div>
+                    </ActionGroup>
                   </>
                 ) : (
                   <>
@@ -211,7 +211,7 @@ const TrainersAdmin: React.FC = () => {
                       <p>{trainer.phone}</p>
                       <p>{trainer.email}</p>
                     </div>
-                    <div className="trainer-actions">
+                    <ActionGroup className="trainer-actions">
                       <button
                         type="button"
                         className="btn-edit"
@@ -228,7 +228,7 @@ const TrainersAdmin: React.FC = () => {
                       >
                         Delete
                       </button>
-                    </div>
+                    </ActionGroup>
                   </>
                 )}
               </div>

@@ -5,6 +5,15 @@ import { useNavigate } from "react-router-dom";
 
 import { createDanceGroup, deleteDanceGroup, getDanceGroups, updateDanceGroup } from "../../api";
 import { DanceGroup } from "../../types";
+import {
+  ActionGroup,
+  BackButton,
+  confirmAction,
+  EmptyState,
+  ErrorMessage,
+  FormField,
+  LoadingState,
+} from "../shared/ui";
 
 interface DanceGroupsAdminProps {
   mode?: "list" | "create";
@@ -82,7 +91,7 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this dance group and all related data?")) {
+    if (!confirmAction("Are you sure you want to delete this dance group and all related data?")) {
       return;
     }
 
@@ -114,16 +123,14 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
         </button>
       </header>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <ErrorMessage message={error} />}
 
       {mode === "list" && (
         <div className="groups-list-view">
-          {isLoading && <div className="loading">Loading dance groups...</div>}
+          {isLoading && <LoadingState>Loading dance groups...</LoadingState>}
 
           {danceGroups.length === 0 ? (
-            <div className="empty-state">
-              <p>No dance groups yet. Create one to get started!</p>
-            </div>
+            <EmptyState>No dance groups yet. Create one to get started!</EmptyState>
           ) : (
             <div className="groups-container">
               {danceGroups.map((group) => (
@@ -149,7 +156,7 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
                       Manage courses, sessions, and learned choreographies for this dance group.
                     </p>
                   </div>
-                  <div className="group-actions">
+                  <ActionGroup className="group-actions">
                     {editingId === group.id ? (
                       <>
                         <button
@@ -198,7 +205,7 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
                         </button>
                       </>
                     )}
-                  </div>
+                  </ActionGroup>
                 </div>
               ))}
             </div>
@@ -208,13 +215,10 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
 
       {mode === "create" && (
         <div className="form-view">
-          <button onClick={() => navigate("/admin")} className="btn-back">
-            ← Back to List
-          </button>
+          <BackButton onClick={() => navigate("/admin")}>Back to List</BackButton>
           <h2>Create New Dance Group</h2>
           <form onSubmit={handleCreate} className="group-form">
-            <div className="form-group">
-              <label htmlFor="group-name">Group Name</label>
+            <FormField label="Group Name" htmlFor="group-name" className="form-group">
               <input
                 id="group-name"
                 type="text"
@@ -224,8 +228,8 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
                 disabled={isLoading}
                 autoFocus
               />
-            </div>
-            <div className="form-actions">
+            </FormField>
+            <ActionGroup className="form-actions">
               <button type="submit" className="btn-primary" disabled={isLoading}>
                 {isLoading ? "Creating..." : "Create Group"}
               </button>
@@ -237,7 +241,7 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
               >
                 Cancel
               </button>
-            </div>
+            </ActionGroup>
           </form>
         </div>
       )}

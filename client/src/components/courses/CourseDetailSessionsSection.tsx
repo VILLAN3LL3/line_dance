@@ -1,9 +1,10 @@
 import React from "react";
 
 import { getSessionBadgeLabel, getSessionBadgeStatus } from "../../utils/courseStatus";
-import { EmptyState, LoadingState } from "../shared/ui";
+import { ActionGroup, EmptyState, LoadingState, StatusBadge } from "../shared/ui";
 
 import type { Session } from "../../types";
+
 type CourseDetailSessionsSectionProps = {
   sessions: Session[];
   visibleSessions: Session[];
@@ -53,9 +54,13 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                 <h4>
                   {new Date(session.session_date).toLocaleDateString()}
                   {sessionBadgeStatus && (
-                    <span className={`session-status-badge session-status-${sessionBadgeStatus}`}>
+                    <StatusBadge
+                      status={sessionBadgeStatus}
+                      className="session-status-badge"
+                      statusPrefix="session-status-"
+                    >
                       {getSessionBadgeLabel(sessionBadgeStatus)}
-                    </span>
+                    </StatusBadge>
                   )}
                 </h4>
                 <p>
@@ -64,7 +69,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                   })}
                 </p>
               </div>
-              <div className="session-actions">
+              <ActionGroup className="session-actions">
                 <button
                   onClick={() => onSelectSession(session)}
                   className={`btn-secondary ${selectedSessionId === session.id ? "active" : ""}`}
@@ -79,7 +84,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                 >
                   Delete
                 </button>
-              </div>
+              </ActionGroup>
             </div>
           );
         })}

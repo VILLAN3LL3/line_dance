@@ -4,12 +4,18 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  addChoreographyToSession, createSession, deleteSession, fetchChoreographies, getDanceCourses, getSessionChoreographies, getSessions,
-  removeChoreographyFromSession
+  addChoreographyToSession,
+  createSession,
+  deleteSession,
+  fetchChoreographies,
+  getDanceCourses,
+  getSessionChoreographies,
+  getSessions,
+  removeChoreographyFromSession,
 } from "../../api";
 import { Choreography, DanceCourse, Session, SessionChoreography } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
-import { ErrorMessage } from "../shared/ui";
+import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
 import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
 import CourseDetailSessionsSection from "./CourseDetailSessionsSection";
 
@@ -126,7 +132,7 @@ const CourseDetail: React.FC = () => {
   };
 
   const handleDeleteSession = async (sessionId: number) => {
-    if (!confirm("Are you sure you want to delete this session?")) {
+    if (!confirmAction("Are you sure you want to delete this session?")) {
       return;
     }
 
@@ -209,7 +215,7 @@ const CourseDetail: React.FC = () => {
       return;
     }
 
-    if (!confirm("Remove this choreography from the session?")) {
+    if (!confirmAction("Remove this choreography from the session?")) {
       return;
     }
 
@@ -230,9 +236,7 @@ const CourseDetail: React.FC = () => {
   return (
     <div className="course-detail">
       <div className="detail-header">
-        <button onClick={() => navigate(`/admin/groups/${parsedGroupId}`)} className="btn-back">
-          Back
-        </button>
+        <BackButton onClick={() => navigate(`/admin/groups/${parsedGroupId}`)}>Back</BackButton>
         <h2>
           Course: {course?.id} ({course?.semester ?? "Unknown Semester"})
         </h2>

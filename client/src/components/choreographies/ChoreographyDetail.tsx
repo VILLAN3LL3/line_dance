@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { deleteChoreography, fetchChoreography, updateChoreography } from "../../api";
 import { Choreography, ChoreographyFormData } from "../../types";
-import { EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
+import { BackButton, confirmAction, EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
 import { ChoreographyCard } from "./ChoreographyCard";
 import { ChoreographyForm } from "./ChoreographyForm";
 
@@ -61,7 +61,7 @@ const ChoreographyDetail: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this choreography?")) {
+    if (!confirmAction("Are you sure you want to delete this choreography?")) {
       return;
     }
 
@@ -107,9 +107,7 @@ const ChoreographyDetail: React.FC = () => {
 
   return (
     <div className="choreography-detail">
-      <button onClick={() => navigate(-1)} className="btn-back">
-        ← Back
-      </button>
+      <BackButton onClick={() => navigate(-1)} />
 
       {error && <ErrorMessage message={error} />}
 

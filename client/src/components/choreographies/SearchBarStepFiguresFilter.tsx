@@ -1,6 +1,6 @@
 import React from "react";
 
-import { AutoCompleteInput, Tag } from "../shared/ui";
+import { AutoCompleteInput, Tag, TagGroup } from "../shared/ui";
 
 interface SearchBarStepFiguresFilterProps {
   selectedFigures: string[];
@@ -108,7 +108,7 @@ export const SearchBarStepFiguresFilter: React.FC<SearchBarStepFiguresFilterProp
       </div>
     )}
 
-    <div className="filter-tags">
+    <TagGroup className="filter-tags">
       {selectedFigures.map((figure) => (
         <Tag
           key={figure}
@@ -120,6 +120,6 @@ export const SearchBarStepFiguresFilter: React.FC<SearchBarStepFiguresFilterProp
           onRemove={() => onToggleFigure(figure)}
         />
       ))}
-    </div>
+    </TagGroup>
   </div>
 );

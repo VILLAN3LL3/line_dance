@@ -1,5 +1,7 @@
 import React from "react";
 
+import { FormField } from "../shared/ui";
+
 interface LevelOption {
   id: number;
   name: string;
@@ -27,8 +29,7 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
   onChange,
 }) => (
   <>
-    <div className="form-group">
-      <label htmlFor="name">Choreography Name *</label>
+    <FormField label="Choreography Name *" htmlFor="name" className="form-group">
       <input
         type="text"
         id="name"
@@ -38,10 +39,9 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
         required
         placeholder="Enter choreography name"
       />
-    </div>
+    </FormField>
 
-    <div className="form-group">
-      <label htmlFor="level">Level *</label>
+    <FormField label="Level *" htmlFor="level" className="form-group">
       <select id="level" name="level" value={level} onChange={onChange} required>
         <option value="">Select a level</option>
         {levels.map((item) => (
@@ -50,11 +50,10 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
           </option>
         ))}
       </select>
-    </div>
+    </FormField>
 
     <div className="form-row">
-      <div className="form-group">
-        <label htmlFor="count">Count</label>
+      <FormField label="Count" htmlFor="count" className="form-group">
         <input
           type="number"
           id="count"
@@ -63,10 +62,9 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
           onChange={onChange}
           placeholder="e.g., 64"
         />
-      </div>
+      </FormField>
 
-      <div className="form-group">
-        <label htmlFor="wall_count">Wall Count</label>
+      <FormField label="Wall Count" htmlFor="wall_count" className="form-group">
         <input
           type="number"
           id="wall_count"
@@ -75,10 +73,9 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
           onChange={onChange}
           placeholder="e.g., 4"
         />
-      </div>
+      </FormField>
 
-      <div className="form-group">
-        <label htmlFor="creation_year">Year Created</label>
+      <FormField label="Year Created" htmlFor="creation_year" className="form-group">
         <input
           type="number"
           id="creation_year"
@@ -87,7 +84,7 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
           onChange={onChange}
           placeholder="e.g., 2023"
         />
-      </div>
+      </FormField>
     </div>
   </>
 );
