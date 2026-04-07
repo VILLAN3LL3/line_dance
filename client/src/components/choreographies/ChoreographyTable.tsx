@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 
 import { getStepFigures } from "../../api";
 import { Choreography } from "../../types";
+import { ActionButton } from "../shared/ui";
 
 interface ChoreographyTableProps {
   choreographies: Choreography[];
@@ -168,7 +169,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                   ))}
                   <td className="actions-cell">
                     {choreo.step_sheet_link && (
-                      <button
+                      <ActionButton
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(choreo.step_sheet_link, "_blank");
@@ -177,10 +178,10 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                         title="Open Step Sheet"
                       >
                         🦶
-                      </button>
+                      </ActionButton>
                     )}
                     {choreo.demo_video_url && (
-                      <button
+                      <ActionButton
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(choreo.demo_video_url, "_blank");
@@ -189,10 +190,10 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                         title="Open Demo Video"
                       >
                         🎬
-                      </button>
+                      </ActionButton>
                     )}
                     {choreo.tutorial_video_url && (
-                      <button
+                      <ActionButton
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(choreo.tutorial_video_url || "", "_blank");
@@ -201,9 +202,9 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                         title="Open Tutorial Video"
                       >
                         🎓
-                      </button>
+                      </ActionButton>
                     )}
-                    <button
+                    <ActionButton
                       onClick={(e) => {
                         e.stopPropagation();
                         onEdit?.(choreo.id);
@@ -213,8 +214,8 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                       title="Edit"
                     >
                       ✏️
-                    </button>
-                    <button
+                    </ActionButton>
+                    <ActionButton
                       onClick={(e) => {
                         e.stopPropagation();
                         onDelete?.(choreo.id);
@@ -224,7 +225,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                       title="Delete"
                     >
                       🗑️
-                    </button>
+                    </ActionButton>
                   </td>
                 </tr>
               );

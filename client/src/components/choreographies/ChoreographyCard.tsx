@@ -4,6 +4,7 @@ import React from "react";
 
 import { Choreography } from "../../types";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
+import { ActionButton, Badge, Card, Tag, YouTubeVideo } from "../shared/ui";
 
 interface ChoreographyCardProps {
   choreography: Choreography;
@@ -36,186 +37,158 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
     event.stopPropagation();
   };
 
-  return (
-    <div className={cardClassName}>
-      <div className="card-header">
-        <h3>{choreography.name}</h3>
-        <span className={`level-badge level-${choreography.level.toLowerCase()}`}>
-          {choreography.level}
-        </span>
-      </div>
+  const header = (
+    <>
+      <h3>{choreography.name}</h3>
+      <Badge className={`level-badge level-${choreography.level.toLowerCase()}`}>
+        {choreography.level}
+      </Badge>
+    </>
+  );
 
-      <div className="card-content">
-        {choreography.count && (
-          <p>
-            <strong>Count:</strong> {choreography.count}
-          </p>
-        )}
-        {choreography.wall_count && (
-          <p>
-            <strong>Wall:</strong> {choreography.wall_count}
-          </p>
-        )}
-        {choreography.creation_year && (
-          <p>
-            <strong>Year:</strong> {choreography.creation_year}
-          </p>
-        )}
+  const content = (
+    <>
+      {choreography.count && (
+        <p>
+          <strong>Count:</strong> {choreography.count}
+        </p>
+      )}
+      {choreography.wall_count && (
+        <p>
+          <strong>Wall:</strong> {choreography.wall_count}
+        </p>
+      )}
+      {choreography.creation_year && (
+        <p>
+          <strong>Year:</strong> {choreography.creation_year}
+        </p>
+      )}
 
-        {choreography.authors.length > 0 && (
-          <div className="authors">
-            <strong>Authors:</strong> {choreography.authors.join(", ")}
+      {choreography.authors.length > 0 && (
+        <div className="authors">
+          <strong>Authors:</strong> {choreography.authors.join(", ")}
+        </div>
+      )}
+
+      {choreography.step_figures.length > 0 && (
+        <div className="step-figures">
+          <strong>Step Figures:</strong>
+          <div className="tag-list">
+            {choreography.step_figures.map((figure) => (
+              <Tag key={figure} value={figure} className="tag-small" />
+            ))}
+            {choreography.restart_information && (
+              <Tag value="Restart 🔁" className="tag-small" title="Has restart information" />
+            )}
+            {choreography.tag_information && (
+              <Tag value="Tag 🌉" className="tag-small" title="Has tag information" />
+            )}
           </div>
-        )}
+        </div>
+      )}
 
-        {choreography.step_figures.length > 0 && (
-          <div className="step-figures">
-            <strong>Step Figures:</strong>
-            <div className="tag-list">
-              {choreography.step_figures.map((figure) => (
-                <span key={figure} className="tag-small">
-                  {figure}
-                </span>
-              ))}
-              {choreography.restart_information && (
-                <span className="tag-small" title="Has restart information">
-                  Restart 🔁
-                </span>
-              )}
-              {choreography.tag_information && (
-                <span className="tag-small" title="Has tag information">
-                  Tag 🌉
-                </span>
-              )}
+      {choreography.tags.length > 0 && (
+        <div className="tags">
+          <strong>Tags:</strong>
+          <div className="tag-list">
+            {choreography.tags.map((tag) => (
+              <Tag key={tag} value={tag} className="tag-small" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {choreography.step_sheet_link && (
+        <a
+          href={choreography.step_sheet_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="step-sheet-link"
+          onClick={handleContentLinkClick}
+        >
+          🦶 View Step Sheet
+        </a>
+      )}
+
+      {showPrimaryEmbed && primaryEmbedUrl && (
+        <div className="video-embed-block">
+          <strong>{primaryEmbedLabel}</strong>
+          <YouTubeVideo src={primaryEmbedUrl} title={primaryEmbedTitle} />
+        </div>
+      )}
+
+      {showDemoLink && choreography.demo_video_url && (
+        <a
+          href={choreography.demo_video_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="step-sheet-link"
+          onClick={handleContentLinkClick}
+        >
+          🎬 Watch Demo
+        </a>
+      )}
+
+      {showTutorialLink && choreography.tutorial_video_url && (
+        <a
+          href={choreography.tutorial_video_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="step-sheet-link"
+          onClick={handleContentLinkClick}
+        >
+          🎓 Watch Tutorial
+        </a>
+      )}
+
+      {showAllEmbeds && (
+        <div className="video-embeds-row">
+          {demoEmbedUrl && (
+            <div className="video-embed-block">
+              <strong>Demo Video:</strong>
+              <YouTubeVideo src={demoEmbedUrl} title={`Demo video for ${choreography.name}`} />
             </div>
-          </div>
-        )}
-
-        {choreography.tags.length > 0 && (
-          <div className="tags">
-            <strong>Tags:</strong>
-            <div className="tag-list">
-              {choreography.tags.map((tag) => (
-                <span key={tag} className="tag-small">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {choreography.step_sheet_link && (
-          <a
-            href={choreography.step_sheet_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="step-sheet-link"
-            onClick={handleContentLinkClick}
-          >
-            🦶 View Step Sheet
-          </a>
-        )}
-
-        {showPrimaryEmbed && primaryEmbedUrl && (
-          <div className="video-embed-block">
-            <strong>{primaryEmbedLabel}</strong>
-            <div className="video-embed-wrapper">
-              <iframe
-                src={primaryEmbedUrl}
-                title={primaryEmbedTitle}
-                loading="lazy"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
+          )}
+          {tutorialEmbedUrl && (
+            <div className="video-embed-block">
+              <strong>Tutorial Video:</strong>
+              <YouTubeVideo
+                src={tutorialEmbedUrl}
+                title={`Tutorial video for ${choreography.name}`}
               />
             </div>
-          </div>
-        )}
-
-        {showDemoLink && choreography.demo_video_url && (
-          <a
-            href={choreography.demo_video_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="step-sheet-link"
-            onClick={handleContentLinkClick}
-          >
-            🎬 Watch Demo
-          </a>
-        )}
-
-        {showTutorialLink && choreography.tutorial_video_url && (
-          <a
-            href={choreography.tutorial_video_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="step-sheet-link"
-            onClick={handleContentLinkClick}
-          >
-            🎓 Watch Tutorial
-          </a>
-        )}
-
-        {showAllEmbeds && (
-          <div className="video-embeds-row">
-            {demoEmbedUrl && (
-              <div className="video-embed-block">
-                <strong>Demo Video:</strong>
-                <div className="video-embed-wrapper">
-                  <iframe
-                    src={demoEmbedUrl}
-                    title={`Demo video for ${choreography.name}`}
-                    loading="lazy"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                  />
-                </div>
-              </div>
-            )}
-            {tutorialEmbedUrl && (
-              <div className="video-embed-block">
-                <strong>Tutorial Video:</strong>
-                <div className="video-embed-wrapper">
-                  <iframe
-                    src={tutorialEmbedUrl}
-                    title={`Tutorial video for ${choreography.name}`}
-                    loading="lazy"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="card-actions">
-        {onEdit && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(choreography.id);
-            }}
-            className="btn-small btn-edit"
-          >
-            Edit
-          </button>
-        )}
-        {onDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(choreography.id);
-            }}
-            className="btn-small btn-delete"
-          >
-            Delete
-          </button>
-        )}
-      </div>
-    </div>
+          )}
+        </div>
+      )}
+    </>
   );
+
+  const actions = (
+    <>
+      {onEdit && (
+        <ActionButton
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(choreography.id);
+          }}
+          className="btn-small btn-edit"
+        >
+          Edit
+        </ActionButton>
+      )}
+      {onDelete && (
+        <ActionButton
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(choreography.id);
+          }}
+          className="btn-small btn-delete"
+        >
+          Delete
+        </ActionButton>
+      )}
+    </>
+  );
+
+  return <Card className={cardClassName} header={header} content={content} actions={actions} />;
 };

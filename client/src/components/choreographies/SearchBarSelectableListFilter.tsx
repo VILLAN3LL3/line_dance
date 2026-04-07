@@ -1,5 +1,7 @@
 import React from "react";
 
+import { AutoCompleteInput, Tag } from "../shared/ui";
+
 interface SearchBarSelectableListFilterProps {
   label: string;
   inputId: string;
@@ -30,49 +32,31 @@ export const SearchBarSelectableListFilter: React.FC<SearchBarSelectableListFilt
   <div className="filter-group">
     <label htmlFor={inputId}>{label}:</label>
     <div className="filter-input-container">
-      <input
+      <AutoCompleteInput
         id={inputId}
-        type="text"
+        listId={listId}
         value={inputValue}
+        options={options}
         onChange={onInputChange}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            onAddFromInput(inputValue);
-          }
-        }}
+        onAdd={onAddFromInput}
         placeholder={placeholder}
-        list={listId}
+        disabled={isLoading}
         autoComplete="off"
-        disabled={isLoading}
+        addButtonLabel="+"
+        addButtonClassName="btn-add-filter"
       />
-      <datalist id={listId}>
-        {options.map((option) => (
-          <option key={option} value={option} />
-        ))}
-      </datalist>
-      <button
-        type="button"
-        onClick={() => onAddFromInput(inputValue)}
-        className="btn-add-filter"
-        disabled={isLoading}
-      >
-        +
-      </button>
     </div>
     <div className="filter-tags">
       {selectedValues.map((value) => (
-        <span key={value} className="filter-tag">
-          {value}
-          <button
-            type="button"
-            onClick={() => onToggleValue(value)}
-            className="btn-remove-tag"
-            disabled={isLoading}
-          >
-            x
-          </button>
-        </span>
+        <Tag
+          key={value}
+          value={value}
+          className="filter-tag"
+          removeButtonClassName="btn-remove-tag"
+          isRemovable
+          disabled={isLoading}
+          onRemove={() => onToggleValue(value)}
+        />
       ))}
     </div>
   </div>

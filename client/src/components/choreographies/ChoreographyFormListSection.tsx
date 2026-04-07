@@ -1,5 +1,7 @@
 import React from "react";
 
+import { AutoCompleteInput, Tag } from "../shared/ui";
+
 interface ChoreographyFormListSectionProps {
   title: string;
   listId: string;
@@ -30,37 +32,28 @@ export const ChoreographyFormListSection: React.FC<ChoreographyFormListSectionPr
   <div className="form-section">
     <h3>{title}</h3>
     <div className="form-group form-input-row">
-      <input
-        type="text"
+      <AutoCompleteInput
+        listId={listId}
         value={inputValue}
+        options={options}
         onChange={onInputChange}
         onBlur={onInputBlur}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            onAdd();
-          }
-        }}
+        onAdd={() => onAdd()}
         placeholder={inputValue ? "" : placeholder}
-        list={listId}
+        addButtonLabel={addButtonLabel}
+        addButtonClassName="btn-add"
       />
-      <datalist id={listId}>
-        {options.map((option) => (
-          <option key={option} value={option} />
-        ))}
-      </datalist>
-      <button type="button" onClick={onAdd} className="btn-add">
-        {addButtonLabel}
-      </button>
     </div>
     <div className="tags-container">
       {selectedValues.map((value) => (
-        <span key={value} className="tag">
-          {value}
-          <button type="button" onClick={() => onRemove(value)} className="btn-remove">
-            x
-          </button>
-        </span>
+        <Tag
+          key={value}
+          value={value}
+          className="tag"
+          removeButtonClassName="btn-remove"
+          isRemovable
+          onRemove={() => onRemove(value)}
+        />
       ))}
     </div>
   </div>

@@ -1,5 +1,7 @@
 import React from "react";
 
+import { AutoCompleteInput, Tag } from "../shared/ui";
+
 interface SearchBarStepFiguresFilterProps {
   selectedFigures: string[];
   inputFigure: string;
@@ -41,38 +43,22 @@ export const SearchBarStepFiguresFilter: React.FC<SearchBarStepFiguresFilterProp
       </label>
     </div>
     <div className="filter-input-container">
-      <input
+      <AutoCompleteInput
         id="figure-input"
-        type="text"
+        listId="figures-list"
         value={inputFigure}
+        options={figureOptions}
         onChange={onFigureInput}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            onAddFigureFromInput(inputFigure);
-          }
-        }}
+        onAdd={onAddFigureFromInput}
         placeholder={
           withoutStepFigures ? "Readonly: using without-step-figures filter" : "Add step figure..."
         }
-        list="figures-list"
         autoComplete="off"
         readOnly={withoutStepFigures}
         disabled={isLoading || withoutStepFigures}
+        addButtonLabel="+"
+        addButtonClassName="btn-add-filter"
       />
-      <datalist id="figures-list">
-        {figureOptions.map((figure) => (
-          <option key={figure} value={figure} />
-        ))}
-      </datalist>
-      <button
-        type="button"
-        onClick={() => onAddFigureFromInput(inputFigure)}
-        className="btn-add-filter"
-        disabled={isLoading || withoutStepFigures}
-      >
-        +
-      </button>
     </div>
 
     {selectedFigures.length > 0 && (
@@ -124,17 +110,15 @@ export const SearchBarStepFiguresFilter: React.FC<SearchBarStepFiguresFilterProp
 
     <div className="filter-tags">
       {selectedFigures.map((figure) => (
-        <span key={figure} className="filter-tag">
-          {figure}
-          <button
-            type="button"
-            onClick={() => onToggleFigure(figure)}
-            className="btn-remove-tag"
-            disabled={isLoading}
-          >
-            x
-          </button>
-        </span>
+        <Tag
+          key={figure}
+          value={figure}
+          className="filter-tag"
+          removeButtonClassName="btn-remove-tag"
+          isRemovable
+          disabled={isLoading}
+          onRemove={() => onToggleFigure(figure)}
+        />
       ))}
     </div>
   </div>
