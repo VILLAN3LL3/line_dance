@@ -11,7 +11,6 @@ interface ChoreographyCardProps {
   onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
   videoEmbedMode?: "single" | "all";
-  openEditInNewTab?: boolean;
 }
 
 export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
@@ -19,7 +18,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   onEdit,
   onDelete,
   videoEmbedMode = "single",
-  openEditInNewTab = false,
 }) => {
   const demoEmbedUrl = getYouTubeVideoEmbedUrl(choreography.demo_video_url);
   const tutorialEmbedUrl = getYouTubeVideoEmbedUrl(choreography.tutorial_video_url);
@@ -162,24 +160,22 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   const actions = (
     <>
       {onEdit && (
-        <ActionButton
+        <a
+          href={`/choreographies/${choreography.id}?edit=1`}
           onClick={(e) => {
             e.stopPropagation();
-            if (openEditInNewTab) {
-              window.open(
-                `/choreographies/${choreography.id}?edit=1`,
-                "_blank",
-                "noopener,noreferrer",
-              );
-              return;
+            // If plain click (no modifier keys), prevent default and use onEdit callback
+            if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+              e.preventDefault();
+              onEdit(choreography.id);
             }
-            onEdit(choreography.id);
+            // Otherwise let the link open normally in a new tab
           }}
-          variant="edit"
-          className="btn-small"
+          className="btn-edit btn-small"
+          role="button"
         >
           Edit
-        </ActionButton>
+        </a>
       )}
       {onDelete && (
         <ActionButton
