@@ -20,6 +20,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   onDelete,
   videoEmbedMode = "single",
 }) => {
+  const isDetailMode = videoEmbedMode === "all";
   const demoEmbedUrl = getYouTubeVideoEmbedUrl(choreography.demo_video_url);
   const tutorialEmbedUrl = getYouTubeVideoEmbedUrl(choreography.tutorial_video_url);
   const primaryEmbedUrl = demoEmbedUrl || tutorialEmbedUrl;
@@ -30,8 +31,9 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   const cardClassName =
     videoEmbedMode === "all" ? "choreography-card card-detail-video-layout" : "choreography-card";
   const showPrimaryEmbed = videoEmbedMode === "single" && Boolean(primaryEmbedUrl);
-  const showDemoLink = !showPrimaryEmbed && Boolean(choreography.demo_video_url);
-  const showTutorialLink = !showPrimaryEmbed && Boolean(choreography.tutorial_video_url);
+  const showDemoLink = videoEmbedMode === "single" && !showPrimaryEmbed && Boolean(choreography.demo_video_url);
+  const showTutorialLink =
+    videoEmbedMode === "single" && !showPrimaryEmbed && Boolean(choreography.tutorial_video_url);
   const showAllEmbeds =
     videoEmbedMode === "all" && (Boolean(demoEmbedUrl) || Boolean(tutorialEmbedUrl));
   const handleContentLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -95,31 +97,53 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
         </div>
       )}
 
-      {choreography.step_figures.length > 0 && (
+      {(choreography.step_figures.length > 0 || isDetailMode) && (
         <div className="step-figures">
           <strong>Step Figures:</strong>
-          <TagGroup className="tag-list">
-            {choreography.step_figures.map((figure) => (
-              <Tag key={figure} value={figure} className="tag-small" />
-            ))}
-            {choreography.restart_information && (
-              <Tag value="Restart 🔁" className="tag-small" title="Has restart information" />
-            )}
-            {choreography.tag_information && (
-              <Tag value="Tag 🌉" className="tag-small" title="Has tag information" />
-            )}
-          </TagGroup>
+          {choreography.step_figures.length > 0 ? (
+            <TagGroup className="tag-list">
+              {choreography.step_figures.map((figure) => (
+                <Tag key={figure} value={figure} className="tag-small" />
+              ))}
+              {choreography.restart_information && (
+                <Tag value="Restart 🔁" className="tag-small" title="Has restart information" />
+              )}
+              {choreography.tag_information && (
+                <Tag value="Tag 🌉" className="tag-small" title="Has tag information" />
+              )}
+            </TagGroup>
+          ) : (
+            <span>No step figures</span>
+          )}
         </div>
       )}
 
-      {choreography.tags.length > 0 && (
+      {(choreography.restart_information || isDetailMode) && (
+        <div className="info-section">
+          <strong>Restart Information</strong>
+          <span>{choreography.restart_information || "None"}</span>
+        </div>
+      )}
+
+      {(choreography.tag_information || isDetailMode) && (
+        <div className="info-section">
+          <strong>Tag Information</strong>
+          <span>{choreography.tag_information || "None"}</span>
+        </div>
+      )}
+
+      {(choreography.tags.length > 0 || isDetailMode) && (
         <div className="tags">
           <strong>Tags:</strong>
-          <TagGroup className="tag-list">
-            {choreography.tags.map((tag) => (
-              <Tag key={tag} value={tag} className="tag-small" />
-            ))}
-          </TagGroup>
+          {choreography.tags.length > 0 ? (
+            <TagGroup className="tag-list">
+              {choreography.tags.map((tag) => (
+                <Tag key={tag} value={tag} className="tag-small" />
+              ))}
+            </TagGroup>
+          ) : (
+            <span>No tags</span>
+          )}
         </div>
       )}
 
