@@ -31,7 +31,8 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   const cardClassName =
     videoEmbedMode === "all" ? "choreography-card card-detail-video-layout" : "choreography-card";
   const showPrimaryEmbed = videoEmbedMode === "single" && Boolean(primaryEmbedUrl);
-  const showDemoLink = videoEmbedMode === "single" && !showPrimaryEmbed && Boolean(choreography.demo_video_url);
+  const showDemoLink =
+    videoEmbedMode === "single" && !showPrimaryEmbed && Boolean(choreography.demo_video_url);
   const showTutorialLink =
     videoEmbedMode === "single" && !showPrimaryEmbed && Boolean(choreography.tutorial_video_url);
   const showAllEmbeds =
