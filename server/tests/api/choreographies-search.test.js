@@ -107,6 +107,14 @@ describe('GET /api/choreographies/search — search param', () => {
     expect(res.body.data).toHaveLength(1);
     expect(res.body.data[0].name).toBe(curlyTitle);
   });
+
+  it('matches titles when query is wrapped in quotes', async () => {
+    await seedDances();
+    const res = await search({ search: '"Argentine Tango"' });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Argentine Tango');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -318,21 +326,23 @@ describe('GET /api/choreographies/search — authors filter', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Filter by max_count
+// max_count is accepted but ignored
 // ---------------------------------------------------------------------------
 
-describe('GET /api/choreographies/search — max_count filter', () => {
-  it('returns choreographies with count <= max_count', async () => {
+describe('GET /api/choreographies/search — max_count (ignored)', () => {
+  it('does not filter results when max_count is provided', async () => {
     await seedDances();
     const res = await search({ max_count: 32 });
     const names = res.body.data.map((c) => c.name).sort();
-    expect(names).toEqual(['Cha Cha Fun', 'Waltz in the Rain']);
+    expect(names).toEqual(['Argentine Tango', 'Cha Cha Fun', 'Waltz in the Rain']);
   });
 
-  it('includes choreographies with null count', async () => {
+  it('still returns records with null count when max_count is provided', async () => {
+    await seedDances();
     await post({ name: 'No Count', level: 'Beginner' }); // count is null
     const res = await search({ max_count: 0 });
     expect(res.body.data.some((c) => c.name === 'No Count')).toBe(true);
+    expect(res.body.data).toHaveLength(4);
   });
 });
 
@@ -424,13 +434,13 @@ describe('GET /api/choreographies/search — bracket-notation query parser regre
     expect(res.body.data[0].name).toBe('Waltz in the Rain');
   });
 
-  it('combines level[]= and max_count filters correctly', async () => {
+  it('accepts level[]= with max_count while ignoring max_count', async () => {
     await seedDances();
-    // Beginner (32 counts) and Advanced (48 counts); max_count=32 excludes Advanced
+    // max_count is ignored, so both Beginner and Advanced should remain.
     const res = await searchRaw('level[]=Beginner&level[]=Advanced&max_count=32');
     expect(res.status).toBe(200);
-    expect(res.body.data).toHaveLength(1);
-    expect(res.body.data[0].name).toBe('Waltz in the Rain');
+    const names = res.body.data.map((c) => c.name).sort();
+    expect(names).toEqual(['Argentine Tango', 'Waltz in the Rain']);
   });
 });
 

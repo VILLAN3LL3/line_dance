@@ -553,7 +553,6 @@ function buildFilterConditions(filterObj) {
     without_step_figures,
     tags,
     authors,
-    max_count,
   } = filterObj;
   const conditions = [];
   const params = [];
@@ -601,14 +600,6 @@ function buildFilterConditions(filterObj) {
   conditions.push(...authorsFilter.conditions);
   params.push(...authorsFilter.params);
 
-  if (max_count !== undefined) {
-    const parsedMaxCount = Number.parseInt(String(max_count), 10);
-    if (!Number.isNaN(parsedMaxCount) && parsedMaxCount >= 0) {
-      conditions.push('(c.count IS NULL OR c.count <= ?)');
-      params.push(parsedMaxCount);
-    }
-  }
-
   return { conditions, params, joins, stepFilter };
 }
 
@@ -624,7 +615,6 @@ export async function searchChoreographies(req, res) {
       search,
       sort_field,
       sort_direction,
-      max_count,
     } = req.query;
     const page = Number.parseInt(req.query.page, 10) || 1;
     const limit = Number.parseInt(req.query.limit, 10) || 20;
@@ -638,7 +628,6 @@ export async function searchChoreographies(req, res) {
       without_step_figures,
       tags,
       authors,
-      max_count,
     });
 
     // Build count params before adding pagination params
@@ -735,7 +724,19 @@ function normalizeSearchText(rawText) {
     return '';
   }
 
-  return rawText.replaceAll(/[\u2018\u2019]/g, "'").trim();
+  const normalized = rawText
+    .replaceAll(/[\u2018\u2019]/g, "'")
+    .replaceAll(/[\u201C\u201D]/g, '"')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  // Support users typing quoted titles, e.g. "Bohemian Rhapsody".
+  const wrappedInSameQuote =
+    normalized.length >= 2 &&
+    ((normalized.startsWith('"') && normalized.endsWith('"')) ||
+      (normalized.startsWith("'") && normalized.endsWith("'")));
+
+  return wrappedInSameQuote ? normalized.slice(1, -1).trim() : normalized;
 }
 
 function buildStepFiguresFilter(step_figures, step_figures_match_mode, without_step_figures) {
