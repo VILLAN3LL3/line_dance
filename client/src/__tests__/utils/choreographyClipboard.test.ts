@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { Choreography } from "../../types";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
 
+import type { Choreography } from "../../types";
 function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
   return {
     id: 1,
