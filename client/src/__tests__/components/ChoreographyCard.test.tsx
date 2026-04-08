@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import { ChoreographyCard } from "../../components/choreographies/ChoreographyCard";
+import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
 
 import type { Choreography } from "../../types";
 
@@ -32,17 +33,15 @@ describe("ChoreographyCard", () => {
   it("renders core choreography fields and links", () => {
     render(<ChoreographyCard choreography={makeChoreography()} />);
 
-    expect(screen.getByText("Neon Waltz")).toBeInTheDocument();
+    expect(screen.getByText("Neon Waltz (2024)")).toBeInTheDocument();
     expect(screen.getByText("Intermediate")).toBeInTheDocument();
-    expect(screen.getByText(/Count:/)).toBeInTheDocument();
-    expect(screen.getByText(/Wall:/)).toBeInTheDocument();
-    expect(screen.getByText(/Year:/)).toBeInTheDocument();
+    expect(screen.getByText(/Count\/Wall:/)).toBeInTheDocument();
     expect(screen.getByText(/Authors:/)).toBeInTheDocument();
     expect(screen.getByText(/Tags:/)).toBeInTheDocument();
     expect(screen.getByText("Restart 🔁")).toBeInTheDocument();
     expect(screen.getByText("Tag 🌉")).toBeInTheDocument();
 
-    expect(screen.getByRole("link", { name: /view step sheet/i })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /open step sheet in a new tab/i })).toHaveAttribute(
       "href",
       "https://example.com/step-sheet",
     );
@@ -114,5 +113,21 @@ describe("ChoreographyCard", () => {
 
     expect(onEdit).toHaveBeenCalledWith(42);
     expect(onDelete).toHaveBeenCalledWith(42);
+  });
+
+  it("copies formatted choreography text to clipboard when copy action is clicked", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+
+    const choreography = makeChoreography();
+    render(<ChoreographyCard choreography={choreography} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /copy choreography details/i }));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledWith(buildChoreographyClipboardText(choreography));
   });
 });

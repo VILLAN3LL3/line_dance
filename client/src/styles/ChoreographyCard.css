@@ -210,6 +210,12 @@
   text-align: center;
 }
 
+.card-actions a[role="button"].step-sheet-action,
+.card-actions a[role="button"].copy-action {
+  flex: 0 0 auto;
+  width: fit-content;
+}
+
 @media (max-width: 768px) {
   .card-header {
     flex-direction: column;

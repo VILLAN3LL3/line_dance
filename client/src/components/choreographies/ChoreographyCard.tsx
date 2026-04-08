@@ -3,6 +3,7 @@ import "../../styles/ChoreographyCard.css";
 import React from "react";
 
 import { Choreography } from "../../types";
+import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
 import { ActionButton, Badge, Card, ExternalLink, Tag, TagGroup, YouTubeVideo } from "../shared/ui";
 
@@ -37,9 +38,31 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
     event.stopPropagation();
   };
 
+  const copyToClipboard = async () => {
+    const text = buildChoreographyClipboardText(choreography);
+
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "absolute";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+  };
+
   const header = (
     <>
-      <h3>{choreography.name}</h3>
+      <h3>
+        {choreography.name}
+        {choreography.creation_year ? ` (${choreography.creation_year})` : ""}
+      </h3>
       <Badge className={`level-badge level-${choreography.level.toLowerCase()}`}>
         {choreography.level}
       </Badge>
@@ -48,19 +71,21 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
 
   const content = (
     <>
-      {choreography.count && (
+      {(choreography.count || choreography.wall_count) && (
         <p>
-          <strong>Count:</strong> {choreography.count}
-        </p>
-      )}
-      {choreography.wall_count && (
-        <p>
-          <strong>Wall:</strong> {choreography.wall_count}
-        </p>
-      )}
-      {choreography.creation_year && (
-        <p>
-          <strong>Year:</strong> {choreography.creation_year}
+          {choreography.count && choreography.wall_count ? (
+            <>
+              <strong>Count/Wall:</strong> {choreography.count} / {choreography.wall_count}
+            </>
+          ) : choreography.count ? (
+            <>
+              <strong>Count:</strong> {choreography.count}
+            </>
+          ) : (
+            <>
+              <strong>Wall:</strong> {choreography.wall_count}
+            </>
+          )}
         </p>
       )}
 
@@ -96,16 +121,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
             ))}
           </TagGroup>
         </div>
-      )}
-
-      {choreography.step_sheet_link && (
-        <ExternalLink
-          href={choreography.step_sheet_link}
-          className="step-sheet-link"
-          onClick={handleContentLinkClick}
-        >
-          🦶 View Step Sheet
-        </ExternalLink>
       )}
 
       {showPrimaryEmbed && primaryEmbedUrl && (
@@ -159,6 +174,36 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
 
   const actions = (
     <>
+      {choreography.step_sheet_link && (
+        <a
+          href={choreography.step_sheet_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          className="btn-secondary btn-small step-sheet-action"
+          role="button"
+          aria-label="Open step sheet in a new tab"
+          title="Open step sheet in a new tab"
+        >
+          🦶
+        </a>
+      )}
+      <a
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void copyToClipboard();
+        }}
+        className="btn-secondary btn-small copy-action"
+        role="button"
+        aria-label="Copy choreography details"
+        title="Copy choreography details"
+      >
+        ⤵️
+      </a>
       {onEdit && (
         <a
           href={`/choreographies/${choreography.id}?edit=1`}
