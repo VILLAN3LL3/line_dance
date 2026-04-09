@@ -196,6 +196,32 @@
   letter-spacing: 0.5px;
 }
 
+.info-section-text {
+  display: block;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.info-section-text-collapsed {
+  max-height: calc(1.5em * 2);
+  overflow: hidden;
+}
+
+.info-section-toggle {
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.info-section-toggle:hover {
+  text-decoration: underline;
+}
+
 .card-actions {
   padding: 16px 20px;
   border-top: 1px solid #f0f0f0;

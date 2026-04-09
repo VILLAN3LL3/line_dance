@@ -1,6 +1,6 @@
 import "../../styles/ChoreographyCard.css";
 
-import React from "react";
+import React, { useState } from "react";
 
 import { Choreography } from "../../types";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
@@ -21,6 +21,8 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   videoEmbedMode = "single",
 }) => {
   const isDetailMode = videoEmbedMode === "all";
+  const [isRestartExpanded, setIsRestartExpanded] = useState(false);
+  const [isTagExpanded, setIsTagExpanded] = useState(false);
   const demoEmbedUrl = getYouTubeVideoEmbedUrl(choreography.demo_video_url);
   const tutorialEmbedUrl = getYouTubeVideoEmbedUrl(choreography.tutorial_video_url);
   const primaryEmbedUrl = demoEmbedUrl || tutorialEmbedUrl;
@@ -122,14 +124,48 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       {(choreography.restart_information || isDetailMode) && (
         <div className="info-section">
           <strong>Restart Information</strong>
-          <span>{choreography.restart_information || "None"}</span>
+          <span
+            className={
+              choreography.restart_information && !isRestartExpanded
+                ? "info-section-text info-section-text-collapsed"
+                : "info-section-text"
+            }
+          >
+            {choreography.restart_information || "None"}
+          </span>
+          {choreography.restart_information && (
+            <button
+              type="button"
+              className="info-section-toggle"
+              onClick={() => setIsRestartExpanded((current) => !current)}
+            >
+              {isRestartExpanded ? "Show less" : "Show more"}
+            </button>
+          )}
         </div>
       )}
 
       {(choreography.tag_information || isDetailMode) && (
         <div className="info-section">
           <strong>Tag Information</strong>
-          <span>{choreography.tag_information || "None"}</span>
+          <span
+            className={
+              choreography.tag_information && !isTagExpanded
+                ? "info-section-text info-section-text-collapsed"
+                : "info-section-text"
+            }
+          >
+            {choreography.tag_information || "None"}
+          </span>
+          {choreography.tag_information && (
+            <button
+              type="button"
+              className="info-section-toggle"
+              onClick={() => setIsTagExpanded((current) => !current)}
+            >
+              {isTagExpanded ? "Show less" : "Show more"}
+            </button>
+          )}
         </div>
       )}
 
