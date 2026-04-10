@@ -95,7 +95,7 @@ export async function deleteChoreography(id: number): Promise<{ message: string 
   return response.data;
 }
 
-export async function getLevels(): Promise<{ id: number; name: string }[]> {
+export async function getLevels(): Promise<{ id: number; name: string; value: number }[]> {
   const response = await api.get("/levels");
   return response.data;
 }
@@ -110,7 +110,7 @@ export async function getAuthors(): Promise<string[]> {
   return response.data;
 }
 
-export async function addLevel(name: string): Promise<{ id: number; name: string }> {
+export async function addLevel(name: string): Promise<{ id: number; name: string; value: number }> {
   try {
     const response = await api.post("/levels", { name });
     return response.data;

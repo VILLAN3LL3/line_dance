@@ -144,7 +144,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   const addLevelFromInput = (levelValue?: string) => {
     const trimmed = (levelValue ?? values.inputLevel).trim();
-    if (trimmed && !values.selectedLevel.includes(trimmed)) {
+    if (
+      trimmed &&
+      levelOptions.includes(trimmed) &&
+      !values.selectedLevel.includes(trimmed)
+    ) {
       setValues((prev) => ({
         ...prev,
         selectedLevel: [...prev.selectedLevel, trimmed],
@@ -153,15 +157,15 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     }
   };
 
-  const handleLevelInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLevelInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value = e.target.value;
     setValues((prev) => ({ ...prev, inputLevel: value }));
-    if (
-      value.trim() &&
-      levelOptions.includes(value.trim()) &&
-      !values.selectedLevel.includes(value.trim()) &&
-      isDatalistSelection(e)
-    ) {
+    if (e.target instanceof HTMLInputElement && value.trim() && isDatalistSelection(e)) {
+      addLevelFromInput(value);
+      return;
+    }
+
+    if (e.target instanceof HTMLSelectElement && value.trim()) {
       addLevelFromInput(value);
     }
   };

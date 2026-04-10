@@ -148,7 +148,7 @@ describe('GET /api/choreographies/:id', () => {
     expect(res.status).toBe(200);
     expect(res.body.name).toBe('Find Me');
     expect(res.body.count).toBe(48);
-    expect(res.body.level).toBe('Advanced');
+    expect(res.body.level).toBe('ADVANCED');
     expect(Array.isArray(res.body.authors)).toBe(true);
   });
 
@@ -178,7 +178,7 @@ describe('PUT /api/choreographies/:id', () => {
     expect(updated.status).toBe(200);
     expect(updated.body.name).toBe('New Name');
     expect(updated.body.count).toBe(64);
-    expect(updated.body.level).toBe('Intermediate');
+    expect(updated.body.level).toBe('INTERMEDIATE');
   });
 
   it('replaces authors on update', async () => {
@@ -261,7 +261,7 @@ describe('PUT /api/choreographies/:id', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
 
-    expect(levelNames).toEqual(['Advanced']);
+    expect(levelNames).toEqual(['ADVANCED']);
   });
 
   it('returns 404 for a non-existent choreography', async () => {
@@ -392,14 +392,33 @@ describe('GET /api/choreographies/max-count', () => {
 // ---------------------------------------------------------------------------
 
 describe('GET /api/levels', () => {
-  it('returns the four default levels', async () => {
+  it('returns canonical default levels sorted by value ascending', async () => {
     const res = await request(app).get('/api/levels');
     expect(res.status).toBe(200);
     const names = res.body.map((l) => l.name);
-    expect(names).toContain('Beginner');
-    expect(names).toContain('Intermediate');
-    expect(names).toContain('Advanced');
-    expect(names).toContain('Experienced');
+    const values = res.body.map((l) => l.value);
+    expect(names).toEqual([
+      'UNKNOWN',
+      'ABSOLUTE BEGINNER',
+      'EASY BEGINNER',
+      'BEGINNER',
+      'HIGH BEGINNER',
+      'LOW IMPROVER',
+      'EASY IMPROVER',
+      'IMPROVER',
+      'HIGH IMPROVER',
+      'LOW INTERMEDIATE',
+      'EASY INTERMEDIATE',
+      'INTERMEDIATE',
+      'HIGH INTERMEDIATE',
+      'LOW ADVANCED',
+      'EASY ADVANCED',
+      'ADVANCED',
+      'HIGH ADVANCED',
+    ]);
+    expect(values).toEqual([
+      0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160,
+    ]);
   });
 });
 
@@ -413,11 +432,47 @@ describe('POST /api/levels', () => {
     expect(res.status).toBe(201);
     expect(res.body.name).toBe('Pro');
     expect(res.body.id).toBeDefined();
+    expect(res.body.value).toBe(170);
+  });
+
+  it('creates a new level with explicit value', async () => {
+    const res = await request(app).post('/api/levels').send({ name: 'Novice', value: 5 });
+    expect(res.status).toBe(201);
+    expect(res.body.name).toBe('Novice');
+    expect(res.body.value).toBe(5);
+
+    const levels = await request(app).get('/api/levels');
+    expect(levels.body.map((l) => l.name)).toEqual([
+      'UNKNOWN',
+      'Novice',
+      'ABSOLUTE BEGINNER',
+      'EASY BEGINNER',
+      'BEGINNER',
+      'HIGH BEGINNER',
+      'LOW IMPROVER',
+      'EASY IMPROVER',
+      'IMPROVER',
+      'HIGH IMPROVER',
+      'LOW INTERMEDIATE',
+      'EASY INTERMEDIATE',
+      'INTERMEDIATE',
+      'HIGH INTERMEDIATE',
+      'LOW ADVANCED',
+      'EASY ADVANCED',
+      'ADVANCED',
+      'HIGH ADVANCED',
+    ]);
   });
 
   it('returns 400 for an empty level name', async () => {
     const res = await request(app).post('/api/levels').send({ name: '' });
     expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for a non-integer value', async () => {
+    const res = await request(app).post('/api/levels').send({ name: 'Custom', value: 'abc' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/value must be an integer/i);
   });
 
   it('returns 400 for a duplicate level name', async () => {

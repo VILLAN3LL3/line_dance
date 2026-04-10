@@ -118,14 +118,38 @@ describe("DanceGroupDetail", () => {
   });
 
   it("adds a group level from the level form", async () => {
+    vi.mocked(fetchChoreographies).mockResolvedValueOnce({
+      data: [
+        {
+          id: 10,
+          name: "Dance X",
+          level: "Beginner",
+          authors: [],
+          tags: [],
+          step_figures: ["Mambo"],
+          created_at: "2024-01-01",
+          updated_at: "2024-01-01",
+        },
+        {
+          id: 11,
+          name: "Dance Y",
+          level: "Advanced",
+          authors: [],
+          tags: [],
+          step_figures: ["Mambo"],
+          created_at: "2024-01-01",
+          updated_at: "2024-01-01",
+        },
+      ],
+      pagination: { page: 1, limit: 10000, total: 2, totalPages: 1 },
+    });
+
     renderWithRoute();
     await screen.findByText("Group One");
 
-    fireEvent.change(
-      screen.getByPlaceholderText("Add a new level (e.g., Beginner, Intermediate)"),
-      { target: { value: "Advanced" } },
-    );
-    fireEvent.click(screen.getByRole("button", { name: "+ Add Level" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Available levels" }), {
+      target: { value: "Advanced" },
+    });
 
     await waitFor(() => {
       expect(addGroupLevel).toHaveBeenCalledWith(1, "Advanced");

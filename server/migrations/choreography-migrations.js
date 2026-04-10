@@ -1,4 +1,4 @@
-import { getQuery, runQuery } from '../scripts/db.js';
+import { allQuery, getQuery, runQuery } from '../scripts/db.js';
 
 const dbName = 'choreography';
 
@@ -25,7 +25,8 @@ const migrations = [
       await runQuery(
         `CREATE TABLE IF NOT EXISTS levels (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL UNIQUE
+          name TEXT NOT NULL UNIQUE,
+          value INTEGER NOT NULL DEFAULT 0
         )`,
         [],
         dbName,
@@ -117,10 +118,29 @@ const migrations = [
   {
     id: '002_seed_default_levels',
     up: async () => {
-      await runQuery(`INSERT OR IGNORE INTO levels (name) VALUES ('Beginner')`, [], dbName);
-      await runQuery(`INSERT OR IGNORE INTO levels (name) VALUES ('Intermediate')`, [], dbName);
-      await runQuery(`INSERT OR IGNORE INTO levels (name) VALUES ('Advanced')`, [], dbName);
-      await runQuery(`INSERT OR IGNORE INTO levels (name) VALUES ('Experienced')`, [], dbName);
+      const defaultLevels = [
+        ['UNKNOWN', 0],
+        ['ABSOLUTE BEGINNER', 10],
+        ['EASY BEGINNER', 20],
+        ['BEGINNER', 30],
+        ['HIGH BEGINNER', 40],
+        ['LOW IMPROVER', 50],
+        ['EASY IMPROVER', 60],
+        ['IMPROVER', 70],
+        ['HIGH IMPROVER', 80],
+        ['LOW INTERMEDIATE', 90],
+        ['EASY INTERMEDIATE', 100],
+        ['INTERMEDIATE', 110],
+        ['HIGH INTERMEDIATE', 120],
+        ['LOW ADVANCED', 130],
+        ['EASY ADVANCED', 140],
+        ['ADVANCED', 150],
+        ['HIGH ADVANCED', 160],
+      ];
+
+      for (const [name, value] of defaultLevels) {
+        await runQuery(`INSERT OR IGNORE INTO levels (name, value) VALUES (?, ?)`, [name, value], dbName);
+      }
     },
   },
   {
@@ -170,6 +190,101 @@ const migrations = [
           [],
           dbName,
         );
+      }
+    },
+  },
+  {
+    id: '004_add_level_value_and_backfill',
+    up: async () => {
+      const valueColumn = await getQuery(
+        `SELECT name FROM pragma_table_info('levels') WHERE name = 'value'`,
+        [],
+        dbName,
+      );
+
+      if (!valueColumn) {
+        await runQuery(`ALTER TABLE levels ADD COLUMN value INTEGER`, [], dbName);
+      }
+
+      const defaults = [
+        ['Beginner', 10],
+        ['Intermediate', 20],
+        ['Advanced', 30],
+        ['Experienced', 40],
+      ];
+
+      for (const [name, value] of defaults) {
+        await runQuery(
+          `UPDATE levels SET value = ? WHERE name = ? AND value IS NULL`,
+          [value, name],
+          dbName,
+        );
+      }
+
+      const maxValueRow = await getQuery(
+        `SELECT COALESCE(MAX(value), 0) AS max_value FROM levels WHERE value IS NOT NULL`,
+        [],
+        dbName,
+      );
+
+      let nextValue = Number(maxValueRow?.max_value || 0) + 10;
+      const levelsWithoutValue = await allQuery(
+        `SELECT id FROM levels WHERE value IS NULL ORDER BY id ASC`,
+        [],
+        dbName,
+      );
+
+      for (const level of levelsWithoutValue) {
+        await runQuery(`UPDATE levels SET value = ? WHERE id = ?`, [nextValue, level.id], dbName);
+        nextValue += 10;
+      }
+    },
+  },
+  {
+    id: '005_ensure_canonical_level_catalog',
+    up: async () => {
+      const valueColumn = await getQuery(
+        `SELECT name FROM pragma_table_info('levels') WHERE name = 'value'`,
+        [],
+        dbName,
+      );
+
+      if (!valueColumn) {
+        await runQuery(`ALTER TABLE levels ADD COLUMN value INTEGER`, [], dbName);
+      }
+
+      const canonicalLevels = [
+        ['UNKNOWN', 0],
+        ['ABSOLUTE BEGINNER', 10],
+        ['EASY BEGINNER', 20],
+        ['BEGINNER', 30],
+        ['HIGH BEGINNER', 40],
+        ['LOW IMPROVER', 50],
+        ['EASY IMPROVER', 60],
+        ['IMPROVER', 70],
+        ['HIGH IMPROVER', 80],
+        ['LOW INTERMEDIATE', 90],
+        ['EASY INTERMEDIATE', 100],
+        ['INTERMEDIATE', 110],
+        ['HIGH INTERMEDIATE', 120],
+        ['LOW ADVANCED', 130],
+        ['EASY ADVANCED', 140],
+        ['ADVANCED', 150],
+        ['HIGH ADVANCED', 160],
+      ];
+
+      for (const [name, value] of canonicalLevels) {
+        const existing = await getQuery(
+          `SELECT id FROM levels WHERE UPPER(name) = UPPER(?) ORDER BY id ASC LIMIT 1`,
+          [name],
+          dbName,
+        );
+
+        if (existing) {
+          await runQuery(`UPDATE levels SET name = ?, value = ? WHERE id = ?`, [name, value, existing.id], dbName);
+        } else {
+          await runQuery(`INSERT INTO levels (name, value) VALUES (?, ?)`, [name, value], dbName);
+        }
       }
     },
   },

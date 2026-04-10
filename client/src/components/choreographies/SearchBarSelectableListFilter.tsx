@@ -11,7 +11,8 @@ interface SearchBarSelectableListFilterProps {
   selectedValues: string[];
   placeholder: string;
   isLoading: boolean;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  inputControl?: "autocomplete" | "select";
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onAddFromInput: (value?: string) => void;
   onToggleValue: (value: string) => void;
 }
@@ -25,6 +26,7 @@ export const SearchBarSelectableListFilter: React.FC<SearchBarSelectableListFilt
   selectedValues,
   placeholder,
   isLoading,
+  inputControl = "autocomplete",
   onInputChange,
   onAddFromInput,
   onToggleValue,
@@ -32,19 +34,32 @@ export const SearchBarSelectableListFilter: React.FC<SearchBarSelectableListFilt
   <div className="filter-group">
     <label htmlFor={inputId}>{label}:</label>
     <div className="filter-input-container">
-      <AutoCompleteInput
-        id={inputId}
-        listId={listId}
-        value={inputValue}
-        options={options}
-        onChange={onInputChange}
-        onAdd={onAddFromInput}
-        placeholder={placeholder}
-        disabled={isLoading}
-        autoComplete="off"
-        addButtonLabel="+"
-        addButtonClassName="btn-add-filter"
-      />
+      {inputControl === "select" ? (
+        <select id={inputId} value={inputValue} onChange={onInputChange} disabled={isLoading}>
+          <option value="">{placeholder}</option>
+          {options
+            .filter((option) => !selectedValues.includes(option))
+            .map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+        </select>
+      ) : (
+        <AutoCompleteInput
+          id={inputId}
+          listId={listId}
+          value={inputValue}
+          options={options}
+          onChange={onInputChange}
+          onAdd={onAddFromInput}
+          placeholder={placeholder}
+          disabled={isLoading}
+          autoComplete="off"
+          addButtonLabel="+"
+          addButtonClassName="btn-add-filter"
+        />
+      )}
     </div>
     <TagGroup className="filter-tags">
       {selectedValues.map((value) => (

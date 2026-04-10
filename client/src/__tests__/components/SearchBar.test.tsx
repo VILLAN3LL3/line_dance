@@ -102,4 +102,22 @@ describe("SearchBar", () => {
       expect(onSearch).toHaveBeenCalledWith({});
     });
   });
+
+  it("adds a level filter from the select", async () => {
+    const onSearch = vi.fn().mockResolvedValue(undefined);
+    render(<SearchBar onSearch={onSearch} filters={{}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
+
+    const levelSelect = await screen.findByRole("combobox", { name: "Level:" });
+
+    fireEvent.change(levelSelect, {
+      target: { value: "Beginner" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /apply filters/i }));
+
+    await waitFor(() => {
+      expect(onSearch).toHaveBeenCalledWith(expect.objectContaining({ level: ["Beginner"] }));
+    });
+  });
 });

@@ -17,12 +17,31 @@ function run(db, sql, params = []) {
   });
 }
 
-const DEFAULT_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Experienced'];
+const DEFAULT_LEVELS = [
+  { name: 'UNKNOWN', value: 0 },
+  { name: 'ABSOLUTE BEGINNER', value: 10 },
+  { name: 'EASY BEGINNER', value: 20 },
+  { name: 'BEGINNER', value: 30 },
+  { name: 'HIGH BEGINNER', value: 40 },
+  { name: 'LOW IMPROVER', value: 50 },
+  { name: 'EASY IMPROVER', value: 60 },
+  { name: 'IMPROVER', value: 70 },
+  { name: 'HIGH IMPROVER', value: 80 },
+  { name: 'LOW INTERMEDIATE', value: 90 },
+  { name: 'EASY INTERMEDIATE', value: 100 },
+  { name: 'INTERMEDIATE', value: 110 },
+  { name: 'HIGH INTERMEDIATE', value: 120 },
+  { name: 'LOW ADVANCED', value: 130 },
+  { name: 'EASY ADVANCED', value: 140 },
+  { name: 'ADVANCED', value: 150 },
+  { name: 'HIGH ADVANCED', value: 160 },
+];
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS levels (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE
+  name TEXT NOT NULL UNIQUE,
+  value INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS choreographies (
@@ -102,7 +121,10 @@ export async function setupChoreographyTestDb() {
   );
 
   for (const level of DEFAULT_LEVELS) {
-    await run(testDb, 'INSERT OR IGNORE INTO levels (name) VALUES (?)', [level]);
+    await run(testDb, 'INSERT OR IGNORE INTO levels (name, value) VALUES (?, ?)', [
+      level.name,
+      level.value,
+    ]);
   }
 
   setDatabaseConnection('choreography', testDb);
@@ -133,6 +155,9 @@ export async function clearChoreographyTables() {
 
   // Re-insert default levels so route handlers can look them up
   for (const level of DEFAULT_LEVELS) {
-    await run(testDb, 'INSERT OR IGNORE INTO levels (name) VALUES (?)', [level]);
+    await run(testDb, 'INSERT OR IGNORE INTO levels (name, value) VALUES (?, ?)', [
+      level.name,
+      level.value,
+    ]);
   }
 }

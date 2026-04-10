@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { Choreography } from "../../types";
-import { ActionButton, EmptyState, Section, TagGroup } from "../shared/ui";
+import { EmptyState, Section, TagGroup } from "../shared/ui";
 
 interface DanceGroupLevelsSectionProps {
   groupLevels: string[];
@@ -18,41 +18,37 @@ export const DanceGroupLevelsSection: React.FC<DanceGroupLevelsSectionProps> = (
   onAddLevel,
   onRemoveLevel,
 }) => {
+  const availableLevels = Array.from(
+    new Set(
+      choreographies.map((choreography) => choreography.level).filter((level) => !groupLevels.includes(level)),
+    ),
+  ).sort((a, b) => a.localeCompare(b));
   const [newLevel, setNewLevel] = useState("");
 
-  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!newLevel.trim()) return;
-    await onAddLevel(newLevel);
+  const handleLevelSelect = async (level: string) => {
+    if (!level) return;
+    setNewLevel(level);
+    await onAddLevel(level);
     setNewLevel("");
   };
 
   return (
     <Section title="Group Levels">
-      <form onSubmit={handleSubmit} className="level-form">
-        <input
-          type="text"
-          placeholder="Add a new level (e.g., Beginner, Intermediate)"
+      <div className="level-form">
+        <select
+          aria-label="Available levels"
           value={newLevel}
-          onChange={(e) => setNewLevel(e.target.value)}
-          list="available-levels"
-          disabled={isLoading}
-        />
-        <datalist id="available-levels">
-          {Array.from(
-            new Set(
-              choreographies.map((c) => c.level).filter((level) => !groupLevels.includes(level)),
-            ),
-          )
-            .sort((a, b) => a.localeCompare(b))
-            .map((level) => (
-              <option key={level} value={level} />
-            ))}
-        </datalist>
-        <ActionButton type="submit" variant="primary" disabled={isLoading}>
-          + Add Level
-        </ActionButton>
-      </form>
+          onChange={(e) => void handleLevelSelect(e.target.value)}
+          disabled={isLoading || availableLevels.length === 0}
+        >
+          <option value="">Select a level...</option>
+          {availableLevels.map((level) => (
+            <option key={level} value={level}>
+              {level}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {groupLevels.length === 0 ? (
         <EmptyState>No levels configured yet</EmptyState>

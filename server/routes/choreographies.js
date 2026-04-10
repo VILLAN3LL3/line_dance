@@ -264,7 +264,7 @@ export async function createChoreography(req, res) {
       return res.status(400).json({ error: 'Name and level are required' });
     }
 
-    const levelRecord = await getQuery('SELECT id FROM levels WHERE name = ?', [level]);
+    const levelRecord = await getQuery('SELECT id FROM levels WHERE UPPER(name) = UPPER(?)', [level]);
     if (!levelRecord) {
       return res.status(400).json({
         error: 'Invalid level. Must be one of: Beginner, Intermediate, Advanced, Experienced',
@@ -331,7 +331,7 @@ export async function getChoreographies(req, res) {
     const choreographies = await allQuery(
       `SELECT c.*, l.name as level FROM choreographies c
        LEFT JOIN levels l ON c.level_id = l.id
-       ORDER BY c.created_at DESC LIMIT ? OFFSET ?`,
+       ORDER BY LOWER(c.name) ASC, COALESCE(l.value, 2147483647) ASC LIMIT ? OFFSET ?`,
       [limit, offset],
     );
 
@@ -402,7 +402,7 @@ export async function updateChoreography(req, res) {
 
     let levelId = null;
     if (level) {
-      const levelRecord = await getQuery('SELECT id FROM levels WHERE name = ?', [level]);
+      const levelRecord = await getQuery('SELECT id FROM levels WHERE UPPER(name) = UPPER(?)', [level]);
       if (!levelRecord) {
         return res.status(400).json({
           error: 'Invalid level. Must be one of: Beginner, Intermediate, Advanced, Experienced',
@@ -566,8 +566,8 @@ function buildFilterConditions(filterObj) {
 
   if (level) {
     const levelList = normalizeQueryParam(level);
-    const placeholders = levelList.map(() => '?').join(',');
-    conditions.push(`l.name IN (${placeholders})`);
+    const placeholders = levelList.map(() => 'UPPER(?)').join(',');
+    conditions.push(`UPPER(l.name) IN (${placeholders})`);
     params.push(...levelList);
   }
 
@@ -613,8 +613,6 @@ export async function searchChoreographies(req, res) {
       tags,
       authors,
       search,
-      sort_field,
-      sort_direction,
     } = req.query;
     const page = Number.parseInt(req.query.page, 10) || 1;
     const limit = Number.parseInt(req.query.limit, 10) || 20;
@@ -653,7 +651,7 @@ export async function searchChoreographies(req, res) {
       params.push(...stepFilter.havingParams);
     }
 
-    query += ` ORDER BY ${buildSortClause(sort_field, sort_direction)} LIMIT ? OFFSET ?`;
+    query += ' ORDER BY LOWER(c.name) ASC, COALESCE(l.value, 2147483647) ASC LIMIT ? OFFSET ?';
     params.push(limit, offset);
 
     const choreographies = await allQuery(query, params);
@@ -799,22 +797,6 @@ function buildRelationshipFilter(items, relationshipTable, relationshipPkCol, en
   return result;
 }
 
-function buildSortClause(sort_field, sort_direction) {
-  let orderBy = 'c.created_at DESC';
-  if (sort_field) {
-    const direction = sort_direction === 'desc' ? 'DESC' : 'ASC';
-    const sortMap = {
-      name: `LOWER(c.name) ${direction}`,
-      level: `LOWER(l.name) ${direction}`,
-      count: `c.count ${direction}`,
-      wall_count: `c.wall_count ${direction}`,
-      creation_year: `c.creation_year ${direction}`,
-    };
-    orderBy = sortMap[sort_field] || 'c.created_at DESC';
-  }
-  return orderBy;
-}
-
 // Helper functions
 function normalizeStringArray(arr) {
   if (!Array.isArray(arr)) return [];
@@ -916,7 +898,7 @@ async function getTagId(name) {
 
 export async function getLevels(req, res) {
   try {
-    const levels = await allQuery('SELECT id, name FROM levels ORDER BY id');
+    const levels = await allQuery('SELECT id, name, value FROM levels ORDER BY value ASC, LOWER(name) ASC');
     res.json(levels);
   } catch (error) {
     captureError(error);
@@ -946,15 +928,37 @@ export async function getAuthors(req, res) {
 
 export async function addLevel(req, res) {
   try {
-    const { name } = req.body;
+    const { name, value } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ error: 'Level name is required' });
     }
 
-    const result = await runQuery('INSERT INTO levels (name) VALUES (?)', [name.trim()]);
+    const normalizedName = name.trim();
+    const existing = await getQuery('SELECT id FROM levels WHERE UPPER(name) = UPPER(?)', [
+      normalizedName,
+    ]);
+    if (existing) {
+      return res.status(400).json({ error: 'This level already exists' });
+    }
 
-    res.status(201).json({ id: result.id, name: name.trim() });
+    let numericValue;
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      numericValue = Number.parseInt(String(value), 10);
+      if (Number.isNaN(numericValue)) {
+        return res.status(400).json({ error: 'Level value must be an integer' });
+      }
+    } else {
+      const maxValue = await getQuery(`SELECT COALESCE(MAX(value), 0) AS max_value FROM levels`);
+      numericValue = Number(maxValue?.max_value || 0) + 10;
+    }
+
+    const result = await runQuery('INSERT INTO levels (name, value) VALUES (?, ?)', [
+      normalizedName,
+      numericValue,
+    ]);
+
+    res.status(201).json({ id: result.id, name: normalizedName, value: numericValue });
   } catch (error) {
     captureError(error);
     if (error.message.includes('UNIQUE constraint failed')) {

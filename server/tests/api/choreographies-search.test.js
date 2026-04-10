@@ -347,29 +347,22 @@ describe('GET /api/choreographies/search — max_count (ignored)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Sorting
+// Fixed ordering
 // ---------------------------------------------------------------------------
 
-describe('GET /api/choreographies/search — sorting', () => {
-  it('sorts by name ascending', async () => {
+describe('GET /api/choreographies/search — fixed ordering', () => {
+  it('always sorts by name ascending then level value ascending', async () => {
     await seedDances();
-    const res = await search({ sort_field: 'name', sort_direction: 'asc' });
+    const res = await search({});
     const names = res.body.data.map((c) => c.name);
     expect(names).toEqual(['Argentine Tango', 'Cha Cha Fun', 'Waltz in the Rain']);
   });
 
-  it('sorts by name descending', async () => {
+  it('ignores sort params and keeps fixed ordering', async () => {
     await seedDances();
     const res = await search({ sort_field: 'name', sort_direction: 'desc' });
     const names = res.body.data.map((c) => c.name);
-    expect(names).toEqual(['Waltz in the Rain', 'Cha Cha Fun', 'Argentine Tango']);
-  });
-
-  it('sorts by count ascending', async () => {
-    await seedDances();
-    const res = await search({ sort_field: 'count', sort_direction: 'asc' });
-    const counts = res.body.data.map((c) => c.count);
-    expect(counts).toEqual([16, 32, 48]);
+    expect(names).toEqual(['Argentine Tango', 'Cha Cha Fun', 'Waltz in the Rain']);
   });
 });
 
@@ -380,7 +373,7 @@ describe('GET /api/choreographies/search — sorting', () => {
 describe('GET /api/choreographies/search — pagination', () => {
   it('returns the correct page slice', async () => {
     await seedDances();
-    const res = await search({ sort_field: 'name', sort_direction: 'asc', page: 1, limit: 2 });
+    const res = await search({ page: 1, limit: 2 });
     expect(res.body.data).toHaveLength(2);
     expect(res.body.pagination.total).toBe(3);
     expect(res.body.pagination.totalPages).toBe(2);
@@ -389,7 +382,7 @@ describe('GET /api/choreographies/search — pagination', () => {
 
   it('returns the second page correctly', async () => {
     await seedDances();
-    const res = await search({ sort_field: 'name', sort_direction: 'asc', page: 2, limit: 2 });
+    const res = await search({ page: 2, limit: 2 });
     expect(res.body.data).toHaveLength(1);
     expect(res.body.data[0].name).toBe('Waltz in the Rain');
   });

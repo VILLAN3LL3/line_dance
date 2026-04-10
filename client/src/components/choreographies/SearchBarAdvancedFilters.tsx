@@ -11,7 +11,7 @@ interface SearchBarAdvancedFiltersProps {
   selectedLevel: string[];
   inputLevel: string;
   levelOptions: string[];
-  onLevelInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLevelInput: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onAddLevelFromInput: (value?: string) => void;
   onToggleLevel: (level: string) => void;
   // Max count
@@ -100,8 +100,9 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
       inputValue={inputLevel}
       options={levelOptions}
       selectedValues={selectedLevel}
-      placeholder="Add level..."
+      placeholder="Select a level..."
       isLoading={isLoading}
+      inputControl="select"
       onInputChange={onLevelInput}
       onAddFromInput={onAddLevelFromInput}
       onToggleValue={onToggleLevel}

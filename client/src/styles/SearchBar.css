@@ -356,7 +356,23 @@
   transition: border-color 0.2s ease;
 }
 
+.filter-input-container select {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  background-color: white;
+  transition: border-color 0.2s ease;
+}
+
 .filter-input-container input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(139, 71, 137, 0.1);
+}
+
+.filter-input-container select:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(139, 71, 137, 0.1);

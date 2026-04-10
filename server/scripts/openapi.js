@@ -243,8 +243,9 @@ export const openApiSpec = {
                     properties: {
                       id: { type: 'integer' },
                       name: { type: 'string' },
+                      value: { type: 'integer' },
                     },
-                    required: ['id', 'name'],
+                    required: ['id', 'name', 'value'],
                   },
                 },
               },
@@ -261,7 +262,7 @@ export const openApiSpec = {
             'application/json': {
               schema: {
                 type: 'object',
-                properties: { name: { type: 'string' } },
+                properties: { name: { type: 'string' }, value: { type: 'integer' } },
                 required: ['name'],
               },
             },
@@ -277,6 +278,7 @@ export const openApiSpec = {
                   properties: {
                     id: { type: 'integer' },
                     name: { type: 'string' },
+                    value: { type: 'integer' },
                   },
                 },
               },

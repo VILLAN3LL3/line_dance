@@ -316,12 +316,14 @@
   margin-bottom: 20px;
 }
 
-.level-form input {
+.level-form input,
+.level-form select {
   flex: 1;
   padding: 10px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 14px;
+  background-color: var(--color-surface);
 }
 
 @media (max-width: 768px) {
