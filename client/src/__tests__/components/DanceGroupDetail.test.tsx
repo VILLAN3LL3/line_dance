@@ -4,8 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import {
-  deleteDanceCourse, exportDanceCoursePdf, fetchChoreographies, getDanceCourses, getDanceGroup, getGroupMaxLevel, getLearnedChoreographies,
-  getLevels, getSessions, updateGroupMaxLevel
+  deleteDanceCourse,
+  exportDanceCoursePdf,
+  fetchChoreographies,
+  getDanceCourses,
+  getDanceGroup,
+  getGroupMaxLevel,
+  getLearnedChoreographies,
+  getLevels,
+  getSessions,
+  updateGroupMaxLevel,
 } from "../../api";
 import DanceGroupDetail from "../../components/dance-groups/DanceGroupDetail";
 
