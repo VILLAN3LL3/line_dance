@@ -1,0 +1,11 @@
+{
+  "name": "line-dance-workspace",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "format": "npm --prefix server run format && npm --prefix client run format"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

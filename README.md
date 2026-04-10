@@ -119,6 +119,8 @@ line_dance/
 ### Install Dependencies
 
 ```bash
+npm install
+
 cd server
 npm install
 
@@ -135,6 +137,23 @@ npm run migrate
 ```
 
 The choreography database file `line_dance.db` is checked into the repository.
+
+## Git Hooks
+
+The repository uses a pre-commit hook to run formatting in both the server and client before each commit.
+
+After cloning, install the root dependencies once to enable the hook:
+
+```bash
+npm install
+```
+
+The hook runs:
+
+```bash
+npm --prefix server run format
+npm --prefix client run format
+```
 
 The migration command above creates or refreshes schema for:
 
