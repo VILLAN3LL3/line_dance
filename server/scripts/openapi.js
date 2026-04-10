@@ -45,6 +45,38 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/url-check': {
+      get: {
+        tags: ['Metadata'],
+        summary: 'Check URL reachability',
+        parameters: [
+          {
+            name: 'url',
+            in: 'query',
+            required: true,
+            schema: { type: 'string', format: 'uri' },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'URL check result',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    ok: { type: 'boolean' },
+                    status: { type: 'integer', nullable: true },
+                  },
+                  required: ['ok', 'status'],
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+        },
+      },
+    },
     '/api/choreographies': {
       get: {
         tags: ['Choreographies'],
@@ -856,6 +888,7 @@ export const openApiSpec = {
               },
             },
           },
+          400: { $ref: '#/components/responses/BadRequest' },
         },
       },
       post: {
@@ -958,6 +991,7 @@ export const openApiSpec = {
               },
             },
           },
+          400: { $ref: '#/components/responses/BadRequest' },
           404: { $ref: '#/components/responses/NotFound' },
         },
       },
@@ -1131,10 +1165,12 @@ export const openApiSpec = {
         properties: {
           search: { type: 'string' },
           level: { type: 'array', items: { type: 'string' } },
+          max_level_value: { type: 'integer', minimum: 0 },
           step_figures: { type: 'array', items: { type: 'string' } },
           step_figures_match_mode: { type: 'string', enum: ['all', 'any', 'exact'] },
           without_step_figures: { type: 'boolean' },
           tags: { type: 'array', items: { type: 'string' } },
+          excluded_tags: { type: 'array', items: { type: 'string' } },
           authors: { type: 'array', items: { type: 'string' } },
           max_count: { type: 'integer' },
         },

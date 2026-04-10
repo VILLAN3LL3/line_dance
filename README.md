@@ -16,13 +16,15 @@ __All code was written by GitHub Copilot. Use with caution.__
 ### Choreography Search
 
 - Search choreographies by name
-- Filter by level, step figures, tags, and authors
+- Filter by level using either selected levels or `up to max level` mode
+- Filter by step figures, tags (include/exclude), and authors
+- Support saved filters that include `max_level_value` and `excluded_tags`
 - Choose step figure matching mode: `all`, `any`, or `exact`
 - Filter choreographies without step figures
 - Filter by maximum count
 - Switch between card and table views
 - Persist current filters and display mode in local storage
-- Save, rename, update, and delete filter presets
+- Save, rename, load, update, and delete filter presets
 - Create, edit, and delete choreographies
 
 ### Dance Group Administration
@@ -219,7 +221,7 @@ The project includes automated tests for backend business logic and frontend com
   - dance groups, trainers, courses, sessions, session choreographies
   - learned choreographies view behavior for past/future session timelines
   - max group level management
-  - choreography CRUD and search filter logic (`all` / `any` / `exact`, max count, combined filters)
+  - choreography CRUD and search filter logic (`all` / `any` / `exact`, max count, `max_level_value`, `excluded_tags`, combined filters)
   - saved filter configuration lifecycle
   - PDF export endpoint headers and response behavior
   - health and OpenAPI smoke endpoints
