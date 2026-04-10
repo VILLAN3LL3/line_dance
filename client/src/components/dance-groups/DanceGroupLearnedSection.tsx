@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Choreography, LearnedChoreography } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
-import { ActionButton, EmptyState, Section, TagGroup } from "../shared/ui";
+import { ActionButton, EmptyState, LevelBatch, Section, TagGroup } from "../shared/ui";
 
 interface DanceGroupLearnedSectionProps {
   learnedChoreographies: LearnedChoreography[];
@@ -107,7 +107,7 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
                         className="clickable-row"
                       >
                         <td>{choreography?.name ?? `Unknown (ID: ${learned.choreography_id})`}</td>
-                        <td>{choreography?.level ?? "N/A"}</td>
+                        <td>{choreography ? <LevelBatch level={choreography.level} /> : "N/A"}</td>
                         <td>{learned.times_danced}</td>
                         <td>{new Date(learned.first_learned_date).toLocaleDateString()}</td>
                         <td>{new Date(learned.last_danced_date).toLocaleDateString()}</td>

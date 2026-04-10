@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { Choreography } from "../../types";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
-import { ActionButton, Badge, Card, ExternalLink, Tag, TagGroup, YouTubeVideo } from "../shared/ui";
+import { ActionButton, Card, ExternalLink, LevelBatch, Tag, TagGroup, YouTubeVideo } from "../shared/ui";
 
 interface ChoreographyCardProps {
   choreography: Choreography;
@@ -329,9 +329,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
         {choreography.name}
         {choreography.creation_year ? ` (${choreography.creation_year})` : ""}
       </h3>
-      <Badge className={`level-badge level-${choreography.level.toLowerCase()}`}>
-        {choreography.level}
-      </Badge>
+      <LevelBatch level={choreography.level} />
     </>
   );
 

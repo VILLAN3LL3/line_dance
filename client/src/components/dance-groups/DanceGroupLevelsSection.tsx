@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { Choreography } from "../../types";
-import { EmptyState, Section, TagGroup } from "../shared/ui";
+import { EmptyState, LevelBatch, Section, TagGroup } from "../shared/ui";
 
 interface DanceGroupLevelsSectionProps {
   groupLevels: string[];
@@ -57,17 +57,14 @@ export const DanceGroupLevelsSection: React.FC<DanceGroupLevelsSectionProps> = (
       ) : (
         <TagGroup className="tags-container">
           {groupLevels.map((level) => (
-            <span key={level} className="tag">
-              {level}
-              <button
-                type="button"
-                onClick={() => onRemoveLevel(level)}
-                className="btn-remove"
-                disabled={isLoading}
-              >
-                ×
-              </button>
-            </span>
+            <LevelBatch
+              key={level}
+              level={level}
+              removeButtonClassName="btn-remove-tag"
+              isRemovable
+              disabled={isLoading}
+              onRemove={() => onRemoveLevel(level)}
+            />
           ))}
         </TagGroup>
       )}

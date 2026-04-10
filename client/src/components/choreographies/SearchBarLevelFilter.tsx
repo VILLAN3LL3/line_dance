@@ -1,6 +1,6 @@
 import React from "react";
 
-import { AutoCompleteInput, Tag, TagGroup } from "../shared/ui";
+import { AutoCompleteInput, LevelBatch, TagGroup } from "../shared/ui";
 
 import type { LevelOption } from "../../types";
 interface SearchBarLevelFilterProps {
@@ -86,10 +86,9 @@ export const SearchBarLevelFilter: React.FC<SearchBarLevelFilterProps> = ({
         </div>
         <TagGroup className="filter-tags">
           {selectedLevel.map((value) => (
-            <Tag
+            <LevelBatch
               key={value}
-              value={value}
-              className="filter-tag"
+              level={value}
               removeButtonClassName="btn-remove-tag"
               isRemovable
               disabled={isLoading}

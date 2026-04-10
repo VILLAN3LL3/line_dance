@@ -518,6 +518,18 @@
   cursor: not-allowed;
 }
 
+.level-batch-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.level-badge-selected {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
+
 .filter-mode-toggle {
   margin-bottom: 12px;
   display: flex;

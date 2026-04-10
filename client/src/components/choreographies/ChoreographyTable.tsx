@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 
 import { getStepFigures } from "../../api";
 import { Choreography } from "../../types";
-import { ActionButton } from "../shared/ui";
+import { ActionButton, LevelBatch } from "../shared/ui";
 
 interface ChoreographyTableProps {
   choreographies: Choreography[];
@@ -156,7 +156,9 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                   <td className="name-cell">
                     <strong>{choreo.name}</strong>
                   </td>
-                  <td className="level-cell">{choreo.level}</td>
+                  <td className="level-cell">
+                    <LevelBatch level={choreo.level} />
+                  </td>
                   <td>{choreo.count || "-"}</td>
                   <td>{choreo.wall_count || "-"}</td>
                   <td>{choreo.creation_year || "-"}</td>

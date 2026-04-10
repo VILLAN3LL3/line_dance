@@ -9,6 +9,7 @@ export { EmptyState } from "./EmptyState";
 export { ErrorMessage } from "./ErrorMessage";
 export { ExternalLink } from "./ExternalLink";
 export { FormField } from "./FormField";
+export { LevelBatch } from "./LevelBatch";
 export { LoadingState } from "./LoadingState";
 export { Section } from "./Section";
 export { StatusBadge } from "./StatusBadge";
