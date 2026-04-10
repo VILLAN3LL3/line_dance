@@ -2,11 +2,7 @@ import "../../styles/SearchBar.css";
 
 import React, { useState } from "react";
 
-import {
-  defaultSearchBarFilterValues,
-  searchBarValuesFromFilters,
-  useSearchBarFilters,
-} from "../../hooks/useSearchBarFilters";
+import { defaultSearchBarFilterValues, searchBarValuesFromFilters, useSearchBarFilters } from "../../hooks/useSearchBarFilters";
 import { SearchFilters } from "../../types";
 import { ActionButton } from "../shared/ui";
 import { SearchBarAdvancedFilters } from "./SearchBarAdvancedFilters";
