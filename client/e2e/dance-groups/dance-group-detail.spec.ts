@@ -1,16 +1,16 @@
 import { expect, test } from "@playwright/test";
 
 import {
-  addGroupLevelViaApi,
   addSessionChoreographyViaApi,
   createChoreographyViaApi,
   createDanceCourseViaApi,
   createDanceGroupViaApi,
   createSessionViaApi,
+  updateGroupMaxLevelViaApi,
 } from "../helpers/api";
 
 test.describe("Dance Group Detail", () => {
-  test("supports adding levels and creating courses", async ({ page, request }) => {
+  test("supports setting max level and creating courses", async ({ page, request }) => {
     const groupName = `E2E Main Group ${Date.now()}`;
     const groupId = await createDanceGroupViaApi(request, groupName);
     const semester = `WS${new Date().getFullYear()}`;
@@ -18,10 +18,9 @@ test.describe("Dance Group Detail", () => {
     await page.goto(`/admin/groups/${groupId}`);
     await expect(page.getByRole("heading", { name: groupName, exact: true })).toBeVisible();
 
-    await page.getByRole("combobox", { name: /Available levels/i }).selectOption({
+    await page.getByRole("combobox", { name: /Max group level/i }).selectOption({
       label: "BEGINNER",
     });
-    await expect(page.locator(".tag", { hasText: "BEGINNER" })).toBeVisible();
 
     await page.getByRole("button", { name: /New Course/i }).click();
     await expect(page).toHaveURL(new RegExp(`/admin/groups/${groupId}/courses/new$`));
@@ -38,7 +37,7 @@ test.describe("Dance Group Detail", () => {
     const choreoName = `E2E Learned ${Date.now()}`;
     const choreographyId = await createChoreographyViaApi(request, choreoName);
     const groupId = await createDanceGroupViaApi(request, `E2E Learned Group ${Date.now()}`);
-    await addGroupLevelViaApi(request, groupId, "BEGINNER");
+    await updateGroupMaxLevelViaApi(request, groupId, 30);
     const courseId = await createDanceCourseViaApi(request, groupId, "WS2024", "2024-01-10");
     const sessionId = await createSessionViaApi(request, courseId, "2024-02-01");
     expect(choreographyId).toBeGreaterThan(0);
@@ -50,7 +49,8 @@ test.describe("Dance Group Detail", () => {
 
     await expect(page).toHaveURL(/\/$/);
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
-    await expect(page.locator(".filter-tag", { hasText: "BEGINNER" })).toBeVisible();
+    await expect(page.getByRole("radio", { name: /Up to max level/i })).toBeChecked();
+    await expect(page.getByRole("combobox", { name: "Level:" })).toHaveValue(/^\d+$/);
     await expect(page.locator(".filter-tag", { hasText: "Vine" })).toBeVisible();
   });
 

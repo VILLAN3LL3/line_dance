@@ -62,7 +62,7 @@ test.describe("Choreography Search", () => {
     await expect(page.getByRole("button", { name: /^Table$/i })).toHaveClass(/active/);
 
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
-    await expect(page.locator(".filter-tag", { hasText: "BEGINNER" })).toBeVisible();
+    await expect(page.locator(".filter-tags .level-batch", { hasText: "BEGINNER" })).toBeVisible();
   });
 
   test("filters choreographies by max level mode", async ({ page, request }) => {

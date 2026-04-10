@@ -36,19 +36,23 @@ test.describe("Saved Filter Configurations", () => {
 
     await page.getByRole("combobox", { name: "Level:" }).fill("BEGINNER");
     await page.getByRole("combobox", { name: "Level:" }).press("Enter");
-    await expect(page.locator(".filter-tag", { hasText: "BEGINNER" })).toBeVisible();
+    await expect(
+      page.locator(".filter-tags .level-batch", { hasText: "BEGINNER" }),
+    ).toBeVisible();
 
     await page.getByPlaceholder(/Configuration name/i).fill(configName);
     await page.getByRole("button", { name: /Save Current Filters/i }).click();
     await expect(page.getByText(`Saved "${configName}"`)).toBeVisible();
 
     await page.getByRole("button", { name: /Clear All Filters/i }).click();
-    await expect(page.locator(".filter-tag", { hasText: "BEGINNER" })).toHaveCount(0);
+    await expect(page.locator(".filter-tags .level-batch", { hasText: "BEGINNER" })).toHaveCount(0);
 
     await page.locator("select").first().selectOption({ label: configName });
     await page.getByRole("button", { name: /Load Selected/i }).click();
     await expect(page.getByText(`Loaded "${configName}"`)).toBeVisible();
-    await expect(page.locator(".filter-tag", { hasText: "BEGINNER" })).toBeVisible();
+    await expect(
+      page.locator(".filter-tags .level-batch", { hasText: "BEGINNER" }),
+    ).toBeVisible();
 
     await page.getByRole("combobox", { name: "Tags:" }).fill("E2E-Updated");
     await page.getByRole("combobox", { name: "Tags:" }).press("Enter");

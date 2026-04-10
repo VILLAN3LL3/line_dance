@@ -102,13 +102,13 @@ export async function addSessionChoreographyViaApi(
   await expectOk(response);
 }
 
-export async function addGroupLevelViaApi(
+export async function updateGroupMaxLevelViaApi(
   request: APIRequestContext,
   danceGroupId: number,
-  level: string,
+  maxGroupLevelValue: number | null,
 ) {
-  const response = await request.post(`${API_BASE}/dance-groups/${danceGroupId}/levels`, {
-    data: { level },
+  const response = await request.put(`${API_BASE}/dance-groups/${danceGroupId}/max-level`, {
+    data: { max_group_level_value: maxGroupLevelValue },
   });
 
   await expectOk(response);
