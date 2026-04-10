@@ -4,25 +4,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  deleteDanceCourse,
-  exportDanceCoursePdf,
-  fetchChoreographies,
-  getDanceCourses,
-  getDanceGroup,
-  getGroupMaxLevel,
-  getLevels,
-  getLearnedChoreographies,
-  getSessions,
-  updateGroupMaxLevel,
+  deleteDanceCourse, exportDanceCoursePdf, fetchChoreographies, getDanceCourses, getDanceGroup, getGroupMaxLevel, getLearnedChoreographies,
+  getLevels, getSessions, updateGroupMaxLevel
 } from "../../api";
-import {
-  Choreography,
-  DanceCourse,
-  DanceGroup,
-  LearnedChoreography,
-  LevelOption,
-  Session,
-} from "../../types";
+import { Choreography, DanceCourse, DanceGroup, LearnedChoreography, LevelOption, Session } from "../../types";
 import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
 import { DanceGroupCoursesSection } from "./DanceGroupCoursesSection";
 import { DanceGroupLearnedSection } from "./DanceGroupLearnedSection";
@@ -54,16 +39,15 @@ const DanceGroupDetail: React.FC = () => {
         choreosData,
         maxLevelData,
         fetchedLevelOptions,
-      ] =
-        await Promise.all([
-          getDanceGroup(parsedGroupId),
-          getDanceCourses(parsedGroupId),
-          getSessions(),
-          getLearnedChoreographies(parsedGroupId),
-          fetchChoreographies(1, 10000),
-          getGroupMaxLevel(parsedGroupId),
-          getLevels(),
-        ]);
+      ] = await Promise.all([
+        getDanceGroup(parsedGroupId),
+        getDanceCourses(parsedGroupId),
+        getSessions(),
+        getLearnedChoreographies(parsedGroupId),
+        fetchChoreographies(1, 10000),
+        getGroupMaxLevel(parsedGroupId),
+        getLevels(),
+      ]);
       setGroup(groupData);
       setCourses(coursesData);
       setSessions(sessionsData);

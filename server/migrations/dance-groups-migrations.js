@@ -185,7 +185,9 @@ const migrations = [
 
       for (const row of groupLevelRows) {
         const danceGroupId = Number(row.dance_group_id);
-        const levelNameUpper = String(row.level || '').trim().toUpperCase();
+        const levelNameUpper = String(row.level || '')
+          .trim()
+          .toUpperCase();
         if (!levelNameUpper) {
           continue;
         }

@@ -161,12 +161,18 @@ export async function updateGroupMaxLevel(req, res) {
     if (rawValue !== null && rawValue !== undefined && rawValue !== '') {
       const parsedValue = Number.parseInt(String(rawValue), 10);
       if (!Number.isFinite(parsedValue) || parsedValue < 0) {
-        return res.status(400).json({ error: 'max_group_level_value must be a non-negative integer or null' });
+        return res
+          .status(400)
+          .json({ error: 'max_group_level_value must be a non-negative integer or null' });
       }
       maxGroupLevelValue = parsedValue;
     }
 
-    const existing = await getQuery(`SELECT id FROM dance_groups WHERE id = ?`, [parsedGroupId], dbName);
+    const existing = await getQuery(
+      `SELECT id FROM dance_groups WHERE id = ?`,
+      [parsedGroupId],
+      dbName,
+    );
     if (!existing) {
       return res.status(404).json({ error: 'Dance group not found' });
     }
