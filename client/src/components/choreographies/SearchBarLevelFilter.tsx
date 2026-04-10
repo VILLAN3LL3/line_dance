@@ -1,8 +1,8 @@
 import React from "react";
 
-import type { LevelOption } from "../../types";
 import { AutoCompleteInput, Tag, TagGroup } from "../shared/ui";
 
+import type { LevelOption } from "../../types";
 interface SearchBarLevelFilterProps {
   levelMode: "selected" | "max";
   selectedLevel: string[];
@@ -36,7 +36,7 @@ export const SearchBarLevelFilter: React.FC<SearchBarLevelFilterProps> = ({
     <label htmlFor={levelMode === "selected" ? "level-input" : "max-level-select"}>Level:</label>
 
     <div className="filter-mode-toggle">
-      <span>Mode:</span>
+      <label>Mode:</label>
       <div className="match-mode-radios" role="radiogroup" aria-label="Level filter mode">
         <label
           className={`match-mode-option mode-level-list ${levelMode === "selected" ? "active" : ""}`}

@@ -1,6 +1,5 @@
 import React from "react";
 
-import type { LevelOption, SearchFilters } from "../../types";
 import { SearchBarLevelFilter } from "./SearchBarLevelFilter";
 import { SearchBarMaxCountFilter } from "./SearchBarMaxCountFilter";
 import { SearchBarSavedConfigurationsPanel } from "./SearchBarSavedConfigurationsPanel";
@@ -8,6 +7,7 @@ import { SearchBarSelectableListFilter } from "./SearchBarSelectableListFilter";
 import { SearchBarStepFiguresFilter } from "./SearchBarStepFiguresFilter";
 import { SearchBarTagFilter } from "./SearchBarTagFilter";
 
+import type { LevelOption, SearchFilters } from "../../types";
 interface SearchBarAdvancedFiltersProps {
   // Level
   levelMode: "selected" | "max";
