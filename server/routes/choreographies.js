@@ -495,12 +495,34 @@ async function cleanupOrphanedRecords() {
        )`,
     );
 
-    // Delete orphaned levels (not used by any choreography)
+    // Delete orphaned non-canonical levels (not used by any choreography)
+    const canonicalLevelNames = [
+      'UNKNOWN',
+      'ABSOLUTE BEGINNER',
+      'EASY BEGINNER',
+      'BEGINNER',
+      'HIGH BEGINNER',
+      'LOW IMPROVER',
+      'EASY IMPROVER',
+      'IMPROVER',
+      'HIGH IMPROVER',
+      'LOW INTERMEDIATE',
+      'EASY INTERMEDIATE',
+      'INTERMEDIATE',
+      'HIGH INTERMEDIATE',
+      'LOW ADVANCED',
+      'EASY ADVANCED',
+      'ADVANCED',
+      'HIGH ADVANCED',
+    ];
+    const canonicalPlaceholders = canonicalLevelNames.map(() => 'UPPER(?)').join(',');
     await runQuery(
       `DELETE FROM levels
        WHERE id NOT IN (
          SELECT DISTINCT level_id FROM choreographies WHERE level_id IS NOT NULL
-       )`,
+       )
+       AND UPPER(name) NOT IN (${canonicalPlaceholders})`,
+      canonicalLevelNames,
     );
 
     // Also clean up any dangling join table entries for non-existent choreographies

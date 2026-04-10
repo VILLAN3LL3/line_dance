@@ -36,7 +36,7 @@ test.describe("Choreography Search", () => {
     const resultCard = page.locator(".choreography-card", { hasText: name }).first();
     await expect(resultCard).toBeVisible({ timeout: 30_000 });
 
-    await resultCard.getByRole("button", { name: /^Edit$/i }).click();
+    await resultCard.getByRole("link", { name: /^Edit$/i }).click();
     await expect(page.getByRole("button", { name: /Save Choreography/i })).toBeVisible();
     await expect(page.getByLabel(/Choreography Name/i)).toHaveValue(name);
   });

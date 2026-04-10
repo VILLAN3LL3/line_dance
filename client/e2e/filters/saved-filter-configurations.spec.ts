@@ -9,8 +9,7 @@ test.describe("Saved Filter Configurations", () => {
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
     await page.getByRole("button", { name: /Saved Configurations/i }).click();
 
-    await page.getByPlaceholder(/Add level/i).fill("Beginner");
-    await page.getByRole("button", { name: /^\+$/ }).first().click();
+    await page.getByRole("combobox", { name: "Level:" }).selectOption({ label: "BEGINNER" });
 
     await page.getByPlaceholder(/Configuration name/i).fill(configName);
     await page.getByRole("button", { name: /Save Current Filters/i }).click();
@@ -34,21 +33,20 @@ test.describe("Saved Filter Configurations", () => {
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
     await page.getByRole("button", { name: /Saved Configurations/i }).click();
 
-    await page.getByPlaceholder(/Add level/i).fill("Beginner");
-    await page.getByRole("button", { name: /^\+$/ }).first().click();
-    await expect(page.locator(".filter-tag", { hasText: "Beginner" })).toBeVisible();
+    await page.getByRole("combobox", { name: "Level:" }).selectOption({ label: "BEGINNER" });
+    await expect(page.locator(".filter-tag", { hasText: "BEGINNER" })).toBeVisible();
 
     await page.getByPlaceholder(/Configuration name/i).fill(configName);
     await page.getByRole("button", { name: /Save Current Filters/i }).click();
     await expect(page.getByText(`Saved "${configName}"`)).toBeVisible();
 
     await page.getByRole("button", { name: /Clear All Filters/i }).click();
-    await expect(page.locator(".filter-tag", { hasText: "Beginner" })).toHaveCount(0);
+    await expect(page.locator(".filter-tag", { hasText: "BEGINNER" })).toHaveCount(0);
 
     await page.locator("select").first().selectOption({ label: configName });
     await page.getByRole("button", { name: /Load Selected/i }).click();
     await expect(page.getByText(`Loaded "${configName}"`)).toBeVisible();
-    await expect(page.locator(".filter-tag", { hasText: "Beginner" })).toBeVisible();
+    await expect(page.locator(".filter-tag", { hasText: "BEGINNER" })).toBeVisible();
 
     await page.getByPlaceholder(/Add tag/i).fill("E2E-Updated");
     await page

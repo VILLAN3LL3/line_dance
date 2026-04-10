@@ -11,7 +11,7 @@ test.describe("Choreography Detail", () => {
     await page.goto(`/choreographies/${choreographyId}`);
     await expect(page.getByText(originalName)).toBeVisible();
 
-    await page.getByRole("button", { name: /^Edit$/i }).click();
+    await page.getByRole("link", { name: /^Edit$/i }).click();
     await page.getByLabel(/Choreography Name/i).fill(updatedName);
     await page.getByRole("button", { name: /Save Choreography/i }).click();
 

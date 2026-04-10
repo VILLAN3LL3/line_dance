@@ -37,7 +37,7 @@ test.describe("Course Management", () => {
     await expect(page.getByRole("heading", { name: /Choreographies for/i })).toBeVisible();
     await expect(page.locator(".loading")).toHaveCount(0);
     await expect(page.getByPlaceholder(/Search choreography by name/i)).toBeEnabled();
-    await page.getByPlaceholder(/Search choreography by name/i).fill(`${choreoName} (Beginner)`);
+    await page.getByPlaceholder(/Search choreography by name/i).fill(`${choreoName} (BEGINNER)`);
     await expect(page.getByRole("button", { name: /Add to Session/i })).toBeEnabled();
     await page.getByRole("button", { name: /Add to Session/i }).click();
 

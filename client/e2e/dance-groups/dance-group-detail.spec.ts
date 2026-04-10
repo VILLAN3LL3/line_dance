@@ -18,9 +18,10 @@ test.describe("Dance Group Detail", () => {
     await page.goto(`/admin/groups/${groupId}`);
     await expect(page.getByRole("heading", { name: groupName, exact: true })).toBeVisible();
 
-    await page.getByPlaceholder(/Add a new level/i).fill("Beginner");
-    await page.getByRole("button", { name: /Add Level/i }).click();
-    await expect(page.locator(".tag", { hasText: "Beginner" })).toBeVisible();
+    await page.getByRole("combobox", { name: /Available levels/i }).selectOption({
+      label: "BEGINNER",
+    });
+    await expect(page.locator(".tag", { hasText: "BEGINNER" })).toBeVisible();
 
     await page.getByRole("button", { name: /New Course/i }).click();
     await expect(page).toHaveURL(new RegExp(`/admin/groups/${groupId}/courses/new$`));
@@ -37,7 +38,7 @@ test.describe("Dance Group Detail", () => {
     const choreoName = `E2E Learned ${Date.now()}`;
     const choreographyId = await createChoreographyViaApi(request, choreoName);
     const groupId = await createDanceGroupViaApi(request, `E2E Learned Group ${Date.now()}`);
-    await addGroupLevelViaApi(request, groupId, "Beginner");
+    await addGroupLevelViaApi(request, groupId, "BEGINNER");
     const courseId = await createDanceCourseViaApi(request, groupId, "WS2024", "2024-01-10");
     const sessionId = await createSessionViaApi(request, courseId, "2024-02-01");
     expect(choreographyId).toBeGreaterThan(0);
@@ -49,7 +50,7 @@ test.describe("Dance Group Detail", () => {
 
     await expect(page).toHaveURL(/\/$/);
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
-    await expect(page.locator(".filter-tag", { hasText: "Beginner" })).toBeVisible();
+    await expect(page.locator(".filter-tag", { hasText: "BEGINNER" })).toBeVisible();
     await expect(page.locator(".filter-tag", { hasText: "Vine" })).toBeVisible();
   });
 
