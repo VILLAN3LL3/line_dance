@@ -20,7 +20,9 @@ export const DanceGroupLevelsSection: React.FC<DanceGroupLevelsSectionProps> = (
 }) => {
   const availableLevels = Array.from(
     new Set(
-      choreographies.map((choreography) => choreography.level).filter((level) => !groupLevels.includes(level)),
+      choreographies
+        .map((choreography) => choreography.level)
+        .filter((level) => !groupLevels.includes(level)),
     ),
   ).sort((a, b) => a.localeCompare(b));
   const [newLevel, setNewLevel] = useState("");

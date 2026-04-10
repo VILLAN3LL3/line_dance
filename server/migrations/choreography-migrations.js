@@ -139,7 +139,11 @@ const migrations = [
       ];
 
       for (const [name, value] of defaultLevels) {
-        await runQuery(`INSERT OR IGNORE INTO levels (name, value) VALUES (?, ?)`, [name, value], dbName);
+        await runQuery(
+          `INSERT OR IGNORE INTO levels (name, value) VALUES (?, ?)`,
+          [name, value],
+          dbName,
+        );
       }
     },
   },
@@ -281,7 +285,11 @@ const migrations = [
         );
 
         if (existing) {
-          await runQuery(`UPDATE levels SET name = ?, value = ? WHERE id = ?`, [name, value, existing.id], dbName);
+          await runQuery(
+            `UPDATE levels SET name = ?, value = ? WHERE id = ?`,
+            [name, value, existing.id],
+            dbName,
+          );
         } else {
           await runQuery(`INSERT INTO levels (name, value) VALUES (?, ?)`, [name, value], dbName);
         }

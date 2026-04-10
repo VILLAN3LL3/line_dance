@@ -264,7 +264,9 @@ export async function createChoreography(req, res) {
       return res.status(400).json({ error: 'Name and level are required' });
     }
 
-    const levelRecord = await getQuery('SELECT id FROM levels WHERE UPPER(name) = UPPER(?)', [level]);
+    const levelRecord = await getQuery('SELECT id FROM levels WHERE UPPER(name) = UPPER(?)', [
+      level,
+    ]);
     if (!levelRecord) {
       return res.status(400).json({
         error: 'Invalid level. Must be one of: Beginner, Intermediate, Advanced, Experienced',
@@ -402,7 +404,9 @@ export async function updateChoreography(req, res) {
 
     let levelId = null;
     if (level) {
-      const levelRecord = await getQuery('SELECT id FROM levels WHERE UPPER(name) = UPPER(?)', [level]);
+      const levelRecord = await getQuery('SELECT id FROM levels WHERE UPPER(name) = UPPER(?)', [
+        level,
+      ]);
       if (!levelRecord) {
         return res.status(400).json({
           error: 'Invalid level. Must be one of: Beginner, Intermediate, Advanced, Experienced',
@@ -898,7 +902,9 @@ async function getTagId(name) {
 
 export async function getLevels(req, res) {
   try {
-    const levels = await allQuery('SELECT id, name, value FROM levels ORDER BY value ASC, LOWER(name) ASC');
+    const levels = await allQuery(
+      'SELECT id, name, value FROM levels ORDER BY value ASC, LOWER(name) ASC',
+    );
     res.json(levels);
   } catch (error) {
     captureError(error);

@@ -3,19 +3,14 @@ import "../../styles/App.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import {
-  createChoreography,
-  deleteChoreography,
-  searchChoreographies,
-  updateChoreography,
-} from "../../api";
+import { deleteChoreography, searchChoreographies, updateChoreography } from "../../api";
 import { Choreography, ChoreographyFormData, SearchFilters } from "../../types";
 import { confirmAction, ErrorMessage } from "../shared/ui";
 import { AppDetailView } from "./AppDetailView";
 import { AppFormView } from "./AppFormView";
 import { AppListView } from "./AppListView";
 
-type View = "list" | "create" | "edit" | "detail";
+type View = "list" | "edit" | "detail";
 
 export const App: React.FC = () => {
   const location = useLocation();
@@ -120,19 +115,6 @@ export const App: React.FC = () => {
     await loadChoreographies(filters);
   };
 
-  const handleCreate = async (formData: ChoreographyFormData) => {
-    setIsLoading(true);
-    try {
-      await createChoreography(formData);
-      await returnToList();
-    } catch (err) {
-      setError("Failed to create choreography");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleEdit = (id: number) => {
     navigate(`/choreographies/${id}`, { state: { editMode: true } });
   };
@@ -195,7 +177,10 @@ export const App: React.FC = () => {
     <div className="app">
       <header className="app-header">
         <h2>Choreography Search</h2>
-        <button onClick={() => setView("create")} disabled={isLoading || view !== "list"}>
+        <button
+          onClick={() => navigate("/choreographies/new")}
+          disabled={isLoading || view !== "list"}
+        >
           + Add New Choreography
         </button>
       </header>
@@ -218,12 +203,12 @@ export const App: React.FC = () => {
         />
       )}
 
-      {view === "create" && (
-        <AppFormView
-          title="Add New Choreography"
-          onSubmit={handleCreate}
-          isLoading={isLoading}
-          onCancel={() => setView("list")}
+      {view === "detail" && selectedChoreography && (
+        <AppDetailView
+          choreography={selectedChoreography}
+          onBack={() => setView("list")}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       )}
 
@@ -236,15 +221,6 @@ export const App: React.FC = () => {
           onCancel={() => {
             void returnToList();
           }}
-        />
-      )}
-
-      {view === "detail" && selectedChoreography && (
-        <AppDetailView
-          choreography={selectedChoreography}
-          onBack={() => setView("list")}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
         />
       )}
     </div>

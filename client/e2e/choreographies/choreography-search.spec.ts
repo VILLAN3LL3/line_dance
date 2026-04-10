@@ -8,11 +8,12 @@ test.describe("Choreography Search", () => {
 
     await page.goto("/");
     await page.getByRole("button", { name: /Add New Choreography/i }).click();
+    await expect(page).toHaveURL(/\/choreographies\/new$/);
 
     await expect(page.getByRole("heading", { name: /Add New Choreography/i })).toBeVisible();
 
     await page.getByLabel(/Choreography Name/i).fill(name);
-    await page.getByLabel(/Level/i).selectOption({ label: "Beginner" });
+    await page.getByLabel(/Level/i).selectOption({ label: "BEGINNER" });
     await page.getByPlaceholder("e.g., 64").fill("32");
     await page.getByPlaceholder("e.g., 4").fill("4");
 
@@ -48,8 +49,7 @@ test.describe("Choreography Search", () => {
     await page.getByPlaceholder(/Search choreographies by name/i).fill(runId);
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
 
-    await page.getByPlaceholder(/Add level/i).fill("Beginner");
-    await page.getByRole("button", { name: /^\+$/ }).first().click();
+    await page.getByRole("combobox", { name: "Level:" }).selectOption({ label: "BEGINNER" });
     await page.getByRole("button", { name: /Apply Filters/i }).click();
 
     await page.getByRole("button", { name: /^Table$/i }).click();
@@ -61,7 +61,7 @@ test.describe("Choreography Search", () => {
     await expect(page.getByRole("button", { name: /^Table$/i })).toHaveClass(/active/);
 
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
-    await expect(page.locator(".filter-tag", { hasText: "Beginner" })).toBeVisible();
+    await expect(page.locator(".filter-tag", { hasText: "BEGINNER" })).toBeVisible();
   });
 
   test("supports table sorting and row click detail flow", async ({ page, request }) => {
@@ -72,13 +72,13 @@ test.describe("Choreography Search", () => {
     await createChoreographyWithPayload(request, {
       name: lowCountName,
       count: 16,
-      level: "Beginner",
+      level: "BEGINNER",
       step_figures: ["Vine"],
     });
     await createChoreographyWithPayload(request, {
       name: highCountName,
       count: 64,
-      level: "Beginner",
+      level: "BEGINNER",
       step_figures: ["Vine"],
     });
 
@@ -110,13 +110,13 @@ test.describe("Choreography Search", () => {
     await createChoreographyWithPayload(request, {
       name: vineOnlyName,
       count: 32,
-      level: "Beginner",
+      level: "BEGINNER",
       step_figures: ["Vine"],
     });
     await createChoreographyWithPayload(request, {
       name: vinePivotName,
       count: 32,
-      level: "Beginner",
+      level: "BEGINNER",
       step_figures: ["Vine", "Pivot"],
     });
 
@@ -150,15 +150,16 @@ test.describe("Choreography Search", () => {
 
     await page.goto("/");
     await page.getByRole("button", { name: /Add New Choreography/i }).click();
+    await expect(page).toHaveURL(/\/choreographies\/new$/);
     await expect(page.getByRole("heading", { name: /Add New Choreography/i })).toBeVisible();
 
     await page.getByLabel(/Choreography Name/i).fill(name);
     await page.getByRole("button", { name: /Save Choreography/i }).click();
 
     await expect(page.getByRole("heading", { name: /Add New Choreography/i })).toBeVisible();
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/choreographies\/new$/);
 
-    await page.getByLabel(/Level/i).selectOption({ label: "Beginner" });
+    await page.getByLabel(/Level/i).selectOption({ label: "BEGINNER" });
     await page.getByRole("button", { name: /Save Choreography/i }).click();
 
     await expect(page.getByRole("heading", { name: /Choreography Search/i })).toBeVisible();
@@ -181,16 +182,15 @@ test.describe("Choreography Search API — bracket-notation array params", () =>
     const beginnerName = `_E2E Beginner Dance ${runId}`;
     const intermediateName = `_E2E Intermediate Dance ${runId}`;
 
-    // Seed: one Beginner, one Intermediate
-    await ensureLevel(request, "Intermediate");
+    // Seed: one BEGINNER, one INTERMEDIATE
     await createChoreographyViaApi(request, beginnerName);
     const intermediateRes = await request.post(`${API_BASE}/choreographies`, {
-      data: { name: intermediateName, level: "Intermediate", step_figures: ["Pivot"], count: 48 },
+      data: { name: intermediateName, level: "INTERMEDIATE", step_figures: ["Pivot"], count: 48 },
     });
     expect(intermediateRes.ok()).toBeTruthy();
 
     const res = await request.get(
-      `${API_BASE}/choreographies/search?level[]=Beginner&level[]=Intermediate&search=${encodeURIComponent(runId)}`,
+      `${API_BASE}/choreographies/search?level[]=BEGINNER&level[]=INTERMEDIATE&search=${encodeURIComponent(runId)}`,
     );
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
@@ -211,10 +211,10 @@ test.describe("Choreography Search API — bracket-notation array params", () =>
 
     // Seed: Vine only; Vine + Pivot
     await request.post(`${API_BASE}/choreographies`, {
-      data: { name: vineOnlyName, level: "Beginner", step_figures: ["Vine"], count: 32 },
+      data: { name: vineOnlyName, level: "BEGINNER", step_figures: ["Vine"], count: 32 },
     });
     await request.post(`${API_BASE}/choreographies`, {
-      data: { name: vinePivotName, level: "Beginner", step_figures: ["Vine", "Pivot"], count: 32 },
+      data: { name: vinePivotName, level: "BEGINNER", step_figures: ["Vine", "Pivot"], count: 32 },
     });
 
     // Exact mode with [Vine, Pivot] — "Vine Only" has Pivot not in its figures → excluded
@@ -237,16 +237,15 @@ test.describe("Choreography Search API — bracket-notation array params", () =>
     const beginnerName = `_E2E B Vine ${runId}`;
     const intermediateName = `_E2E I Vine ${runId}`;
 
-    await ensureLevel(request, "Intermediate");
     await request.post(`${API_BASE}/choreographies`, {
-      data: { name: beginnerName, level: "Beginner", step_figures: ["Vine"], count: 32 },
+      data: { name: beginnerName, level: "BEGINNER", step_figures: ["Vine"], count: 32 },
     });
     await request.post(`${API_BASE}/choreographies`, {
-      data: { name: intermediateName, level: "Intermediate", step_figures: ["Vine"], count: 32 },
+      data: { name: intermediateName, level: "INTERMEDIATE", step_figures: ["Vine"], count: 32 },
     });
 
     const res = await request.get(
-      `${API_BASE}/choreographies/search?level[]=Beginner&step_figures[]=Vine&step_figures_match_mode=any&search=${encodeURIComponent(runId)}`,
+      `${API_BASE}/choreographies/search?level[]=BEGINNER&step_figures[]=Vine&step_figures_match_mode=any&search=${encodeURIComponent(runId)}`,
     );
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
@@ -255,22 +254,6 @@ test.describe("Choreography Search API — bracket-notation array params", () =>
     expect(names).not.toContain(intermediateName);
   });
 });
-
-async function ensureLevel(request: APIRequestContext, name: string) {
-  const levelsResponse = await request.get(`${API_BASE}/levels`);
-  expect(levelsResponse.ok()).toBeTruthy();
-
-  const levels: Array<{ name: string }> = await levelsResponse.json();
-  if (levels.some((level) => level.name === name)) {
-    return;
-  }
-
-  const createResponse = await request.post(`${API_BASE}/levels`, {
-    data: { name },
-  });
-
-  expect(createResponse.status()).toBe(201);
-}
 
 async function createChoreographyWithPayload(
   request: APIRequestContext,

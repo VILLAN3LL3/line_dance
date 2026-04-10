@@ -4,6 +4,7 @@ import React from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 
 import { App as ChoreographySearch } from "./app/App";
+import ChoreographyCreatePage from "./choreographies/ChoreographyCreatePage";
 import ChoreographyDetail from "./choreographies/ChoreographyDetail";
 import CourseDetail from "./courses/CourseDetail";
 import CourseFormPage from "./courses/CourseFormPage";
@@ -60,6 +61,7 @@ export const AppRouter: React.FC = () => {
       <main className="router-content">
         <Routes>
           <Route path="/" element={<ChoreographySearch />} />
+          <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
           <Route path="/choreographies/:id" element={<ChoreographyDetail />} />
           <Route path="/admin" element={<DanceGroupsAdmin mode="list" />} />
           <Route path="/admin/groups/new" element={<DanceGroupsAdmin mode="create" />} />

@@ -2,7 +2,11 @@ import "../../styles/SearchBar.css";
 
 import React, { useState } from "react";
 
-import { defaultSearchBarFilterValues, searchBarValuesFromFilters, useSearchBarFilters } from "../../hooks/useSearchBarFilters";
+import {
+  defaultSearchBarFilterValues,
+  searchBarValuesFromFilters,
+  useSearchBarFilters,
+} from "../../hooks/useSearchBarFilters";
 import { SearchFilters } from "../../types";
 import { ActionButton } from "../shared/ui";
 import { SearchBarAdvancedFilters } from "./SearchBarAdvancedFilters";
@@ -140,11 +144,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   const addLevelFromInput = (levelValue?: string) => {
     const trimmed = (levelValue ?? values.inputLevel).trim();
-    if (
-      trimmed &&
-      levelOptions.includes(trimmed) &&
-      !values.selectedLevel.includes(trimmed)
-    ) {
+    if (trimmed && levelOptions.includes(trimmed) && !values.selectedLevel.includes(trimmed)) {
       setValues((prev) => ({
         ...prev,
         selectedLevel: [...prev.selectedLevel, trimmed],
