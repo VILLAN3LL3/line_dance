@@ -118,6 +118,12 @@ const migrations = [
   {
     id: '002_seed_default_levels',
     up: async () => {
+      const valueColumn = await getQuery(
+        `SELECT name FROM pragma_table_info('levels') WHERE name = 'value'`,
+        [],
+        dbName,
+      );
+
       const defaultLevels = [
         ['UNKNOWN', 0],
         ['ABSOLUTE BEGINNER', 10],
@@ -139,11 +145,25 @@ const migrations = [
       ];
 
       for (const [name, value] of defaultLevels) {
-        await runQuery(
-          `INSERT OR IGNORE INTO levels (name, value) VALUES (?, ?)`,
-          [name, value],
+        const existing = await getQuery(
+          `SELECT id FROM levels WHERE UPPER(name) = UPPER(?) LIMIT 1`,
+          [name],
           dbName,
         );
+
+        if (existing) {
+          continue;
+        }
+
+        if (valueColumn) {
+          await runQuery(
+            `INSERT OR IGNORE INTO levels (name, value) VALUES (?, ?)`,
+            [name, value],
+            dbName,
+          );
+        } else {
+          await runQuery(`INSERT OR IGNORE INTO levels (name) VALUES (?)`, [name], dbName);
+        }
       }
     },
   },
