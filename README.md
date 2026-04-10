@@ -16,6 +16,7 @@ __All code was written by GitHub Copilot. Use with caution.__
 ### Choreography Search
 
 - Search choreographies by name
+- Search results return all matches for the active filters (no `page` / `limit` pagination)
 - Filter by level using either selected levels or `up to max level` mode
 - Filter by step figures, tags (include/exclude), and authors
 - Support saved filters that include `max_level_value` and `excluded_tags`
@@ -297,6 +298,11 @@ Use Swagger UI for all endpoint documentation and request/response details:
 Raw OpenAPI JSON is available at:
 
 - `http://localhost:3001/api/openapi.json`
+
+Search endpoint note:
+
+- `GET /api/choreographies/search` always returns all matching choreographies for the provided filters.
+- `page` and `limit` are not used for this endpoint.
 
 ## Data Notes
 

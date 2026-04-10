@@ -662,9 +662,6 @@ export async function searchChoreographies(req, res) {
       authors,
       search,
     } = req.query;
-    const page = Number.parseInt(req.query.page, 10) || 1;
-    const limit = Number.parseInt(req.query.limit, 10) || 20;
-    const offset = (page - 1) * limit;
 
     const { conditions, params, joins, stepFilter } = buildFilterConditions({
       search,
@@ -677,12 +674,6 @@ export async function searchChoreographies(req, res) {
       excluded_tags,
       authors,
     });
-
-    // Build count params before adding pagination params
-    const countParams = [...params];
-    if (stepFilter.having) {
-      countParams.push(...stepFilter.havingParams);
-    }
 
     let query =
       'SELECT DISTINCT c.*, l.name as level FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id';
@@ -701,42 +692,19 @@ export async function searchChoreographies(req, res) {
       params.push(...stepFilter.havingParams);
     }
 
-    query += ' ORDER BY LOWER(c.name) ASC, COALESCE(l.value, 2147483647) ASC LIMIT ? OFFSET ?';
-    params.push(limit, offset);
+    query += ' ORDER BY LOWER(c.name) ASC, COALESCE(l.value, 2147483647) ASC';
 
     const choreographies = await allQuery(query, params);
     const enriched = await Promise.all(choreographies.map((c) => enrichChoreography(c)));
-
-    // Build count query
-    let countQuery =
-      'SELECT COUNT(DISTINCT c.id) as count FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id';
-    countQuery += joins.map((j) => ` ${j}`).join('');
-
-    if (conditions.length > 0) {
-      countQuery += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    if (stepFilter.groupBy) {
-      countQuery += stepFilter.groupBy;
-    }
-
-    if (stepFilter.having) {
-      countQuery += stepFilter.having;
-    }
-
-    if (stepFilter.groupBy || stepFilter.having) {
-      countQuery = `SELECT COUNT(*) as count FROM (${countQuery})`;
-    }
-
-    const countResult = await getQuery(countQuery, countParams);
+    const total = enriched.length;
 
     res.json({
       data: enriched,
       pagination: {
-        page,
-        limit,
-        total: countResult.count,
-        totalPages: Math.ceil(countResult.count / limit),
+        page: 1,
+        limit: total,
+        total,
+        totalPages: total > 0 ? 1 : 0,
       },
     });
   } catch (error) {

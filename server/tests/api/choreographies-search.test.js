@@ -406,24 +406,26 @@ describe('GET /api/choreographies/search — fixed ordering', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Pagination
+// Always return full search result set (page/limit ignored)
 // ---------------------------------------------------------------------------
 
-describe('GET /api/choreographies/search — pagination', () => {
-  it('returns the correct page slice', async () => {
+describe('GET /api/choreographies/search — full result set', () => {
+  it('returns all matches even when page and limit are provided', async () => {
     await seedDances();
     const res = await search({ page: 1, limit: 2 });
-    expect(res.body.data).toHaveLength(2);
+    expect(res.body.data).toHaveLength(3);
+    expect(res.body.pagination.page).toBe(1);
+    expect(res.body.pagination.limit).toBe(3);
     expect(res.body.pagination.total).toBe(3);
-    expect(res.body.pagination.totalPages).toBe(2);
-    expect(res.body.data[0].name).toBe('Argentine Tango');
+    expect(res.body.pagination.totalPages).toBe(1);
   });
 
-  it('returns the second page correctly', async () => {
+  it('ignores page offsets and still returns all matches', async () => {
     await seedDances();
     const res = await search({ page: 2, limit: 2 });
-    expect(res.body.data).toHaveLength(1);
-    expect(res.body.data[0].name).toBe('Waltz in the Rain');
+    expect(res.body.data).toHaveLength(3);
+    const names = res.body.data.map((c) => c.name);
+    expect(names).toEqual(['Argentine Tango', 'Cha Cha Fun', 'Waltz in the Rain']);
   });
 });
 

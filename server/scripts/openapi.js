@@ -123,7 +123,7 @@ export const openApiSpec = {
     '/api/choreographies/search': {
       get: {
         tags: ['Choreographies'],
-        summary: 'Search choreographies',
+        summary: 'Search choreographies (returns all matches)',
         parameters: [
           { name: 'search', in: 'query', schema: { type: 'string' } },
           {
@@ -159,12 +159,10 @@ export const openApiSpec = {
             schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
           },
           { name: 'max_count', in: 'query', schema: { type: 'integer', minimum: 0 } },
-          { $ref: '#/components/parameters/Page' },
-          { $ref: '#/components/parameters/Limit' },
         ],
         responses: {
           200: {
-            description: 'Paginated search result',
+            description: 'Search result',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/PaginatedChoreographyResponse' },
