@@ -230,14 +230,14 @@
 }
 
 .card-actions button,
-.card-actions a[role="button"] {
+.card-actions a {
   flex: 1;
   font-weight: 600;
   text-align: center;
 }
 
-.card-actions a[role="button"].step-sheet-action,
-.card-actions a[role="button"].copy-action {
+.card-actions a.step-sheet-action,
+.card-actions button.copy-action {
   flex: 0 0 auto;
   width: fit-content;
 }

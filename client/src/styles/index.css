@@ -65,7 +65,9 @@ button:disabled {
   box-shadow: none;
 }
 
-a[role="button"] {
+a[role="button"],
+a.btn-small,
+a.btn-edit {
   cursor: pointer;
   font-family: inherit;
   border-radius: var(--radius-sm);
@@ -141,13 +143,15 @@ select:focus {
   border: 1px solid var(--color-border);
 }
 
-a[role="button"].btn-small {
+a[role="button"].btn-small,
+a.btn-small {
   padding: 6px 12px;
   font-size: 13px;
 }
 
 button.btn-small:hover:not(:disabled),
-a[role="button"].btn-small:hover {
+a[role="button"].btn-small:hover,
+a.btn-small:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
   background-color: #f6f0fb;
@@ -160,7 +164,8 @@ a[role="button"].btn-small:hover {
 }
 
 button.btn-edit:hover:not(:disabled),
-a[role="button"].btn-edit:hover {
+a[role="button"].btn-edit:hover,
+a.btn-edit:hover {
   background-color: #ead7f8;
   color: #3f2154;
   border-color: #cfa7e3;
