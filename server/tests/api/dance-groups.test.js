@@ -149,5 +149,3 @@ describe('DELETE /api/dance-groups/:id', () => {
     expect(courses.body).toHaveLength(0);
   });
 });
-
-

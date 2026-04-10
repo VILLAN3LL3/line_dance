@@ -1016,4 +1016,3 @@ export async function getLearnedChoreographies(req, res) {
     res.status(500).json({ error: 'Failed to fetch learned choreographies' });
   }
 }
-
