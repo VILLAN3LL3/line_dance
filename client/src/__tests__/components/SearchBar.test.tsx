@@ -30,7 +30,7 @@ vi.mock("../../api", () => ({
 describe("SearchBar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getLevels).mockResolvedValue([{ id: 1, name: "Beginner" }]);
+    vi.mocked(getLevels).mockResolvedValue([{ id: 1, name: "Beginner", value: 30 }]);
     vi.mocked(getStepFigures).mockResolvedValue(["Mambo"]);
     vi.mocked(getTags).mockResolvedValue(["classic"]);
     vi.mocked(getAuthors).mockResolvedValue(["Alice"]);

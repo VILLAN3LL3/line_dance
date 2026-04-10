@@ -138,7 +138,7 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
       selectedValues={selectedTags}
       placeholder="Add tag..."
       isLoading={isLoading}
-      onInputChange={onTagInput}
+      onInputChange={(e) => onTagInput(e as React.ChangeEvent<HTMLInputElement>)}
       onAddFromInput={onAddTagFromInput}
       onToggleValue={onToggleTag}
     />
@@ -152,7 +152,7 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
       selectedValues={selectedAuthors}
       placeholder="Add author..."
       isLoading={isLoading}
-      onInputChange={onAuthorInput}
+      onInputChange={(e) => onAuthorInput(e as React.ChangeEvent<HTMLInputElement>)}
       onAddFromInput={onAddAuthorFromInput}
       onToggleValue={onToggleAuthor}
     />

@@ -156,7 +156,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const handleLevelInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value = e.target.value;
     setValues((prev) => ({ ...prev, inputLevel: value }));
-    if (e.target instanceof HTMLInputElement && value.trim() && isDatalistSelection(e)) {
+    if (
+      e.target instanceof HTMLInputElement &&
+      value.trim() &&
+      isDatalistSelection(e as React.ChangeEvent<HTMLInputElement>)
+    ) {
       addLevelFromInput(value);
       return;
     }
