@@ -3,8 +3,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import {
-  deleteSavedFilterConfiguration, getAuthors, getLevels, getMaxChoreographyCount, getSavedFilterConfigurations, getStepFigures, getTags,
-  saveFilterConfiguration, updateSavedFilterConfiguration
+  deleteSavedFilterConfiguration,
+  getAuthors,
+  getLevels,
+  getMaxChoreographyCount,
+  getSavedFilterConfigurations,
+  getStepFigures,
+  getTags,
+  saveFilterConfiguration,
+  updateSavedFilterConfiguration,
 } from "../../api";
 import { SearchBar } from "../../components/choreographies/SearchBar";
 

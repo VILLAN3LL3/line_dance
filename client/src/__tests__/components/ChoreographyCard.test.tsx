@@ -41,7 +41,7 @@ describe("ChoreographyCard", () => {
     expect(screen.getByText("Restart 🔁")).toBeInTheDocument();
     expect(screen.getByText("Tag 🌉")).toBeInTheDocument();
 
-    expect(screen.getByRole("button", { name: /open step sheet in a new tab/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /open step sheet in a new tab/i })).toHaveAttribute(
       "href",
       "https://example.com/step-sheet",
     );
@@ -108,7 +108,7 @@ describe("ChoreographyCard", () => {
       <ChoreographyCard choreography={makeChoreography()} onEdit={onEdit} onDelete={onDelete} />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.click(screen.getByRole("link", { name: "Edit" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
     expect(onEdit).toHaveBeenCalledWith(42);

@@ -14,83 +14,110 @@ interface ChoreographyCardProps {
   videoEmbedMode?: "single" | "all";
 }
 
-export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
-  choreography,
-  onEdit,
-  onDelete,
-  videoEmbedMode = "single",
+interface InfoSectionProps {
+  title: string;
+  value?: string;
+  isDetailMode: boolean;
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+
+interface ChoreographyCardContentProps {
+  choreography: Choreography;
+  isDetailMode: boolean;
+  countWallSummary: { label: string; value: string } | null;
+  demoEmbedUrl: string | null;
+  tutorialEmbedUrl: string | null;
+  onLinkClick: (event: React.MouseEvent<HTMLAnchorElement>) => void;
+  isRestartExpanded: boolean;
+  isTagExpanded: boolean;
+  onRestartToggle: () => void;
+  onTagToggle: () => void;
+}
+
+interface ChoreographyCardActionsProps {
+  choreography: Choreography;
+  onEdit?: (id: number) => void;
+  onDelete?: (id: number) => void;
+  onCopy: () => Promise<void>;
+}
+
+function getCountWallSummary(choreography: Choreography): { label: string; value: string } | null {
+  if (choreography.count && choreography.wall_count) {
+    return { label: "Count/Wall", value: `${choreography.count} / ${choreography.wall_count}` };
+  }
+
+  if (choreography.count) {
+    return { label: "Count", value: String(choreography.count) };
+  }
+
+  if (choreography.wall_count) {
+    return { label: "Wall", value: String(choreography.wall_count) };
+  }
+
+  return null;
+}
+
+const InfoSection: React.FC<InfoSectionProps> = ({
+  title,
+  value,
+  isDetailMode,
+  isExpanded,
+  onToggle,
 }) => {
-  const isDetailMode = videoEmbedMode === "all";
-  const [isRestartExpanded, setIsRestartExpanded] = useState(false);
-  const [isTagExpanded, setIsTagExpanded] = useState(false);
-  const demoEmbedUrl = getYouTubeVideoEmbedUrl(choreography.demo_video_url);
-  const tutorialEmbedUrl = getYouTubeVideoEmbedUrl(choreography.tutorial_video_url);
+  if (!value && !isDetailMode) {
+    return null;
+  }
+
+  return (
+    <div className="info-section">
+      <strong>{title}</strong>
+      <span
+        className={
+          value && !isExpanded
+            ? "info-section-text info-section-text-collapsed"
+            : "info-section-text"
+        }
+      >
+        {value || "None"}
+      </span>
+      {value && (
+        <button type="button" className="info-section-toggle" onClick={onToggle}>
+          {isExpanded ? "Show less" : "Show more"}
+        </button>
+      )}
+    </div>
+  );
+};
+
+const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = ({
+  choreography,
+  isDetailMode,
+  countWallSummary,
+  demoEmbedUrl,
+  tutorialEmbedUrl,
+  onLinkClick,
+  isRestartExpanded,
+  isTagExpanded,
+  onRestartToggle,
+  onTagToggle,
+}) => {
   const primaryEmbedUrl = demoEmbedUrl || tutorialEmbedUrl;
   const primaryEmbedLabel = demoEmbedUrl ? "Demo Video:" : "Tutorial Video:";
   const primaryEmbedTitle = demoEmbedUrl
     ? `Demo video for ${choreography.name}`
     : `Tutorial video for ${choreography.name}`;
-  const cardClassName =
-    videoEmbedMode === "all" ? "choreography-card card-detail-video-layout" : "choreography-card";
-  const showPrimaryEmbed = videoEmbedMode === "single" && Boolean(primaryEmbedUrl);
-  const showDemoLink =
-    videoEmbedMode === "single" && !showPrimaryEmbed && Boolean(choreography.demo_video_url);
+  const showPrimaryEmbed = !isDetailMode && Boolean(primaryEmbedUrl);
+  const showDemoLink = !isDetailMode && !showPrimaryEmbed && Boolean(choreography.demo_video_url);
   const showTutorialLink =
-    videoEmbedMode === "single" && !showPrimaryEmbed && Boolean(choreography.tutorial_video_url);
-  const showAllEmbeds =
-    videoEmbedMode === "all" && (Boolean(demoEmbedUrl) || Boolean(tutorialEmbedUrl));
-  const handleContentLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.stopPropagation();
-  };
+    !isDetailMode && !showPrimaryEmbed && Boolean(choreography.tutorial_video_url);
+  const showAllEmbeds = isDetailMode && (Boolean(demoEmbedUrl) || Boolean(tutorialEmbedUrl));
 
-  const copyToClipboard = async () => {
-    const text = buildChoreographyClipboardText(choreography);
-
-    try {
-      await navigator.clipboard.writeText(text);
-      return;
-    } catch {
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "absolute";
-      textarea.style.left = "-9999px";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
-    }
-  };
-
-  const header = (
+  return (
     <>
-      <h3>
-        {choreography.name}
-        {choreography.creation_year ? ` (${choreography.creation_year})` : ""}
-      </h3>
-      <Badge className={`level-badge level-${choreography.level.toLowerCase()}`}>
-        {choreography.level}
-      </Badge>
-    </>
-  );
-
-  const content = (
-    <>
-      {(choreography.count || choreography.wall_count) && (
+      {countWallSummary && (
         <p>
-          {choreography.count && choreography.wall_count ? (
-            <>
-              <strong>Count/Wall:</strong> {choreography.count} / {choreography.wall_count}
-            </>
-          ) : choreography.count ? (
-            <>
-              <strong>Count:</strong> {choreography.count}
-            </>
-          ) : (
-            <>
-              <strong>Wall:</strong> {choreography.wall_count}
-            </>
-          )}
+          <strong>{countWallSummary.label}:</strong> {countWallSummary.value}
         </p>
       )}
 
@@ -121,53 +148,21 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
         </div>
       )}
 
-      {(choreography.restart_information || isDetailMode) && (
-        <div className="info-section">
-          <strong>Restart Information</strong>
-          <span
-            className={
-              choreography.restart_information && !isRestartExpanded
-                ? "info-section-text info-section-text-collapsed"
-                : "info-section-text"
-            }
-          >
-            {choreography.restart_information || "None"}
-          </span>
-          {choreography.restart_information && (
-            <button
-              type="button"
-              className="info-section-toggle"
-              onClick={() => setIsRestartExpanded((current) => !current)}
-            >
-              {isRestartExpanded ? "Show less" : "Show more"}
-            </button>
-          )}
-        </div>
-      )}
+      <InfoSection
+        title="Restart Information"
+        value={choreography.restart_information}
+        isDetailMode={isDetailMode}
+        isExpanded={isRestartExpanded}
+        onToggle={onRestartToggle}
+      />
 
-      {(choreography.tag_information || isDetailMode) && (
-        <div className="info-section">
-          <strong>Tag Information</strong>
-          <span
-            className={
-              choreography.tag_information && !isTagExpanded
-                ? "info-section-text info-section-text-collapsed"
-                : "info-section-text"
-            }
-          >
-            {choreography.tag_information || "None"}
-          </span>
-          {choreography.tag_information && (
-            <button
-              type="button"
-              className="info-section-toggle"
-              onClick={() => setIsTagExpanded((current) => !current)}
-            >
-              {isTagExpanded ? "Show less" : "Show more"}
-            </button>
-          )}
-        </div>
-      )}
+      <InfoSection
+        title="Tag Information"
+        value={choreography.tag_information}
+        isDetailMode={isDetailMode}
+        isExpanded={isTagExpanded}
+        onToggle={onTagToggle}
+      />
 
       {(choreography.tags.length > 0 || isDetailMode) && (
         <div className="tags">
@@ -195,7 +190,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
         <ExternalLink
           href={choreography.demo_video_url}
           className="step-sheet-link"
-          onClick={handleContentLinkClick}
+          onClick={onLinkClick}
         >
           🎬 Watch Demo
         </ExternalLink>
@@ -205,7 +200,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
         <ExternalLink
           href={choreography.tutorial_video_url}
           className="step-sheet-link"
-          onClick={handleContentLinkClick}
+          onClick={onLinkClick}
         >
           🎓 Watch Tutorial
         </ExternalLink>
@@ -232,70 +227,136 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       )}
     </>
   );
+};
+
+const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = ({
+  choreography,
+  onEdit,
+  onDelete,
+  onCopy,
+}) => (
+  <>
+    {choreography.step_sheet_link && (
+      <a
+        href={choreography.step_sheet_link}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(event) => event.stopPropagation()}
+        className="btn-secondary btn-small step-sheet-action"
+        aria-label="Open step sheet in a new tab"
+        title="Open step sheet in a new tab"
+      >
+        🦶
+      </a>
+    )}
+
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        void onCopy();
+      }}
+      className="btn-secondary btn-small copy-action"
+      aria-label="Copy choreography details"
+      title="Copy choreography details"
+    >
+      ⤵️
+    </button>
+
+    {onEdit && (
+      <a
+        href={`/choreographies/${choreography.id}?edit=1`}
+        onClick={(event) => {
+          event.stopPropagation();
+          if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
+            event.preventDefault();
+            onEdit(choreography.id);
+          }
+        }}
+        className="btn-edit btn-small"
+      >
+        Edit
+      </a>
+    )}
+
+    {onDelete && (
+      <ActionButton
+        onClick={(event) => {
+          event.stopPropagation();
+          onDelete(choreography.id);
+        }}
+        variant="delete"
+        className="btn-small"
+      >
+        Delete
+      </ActionButton>
+    )}
+  </>
+);
+
+export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
+  choreography,
+  onEdit,
+  onDelete,
+  videoEmbedMode = "single",
+}) => {
+  const isDetailMode = videoEmbedMode === "all";
+  const [isRestartExpanded, setIsRestartExpanded] = useState(false);
+  const [isTagExpanded, setIsTagExpanded] = useState(false);
+  const countWallSummary = getCountWallSummary(choreography);
+  const demoEmbedUrl = getYouTubeVideoEmbedUrl(choreography.demo_video_url);
+  const tutorialEmbedUrl = getYouTubeVideoEmbedUrl(choreography.tutorial_video_url);
+  const cardClassName =
+    videoEmbedMode === "all" ? "choreography-card card-detail-video-layout" : "choreography-card";
+  const handleContentLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
+  };
+
+  const copyToClipboard = async () => {
+    const text = buildChoreographyClipboardText(choreography);
+
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      globalThis.prompt("Copy choreography details:", text);
+    }
+  };
+
+  const header = (
+    <>
+      <h3>
+        {choreography.name}
+        {choreography.creation_year ? ` (${choreography.creation_year})` : ""}
+      </h3>
+      <Badge className={`level-badge level-${choreography.level.toLowerCase()}`}>
+        {choreography.level}
+      </Badge>
+    </>
+  );
+
+  const content = (
+    <ChoreographyCardContent
+      choreography={choreography}
+      isDetailMode={isDetailMode}
+      countWallSummary={countWallSummary}
+      demoEmbedUrl={demoEmbedUrl}
+      tutorialEmbedUrl={tutorialEmbedUrl}
+      onLinkClick={handleContentLinkClick}
+      isRestartExpanded={isRestartExpanded}
+      isTagExpanded={isTagExpanded}
+      onRestartToggle={() => setIsRestartExpanded((current) => !current)}
+      onTagToggle={() => setIsTagExpanded((current) => !current)}
+    />
+  );
 
   const actions = (
-    <>
-      {choreography.step_sheet_link && (
-        <a
-          href={choreography.step_sheet_link}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          className="btn-secondary btn-small step-sheet-action"
-          role="button"
-          aria-label="Open step sheet in a new tab"
-          title="Open step sheet in a new tab"
-        >
-          🦶
-        </a>
-      )}
-      <a
-        href="#"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          void copyToClipboard();
-        }}
-        className="btn-secondary btn-small copy-action"
-        role="button"
-        aria-label="Copy choreography details"
-        title="Copy choreography details"
-      >
-        ⤵️
-      </a>
-      {onEdit && (
-        <a
-          href={`/choreographies/${choreography.id}?edit=1`}
-          onClick={(e) => {
-            e.stopPropagation();
-            // If plain click (no modifier keys), prevent default and use onEdit callback
-            if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
-              e.preventDefault();
-              onEdit(choreography.id);
-            }
-            // Otherwise let the link open normally in a new tab
-          }}
-          className="btn-edit btn-small"
-          role="button"
-        >
-          Edit
-        </a>
-      )}
-      {onDelete && (
-        <ActionButton
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(choreography.id);
-          }}
-          variant="delete"
-          className="btn-small"
-        >
-          Delete
-        </ActionButton>
-      )}
-    </>
+    <ChoreographyCardActions
+      choreography={choreography}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onCopy={copyToClipboard}
+    />
   );
 
   return <Card className={cardClassName} header={header} content={content} actions={actions} />;

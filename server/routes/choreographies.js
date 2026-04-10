@@ -730,7 +730,7 @@ function normalizeSearchText(rawText) {
     .replaceAll(/[\u2018\u2019]/g, "'")
     .replaceAll(/[\u201C\u201D]/g, '"')
     .trim()
-    .replace(/\s+/g, ' ');
+    .replaceAll(/\s+/g, ' ');
 
   // Support users typing quoted titles, e.g. "Bohemian Rhapsody".
   const wrappedInSameQuote =
