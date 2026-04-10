@@ -81,6 +81,7 @@ export type Level = "Beginner" | "Intermediate" | "Advanced" | "Experienced";
 export interface DanceGroup {
   id: number;
   name: string;
+  max_group_level_value?: number | null;
   created_at: string;
 }
 

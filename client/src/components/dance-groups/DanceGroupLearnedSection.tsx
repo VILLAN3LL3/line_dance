@@ -8,7 +8,7 @@ import { ActionButton, EmptyState, LevelBatch, Section, TagGroup } from "../shar
 interface DanceGroupLearnedSectionProps {
   learnedChoreographies: LearnedChoreography[];
   choreographies: Choreography[];
-  groupLevels: string[];
+  maxGroupLevelValue: number | null;
   groupName: string;
   isLoading: boolean;
 }
@@ -16,7 +16,7 @@ interface DanceGroupLearnedSectionProps {
 export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> = ({
   learnedChoreographies,
   choreographies,
-  groupLevels,
+  maxGroupLevelValue,
   groupName,
   isLoading,
 }) => {
@@ -36,13 +36,15 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
   ).sort((a, b) => a.localeCompare(b));
 
   const handleSearchChoreographies = () => {
+    const initialFilters = {
+      step_figures: learnedStepFigures,
+      step_figures_match_mode: "exact" as const,
+      ...(maxGroupLevelValue === null ? {} : { max_level_value: maxGroupLevelValue }),
+    };
+
     navigate("/", {
       state: {
-        initialFilters: {
-          step_figures: learnedStepFigures,
-          level: groupLevels,
-          step_figures_match_mode: "exact",
-        },
+        initialFilters,
       },
     });
   };

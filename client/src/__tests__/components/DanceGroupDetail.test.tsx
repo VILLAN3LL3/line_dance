@@ -4,16 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import {
-  addGroupLevel,
   deleteDanceCourse,
   exportDanceCoursePdf,
   fetchChoreographies,
   getDanceCourses,
   getDanceGroup,
-  getGroupLevels,
+  getGroupMaxLevel,
+  getLevels,
   getLearnedChoreographies,
   getSessions,
-  removeGroupLevel,
+  updateGroupMaxLevel,
 } from "../../api";
 import DanceGroupDetail from "../../components/dance-groups/DanceGroupDetail";
 
@@ -28,16 +28,16 @@ vi.mock("react-router-dom", async () => {
 });
 
 vi.mock("../../api", () => ({
-  addGroupLevel: vi.fn(),
   deleteDanceCourse: vi.fn(),
   exportDanceCoursePdf: vi.fn(),
   fetchChoreographies: vi.fn(),
   getDanceCourses: vi.fn(),
   getDanceGroup: vi.fn(),
-  getGroupLevels: vi.fn(),
+  getGroupMaxLevel: vi.fn(),
+  getLevels: vi.fn(),
   getLearnedChoreographies: vi.fn(),
   getSessions: vi.fn(),
-  removeGroupLevel: vi.fn(),
+  updateGroupMaxLevel: vi.fn(),
 }));
 
 describe("DanceGroupDetail", () => {
@@ -47,6 +47,7 @@ describe("DanceGroupDetail", () => {
     vi.mocked(getDanceGroup).mockResolvedValue({
       id: 1,
       name: "Group One",
+      max_group_level_value: 30,
       created_at: "2024-01-01",
     });
     vi.mocked(getDanceCourses).mockResolvedValue([
@@ -70,6 +71,12 @@ describe("DanceGroupDetail", () => {
     ]);
     vi.mocked(getSessions).mockResolvedValue([]);
     vi.mocked(getLearnedChoreographies).mockResolvedValue([]);
+    vi.mocked(getLevels).mockResolvedValue([
+      { id: 1, name: "BEGINNER", value: 30 },
+      { id: 2, name: "ADVANCED", value: 150 },
+    ]);
+    vi.mocked(getGroupMaxLevel).mockResolvedValue({ max_group_level_value: 30 });
+    vi.mocked(updateGroupMaxLevel).mockResolvedValue({ max_group_level_value: 150 });
     vi.mocked(fetchChoreographies).mockResolvedValue({
       data: [
         {
@@ -85,9 +92,6 @@ describe("DanceGroupDetail", () => {
       ],
       pagination: { page: 1, limit: 10000, total: 1, totalPages: 1 },
     });
-    vi.mocked(getGroupLevels).mockResolvedValue(["Beginner"]);
-    vi.mocked(addGroupLevel).mockResolvedValue({ level: "Beginner" });
-    vi.mocked(removeGroupLevel).mockResolvedValue({ message: "ok" });
     vi.mocked(deleteDanceCourse).mockResolvedValue({ message: "ok" });
     vi.mocked(exportDanceCoursePdf).mockResolvedValue(
       new Blob(["pdf"], { type: "application/pdf" }),
@@ -117,42 +121,16 @@ describe("DanceGroupDetail", () => {
     expect(await screen.findByText("(WS 2099)")).toBeInTheDocument();
   });
 
-  it("adds a group level from the level form", async () => {
-    vi.mocked(fetchChoreographies).mockResolvedValueOnce({
-      data: [
-        {
-          id: 10,
-          name: "Dance X",
-          level: "Beginner",
-          authors: [],
-          tags: [],
-          step_figures: ["Mambo"],
-          created_at: "2024-01-01",
-          updated_at: "2024-01-01",
-        },
-        {
-          id: 11,
-          name: "Dance Y",
-          level: "Advanced",
-          authors: [],
-          tags: [],
-          step_figures: ["Mambo"],
-          created_at: "2024-01-01",
-          updated_at: "2024-01-01",
-        },
-      ],
-      pagination: { page: 1, limit: 10000, total: 2, totalPages: 1 },
-    });
-
+  it("updates max group level from the select", async () => {
     renderWithRoute();
     await screen.findByText("Group One");
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Available levels" }), {
-      target: { value: "Advanced" },
+    fireEvent.change(screen.getByRole("combobox", { name: "Max group level" }), {
+      target: { value: "150" },
     });
 
     await waitFor(() => {
-      expect(addGroupLevel).toHaveBeenCalledWith(1, "Advanced");
+      expect(updateGroupMaxLevel).toHaveBeenCalledWith(1, 150);
     });
   });
 

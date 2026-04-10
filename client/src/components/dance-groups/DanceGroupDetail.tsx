@@ -4,18 +4,25 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  addGroupLevel,
   deleteDanceCourse,
   exportDanceCoursePdf,
   fetchChoreographies,
   getDanceCourses,
   getDanceGroup,
-  getGroupLevels,
+  getGroupMaxLevel,
+  getLevels,
   getLearnedChoreographies,
   getSessions,
-  removeGroupLevel,
+  updateGroupMaxLevel,
 } from "../../api";
-import { Choreography, DanceCourse, DanceGroup, LearnedChoreography, Session } from "../../types";
+import {
+  Choreography,
+  DanceCourse,
+  DanceGroup,
+  LearnedChoreography,
+  LevelOption,
+  Session,
+} from "../../types";
 import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
 import { DanceGroupCoursesSection } from "./DanceGroupCoursesSection";
 import { DanceGroupLearnedSection } from "./DanceGroupLearnedSection";
@@ -30,7 +37,8 @@ const DanceGroupDetail: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [learnedChoreographies, setLearnedChoreographies] = useState<LearnedChoreography[]>([]);
   const [choreographies, setChoreographies] = useState<Choreography[]>([]);
-  const [groupLevels, setGroupLevels] = useState<string[]>([]);
+  const [maxGroupLevelValue, setMaxGroupLevelValue] = useState<number | null>(null);
+  const [levelOptions, setLevelOptions] = useState<LevelOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,21 +46,31 @@ const DanceGroupDetail: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [groupData, coursesData, sessionsData, learnedData, choreosData, levelsData] =
+      const [
+        groupData,
+        coursesData,
+        sessionsData,
+        learnedData,
+        choreosData,
+        maxLevelData,
+        fetchedLevelOptions,
+      ] =
         await Promise.all([
           getDanceGroup(parsedGroupId),
           getDanceCourses(parsedGroupId),
           getSessions(),
           getLearnedChoreographies(parsedGroupId),
           fetchChoreographies(1, 10000),
-          getGroupLevels(parsedGroupId),
+          getGroupMaxLevel(parsedGroupId),
+          getLevels(),
         ]);
       setGroup(groupData);
       setCourses(coursesData);
       setSessions(sessionsData);
       setLearnedChoreographies(learnedData);
       setChoreographies(choreosData.data);
-      setGroupLevels(levelsData);
+      setMaxGroupLevelValue(maxLevelData.max_group_level_value);
+      setLevelOptions(fetchedLevelOptions);
     } catch (err) {
       setError("Failed to load group data");
       console.error(err);
@@ -114,32 +132,14 @@ const DanceGroupDetail: React.FC = () => {
     }
   };
 
-  const handleAddLevel = async (levelValue: string) => {
+  const handleMaxGroupLevelValueChange = async (value: number | null) => {
     setIsLoading(true);
     setError(null);
     try {
-      await addGroupLevel(parsedGroupId, levelValue);
-      await loadData();
+      const updated = await updateGroupMaxLevel(parsedGroupId, value);
+      setMaxGroupLevelValue(updated.max_group_level_value);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add level");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRemoveLevel = async (level: string) => {
-    if (!confirmAction(`Remove level "${level}"?`)) {
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      await removeGroupLevel(parsedGroupId, level);
-      await loadData();
-    } catch (err) {
-      setError("Failed to remove level");
+      setError(err instanceof Error ? err.message : "Failed to update max group level");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -174,17 +174,16 @@ const DanceGroupDetail: React.FC = () => {
         />
 
         <DanceGroupLevelsSection
-          groupLevels={groupLevels}
-          choreographies={choreographies}
+          maxGroupLevelValue={maxGroupLevelValue}
+          levelOptions={levelOptions}
           isLoading={isLoading}
-          onAddLevel={handleAddLevel}
-          onRemoveLevel={handleRemoveLevel}
+          onMaxGroupLevelValueChange={handleMaxGroupLevelValueChange}
         />
 
         <DanceGroupLearnedSection
           learnedChoreographies={learnedChoreographies}
           choreographies={choreographies}
-          groupLevels={groupLevels}
+          maxGroupLevelValue={maxGroupLevelValue}
           groupName={group?.name ?? "this group"}
           isLoading={isLoading}
         />

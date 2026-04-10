@@ -26,7 +26,7 @@ export function escapeVCardValue(value) {
 export async function getDanceGroups(req, res) {
   try {
     const rows = await allQuery(
-      `SELECT id, name, created_at FROM dance_groups ORDER BY name ASC`,
+      `SELECT id, name, max_group_level_value, created_at FROM dance_groups ORDER BY name ASC`,
       [],
       dbName,
     );
@@ -52,7 +52,7 @@ export async function createDanceGroup(req, res) {
     );
 
     const group = await getQuery(
-      `SELECT id, name, created_at FROM dance_groups WHERE id = ?`,
+      `SELECT id, name, max_group_level_value, created_at FROM dance_groups WHERE id = ?`,
       [result.id],
       dbName,
     );
@@ -71,7 +71,7 @@ export async function getDanceGroupById(req, res) {
   try {
     const { id } = req.params;
     const group = await getQuery(
-      `SELECT id, name, created_at FROM dance_groups WHERE id = ?`,
+      `SELECT id, name, max_group_level_value, created_at FROM dance_groups WHERE id = ?`,
       [id],
       dbName,
     );
@@ -105,7 +105,7 @@ export async function updateDanceGroup(req, res) {
     await runQuery(`UPDATE dance_groups SET name = ? WHERE id = ?`, [name.trim(), id], dbName);
 
     const updated = await getQuery(
-      `SELECT id, name, created_at FROM dance_groups WHERE id = ?`,
+      `SELECT id, name, max_group_level_value, created_at FROM dance_groups WHERE id = ?`,
       [id],
       dbName,
     );
@@ -117,6 +117,78 @@ export async function updateDanceGroup(req, res) {
       return res.status(400).json({ error: 'A dance group with that name already exists' });
     }
     res.status(500).json({ error: 'Failed to update dance group' });
+  }
+}
+
+export async function getGroupMaxLevel(req, res) {
+  try {
+    const { groupId } = req.params;
+    const parsedGroupId = Number.parseInt(groupId, 10);
+
+    if (!groupId || !Number.isFinite(parsedGroupId)) {
+      return res.status(400).json({ error: 'Valid group ID is required' });
+    }
+
+    const group = await getQuery(
+      `SELECT id, max_group_level_value FROM dance_groups WHERE id = ?`,
+      [parsedGroupId],
+      dbName,
+    );
+
+    if (!group) {
+      return res.status(404).json({ error: 'Dance group not found' });
+    }
+
+    return res.json({ max_group_level_value: group.max_group_level_value ?? null });
+  } catch (error) {
+    captureError(error);
+    return res.status(500).json({ error: 'Failed to fetch group max level' });
+  }
+}
+
+export async function updateGroupMaxLevel(req, res) {
+  try {
+    const { groupId } = req.params;
+    const parsedGroupId = Number.parseInt(groupId, 10);
+
+    if (!groupId || !Number.isFinite(parsedGroupId)) {
+      return res.status(400).json({ error: 'Valid group ID is required' });
+    }
+
+    const rawValue = req.body?.max_group_level_value;
+    let maxGroupLevelValue = null;
+
+    if (rawValue !== null && rawValue !== undefined && rawValue !== '') {
+      const parsedValue = Number.parseInt(String(rawValue), 10);
+      if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+        return res.status(400).json({ error: 'max_group_level_value must be a non-negative integer or null' });
+      }
+      maxGroupLevelValue = parsedValue;
+    }
+
+    const existing = await getQuery(`SELECT id FROM dance_groups WHERE id = ?`, [parsedGroupId], dbName);
+    if (!existing) {
+      return res.status(404).json({ error: 'Dance group not found' });
+    }
+
+    await runQuery(
+      `UPDATE dance_groups
+       SET max_group_level_value = ?
+       WHERE id = ?`,
+      [maxGroupLevelValue, parsedGroupId],
+      dbName,
+    );
+
+    const updated = await getQuery(
+      `SELECT id, max_group_level_value FROM dance_groups WHERE id = ?`,
+      [parsedGroupId],
+      dbName,
+    );
+
+    return res.json({ max_group_level_value: updated.max_group_level_value ?? null });
+  } catch (error) {
+    captureError(error);
+    return res.status(500).json({ error: 'Failed to update group max level' });
   }
 }
 

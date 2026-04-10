@@ -1,73 +1,42 @@
-import React, { useState } from "react";
+import React from "react";
 
-import { Choreography } from "../../types";
-import { EmptyState, LevelBatch, Section, TagGroup } from "../shared/ui";
+import { LevelOption } from "../../types";
+import { Section } from "../shared/ui";
 
 interface DanceGroupLevelsSectionProps {
-  groupLevels: string[];
-  choreographies: Choreography[];
+  maxGroupLevelValue: number | null;
+  levelOptions: LevelOption[];
   isLoading: boolean;
-  onAddLevel: (level: string) => Promise<void>;
-  onRemoveLevel: (level: string) => Promise<void>;
+  onMaxGroupLevelValueChange: (value: number | null) => Promise<void>;
 }
 
 export const DanceGroupLevelsSection: React.FC<DanceGroupLevelsSectionProps> = ({
-  groupLevels,
-  choreographies,
+  maxGroupLevelValue,
+  levelOptions,
   isLoading,
-  onAddLevel,
-  onRemoveLevel,
+  onMaxGroupLevelValueChange,
 }) => {
-  const availableLevels = Array.from(
-    new Set(
-      choreographies
-        .map((choreography) => choreography.level)
-        .filter((level) => !groupLevels.includes(level)),
-    ),
-  ).sort((a, b) => a.localeCompare(b));
-  const [newLevel, setNewLevel] = useState("");
-
-  const handleLevelSelect = async (level: string) => {
-    if (!level) return;
-    setNewLevel(level);
-    await onAddLevel(level);
-    setNewLevel("");
-  };
-
   return (
-    <Section title="Group Levels">
+    <Section title="Max Group Level">
       <div className="level-form">
         <select
-          aria-label="Available levels"
-          value={newLevel}
-          onChange={(e) => void handleLevelSelect(e.target.value)}
-          disabled={isLoading || availableLevels.length === 0}
+          aria-label="Max group level"
+          value={maxGroupLevelValue ?? ""}
+          onChange={(e) =>
+            void onMaxGroupLevelValueChange(
+              e.target.value ? Number.parseInt(e.target.value, 10) : null,
+            )
+          }
+          disabled={isLoading || levelOptions.length === 0}
         >
-          <option value="">Select a level...</option>
-          {availableLevels.map((level) => (
-            <option key={level} value={level}>
-              {level}
+          <option value="">No max group level</option>
+          {levelOptions.map((option) => (
+            <option key={option.id} value={option.value}>
+              {option.name}
             </option>
           ))}
         </select>
       </div>
-
-      {groupLevels.length === 0 ? (
-        <EmptyState>No levels configured yet</EmptyState>
-      ) : (
-        <TagGroup className="tags-container">
-          {groupLevels.map((level) => (
-            <LevelBatch
-              key={level}
-              level={level}
-              removeButtonClassName="btn-remove-tag"
-              isRemovable
-              disabled={isLoading}
-              onRemove={() => onRemoveLevel(level)}
-            />
-          ))}
-        </TagGroup>
-      )}
     </Section>
   );
 };

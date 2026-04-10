@@ -156,6 +156,68 @@ const migrations = [
       );
     },
   },
+  {
+    id: '006_add_group_max_level_value_and_backfill',
+    up: async () => {
+      await ensureColumnExists('dance_groups', 'max_group_level_value', 'INTEGER');
+
+      const levelRows = await allQuery(
+        `SELECT UPPER(name) AS name_upper, value
+         FROM levels
+         WHERE value IS NOT NULL`,
+        [],
+        'choreography',
+      );
+
+      const levelValueByName = new Map(
+        levelRows.map((row) => [String(row.name_upper), Number(row.value)]),
+      );
+
+      const groupLevelRows = await allQuery(
+        `SELECT dance_group_id, level
+         FROM group_levels
+         ORDER BY dance_group_id ASC`,
+        [],
+        dbName,
+      );
+
+      const maxValueByGroup = new Map();
+
+      for (const row of groupLevelRows) {
+        const danceGroupId = Number(row.dance_group_id);
+        const levelNameUpper = String(row.level || '').trim().toUpperCase();
+        if (!levelNameUpper) {
+          continue;
+        }
+
+        const value = levelValueByName.get(levelNameUpper);
+        if (!Number.isFinite(value)) {
+          continue;
+        }
+
+        const currentMax = maxValueByGroup.get(danceGroupId);
+        if (!Number.isFinite(currentMax) || value > currentMax) {
+          maxValueByGroup.set(danceGroupId, value);
+        }
+      }
+
+      for (const [danceGroupId, maxValue] of maxValueByGroup.entries()) {
+        await runQuery(
+          `UPDATE dance_groups
+           SET max_group_level_value = ?
+           WHERE id = ? AND max_group_level_value IS NULL`,
+          [maxValue, danceGroupId],
+          dbName,
+        );
+      }
+    },
+  },
+  {
+    id: '007_drop_group_levels_table',
+    up: async () => {
+      await runQuery(`DROP TABLE IF EXISTS group_levels`, [], dbName);
+    },
+  },
 ];
 
 export async function runDanceGroupsMigrations() {

@@ -350,6 +350,23 @@ export async function getLearnedChoreographies(
 
 // Group Levels API
 
+export async function getGroupMaxLevel(
+  groupId: number,
+): Promise<{ max_group_level_value: number | null }> {
+  const response = await api.get(`/dance-groups/${groupId}/max-level`);
+  return response.data;
+}
+
+export async function updateGroupMaxLevel(
+  groupId: number,
+  maxGroupLevelValue: number | null,
+): Promise<{ max_group_level_value: number | null }> {
+  const response = await api.put(`/dance-groups/${groupId}/max-level`, {
+    max_group_level_value: maxGroupLevelValue,
+  });
+  return response.data;
+}
+
 export async function getGroupLevels(groupId: number): Promise<string[]> {
   const response = await api.get(`/dance-groups/${groupId}/levels`);
   return response.data;
