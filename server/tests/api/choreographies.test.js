@@ -237,9 +237,14 @@ describe('PUT /api/choreographies/:id', () => {
   });
 
   it('cleans up orphaned levels after update to a different level', async () => {
+    const addLevel = await request(app)
+      .post('/api/levels')
+      .send({ name: 'TEMP UPDATE LEVEL', value: 999 });
+    expect(addLevel.status).toBe(201);
+
     const created = await createChoreo({
       name: 'Level Update',
-      level: 'Beginner',
+      level: 'TEMP UPDATE LEVEL',
     });
 
     const update = await request(app).put(`/api/choreographies/${created.id}`).send({
@@ -249,19 +254,18 @@ describe('PUT /api/choreographies/:id', () => {
 
     expect(update.status).toBe(200);
 
-    // Cleanup runs right after sending the response in the route handler,
-    // so we poll briefly until the cleanup result is visible.
     let levelNames = [];
     for (let attempt = 0; attempt < 10; attempt += 1) {
       const levels = await request(app).get('/api/levels');
       levelNames = levels.body.map((l) => l.name);
-      if (levelNames.length === 1 && levelNames[0] === 'Advanced') {
+      if (!levelNames.includes('TEMP UPDATE LEVEL')) {
         break;
       }
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
 
-    expect(levelNames).toEqual(['ADVANCED']);
+    expect(levelNames).not.toContain('TEMP UPDATE LEVEL');
+    expect(levelNames).toContain('ADVANCED');
   });
 
   it('returns 404 for a non-existent choreography', async () => {
@@ -313,9 +317,14 @@ describe('DELETE /api/choreographies/:id', () => {
   });
 
   it('cleans up orphaned tags, step_figures, and levels on delete', async () => {
+    const addLevel = await request(app)
+      .post('/api/levels')
+      .send({ name: 'TEMP DELETE LEVEL', value: 998 });
+    expect(addLevel.status).toBe(201);
+
     const created = await createChoreo({
       name: 'Delete Cleanup',
-      level: 'Intermediate',
+      level: 'TEMP DELETE LEVEL',
       tags: ['to-delete-tag'],
       step_figures: ['To Delete Figure'],
     });
@@ -326,10 +335,12 @@ describe('DELETE /api/choreographies/:id', () => {
     const tags = await request(app).get('/api/tags');
     const figures = await request(app).get('/api/step_figures');
     const levels = await request(app).get('/api/levels');
+    const levelNames = levels.body.map((l) => l.name);
 
     expect(tags.body).toEqual([]);
     expect(figures.body).toEqual([]);
-    expect(levels.body).toEqual([]);
+    expect(levelNames).not.toContain('TEMP DELETE LEVEL');
+    expect(levelNames).toContain('BEGINNER');
   });
 });
 
