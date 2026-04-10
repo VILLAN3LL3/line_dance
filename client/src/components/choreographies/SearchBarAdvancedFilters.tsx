@@ -1,19 +1,26 @@
 import React from "react";
 
-import { SearchFilters } from "../../types";
+import type { LevelOption, SearchFilters } from "../../types";
+import { SearchBarLevelFilter } from "./SearchBarLevelFilter";
 import { SearchBarMaxCountFilter } from "./SearchBarMaxCountFilter";
 import { SearchBarSavedConfigurationsPanel } from "./SearchBarSavedConfigurationsPanel";
 import { SearchBarSelectableListFilter } from "./SearchBarSelectableListFilter";
 import { SearchBarStepFiguresFilter } from "./SearchBarStepFiguresFilter";
+import { SearchBarTagFilter } from "./SearchBarTagFilter";
 
 interface SearchBarAdvancedFiltersProps {
   // Level
+  levelMode: "selected" | "max";
   selectedLevel: string[];
   inputLevel: string;
   levelOptions: string[];
-  onLevelInput: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  maxLevelValue: number | null;
+  maxLevelOptions: LevelOption[];
+  onLevelModeChange: (mode: "selected" | "max") => void;
+  onLevelInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAddLevelFromInput: (value?: string) => void;
   onToggleLevel: (level: string) => void;
+  onMaxLevelValueChange: (value: number | null) => void;
   // Max count
   maxCount: number;
   maxCountLimit: number;
@@ -30,12 +37,16 @@ interface SearchBarAdvancedFiltersProps {
   onWithoutStepFiguresChange: (checked: boolean) => void;
   onStepFiguresMatchModeChange: (mode: "all" | "any" | "exact") => void;
   // Tags
-  selectedTags: string[];
   inputTag: string;
+  tagMode: "include" | "exclude";
   tagOptions: string[];
+  includedTags: string[];
+  excludedTags: string[];
   onTagInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onAddTagFromInput: (value?: string) => void;
-  onToggleTag: (tag: string) => void;
+  onTagModeChange: (mode: "include" | "exclude") => void;
+  onAddTagFromInput: (value?: string, mode?: "include" | "exclude") => void;
+  onRemoveIncludedTag: (tag: string) => void;
+  onRemoveExcludedTag: (tag: string) => void;
   // Authors
   selectedAuthors: string[];
   inputAuthor: string;
@@ -51,12 +62,17 @@ interface SearchBarAdvancedFiltersProps {
 }
 
 export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> = ({
+  levelMode,
   selectedLevel,
   inputLevel,
   levelOptions,
+  maxLevelValue,
+  maxLevelOptions,
+  onLevelModeChange,
   onLevelInput,
   onAddLevelFromInput,
   onToggleLevel,
+  onMaxLevelValueChange,
   maxCount,
   maxCountLimit,
   onMaxCountChange,
@@ -70,12 +86,16 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
   onToggleFigure,
   onWithoutStepFiguresChange,
   onStepFiguresMatchModeChange,
-  selectedTags,
   inputTag,
+  tagMode,
   tagOptions,
+  includedTags,
+  excludedTags,
   onTagInput,
+  onTagModeChange,
   onAddTagFromInput,
-  onToggleTag,
+  onRemoveIncludedTag,
+  onRemoveExcludedTag,
   selectedAuthors,
   inputAuthor,
   authorOptions,
@@ -93,19 +113,19 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
       isLoading={isLoading}
     />
 
-    <SearchBarSelectableListFilter
-      label="Level"
-      inputId="level-input"
-      listId="levels-list"
-      inputValue={inputLevel}
-      options={levelOptions}
-      selectedValues={selectedLevel}
-      placeholder="Select a level..."
+    <SearchBarLevelFilter
+      levelMode={levelMode}
+      selectedLevel={selectedLevel}
+      inputLevel={inputLevel}
+      levelOptions={levelOptions}
+      maxLevelValue={maxLevelValue}
+      maxLevelOptions={maxLevelOptions}
       isLoading={isLoading}
-      inputControl="select"
-      onInputChange={onLevelInput}
-      onAddFromInput={onAddLevelFromInput}
-      onToggleValue={onToggleLevel}
+      onLevelModeChange={onLevelModeChange}
+      onLevelInput={onLevelInput}
+      onAddLevelFromInput={onAddLevelFromInput}
+      onToggleLevel={onToggleLevel}
+      onMaxLevelValueChange={onMaxLevelValueChange}
     />
 
     <SearchBarMaxCountFilter
@@ -129,18 +149,18 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
       onStepFiguresMatchModeChange={onStepFiguresMatchModeChange}
     />
 
-    <SearchBarSelectableListFilter
-      label="Tags"
-      inputId="tag-input"
-      listId="tags-list"
-      inputValue={inputTag}
-      options={tagOptions}
-      selectedValues={selectedTags}
-      placeholder="Add tag..."
+    <SearchBarTagFilter
+      inputTag={inputTag}
+      tagMode={tagMode}
+      tagOptions={tagOptions}
+      includedTags={includedTags}
+      excludedTags={excludedTags}
       isLoading={isLoading}
-      onInputChange={(e) => onTagInput(e as React.ChangeEvent<HTMLInputElement>)}
-      onAddFromInput={onAddTagFromInput}
-      onToggleValue={onToggleTag}
+      onTagInput={onTagInput}
+      onTagModeChange={onTagModeChange}
+      onAddTagFromInput={onAddTagFromInput}
+      onRemoveIncludedTag={onRemoveIncludedTag}
+      onRemoveExcludedTag={onRemoveExcludedTag}
     />
 
     <SearchBarSelectableListFilter

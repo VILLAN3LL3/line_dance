@@ -49,7 +49,8 @@ test.describe("Choreography Search", () => {
     await page.getByPlaceholder(/Search choreographies by name/i).fill(runId);
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
 
-    await page.getByRole("combobox", { name: "Level:" }).selectOption({ label: "BEGINNER" });
+    await page.getByRole("combobox", { name: "Level:" }).fill("BEGINNER");
+    await page.getByRole("combobox", { name: "Level:" }).press("Enter");
     await page.getByRole("button", { name: /Apply Filters/i }).click();
 
     await page.getByRole("button", { name: /^Table$/i }).click();
@@ -62,6 +63,86 @@ test.describe("Choreography Search", () => {
 
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
     await expect(page.locator(".filter-tag", { hasText: "BEGINNER" })).toBeVisible();
+  });
+
+  test("filters choreographies by max level mode", async ({ page, request }) => {
+    const runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    const beginnerName = `Beginner ${runId}`;
+    const intermediateName = `Intermediate ${runId}`;
+    const advancedName = `Advanced ${runId}`;
+
+    await createChoreographyWithPayload(request, {
+      name: beginnerName,
+      count: 32,
+      level: "BEGINNER",
+      step_figures: ["Vine"],
+    });
+    await createChoreographyWithPayload(request, {
+      name: intermediateName,
+      count: 40,
+      level: "INTERMEDIATE",
+      step_figures: ["Pivot"],
+    });
+    await createChoreographyWithPayload(request, {
+      name: advancedName,
+      count: 48,
+      level: "ADVANCED",
+      step_figures: ["Kick"],
+    });
+
+    await page.goto("/");
+    await page.getByPlaceholder(/Search choreographies by name/i).fill(runId);
+    await page.getByRole("button", { name: /Advanced Filters/i }).click();
+    await page.getByRole("radio", { name: /Up to max level/i }).check();
+    await page.getByRole("combobox", { name: "Level:" }).selectOption({ label: "INTERMEDIATE" });
+    await page.getByRole("button", { name: /Apply Filters/i }).click();
+
+    await expect(page.locator(".choreography-card", { hasText: beginnerName })).toBeVisible();
+    await expect(page.locator(".choreography-card", { hasText: intermediateName })).toBeVisible();
+    await expect(page.locator(".choreography-card", { hasText: advancedName })).toHaveCount(0);
+  });
+
+  test("excludes choreographies by tag", async ({ page, request }) => {
+    const runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    const includedName = `Exclude Tag Included ${runId}`;
+    const excludedName = `Exclude Tag Blocked ${runId}`;
+
+    await request.post(`${API_BASE}/choreographies`, {
+      data: {
+        name: includedName,
+        level: "BEGINNER",
+        authors: ["E2E API Author"],
+        tags: ["E2E-KEEP"],
+        step_figures: ["Vine"],
+        count: 32,
+        wall_count: 4,
+      },
+    });
+    await request.post(`${API_BASE}/choreographies`, {
+      data: {
+        name: excludedName,
+        level: "BEGINNER",
+        authors: ["E2E API Author"],
+        tags: ["E2E-BLOCK"],
+        step_figures: ["Vine"],
+        count: 32,
+        wall_count: 4,
+      },
+    });
+
+    await page.goto("/");
+    await page.getByPlaceholder(/Search choreographies by name/i).fill(runId);
+    await page.getByRole("button", { name: /Advanced Filters/i }).click();
+    await page.getByRole("radio", { name: /Exclude matches/i }).check();
+
+    const tagsGroup = page.locator(".filter-group", { hasText: /^Tags:/ });
+    await tagsGroup.getByRole("combobox", { name: "Tags:" }).fill("E2E-BLOCK");
+    await tagsGroup.getByRole("combobox", { name: "Tags:" }).press("Enter");
+    await page.getByRole("button", { name: /Apply Filters/i }).click();
+
+    await expect(page.locator(".choreography-card", { hasText: includedName })).toBeVisible();
+    await expect(page.locator(".choreography-card", { hasText: excludedName })).toHaveCount(0);
+    await expect(page.locator(".filter-tag-exclude", { hasText: "E2E-BLOCK" })).toBeVisible();
   });
 
   test("supports table sorting and row click detail flow", async ({ page, request }) => {
@@ -252,6 +333,50 @@ test.describe("Choreography Search API — bracket-notation array params", () =>
     const names: string[] = body.data.map((c: { name: string }) => c.name);
     expect(names).toContain(beginnerName);
     expect(names).not.toContain(intermediateName);
+  });
+
+  test("max_level_value and excluded_tags[] filters work through the API", async ({ request }) => {
+    const runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    const beginnerName = `_E2E Beginner Keep ${runId}`;
+    const advancedName = `_E2E Advanced Block ${runId}`;
+
+    await request.post(`${API_BASE}/choreographies`, {
+      data: {
+        name: beginnerName,
+        level: "BEGINNER",
+        authors: ["E2E API Author"],
+        tags: ["E2E-KEEP"],
+        step_figures: ["Vine"],
+        count: 32,
+        wall_count: 4,
+      },
+    });
+    await request.post(`${API_BASE}/choreographies`, {
+      data: {
+        name: advancedName,
+        level: "ADVANCED",
+        authors: ["E2E API Author"],
+        tags: ["E2E-BLOCK"],
+        step_figures: ["Kick"],
+        count: 56,
+        wall_count: 4,
+      },
+    });
+
+    const levelsRes = await request.get(`${API_BASE}/levels`);
+    expect(levelsRes.ok()).toBeTruthy();
+    const levels = (await levelsRes.json()) as Array<{ name: string; value: number }>;
+    const beginnerLevel = levels.find((level) => level.name === "BEGINNER");
+    expect(beginnerLevel).toBeDefined();
+
+    const res = await request.get(
+      `${API_BASE}/choreographies/search?max_level_value=${beginnerLevel?.value}&excluded_tags[]=E2E-BLOCK&search=${encodeURIComponent(runId)}`,
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    const names: string[] = body.data.map((c: { name: string }) => c.name);
+    expect(names).toContain(beginnerName);
+    expect(names).not.toContain(advancedName);
   });
 });
 

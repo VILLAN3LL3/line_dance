@@ -30,6 +30,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     setValues,
     maxCountLimit,
     levelOptions,
+    levelValueOptions,
     figureOptions,
     tagOptions,
     authorOptions,
@@ -37,7 +38,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   const buildFilters = (): SearchFilters => ({
     search: values.searchTerm || undefined,
-    level: values.selectedLevel.length > 0 ? values.selectedLevel : undefined,
+    level:
+      values.levelMode === "selected" && values.selectedLevel.length > 0
+        ? values.selectedLevel
+        : undefined,
+    max_level_value:
+      values.levelMode === "max" && values.maxLevelValue !== null
+        ? values.maxLevelValue
+        : undefined,
     max_count: maxCountLimit > 0 ? values.maxCount : undefined,
     step_figures:
       !values.withoutStepFigures && values.selectedFigures.length > 0
@@ -48,7 +56,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         ? values.stepFiguresMatchMode
         : undefined,
     without_step_figures: values.withoutStepFigures || undefined,
-    tags: values.selectedTags.length > 0 ? values.selectedTags : undefined,
+    tags: values.includedTags.length > 0 ? values.includedTags : undefined,
+    excluded_tags: values.excludedTags.length > 0 ? values.excludedTags : undefined,
     authors: values.selectedAuthors.length > 0 ? values.selectedAuthors : undefined,
   });
 
@@ -76,12 +85,17 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     }));
   };
 
-  const toggleTag = (tag: string) => {
+  const removeIncludedTag = (tag: string) => {
     setValues((prev) => ({
       ...prev,
-      selectedTags: prev.selectedTags.includes(tag)
-        ? prev.selectedTags.filter((t) => t !== tag)
-        : [...prev.selectedTags, tag],
+      includedTags: prev.includedTags.filter((t) => t !== tag),
+    }));
+  };
+
+  const removeExcludedTag = (tag: string) => {
+    setValues((prev) => ({
+      ...prev,
+      excludedTags: prev.excludedTags.filter((t) => t !== tag),
     }));
   };
 
@@ -106,15 +120,32 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     }
   };
 
-  const addTagFromInput = (tagValue?: string) => {
+  const addTagFromInput = (tagValue?: string, tagMode: "include" | "exclude" = values.tagMode) => {
     const trimmed = (tagValue ?? values.inputTag).trim();
-    if (trimmed && !values.selectedTags.includes(trimmed)) {
+    if (!trimmed) {
+      return;
+    }
+
+    if (tagMode === "include") {
       setValues((prev) => ({
         ...prev,
-        selectedTags: [...prev.selectedTags, trimmed],
+        includedTags: prev.includedTags.includes(trimmed)
+          ? prev.includedTags
+          : [...prev.includedTags, trimmed],
+        excludedTags: prev.excludedTags.filter((tag) => tag !== trimmed),
         inputTag: "",
       }));
+      return;
     }
+
+    setValues((prev) => ({
+      ...prev,
+      excludedTags: prev.excludedTags.includes(trimmed)
+        ? prev.excludedTags
+        : [...prev.excludedTags, trimmed],
+      includedTags: prev.includedTags.filter((tag) => tag !== trimmed),
+      inputTag: "",
+    }));
   };
 
   const addAuthorFromInput = (authorValue?: string) => {
@@ -153,19 +184,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     }
   };
 
-  const handleLevelInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleLevelInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setValues((prev) => ({ ...prev, inputLevel: value }));
-    if (
-      e.target instanceof HTMLInputElement &&
-      value.trim() &&
-      isDatalistSelection(e as React.ChangeEvent<HTMLInputElement>)
-    ) {
-      addLevelFromInput(value);
-      return;
-    }
-
-    if (e.target instanceof HTMLSelectElement && value.trim()) {
+    if (value.trim() && isDatalistSelection(e)) {
       addLevelFromInput(value);
     }
   };
@@ -190,10 +212,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     if (
       value.trim() &&
       tagOptions.includes(value.trim()) &&
-      !values.selectedTags.includes(value.trim()) &&
+      !values.includedTags.includes(value.trim()) &&
+      !values.excludedTags.includes(value.trim()) &&
       isDatalistSelection(e)
     ) {
-      addTagFromInput(value);
+      addTagFromInput(value, values.tagMode);
     }
   };
 
@@ -239,12 +262,27 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
       {showAdvanced && (
         <SearchBarAdvancedFilters
+          levelMode={values.levelMode}
           selectedLevel={values.selectedLevel}
           inputLevel={values.inputLevel}
           levelOptions={levelOptions}
+          maxLevelValue={values.maxLevelValue}
+          maxLevelOptions={levelValueOptions}
+          onLevelModeChange={(mode) =>
+            setValues((prev) => ({
+              ...prev,
+              levelMode: mode,
+              ...(mode === "selected"
+                ? { maxLevelValue: null }
+                : { selectedLevel: [], inputLevel: "" }),
+            }))
+          }
           onLevelInput={handleLevelInput}
           onAddLevelFromInput={addLevelFromInput}
           onToggleLevel={toggleLevel}
+          onMaxLevelValueChange={(value) =>
+            setValues((prev) => ({ ...prev, levelMode: "max", maxLevelValue: value }))
+          }
           maxCount={values.maxCount}
           maxCountLimit={maxCountLimit}
           onMaxCountChange={(n) => setValues((prev) => ({ ...prev, maxCount: n }))}
@@ -266,12 +304,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onStepFiguresMatchModeChange={(mode) =>
             setValues((prev) => ({ ...prev, stepFiguresMatchMode: mode }))
           }
-          selectedTags={values.selectedTags}
           inputTag={values.inputTag}
+          tagMode={values.tagMode}
           tagOptions={tagOptions}
+          includedTags={values.includedTags}
+          excludedTags={values.excludedTags}
           onTagInput={handleTagInput}
+          onTagModeChange={(mode) => setValues((prev) => ({ ...prev, tagMode: mode }))}
           onAddTagFromInput={addTagFromInput}
-          onToggleTag={toggleTag}
+          onRemoveIncludedTag={removeIncludedTag}
+          onRemoveExcludedTag={removeExcludedTag}
           selectedAuthors={values.selectedAuthors}
           inputAuthor={values.inputAuthor}
           authorOptions={authorOptions}

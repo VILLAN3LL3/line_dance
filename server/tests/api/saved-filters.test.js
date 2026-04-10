@@ -41,7 +41,12 @@ describe('GET /api/saved-filters', () => {
   });
 
   it('includes id, name, filters, created_at, updated_at fields', async () => {
-    await createConfig('My Filter', { search: 'Waltz', level: ['Beginner'] });
+    await createConfig('My Filter', {
+      search: 'Waltz',
+      level: ['Beginner'],
+      max_level_value: 10,
+      excluded_tags: ['holiday'],
+    });
 
     const res = await request(app).get('/api/saved-filters');
     const cfg = res.body[0];
@@ -49,6 +54,8 @@ describe('GET /api/saved-filters', () => {
     expect(cfg.name).toBe('My Filter');
     expect(cfg.filters.search).toBe('Waltz');
     expect(cfg.filters.level).toEqual(['Beginner']);
+    expect(cfg.filters.max_level_value).toBe(10);
+    expect(cfg.filters.excluded_tags).toEqual(['holiday']);
     expect(cfg.created_at).toBeDefined();
     expect(cfg.updated_at).toBeDefined();
   });

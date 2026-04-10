@@ -6,6 +6,7 @@ import {
   DanceCourse,
   DanceGroup,
   LearnedChoreography,
+  LevelOption,
   PaginatedResponse,
   SavedFilterConfiguration,
   SearchFilters,
@@ -95,7 +96,7 @@ export async function deleteChoreography(id: number): Promise<{ message: string 
   return response.data;
 }
 
-export async function getLevels(): Promise<{ id: number; name: string; value: number }[]> {
+export async function getLevels(): Promise<LevelOption[]> {
   const response = await api.get("/levels");
   return response.data;
 }

@@ -41,6 +41,11 @@ export function normalizeSavedFilters(rawFilters) {
   const level = normalizeStringArray(rawFilters.level);
   if (level.length > 0) normalized.level = level;
 
+  const parsedMaxLevelValue = normalizeNonNegativeInteger(rawFilters.max_level_value);
+  if (parsedMaxLevelValue !== null) {
+    normalized.max_level_value = parsedMaxLevelValue;
+  }
+
   const stepFigures = normalizeStringArray(rawFilters.step_figures);
   if (stepFigures.length > 0) normalized.step_figures = stepFigures;
 
@@ -54,6 +59,11 @@ export function normalizeSavedFilters(rawFilters) {
 
   const tags = normalizeStringArray(rawFilters.tags);
   if (tags.length > 0) normalized.tags = tags;
+
+  const excludedTags = normalizeStringArray(rawFilters.excluded_tags).filter(
+    (tag) => !tags.includes(tag),
+  );
+  if (excludedTags.length > 0) normalized.excluded_tags = excludedTags;
 
   const authors = normalizeStringArray(rawFilters.authors);
   if (authors.length > 0) normalized.authors = authors;
@@ -574,10 +584,12 @@ function buildFilterConditions(filterObj) {
   const {
     search,
     level,
+    max_level_value,
     step_figures,
     step_figures_match_mode,
     without_step_figures,
     tags,
+    excluded_tags,
     authors,
   } = filterObj;
   const conditions = [];
@@ -590,11 +602,10 @@ function buildFilterConditions(filterObj) {
     params.push(`%${normalizeSearchText(search)}%`);
   }
 
-  if (level) {
-    const levelList = normalizeQueryParam(level);
-    const placeholders = levelList.map(() => 'UPPER(?)').join(',');
-    conditions.push(`UPPER(l.name) IN (${placeholders})`);
-    params.push(...levelList);
+  const levelFilter = buildLevelFilter(level, max_level_value);
+  if (levelFilter.condition) {
+    conditions.push(levelFilter.condition);
+    params.push(...levelFilter.params);
   }
 
   const stepFilter = buildStepFiguresFilter(
@@ -616,6 +627,15 @@ function buildFilterConditions(filterObj) {
   conditions.push(...tagsFilter.conditions);
   params.push(...tagsFilter.params);
 
+  const excludedTagsFilter = buildExcludedRelationshipFilter(
+    excluded_tags,
+    'personal_tags.choreography_tags',
+    'tag_id',
+    'personal_tags.tags',
+  );
+  conditions.push(...excludedTagsFilter.conditions);
+  params.push(...excludedTagsFilter.params);
+
   const authorsFilter = buildRelationshipFilter(
     authors,
     'choreography_authors',
@@ -633,10 +653,12 @@ export async function searchChoreographies(req, res) {
   try {
     const {
       level,
+      max_level_value,
       step_figures,
       step_figures_match_mode,
       without_step_figures,
       tags,
+      excluded_tags,
       authors,
       search,
     } = req.query;
@@ -647,10 +669,12 @@ export async function searchChoreographies(req, res) {
     const { conditions, params, joins, stepFilter } = buildFilterConditions({
       search,
       level,
+      max_level_value,
       step_figures,
       step_figures_match_mode,
       without_step_figures,
       tags,
+      excluded_tags,
       authors,
     });
 
@@ -733,6 +757,24 @@ function normalizeQueryParam(param) {
   return param ? [param] : [];
 }
 
+function normalizeNonNegativeInteger(value) {
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isNaN(parsed) || parsed < 0 ? null : parsed;
+}
+
+function normalizeNumericQueryParam(param) {
+  const values = normalizeQueryParam(param);
+
+  for (let index = values.length - 1; index >= 0; index -= 1) {
+    const parsed = normalizeNonNegativeInteger(values[index]);
+    if (parsed !== null) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
 function normalizeMatchMode(rawMode) {
   const modeValue = Array.isArray(rawMode) ? rawMode.at(-1) : rawMode;
   if (typeof modeValue !== 'string') {
@@ -808,6 +850,36 @@ function buildStepFiguresFilter(step_figures, step_figures_match_mode, without_s
   return result;
 }
 
+function buildLevelFilter(level, max_level_value) {
+  const levelList = normalizeQueryParam(level)
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+  const maxLevelValue = normalizeNumericQueryParam(max_level_value);
+
+  if (levelList.length === 0 && maxLevelValue === null) {
+    return { condition: '', params: [] };
+  }
+
+  const parts = [];
+  const params = [];
+
+  if (levelList.length > 0) {
+    const placeholders = levelList.map(() => 'UPPER(?)').join(',');
+    parts.push(`UPPER(l.name) IN (${placeholders})`);
+    params.push(...levelList);
+  }
+
+  if (maxLevelValue !== null) {
+    parts.push('(l.value IS NOT NULL AND l.value <= ?)');
+    params.push(maxLevelValue);
+  }
+
+  return {
+    condition: parts.length === 1 ? parts[0] : `(${parts.join(' OR ')})`,
+    params,
+  };
+}
+
 function buildRelationshipFilter(items, relationshipTable, relationshipPkCol, entityTable) {
   const result = { joins: [], conditions: [], params: [] };
   const itemList = normalizeQueryParam(items);
@@ -820,6 +892,23 @@ function buildRelationshipFilter(items, relationshipTable, relationshipPkCol, en
     result.conditions = [`${entityTable}.name IN (${placeholders})`];
     result.params = itemList;
   }
+  return result;
+}
+
+function buildExcludedRelationshipFilter(items, relationshipTable, relationshipPkCol, entityTable) {
+  const result = { conditions: [], params: [] };
+  const itemList = normalizeQueryParam(items)
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+
+  if (itemList.length > 0) {
+    const placeholders = itemList.map(() => '?').join(',');
+    result.conditions = [
+      `NOT EXISTS (SELECT 1 FROM ${relationshipTable} excluded_rel INNER JOIN ${entityTable} excluded_entity ON excluded_rel.${relationshipPkCol} = excluded_entity.id WHERE excluded_rel.choreography_id = c.id AND excluded_entity.name IN (${placeholders}))`,
+    ];
+    result.params = itemList;
+  }
+
   return result;
 }
 

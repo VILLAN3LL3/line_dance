@@ -30,7 +30,11 @@ vi.mock("../../api", () => ({
 describe("SearchBar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getLevels).mockResolvedValue([{ id: 1, name: "Beginner", value: 30 }]);
+    vi.mocked(getLevels).mockResolvedValue([
+      { id: 1, name: "Beginner", value: 10 },
+      { id: 2, name: "Intermediate", value: 20 },
+      { id: 3, name: "Advanced", value: 30 },
+    ]);
     vi.mocked(getStepFigures).mockResolvedValue(["Mambo"]);
     vi.mocked(getTags).mockResolvedValue(["classic"]);
     vi.mocked(getAuthors).mockResolvedValue(["Alice"]);
@@ -103,21 +107,57 @@ describe("SearchBar", () => {
     });
   });
 
-  it("adds a level filter from the select", async () => {
+  it("adds a level filter from the autocomplete", async () => {
     const onSearch = vi.fn().mockResolvedValue(undefined);
     render(<SearchBar onSearch={onSearch} filters={{}} />);
 
     fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
 
-    const levelSelect = await screen.findByRole("combobox", { name: "Level:" });
+    const levelInput = await screen.findByRole("combobox", { name: "Level:" });
 
-    fireEvent.change(levelSelect, {
+    fireEvent.change(levelInput, {
       target: { value: "Beginner" },
     });
+    fireEvent.keyDown(levelInput, { key: "Enter", code: "Enter" });
     fireEvent.click(screen.getByRole("button", { name: /apply filters/i }));
 
     await waitFor(() => {
       expect(onSearch).toHaveBeenCalledWith(expect.objectContaining({ level: ["Beginner"] }));
+    });
+  });
+
+  it("adds a max level filter using the selected level value", async () => {
+    const onSearch = vi.fn().mockResolvedValue(undefined);
+    render(<SearchBar onSearch={onSearch} filters={{}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /up to max level/i }));
+
+    const maxLevelSelect = await screen.findByRole("combobox", { name: "Level:" });
+    fireEvent.change(maxLevelSelect, { target: { value: "20" } });
+    fireEvent.click(screen.getByRole("button", { name: /apply filters/i }));
+
+    await waitFor(() => {
+      expect(onSearch).toHaveBeenCalledWith(expect.objectContaining({ max_level_value: 20 }));
+    });
+  });
+
+  it("adds tags to the excluded list", async () => {
+    const onSearch = vi.fn().mockResolvedValue(undefined);
+    render(<SearchBar onSearch={onSearch} filters={{}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /exclude matches/i }));
+
+    const tagInput = await screen.findByRole("combobox", { name: "Tags:" });
+    fireEvent.change(tagInput, { target: { value: "classic" } });
+    fireEvent.keyDown(tagInput, { key: "Enter", code: "Enter" });
+    fireEvent.click(screen.getByRole("button", { name: /apply filters/i }));
+
+    await waitFor(() => {
+      expect(onSearch).toHaveBeenCalledWith(
+        expect.objectContaining({ excluded_tags: ["classic"] }),
+      );
     });
   });
 });

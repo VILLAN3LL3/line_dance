@@ -64,6 +64,19 @@ describe('normalizeSavedFilters', () => {
     });
   });
 
+  it('keeps a non-negative max_level_value', () => {
+    expect(normalizeSavedFilters({ max_level_value: 20 })).toEqual({ max_level_value: 20 });
+  });
+
+  it('parses max_level_value from a numeric string', () => {
+    expect(normalizeSavedFilters({ max_level_value: '30' })).toEqual({ max_level_value: 30 });
+  });
+
+  it('omits max_level_value when it is negative or invalid', () => {
+    expect(normalizeSavedFilters({ max_level_value: -1 })).toEqual({});
+    expect(normalizeSavedFilters({ max_level_value: 'hard' })).toEqual({});
+  });
+
   it('omits level when the array is empty', () => {
     expect(normalizeSavedFilters({ level: [] })).toEqual({});
   });
@@ -144,6 +157,21 @@ describe('normalizeSavedFilters', () => {
     expect(normalizeSavedFilters({ tags: [] })).toEqual({});
   });
 
+  it('keeps excluded_tags when they are provided', () => {
+    expect(normalizeSavedFilters({ excluded_tags: ['holiday', 'novice'] })).toEqual({
+      excluded_tags: ['holiday', 'novice'],
+    });
+  });
+
+  it('removes excluded_tags that also exist in tags', () => {
+    expect(normalizeSavedFilters({ tags: ['classic'], excluded_tags: ['classic', 'fun'] })).toEqual(
+      {
+        tags: ['classic'],
+        excluded_tags: ['fun'],
+      },
+    );
+  });
+
   // ---------------------------------------------------------------------------
   // authors
   // ---------------------------------------------------------------------------
@@ -192,18 +220,22 @@ describe('normalizeSavedFilters', () => {
     const input = {
       search: ' Tango ',
       level: ['Beginner'],
+      max_level_value: 10,
       step_figures: ['Cha Cha'],
       step_figures_match_mode: 'any',
       tags: ['fun'],
+      excluded_tags: ['holiday'],
       authors: ['Jane'],
       max_count: 32,
     };
     expect(normalizeSavedFilters(input)).toEqual({
       search: 'Tango',
       level: ['Beginner'],
+      max_level_value: 10,
       step_figures: ['Cha Cha'],
       step_figures_match_mode: 'any',
       tags: ['fun'],
+      excluded_tags: ['holiday'],
       authors: ['Jane'],
       max_count: 32,
     });

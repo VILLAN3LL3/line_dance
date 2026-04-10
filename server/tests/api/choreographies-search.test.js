@@ -30,6 +30,12 @@ async function searchRaw(queryString) {
   return request(app).get(`/api/choreographies/search?${queryString}`);
 }
 
+async function getLevelValue(levelName) {
+  const res = await request(app).get('/api/levels');
+  const level = res.body.find((entry) => entry.name.toLowerCase() === levelName.toLowerCase());
+  return level?.value;
+}
+
 // Seed helpers
 async function seedDances() {
   // Returns IDs in order: [waltz, tango, cha_cha]
@@ -132,6 +138,24 @@ describe('GET /api/choreographies/search — level filter', () => {
   it('filters by multiple levels (OR semantics)', async () => {
     await seedDances();
     const res = await search({ level: ['Beginner', 'Advanced'] });
+    expect(res.body.data).toHaveLength(2);
+    const names = res.body.data.map((c) => c.name).sort();
+    expect(names).toEqual(['Argentine Tango', 'Waltz in the Rain']);
+  });
+
+  it('filters by max_level_value using the numeric level ordering', async () => {
+    await seedDances();
+    const intermediateValue = await getLevelValue('Intermediate');
+    const res = await search({ max_level_value: intermediateValue });
+    expect(res.body.data).toHaveLength(2);
+    const names = res.body.data.map((c) => c.name).sort();
+    expect(names).toEqual(['Cha Cha Fun', 'Waltz in the Rain']);
+  });
+
+  it('combines explicit levels and max_level_value with OR semantics', async () => {
+    await seedDances();
+    const beginnerValue = await getLevelValue('Beginner');
+    const res = await search({ level: ['Advanced'], max_level_value: beginnerValue });
     expect(res.body.data).toHaveLength(2);
     const names = res.body.data.map((c) => c.name).sort();
     expect(names).toEqual(['Argentine Tango', 'Waltz in the Rain']);
@@ -303,6 +327,21 @@ describe('GET /api/choreographies/search — tags filter', () => {
     const names = res.body.data.map((c) => c.name).sort();
     expect(names).toEqual(['Cha Cha Fun', 'Waltz in the Rain']);
   });
+
+  it('excludes choreographies that have any excluded_tags', async () => {
+    await seedDances();
+    const res = await search({ excluded_tags: ['classic'] });
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Cha Cha Fun');
+  });
+
+  it('applies included and excluded tag filters together', async () => {
+    await seedDances();
+    const res = await search({ tags: ['classic', 'fun'], excluded_tags: ['slow'] });
+    expect(res.body.data).toHaveLength(2);
+    const names = res.body.data.map((c) => c.name).sort();
+    expect(names).toEqual(['Argentine Tango', 'Cha Cha Fun']);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -434,6 +473,14 @@ describe('GET /api/choreographies/search — bracket-notation query parser regre
     expect(res.status).toBe(200);
     const names = res.body.data.map((c) => c.name).sort();
     expect(names).toEqual(['Argentine Tango', 'Waltz in the Rain']);
+  });
+
+  it('accepts excluded_tags[]= query arrays', async () => {
+    await seedDances();
+    const res = await searchRaw('excluded_tags[]=classic');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Cha Cha Fun');
   });
 });
 

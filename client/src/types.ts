@@ -47,16 +47,24 @@ export interface PaginatedResponse<T> {
 export interface SearchFilters {
   search?: string;
   level?: string[];
+  max_level_value?: number;
   max_count?: number;
   step_figures?: string[];
   step_figures_match_mode?: "all" | "any" | "exact";
   without_step_figures?: boolean;
   tags?: string[];
+  excluded_tags?: string[];
   authors?: string[];
   sort_field?: string;
   sort_direction?: "asc" | "desc";
   page?: number;
   limit?: number;
+}
+
+export interface LevelOption {
+  id: number;
+  name: string;
+  value: number;
 }
 
 export interface SavedFilterConfiguration {
