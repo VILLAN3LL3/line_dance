@@ -22,7 +22,7 @@ export const openApiSpec = {
     { name: 'Sessions' },
     { name: 'Session Choreographies' },
     { name: 'Learned Choreographies' },
-    { name: 'Group Levels' },
+    { name: 'Group Max Level' },
   ],
   paths: {
     '/api/health': {
@@ -99,6 +99,7 @@ export const openApiSpec = {
             in: 'query',
             schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
           },
+          { name: 'max_level_value', in: 'query', schema: { type: 'integer', minimum: 0 } },
           {
             name: 'step_figures',
             in: 'query',
@@ -116,24 +117,16 @@ export const openApiSpec = {
             schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
           },
           {
+            name: 'excluded_tags',
+            in: 'query',
+            schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
+          },
+          {
             name: 'authors',
             in: 'query',
             schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
           },
           { name: 'max_count', in: 'query', schema: { type: 'integer', minimum: 0 } },
-          {
-            name: 'sort_field',
-            in: 'query',
-            schema: {
-              type: 'string',
-              enum: ['name', 'level', 'count', 'wall_count', 'creation_year'],
-            },
-          },
-          {
-            name: 'sort_direction',
-            in: 'query',
-            schema: { type: 'string', enum: ['asc', 'desc'] },
-          },
           { $ref: '#/components/parameters/Page' },
           { $ref: '#/components/parameters/Limit' },
         ],
@@ -940,10 +933,10 @@ export const openApiSpec = {
         },
       },
     },
-    '/api/dance-groups/{groupId}/levels': {
+    '/api/dance-groups/{groupId}/max-level': {
       get: {
-        tags: ['Group Levels'],
-        summary: 'List levels for dance group',
+        tags: ['Group Max Level'],
+        summary: 'Get max level value for dance group',
         parameters: [
           {
             name: 'groupId',
@@ -954,18 +947,23 @@ export const openApiSpec = {
         ],
         responses: {
           200: {
-            description: 'Level names',
+            description: 'Max group level value',
             content: {
               'application/json': {
-                schema: { type: 'array', items: { type: 'string' } },
+                schema: {
+                  type: 'object',
+                  properties: { max_group_level_value: { type: 'integer', nullable: true } },
+                  required: ['max_group_level_value'],
+                },
               },
             },
           },
+          404: { $ref: '#/components/responses/NotFound' },
         },
       },
-      post: {
-        tags: ['Group Levels'],
-        summary: 'Add level to dance group',
+      put: {
+        tags: ['Group Max Level'],
+        summary: 'Update max level value for dance group',
         parameters: [
           {
             name: 'groupId',
@@ -980,54 +978,28 @@ export const openApiSpec = {
             'application/json': {
               schema: {
                 type: 'object',
-                properties: { level: { type: 'string' } },
-                required: ['level'],
-              },
-            },
-          },
-        },
-        responses: {
-          201: {
-            description: 'Added level',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { level: { type: 'string' } },
+                properties: {
+                  max_group_level_value: { type: 'integer', nullable: true, minimum: 0 },
                 },
               },
             },
           },
         },
-      },
-    },
-    '/api/dance-groups/{groupId}/levels/{level}': {
-      delete: {
-        tags: ['Group Levels'],
-        summary: 'Remove level from dance group',
-        parameters: [
-          {
-            name: 'groupId',
-            in: 'path',
-            required: true,
-            schema: { type: 'integer' },
-          },
-          {
-            name: 'level',
-            in: 'path',
-            required: true,
-            schema: { type: 'string' },
-          },
-        ],
         responses: {
           200: {
-            description: 'Removal status',
+            description: 'Updated max group level value',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/MessageResponse' },
+                schema: {
+                  type: 'object',
+                  properties: { max_group_level_value: { type: 'integer', nullable: true } },
+                  required: ['max_group_level_value'],
+                },
               },
             },
           },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
         },
       },
     },
@@ -1184,6 +1156,7 @@ export const openApiSpec = {
         properties: {
           id: { type: 'integer' },
           name: { type: 'string' },
+          max_group_level_value: { type: 'integer', nullable: true },
           created_at: { type: 'string' },
         },
         required: ['id', 'name'],

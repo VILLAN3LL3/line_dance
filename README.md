@@ -41,9 +41,9 @@ __All code was written by GitHub Copilot. Use with caution.__
 - Create and edit courses on dedicated pages
 - Manage trainers (name, phone, email) in a separate admin area
 - Assign trainers to courses
-- Manage allowed levels per dance group
+- Configure a max group level per dance group
 - Compute learned step figures from past course activity
-- Jump back into choreography search using a group's learned figures and configured levels
+- Jump back into choreography search using a group's learned figures and max level
 
 ### Sessions And Course Planning
 
@@ -161,7 +161,7 @@ The migration command above creates or refreshes schema for:
 - dance courses
 - sessions
 - session choreographies
-- group levels
+- max group level value on dance groups
 
 ### Run The App
 
@@ -218,7 +218,7 @@ The project includes automated tests for backend business logic and frontend com
 - Coverage includes:
   - dance groups, trainers, courses, sessions, session choreographies
   - learned choreographies view behavior for past/future session timelines
-  - group levels management
+  - max group level management
   - choreography CRUD and search filter logic (`all` / `any` / `exact`, max count, combined filters)
   - saved filter configuration lifecycle
   - PDF export endpoint headers and response behavior
@@ -311,7 +311,7 @@ The dance-group side stores:
 - `trainers`
 - `sessions`
 - `session_choreographies`
-- `group_levels`
+- `max_group_level_value` column on `dance_groups`
 - `learned_choreographies` view
 
 The course table includes optional playlist URL fields for YouTube, Copperknob, and Spotify, plus an optional trainer relation.
