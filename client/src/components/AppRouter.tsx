@@ -21,7 +21,11 @@ export const AppRouter: React.FC = () => {
     <div className="app-router">
       <nav className="main-nav">
         <div className="nav-container">
-          <h1 className="nav-title">Line Dance</h1>
+          <h1 className="nav-title">
+            <Link to="/" className="nav-title-link" aria-label="Line Dance Home">
+              💃 Line Dance
+            </Link>
+          </h1>
           <ul className="nav-links">
             <li>
               <Link to="/" className={`nav-link ${location.pathname === "/" ? "active" : ""}`}>

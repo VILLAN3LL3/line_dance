@@ -31,6 +31,15 @@
   color: white;
 }
 
+.nav-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.nav-title-link:hover {
+  text-decoration: none;
+}
+
 .nav-links {
   display: flex;
   list-style: none;

@@ -4,7 +4,8 @@ test.describe("Navigation", () => {
   test("loads app shell and navigates between major sections", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { name: "Line Dance" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Line Dance/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Line Dance Home/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Choreography Search" })).toBeVisible();
 
     await page.getByRole("link", { name: /Dance Groups/i }).click();
@@ -14,6 +15,10 @@ test.describe("Navigation", () => {
     await page.getByRole("link", { name: /Trainers/i }).click();
     await expect(page).toHaveURL(/\/trainers$/);
     await expect(page.getByRole("heading", { name: /Trainer Management/i })).toBeVisible();
+
+    await page.getByRole("link", { name: /Line Dance Home/i }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("heading", { name: "Choreography Search" })).toBeVisible();
 
     await page.getByRole("link", { name: /Choreographies/i }).click();
     await expect(page).toHaveURL(/\/$/);
