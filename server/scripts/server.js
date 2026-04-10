@@ -45,9 +45,6 @@ import {
   addChoreographyToSession,
   removeChoreographyFromSession,
   getLearnedChoreographies,
-  getGroupLevels,
-  addGroupLevel,
-  removeGroupLevel,
   getGroupMaxLevel,
   updateGroupMaxLevel,
 } from '../routes/dance-groups.js';
@@ -98,9 +95,6 @@ app.delete('/api/saved-filters/:id', deleteSavedFilterConfiguration);
 app.get('/api/dance-groups', getDanceGroups);
 app.post('/api/dance-groups', createDanceGroup);
 // Specific routes must come before generic :id routes
-app.get('/api/dance-groups/:groupId/levels', getGroupLevels);
-app.post('/api/dance-groups/:groupId/levels', addGroupLevel);
-app.delete('/api/dance-groups/:groupId/levels/:level', removeGroupLevel);
 app.get('/api/dance-groups/:groupId/max-level', getGroupMaxLevel);
 app.put('/api/dance-groups/:groupId/max-level', updateGroupMaxLevel);
 // Generic routes after specific ones

@@ -27,9 +27,8 @@ import {
   addChoreographyToSession,
   removeChoreographyFromSession,
   getLearnedChoreographies,
-  getGroupLevels,
-  addGroupLevel,
-  removeGroupLevel,
+  getGroupMaxLevel,
+  updateGroupMaxLevel,
 } from '../../routes/dance-groups.js';
 import { openApiSpec } from '../../scripts/openapi.js';
 
@@ -39,14 +38,11 @@ app.use(express.json());
 // Dance Groups
 app.get('/api/dance-groups', getDanceGroups);
 app.post('/api/dance-groups', createDanceGroup);
+app.get('/api/dance-groups/:groupId/max-level', getGroupMaxLevel);
+app.put('/api/dance-groups/:groupId/max-level', updateGroupMaxLevel);
 app.get('/api/dance-groups/:id', getDanceGroupById);
 app.put('/api/dance-groups/:id', updateDanceGroup);
 app.delete('/api/dance-groups/:id', deleteDanceGroup);
-
-// Group Levels (must come before /:id catch-all on sub-paths)
-app.get('/api/dance-groups/:groupId/levels', getGroupLevels);
-app.post('/api/dance-groups/:groupId/levels', addGroupLevel);
-app.delete('/api/dance-groups/:groupId/levels/:level', removeGroupLevel);
 
 // Trainers
 app.get('/api/trainers', getTrainers);

@@ -39,7 +39,6 @@ export async function clearAllTables() {
     'session_choreographies',
     'sessions',
     'dance_courses',
-    'group_levels',
     'trainers',
     'dance_groups',
   ];

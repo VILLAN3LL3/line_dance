@@ -114,7 +114,7 @@ test.describe("Saved Filter Configurations", () => {
 
     await expect(page.getByText(`Loaded "${configName}"`)).toBeVisible();
     await expect(page.getByRole("radio", { name: /Up to max level/i })).toBeChecked();
-    await expect(page.getByRole("combobox", { name: "Level:" })).toHaveValue(/^[0-9]+$/);
+    await expect(page.getByRole("combobox", { name: "Level:" })).toHaveValue(/^\d+$/);
     await expect(page.locator(".filter-tag-exclude", { hasText: "E2E-BLOCK" })).toBeVisible();
 
     await page.getByRole("button", { name: /Apply Filters/i }).click();
