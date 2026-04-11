@@ -19,6 +19,9 @@ __All code was written by GitHub Copilot. Use with caution.__
 - Search results return all matches for the active filters (no `page` / `limit` pagination)
 - Filter by level using either selected levels or `up to max level` mode
 - Filter by step figures, tags (include/exclude), and authors
+- Step figure search understands hierarchy:
+  - `any` and `all` treat selected component figures as matching composite parent figures
+  - `exact` only infers a composite parent when all of its required component figures are included in the query
 - Support saved filters that include `max_level_value` and `excluded_tags`
 - Choose step figure matching mode: `all`, `any`, or `exact`
 - Filter choreographies without step figures
@@ -43,10 +46,19 @@ __All code was written by GitHub Copilot. Use with caution.__
   - Spotify
 - Create and edit courses on dedicated pages
 - Manage trainers (name, phone, email) in a separate admin area
+- Manage reusable step figure hierarchy in a separate admin area
 - Assign trainers to courses
 - Configure a max group level per dance group
 - Compute learned step figures from past course activity
 - Jump back into choreography search using a group's learned figures and max level
+
+### Step Figure Hierarchy
+
+- Create reusable base and composite step figures
+- Build composite figures from ordered component step figures
+- Maintain step figure hierarchy from a dedicated admin page
+- Reuse the same autocomplete tag-entry interaction as the choreography form
+- Protect referenced step figures from deletion when they are still used by choreographies or other composite figures
 
 ### Sessions And Course Planning
 
@@ -105,6 +117,7 @@ line_dance/
 - `/` - choreography search
 - `/choreographies/:id` - choreography detail
 - `/admin` - dance group admin overview
+- `/admin/step-figures` - step figure hierarchy administration
 - `/admin/groups/new` - create a new dance group
 - `/admin/groups/:groupId` - dance group detail, course management, learned figures
 - `/admin/groups/:groupId/courses/new` - create course page
@@ -222,7 +235,8 @@ The project includes automated tests for backend business logic and frontend com
   - dance groups, trainers, courses, sessions, session choreographies
   - learned choreographies view behavior for past/future session timelines
   - max group level management
-  - choreography CRUD and search filter logic (`all` / `any` / `exact`, max count, `max_level_value`, `excluded_tags`, combined filters)
+  - choreography CRUD and search filter logic (`all` / `any` / `exact`, max count, `max_level_value`, `excluded_tags`, combined filters, hierarchy-aware step figure matching)
+  - step figure hierarchy CRUD and validation (cycles, parent/component references, delete protection)
   - saved filter configuration lifecycle
   - PDF export endpoint headers and response behavior
   - health and OpenAPI smoke endpoints
@@ -240,6 +254,7 @@ npm test
 - Utility tests for course status evaluation logic
 - Component tests for:
   - choreography card, table, and search bar
+  - step figure hierarchy admin page
   - dance groups admin and dance group detail views
   - course form page and course detail/session management flows
 
@@ -254,7 +269,7 @@ npm test
 
 - E2E tests are grouped by user-facing use cases under `client/e2e`:
   - `navigation` - app shell and primary route navigation
-  - `choreographies` - create/search/detail/edit/delete choreography flows
+  - `choreographies` - create/search/detail/edit/delete choreography flows and step figure hierarchy admin flow
   - `dance-groups` - dance group admin and detail behaviors
   - `courses` - course edit and session/choreography lifecycle
   - `trainers` - trainer validation, create/edit/delete
@@ -303,12 +318,15 @@ Search endpoint note:
 
 - `GET /api/choreographies/search` always returns all matching choreographies for the provided filters.
 - `page` and `limit` are not used for this endpoint.
+- Step figure hierarchy affects search matching:
+  - `any` / `all`: searching for a component figure also matches choreographies tagged with composite parents containing that component
+  - `exact`: a composite parent only matches when the parent itself is queried or all of its required components are present in the query
 
 ## Data Notes
 
 ### Choreography Search Database
 
-The choreography side stores choreographies, levels, authors, tags, step figures, and saved filter configurations.
+The choreography side stores choreographies, levels, authors, tags, step figures, step figure hierarchy, and saved filter configurations.
 
 ### Dance Group Database
 

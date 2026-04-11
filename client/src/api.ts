@@ -1,17 +1,8 @@
 import axios from "axios";
 
 import {
-  Choreography,
-  ChoreographyFormData,
-  DanceCourse,
-  DanceGroup,
-  LearnedChoreography,
-  LevelOption,
-  PaginatedResponse,
-  SavedFilterConfiguration,
-  SearchFilters,
-  Session,
-  SessionChoreography,
+  Choreography, ChoreographyFormData, DanceCourse, DanceGroup, LearnedChoreography, LevelOption, PaginatedResponse,
+  SavedFilterConfiguration, SearchFilters, Session, SessionChoreography, StepFigureDefinition
 } from "./types";
 
 import type { Trainer } from "./types";
@@ -125,6 +116,35 @@ export async function addLevel(name: string): Promise<{ id: number; name: string
 
 export async function getStepFigures(): Promise<string[]> {
   const response = await api.get("/step_figures");
+  return response.data;
+}
+
+export async function getStepFigureHierarchy(): Promise<StepFigureDefinition[]> {
+  const response = await api.get("/step_figures/hierarchy");
+  return response.data;
+}
+
+export async function createStepFigureDefinition(payload: {
+  name: string;
+  component_ids: number[];
+}): Promise<StepFigureDefinition> {
+  const response = await api.post("/step_figures", payload);
+  return response.data;
+}
+
+export async function updateStepFigureDefinition(
+  id: number,
+  payload: {
+    name: string;
+    component_ids: number[];
+  },
+): Promise<StepFigureDefinition> {
+  const response = await api.put(`/step_figures/${id}`, payload);
+  return response.data;
+}
+
+export async function deleteStepFigureDefinition(id: number): Promise<{ message: string }> {
+  const response = await api.delete(`/step_figures/${id}`);
   return response.data;
 }
 

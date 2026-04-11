@@ -1,0 +1,127 @@
+.step-figure-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.step-figure-admin__header h2 {
+  margin: 0 0 6px;
+  color: var(--color-primary);
+}
+
+.step-figure-admin__header p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.step-figure-admin__section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.step-figure-admin__layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+  gap: 18px;
+}
+
+.step-figure-admin__form,
+.step-figure-admin__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.step-figure-admin__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step-figure-admin__field span {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.step-figure-admin .tag {
+  color: #fff;
+}
+
+.step-figure-admin__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step-figure-admin__list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.step-figure-admin__list-item.active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(203, 76, 46, 0.12);
+}
+
+.step-figure-admin__list-item strong {
+  display: block;
+  color: var(--color-primary);
+}
+
+.step-figure-admin__list-item p {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+}
+
+.step-figure-admin__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.step-figure-admin__meta h4 {
+  margin: 0 0 8px;
+  color: var(--color-primary);
+}
+
+.step-figure-admin__meta p,
+.step-figure-admin__meta ul {
+  margin: 0;
+}
+
+.step-figure-admin__meta ul {
+  padding-left: 18px;
+}
+
+.step-figure-admin__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .step-figure-admin__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .step-figure-admin__meta {
+    grid-template-columns: 1fr;
+  }
+}

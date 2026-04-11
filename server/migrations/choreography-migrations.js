@@ -316,6 +316,24 @@ const migrations = [
       }
     },
   },
+  {
+    id: '006_add_step_figure_hierarchy',
+    up: async () => {
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS step_figure_components (
+          parent_step_figure_id INTEGER NOT NULL,
+          child_step_figure_id INTEGER NOT NULL,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          PRIMARY KEY (parent_step_figure_id, child_step_figure_id),
+          FOREIGN KEY (parent_step_figure_id) REFERENCES step_figures(id) ON DELETE CASCADE,
+          FOREIGN KEY (child_step_figure_id) REFERENCES step_figures(id) ON DELETE CASCADE,
+          CHECK (parent_step_figure_id != child_step_figure_id)
+        )`,
+        [],
+        dbName,
+      );
+    },
+  },
 ];
 
 export async function runChoreographyMigrations() {

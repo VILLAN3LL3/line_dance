@@ -15,6 +15,7 @@ export const openApiSpec = {
     { name: 'Health' },
     { name: 'Choreographies' },
     { name: 'Metadata' },
+    { name: 'Step Figures' },
     { name: 'Saved Filters' },
     { name: 'Dance Groups' },
     { name: 'Trainers' },
@@ -344,7 +345,7 @@ export const openApiSpec = {
     },
     '/api/step_figures': {
       get: {
-        tags: ['Metadata'],
+        tags: ['Step Figures'],
         summary: 'Get all step figures',
         responses: {
           200: {
@@ -355,6 +356,93 @@ export const openApiSpec = {
               },
             },
           },
+        },
+      },
+      post: {
+        tags: ['Step Figures'],
+        summary: 'Create step figure definition with optional component hierarchy',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/StepFigureUpsertRequest' },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Created step figure definition',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/StepFigureDefinition' },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+        },
+      },
+    },
+    '/api/step_figures/hierarchy': {
+      get: {
+        tags: ['Step Figures'],
+        summary: 'Get full step figure hierarchy',
+        responses: {
+          200: {
+            description: 'Step figure definitions including parent and child references',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/StepFigureDefinition' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/step_figures/{id}': {
+      put: {
+        tags: ['Step Figures'],
+        summary: 'Update step figure definition and component hierarchy',
+        parameters: [{ $ref: '#/components/parameters/IdPath' }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/StepFigureUpsertRequest' },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Updated step figure definition',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/StepFigureDefinition' },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+      delete: {
+        tags: ['Step Figures'],
+        summary: 'Delete an unreferenced step figure definition',
+        parameters: [{ $ref: '#/components/parameters/IdPath' }],
+        responses: {
+          200: {
+            description: 'Deletion status',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/MessageResponse' },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
         },
       },
     },
@@ -1074,6 +1162,14 @@ export const openApiSpec = {
           },
         },
       },
+      Conflict: {
+        description: 'Conflict with existing relationships or state',
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/ErrorResponse' },
+          },
+        },
+      },
     },
     schemas: {
       ErrorResponse: {
@@ -1172,6 +1268,42 @@ export const openApiSpec = {
           authors: { type: 'array', items: { type: 'string' } },
           max_count: { type: 'integer' },
         },
+      },
+      StepFigureReference: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          name: { type: 'string' },
+        },
+        required: ['id', 'name'],
+      },
+      StepFigureDefinition: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          name: { type: 'string' },
+          components: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/StepFigureReference' },
+          },
+          parents: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/StepFigureReference' },
+          },
+          used_by_choreography_count: { type: 'integer' },
+        },
+        required: ['id', 'name', 'components', 'parents', 'used_by_choreography_count'],
+      },
+      StepFigureUpsertRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          component_ids: {
+            type: 'array',
+            items: { type: 'integer' },
+          },
+        },
+        required: ['name'],
       },
       SavedFilterConfiguration: {
         type: 'object',

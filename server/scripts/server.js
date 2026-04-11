@@ -15,6 +15,10 @@ import {
   addLevel,
   getTags,
   getStepFigures,
+  getStepFigureHierarchy,
+  createStepFigure,
+  updateStepFigure,
+  deleteStepFigure,
   getAuthors,
   getSavedFilterConfigurations,
   saveFilterConfiguration,
@@ -85,6 +89,10 @@ app.get('/api/levels', getLevels);
 app.post('/api/levels', addLevel);
 app.get('/api/tags', getTags);
 app.get('/api/authors', getAuthors);
+app.get('/api/step_figures/hierarchy', getStepFigureHierarchy);
+app.post('/api/step_figures', createStepFigure);
+app.put('/api/step_figures/:id', updateStepFigure);
+app.delete('/api/step_figures/:id', deleteStepFigure);
 app.get('/api/step_figures', getStepFigures);
 app.get('/api/saved-filters', getSavedFilterConfigurations);
 app.post('/api/saved-filters', saveFilterConfiguration);

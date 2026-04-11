@@ -79,6 +79,16 @@ CREATE TABLE IF NOT EXISTS step_figures (
   name TEXT NOT NULL UNIQUE
 );
 
+CREATE TABLE IF NOT EXISTS step_figure_components (
+  parent_step_figure_id INTEGER NOT NULL,
+  child_step_figure_id INTEGER NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (parent_step_figure_id, child_step_figure_id),
+  FOREIGN KEY (parent_step_figure_id) REFERENCES step_figures(id) ON DELETE CASCADE,
+  FOREIGN KEY (child_step_figure_id) REFERENCES step_figures(id) ON DELETE CASCADE,
+  CHECK (parent_step_figure_id != child_step_figure_id)
+);
+
 CREATE TABLE IF NOT EXISTS choreography_step_figures (
   choreography_id INTEGER NOT NULL,
   step_figure_id INTEGER NOT NULL,
@@ -136,6 +146,7 @@ export async function clearChoreographyTables() {
   await run(testDb, 'DELETE FROM personal_tags.choreography_tags');
   // Delete choreographies — FK ON DELETE CASCADE removes choreography_authors and choreography_step_figures
   await run(testDb, 'DELETE FROM choreographies');
+  await run(testDb, 'DELETE FROM step_figure_components');
   await run(testDb, 'DELETE FROM authors');
   await run(testDb, 'DELETE FROM personal_tags.tags');
   await run(testDb, 'DELETE FROM step_figures');

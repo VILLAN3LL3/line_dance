@@ -23,6 +23,13 @@ async function search(params) {
   return request(app).get('/api/choreographies/search').query(params);
 }
 
+async function createStepFigure(name, componentIds = []) {
+  return request(app).post('/api/step_figures').send({
+    name,
+    component_ids: componentIds,
+  });
+}
+
 // Sends the query as a raw URL string, bypassing supertest's .query() serialization.
 // This exercises the actual Express query parser with bracket-notation arrays
 // (e.g. level[]=Beginner&level[]=Advanced) exactly as a browser would send them.
@@ -180,6 +187,27 @@ describe('GET /api/choreographies/search — step_figures "any" mode', () => {
     const res = await search({ step_figures: 'Weave', step_figures_match_mode: 'any' });
     expect(res.body.data).toHaveLength(2);
   });
+
+  it('matches choreographies tagged with composite figures when searching by a component figure', async () => {
+    const rock = await createStepFigure('Rock Step');
+    const shuffle = await createStepFigure('Shuffle');
+    const lindy = await createStepFigure('Lindy Step', [rock.body.id, shuffle.body.id]);
+
+    expect(rock.status).toBe(201);
+    expect(shuffle.status).toBe(201);
+    expect(lindy.status).toBe(201);
+
+    await post({
+      name: 'Composite Dance',
+      level: 'Beginner',
+      step_figures: ['Lindy Step'],
+    });
+
+    const res = await search({ step_figures: 'Rock Step', step_figures_match_mode: 'any' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.map((c) => c.name)).toContain('Composite Dance');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -290,6 +318,43 @@ describe('GET /api/choreographies/search — step_figures "exact" mode', () => {
 
     // Waltz has {Rock Step, Weave}, which is a subset of the provided selection.
     expect(res.body.data.some((c) => c.name === 'Waltz in the Rain')).toBe(true);
+  });
+
+  it('returns composite-step choreographies only when the composite is queried or all required components are queried', async () => {
+    const rock = await createStepFigure('Rock Step');
+    const shuffle = await createStepFigure('Shuffle');
+    const lindy = await createStepFigure('Lindy Step', [rock.body.id, shuffle.body.id]);
+
+    expect(rock.status).toBe(201);
+    expect(shuffle.status).toBe(201);
+    expect(lindy.status).toBe(201);
+
+    await post({
+      name: 'Composite Exact Dance',
+      level: 'Beginner',
+      step_figures: ['Lindy Step'],
+    });
+
+    const onlyRock = await search({
+      step_figures: ['Rock Step'],
+      step_figures_match_mode: 'exact',
+    });
+    expect(onlyRock.status).toBe(200);
+    expect(onlyRock.body.data.map((c) => c.name)).not.toContain('Composite Exact Dance');
+
+    const rockAndShuffle = await search({
+      step_figures: ['Rock Step', 'Shuffle'],
+      step_figures_match_mode: 'exact',
+    });
+    expect(rockAndShuffle.status).toBe(200);
+    expect(rockAndShuffle.body.data.map((c) => c.name)).toContain('Composite Exact Dance');
+
+    const includesLindy = await search({
+      step_figures: ['Lindy Step'],
+      step_figures_match_mode: 'exact',
+    });
+    expect(includesLindy.status).toBe(200);
+    expect(includesLindy.body.data.map((c) => c.name)).toContain('Composite Exact Dance');
   });
 });
 

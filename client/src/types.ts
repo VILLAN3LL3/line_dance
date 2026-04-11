@@ -75,7 +75,18 @@ export interface SavedFilterConfiguration {
   updated_at: string;
 }
 
-export type Level = "Beginner" | "Intermediate" | "Advanced" | "Experienced";
+export interface StepFigureReference {
+  id: number;
+  name: string;
+}
+
+export interface StepFigureDefinition {
+  id: number;
+  name: string;
+  components: StepFigureReference[];
+  parents: StepFigureReference[];
+  used_by_choreography_count: number;
+}
 
 // Dance Groups Types
 export interface DanceGroup {

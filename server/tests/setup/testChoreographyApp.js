@@ -16,6 +16,10 @@ import {
   getTags,
   getAuthors,
   getStepFigures,
+  getStepFigureHierarchy,
+  createStepFigure,
+  updateStepFigure,
+  deleteStepFigure,
   getMaxChoreographyCount,
   getSavedFilterConfigurations,
   saveFilterConfiguration,
@@ -43,6 +47,10 @@ app.post('/api/levels', addLevel);
 
 app.get('/api/tags', getTags);
 app.get('/api/authors', getAuthors);
+app.get('/api/step_figures/hierarchy', getStepFigureHierarchy);
+app.post('/api/step_figures', createStepFigure);
+app.put('/api/step_figures/:id', updateStepFigure);
+app.delete('/api/step_figures/:id', deleteStepFigure);
 app.get('/api/step_figures', getStepFigures);
 
 app.get('/api/saved-filters', getSavedFilterConfigurations);

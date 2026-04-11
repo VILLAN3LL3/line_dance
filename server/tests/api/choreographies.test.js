@@ -211,7 +211,7 @@ describe('PUT /api/choreographies/:id', () => {
     expect(res.body.step_figures).toEqual(['Cha Cha']);
   });
 
-  it('cleans up orphaned tags and step_figures after update', async () => {
+  it('cleans up orphaned tags after update but preserves the step figure catalog', async () => {
     const created = await createChoreo({
       name: 'Cleanup On Update',
       level: 'Beginner',
@@ -233,7 +233,7 @@ describe('PUT /api/choreographies/:id', () => {
     const tags = await request(app).get('/api/tags');
     const figures = await request(app).get('/api/step_figures');
     expect(tags.body).toEqual(['new-tag']);
-    expect(figures.body).toEqual(['New Figure']);
+    expect(figures.body).toEqual(['New Figure', 'Old Figure']);
   });
 
   it('cleans up orphaned levels after update to a different level', async () => {
@@ -316,7 +316,7 @@ describe('DELETE /api/choreographies/:id', () => {
     expect(get.status).toBe(200);
   });
 
-  it('cleans up orphaned tags, step_figures, and levels on delete', async () => {
+  it('cleans up orphaned tags and levels on delete but preserves the step figure catalog', async () => {
     const addLevel = await request(app)
       .post('/api/levels')
       .send({ name: 'TEMP DELETE LEVEL', value: 998 });
@@ -338,7 +338,7 @@ describe('DELETE /api/choreographies/:id', () => {
     const levelNames = levels.body.map((l) => l.name);
 
     expect(tags.body).toEqual([]);
-    expect(figures.body).toEqual([]);
+    expect(figures.body).toEqual(['To Delete Figure']);
     expect(levelNames).not.toContain('TEMP DELETE LEVEL');
     expect(levelNames).toContain('BEGINNER');
   });

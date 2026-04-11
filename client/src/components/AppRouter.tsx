@@ -6,6 +6,7 @@ import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { App as ChoreographySearch } from "./app/App";
 import ChoreographyCreatePage from "./choreographies/ChoreographyCreatePage";
 import ChoreographyDetail from "./choreographies/ChoreographyDetail";
+import StepFigureHierarchyAdmin from "./choreographies/StepFigureHierarchyAdmin";
 import CourseDetail from "./courses/CourseDetail";
 import CourseFormPage from "./courses/CourseFormPage";
 import DanceGroupDetail from "./dance-groups/DanceGroupDetail";
@@ -16,6 +17,8 @@ import TrainersAdmin from "./trainers/TrainersAdmin";
 export const AppRouter: React.FC = () => {
   const location = useLocation();
   const swaggerDocsUrl = "http://localhost:3001/api/docs";
+  const isStepFiguresRoute = location.pathname.startsWith("/admin/step-figures");
+  const isDanceGroupsRoute = location.pathname === "/admin" || location.pathname.startsWith("/admin/groups");
 
   return (
     <div className="app-router">
@@ -35,9 +38,17 @@ export const AppRouter: React.FC = () => {
             <li>
               <Link
                 to="/admin"
-                className={`nav-link ${location.pathname.startsWith("/admin") ? "active" : ""}`}
+                className={`nav-link ${isDanceGroupsRoute && !isStepFiguresRoute ? "active" : ""}`}
               >
                 👥 Dance Groups
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/admin/step-figures"
+                className={`nav-link ${isStepFiguresRoute ? "active" : ""}`}
+              >
+                🪜 Step Figures
               </Link>
             </li>
             <li>
@@ -68,6 +79,7 @@ export const AppRouter: React.FC = () => {
           <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
           <Route path="/choreographies/:id" element={<ChoreographyDetail />} />
           <Route path="/admin" element={<DanceGroupsAdmin mode="list" />} />
+          <Route path="/admin/step-figures" element={<StepFigureHierarchyAdmin />} />
           <Route path="/admin/groups/new" element={<DanceGroupsAdmin mode="create" />} />
           <Route path="/admin/groups/:groupId" element={<DanceGroupDetail />} />
           <Route path="/admin/groups/:groupId/courses/new" element={<CourseFormPage />} />
