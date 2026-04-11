@@ -16,11 +16,13 @@ async function createStepFigure(name, component_ids = []) {
 }
 
 async function createChoreographyWithFigure(stepFigureName) {
-  return request(app).post('/api/choreographies').send({
-    name: 'Hierarchy Dance',
-    level: 'Beginner',
-    step_figures: [stepFigureName],
-  });
+  return request(app)
+    .post('/api/choreographies')
+    .send({
+      name: 'Hierarchy Dance',
+      level: 'Beginner',
+      step_figures: [stepFigureName],
+    });
 }
 
 describe('step figure hierarchy endpoints', () => {

@@ -852,7 +852,9 @@ async function expandStepFigureNamesForExactMode(stepFigureParam) {
         continue;
       }
 
-      const hasAllChildren = Array.from(requiredChildren).every((childName) => expanded.has(childName));
+      const hasAllChildren = Array.from(requiredChildren).every((childName) =>
+        expanded.has(childName),
+      );
       if (hasAllChildren) {
         expanded.add(parentName);
         changed = true;

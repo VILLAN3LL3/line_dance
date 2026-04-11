@@ -18,7 +18,8 @@ export const AppRouter: React.FC = () => {
   const location = useLocation();
   const swaggerDocsUrl = "http://localhost:3001/api/docs";
   const isStepFiguresRoute = location.pathname.startsWith("/admin/step-figures");
-  const isDanceGroupsRoute = location.pathname === "/admin" || location.pathname.startsWith("/admin/groups");
+  const isDanceGroupsRoute =
+    location.pathname === "/admin" || location.pathname.startsWith("/admin/groups");
 
   return (
     <div className="app-router">
