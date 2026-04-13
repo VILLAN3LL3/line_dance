@@ -131,14 +131,20 @@
   flex: 1;
 }
 
-.session-info h4,
-.choreo-info h4 {
+.session-info h4 {
   margin: 0 0 5px 0;
   font-size: 16px;
   color: var(--color-primary);
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.choreo-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: var(--color-primary);
+  display: block;
 }
 
 .session-status-badge {

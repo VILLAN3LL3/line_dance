@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ActionButton, EmptyState, Section } from "../shared/ui";
+import { ActionButton, EmptyState, LevelBatch, Section } from "../shared/ui";
 
 import type { Choreography, Session, SessionChoreography } from "../../types";
 
@@ -84,7 +84,7 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
               <div key={sessionChoreography.id} className="choreography-item">
                 <div className="choreo-info">
                   <h4>{choreography?.name}</h4>
-                  <p>{choreography?.level}</p>
+                  <LevelBatch level={choreography?.level || "UNKNOWN"} />
                 </div>
                 <ActionButton
                   onClick={() => onRemoveChoreography(sessionChoreography.choreography_id)}
