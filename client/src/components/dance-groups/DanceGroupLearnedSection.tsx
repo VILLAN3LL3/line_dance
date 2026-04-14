@@ -95,8 +95,8 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
                 {[...learnedChoreographies]
                   .sort(
                     (a, b) =>
-                      new Date(a.first_learned_date).getTime() -
-                      new Date(b.first_learned_date).getTime(),
+                      new Date(b.first_learned_date).getTime() -
+                      new Date(a.first_learned_date).getTime(),
                   )
                   .map((learned) => {
                     const choreography = choreographies.find(
