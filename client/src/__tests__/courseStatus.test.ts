@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  getBerlinTodayIso, getCourseStatus, getCourseStatusLabel, getSessionBadgeLabel, getSessionBadgeStatus, normalizeDate
+  getBerlinTodayIso,
+  getCourseStatus,
+  getCourseStatusLabel,
+  getSessionBadgeLabel,
+  getSessionBadgeStatus,
+  normalizeDate,
 } from "../utils/courseStatus";
 
 import type { DanceCourse, Session } from "../types";
