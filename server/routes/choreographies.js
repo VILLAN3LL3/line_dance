@@ -237,9 +237,10 @@ export async function deleteSavedFilterConfiguration(req, res) {
       return res.status(400).json({ error: 'Invalid configuration id' });
     }
 
-    const result = await runQuery('DELETE FROM personal_data.saved_filter_configurations WHERE id = ?', [
-      configurationId,
-    ]);
+    const result = await runQuery(
+      'DELETE FROM personal_data.saved_filter_configurations WHERE id = ?',
+      [configurationId],
+    );
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Saved filter configuration not found' });
