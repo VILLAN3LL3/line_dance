@@ -220,6 +220,12 @@ const migrations = [
       await runQuery(`DROP TABLE IF EXISTS group_levels`, [], dbName);
     },
   },
+  {
+    id: '008_add_session_comment',
+    up: async () => {
+      await ensureColumnExists('sessions', 'comment', 'TEXT');
+    },
+  },
 ];
 
 export async function runDanceGroupsMigrations() {

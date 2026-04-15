@@ -799,7 +799,7 @@ export async function getSessions(req, res) {
   try {
     const { dance_course_id } = req.query;
 
-    let query = `SELECT s.id, s.dance_course_id, s.session_date, s.created_at, dc.semester, dg.name as dance_group_name
+    let query = `SELECT s.id, s.dance_course_id, s.session_date, s.comment, s.created_at, dc.semester, dg.name as dance_group_name
                  FROM sessions s
                  LEFT JOIN dance_courses dc ON s.dance_course_id = dc.id
                  LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id`;
@@ -822,7 +822,7 @@ export async function getSessions(req, res) {
 
 export async function createSession(req, res) {
   try {
-    const { dance_course_id, session_date } = req.body;
+    const { dance_course_id, session_date, comment } = req.body;
 
     if (!dance_course_id || !session_date) {
       return res.status(400).json({ error: 'Dance course ID and session date are required' });
@@ -840,13 +840,13 @@ export async function createSession(req, res) {
     }
 
     const result = await runQuery(
-      `INSERT INTO sessions (dance_course_id, session_date) VALUES (?, ?)`,
-      [dance_course_id, session_date],
+      `INSERT INTO sessions (dance_course_id, session_date, comment) VALUES (?, ?, ?)`,
+      [dance_course_id, session_date, comment ?? null],
       dbName,
     );
 
     const session = await getQuery(
-      `SELECT s.id, s.dance_course_id, s.session_date, s.created_at, dc.semester, dg.name as dance_group_name
+      `SELECT s.id, s.dance_course_id, s.session_date, s.comment, s.created_at, dc.semester, dg.name as dance_group_name
        FROM sessions s
        LEFT JOIN dance_courses dc ON s.dance_course_id = dc.id
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
@@ -865,7 +865,7 @@ export async function createSession(req, res) {
 export async function updateSession(req, res) {
   try {
     const { id } = req.params;
-    const { session_date } = req.body;
+    const { session_date, comment } = req.body;
 
     if (!session_date) {
       return res.status(400).json({ error: 'Session date is required' });
@@ -877,10 +877,14 @@ export async function updateSession(req, res) {
       return res.status(404).json({ error: 'Session not found' });
     }
 
-    await runQuery(`UPDATE sessions SET session_date = ? WHERE id = ?`, [session_date, id], dbName);
+    await runQuery(
+      `UPDATE sessions SET session_date = ?, comment = ? WHERE id = ?`,
+      [session_date, comment ?? null, id],
+      dbName,
+    );
 
     const updated = await getQuery(
-      `SELECT s.id, s.dance_course_id, s.session_date, s.created_at, dc.semester, dg.name as dance_group_name
+      `SELECT s.id, s.dance_course_id, s.session_date, s.comment, s.created_at, dc.semester, dg.name as dance_group_name
        FROM sessions s
        LEFT JOIN dance_courses dc ON s.dance_course_id = dc.id
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id

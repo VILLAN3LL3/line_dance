@@ -126,6 +126,7 @@ export interface Session {
   session_date: string;
   dance_group_name: string;
   semester: string;
+  comment: string | null;
   created_at: string;
 }
 

@@ -70,6 +70,7 @@ describe("CourseDetail", () => {
         session_date: toIsoDate(yesterday),
         dance_group_name: "Group Two",
         semester: "WS 2025",
+        comment: null,
         created_at: "2024-01-01",
       },
       {
@@ -78,6 +79,7 @@ describe("CourseDetail", () => {
         session_date: toIsoDate(tomorrow),
         dance_group_name: "Group Two",
         semester: "WS 2025",
+        comment: null,
         created_at: "2024-01-01",
       },
     ]);
@@ -103,6 +105,7 @@ describe("CourseDetail", () => {
       session_date: "2025-02-01",
       dance_group_name: "Group Two",
       semester: "WS 2025",
+      comment: null,
       created_at: "2024-01-01",
     });
     vi.mocked(addChoreographyToSession).mockResolvedValue({
@@ -130,11 +133,13 @@ describe("CourseDetail", () => {
 
     await screen.findByText(/Course: 7/);
 
-    fireEvent.change(screen.getByDisplayValue(""), { target: { value: "2025-02-01" } });
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const dateInput = document.querySelector<HTMLInputElement>('.session-form input[type="date"]')!;
+    fireEvent.change(dateInput, { target: { value: "2025-02-01" } });
     fireEvent.click(screen.getByRole("button", { name: "+ Add Session" }));
 
     await waitFor(() => {
-      expect(createSession).toHaveBeenCalledWith(7, "2025-02-01");
+      expect(createSession).toHaveBeenCalledWith(7, "2025-02-01", undefined);
     });
   });
 

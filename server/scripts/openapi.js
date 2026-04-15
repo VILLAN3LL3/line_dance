@@ -884,6 +884,7 @@ export const openApiSpec = {
                 properties: {
                   dance_course_id: { type: 'integer' },
                   session_date: { type: 'string', format: 'date' },
+                  comment: { type: 'string', nullable: true },
                 },
                 required: ['dance_course_id', 'session_date'],
               },
@@ -915,6 +916,7 @@ export const openApiSpec = {
                 type: 'object',
                 properties: {
                   session_date: { type: 'string', format: 'date' },
+                  comment: { type: 'string', nullable: true },
                 },
                 required: ['session_date'],
               },
@@ -1390,6 +1392,7 @@ export const openApiSpec = {
           semester: { type: 'string', nullable: true },
           dance_group_name: { type: 'string', nullable: true },
           session_date: { type: 'string', format: 'date' },
+          comment: { type: 'string', nullable: true },
           created_at: { type: 'string' },
         },
       },

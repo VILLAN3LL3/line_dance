@@ -12,6 +12,7 @@ import {
   getSessionChoreographies,
   getSessions,
   removeChoreographyFromSession,
+  updateSession,
 } from "../../api";
 import { Choreography, DanceCourse, Session, SessionChoreography } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
@@ -30,6 +31,10 @@ const CourseDetail: React.FC = () => {
   const [sessionChoreographies, setSessionChoreographies] = useState<SessionChoreography[]>([]);
   const [availableChoreographies, setAvailableChoreographies] = useState<Choreography[]>([]);
   const [newSessionDate, setNewSessionDate] = useState("");
+  const [newSessionComment, setNewSessionComment] = useState("");
+  const [editingSessionId, setEditingSessionId] = useState<number | null>(null);
+  const [editSessionDate, setEditSessionDate] = useState("");
+  const [editSessionComment, setEditSessionComment] = useState("");
   const [showPassedSessions, setShowPassedSessions] = useState(false);
   const [selectedChoreographyId, setSelectedChoreographyId] = useState<string>("");
   const [selectedChoreographyQuery, setSelectedChoreographyQuery] = useState("");
@@ -120,11 +125,41 @@ const CourseDetail: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await createSession(parsedCourseId, newSessionDate);
+      await createSession(parsedCourseId, newSessionDate, newSessionComment || undefined);
       setNewSessionDate("");
+      setNewSessionComment("");
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create session");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStartEditSession = (session: Session) => {
+    setEditingSessionId(session.id);
+    setEditSessionDate(session.session_date.slice(0, 10));
+    setEditSessionComment(session.comment ?? "");
+  };
+
+  const handleCancelEditSession = () => {
+    setEditingSessionId(null);
+  };
+
+  const handleSaveEditSession = async (sessionId: number) => {
+    if (!editSessionDate) {
+      setError("Session date is required");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      await updateSession(sessionId, editSessionDate, editSessionComment || null);
+      setEditingSessionId(null);
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update session");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -255,9 +290,19 @@ const CourseDetail: React.FC = () => {
           newSessionDate={newSessionDate}
           onToggleShowPassedSessions={setShowPassedSessions}
           onNewSessionDateChange={setNewSessionDate}
+          newSessionComment={newSessionComment}
+          onNewSessionCommentChange={setNewSessionComment}
           onCreateSession={handleCreateSession}
           onSelectSession={handleSelectSession}
           onDeleteSession={handleDeleteSession}
+          editingSessionId={editingSessionId}
+          editSessionDate={editSessionDate}
+          editSessionComment={editSessionComment}
+          onStartEditSession={handleStartEditSession}
+          onEditSessionDateChange={setEditSessionDate}
+          onEditSessionCommentChange={setEditSessionComment}
+          onSaveEditSession={handleSaveEditSession}
+          onCancelEditSession={handleCancelEditSession}
         />
 
         {selectedSession && (

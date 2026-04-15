@@ -324,16 +324,28 @@ export async function getSessions(danceCoursesId?: number): Promise<Session[]> {
   return response.data;
 }
 
-export async function createSession(danceCourseId: number, sessionDate: string): Promise<Session> {
+export async function createSession(
+  danceCourseId: number,
+  sessionDate: string,
+  comment?: string,
+): Promise<Session> {
   const response = await api.post("/sessions", {
     dance_course_id: danceCourseId,
     session_date: sessionDate,
+    comment: comment ?? null,
   });
   return response.data;
 }
 
-export async function updateSession(id: number, sessionDate: string): Promise<Session> {
-  const response = await api.put(`/sessions/${id}`, { session_date: sessionDate });
+export async function updateSession(
+  id: number,
+  sessionDate: string,
+  comment?: string | null,
+): Promise<Session> {
+  const response = await api.put(`/sessions/${id}`, {
+    session_date: sessionDate,
+    comment: comment ?? null,
+  });
   return response.data;
 }
 

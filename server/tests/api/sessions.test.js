@@ -95,6 +95,24 @@ describe('POST /api/sessions', () => {
     expect(res.body.dance_course_id).toBe(course.id);
   });
 
+  it('creates a session with a comment', async () => {
+    const { course } = await createGroupAndCourse();
+    const res = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.id, session_date: '2025-01-15', comment: 'Warm-up focus' });
+    expect(res.status).toBe(201);
+    expect(res.body.comment).toBe('Warm-up focus');
+  });
+
+  it('returns comment as null when not provided', async () => {
+    const { course } = await createGroupAndCourse();
+    const res = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.id, session_date: '2025-01-15' });
+    expect(res.status).toBe(201);
+    expect(res.body.comment).toBeNull();
+  });
+
   it('returns 400 when dance_course_id is missing', async () => {
     const res = await request(app).post('/api/sessions').send({ session_date: '2025-01-15' });
     expect(res.status).toBe(400);
@@ -129,6 +147,32 @@ describe('PUT /api/sessions/:id', () => {
       .send({ session_date: '2025-02-20' });
     expect(res.status).toBe(200);
     expect(res.body.session_date).toBe('2025-02-20');
+  });
+
+  it('updates the comment', async () => {
+    const { course } = await createGroupAndCourse();
+    const created = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.id, session_date: '2025-01-15', comment: 'Old note' });
+
+    const res = await request(app)
+      .put(`/api/sessions/${created.body.id}`)
+      .send({ session_date: '2025-01-15', comment: 'New note' });
+    expect(res.status).toBe(200);
+    expect(res.body.comment).toBe('New note');
+  });
+
+  it('clears the comment when set to null', async () => {
+    const { course } = await createGroupAndCourse();
+    const created = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.id, session_date: '2025-01-15', comment: 'Remove me' });
+
+    const res = await request(app)
+      .put(`/api/sessions/${created.body.id}`)
+      .send({ session_date: '2025-01-15', comment: null });
+    expect(res.status).toBe(200);
+    expect(res.body.comment).toBeNull();
   });
 
   it('returns 404 for non-existent session', async () => {

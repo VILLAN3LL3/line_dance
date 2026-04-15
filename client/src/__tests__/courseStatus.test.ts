@@ -33,6 +33,7 @@ function makeSession(session_date: string, id = 1): Session {
     session_date,
     dance_group_name: "Test Group",
     semester: "WS 2025",
+    comment: null,
     created_at: "2024-01-01T00:00:00.000Z",
   };
 }
