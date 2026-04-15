@@ -5,7 +5,15 @@ import React, { useState } from "react";
 import { Choreography } from "../../types";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
-import { ActionButton, Card, ExternalLink, LevelBatch, Tag, TagGroup, YouTubeVideo } from "../shared/ui";
+import {
+  ActionButton,
+  Card,
+  ExternalLink,
+  LevelBatch,
+  Tag,
+  TagGroup,
+  YouTubeVideo,
+} from "../shared/ui";
 
 interface ChoreographyCardProps {
   choreography: Choreography;

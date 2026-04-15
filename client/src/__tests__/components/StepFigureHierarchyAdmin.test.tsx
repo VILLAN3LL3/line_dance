@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-import { createStepFigureDefinition, deleteStepFigureDefinition, getStepFigureHierarchy, updateStepFigureDefinition } from "../../api";
+import {
+  createStepFigureDefinition,
+  deleteStepFigureDefinition,
+  getStepFigureHierarchy,
+  updateStepFigureDefinition,
+} from "../../api";
 import StepFigureHierarchyAdmin from "../../components/choreographies/StepFigureHierarchyAdmin";
 
 vi.mock("../../api", () => ({
