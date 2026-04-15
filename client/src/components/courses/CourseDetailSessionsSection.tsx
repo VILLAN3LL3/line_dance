@@ -1,15 +1,7 @@
 import React from "react";
 
 import { getSessionBadgeLabel, getSessionBadgeStatus } from "../../utils/courseStatus";
-import {
-  ActionButton,
-  ActionGroup,
-  CheckboxFilter,
-  EmptyState,
-  LoadingState,
-  Section,
-  StatusBadge,
-} from "../shared/ui";
+import { ActionButton, ActionGroup, CheckboxFilter, EmptyState, LoadingState, Section, StatusBadge } from "../shared/ui";
 
 import type { Session } from "../../types";
 
@@ -134,9 +126,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                         weekday: "long",
                       })}
                     </p>
-                    {session.comment && (
-                      <p className="session-comment">{session.comment}</p>
-                    )}
+                    {session.comment && <p className="session-comment">{session.comment}</p>}
                   </div>
                   <ActionGroup className="session-actions">
                     <ActionButton
