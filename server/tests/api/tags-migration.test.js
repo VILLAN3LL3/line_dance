@@ -19,7 +19,7 @@ async function createLegacyChoreographyDatabase() {
   const db = new sqlite3.Database(':memory:');
 
   await run(db, 'PRAGMA foreign_keys = ON');
-  await run(db, "ATTACH DATABASE ':memory:' AS personal_tags");
+  await run(db, "ATTACH DATABASE ':memory:' AS personal_data");
 
   // Simulate pre-split schema/data in main DB.
   await run(
@@ -107,11 +107,11 @@ describe('Choreography tags migration regression', () => {
 
     await runChoreographyMigrations();
 
-    const tagCount = await getQuery('SELECT COUNT(*) as count FROM personal_tags.tags');
+    const tagCount = await getQuery('SELECT COUNT(*) as count FROM personal_data.tags');
     const mappingCount = await getQuery(
-      'SELECT COUNT(*) as count FROM personal_tags.choreography_tags',
+      'SELECT COUNT(*) as count FROM personal_data.choreography_tags',
     );
-    const tagRows = await allQuery('SELECT name FROM personal_tags.tags ORDER BY name');
+    const tagRows = await allQuery('SELECT name FROM personal_data.tags ORDER BY name');
 
     expect(tagCount?.count).toBe(1);
     expect(mappingCount?.count).toBe(1);

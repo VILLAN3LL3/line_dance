@@ -96,7 +96,7 @@ const migrations = [
       );
 
       await runQuery(
-        `CREATE TABLE IF NOT EXISTS personal_tags.tags (
+        `CREATE TABLE IF NOT EXISTS personal_data.tags (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL UNIQUE
         )`,
@@ -105,7 +105,7 @@ const migrations = [
       );
 
       await runQuery(
-        `CREATE TABLE IF NOT EXISTS personal_tags.choreography_tags (
+        `CREATE TABLE IF NOT EXISTS personal_data.choreography_tags (
           choreography_id INTEGER NOT NULL,
           tag_id INTEGER NOT NULL,
           PRIMARY KEY (choreography_id, tag_id)
@@ -171,7 +171,7 @@ const migrations = [
     id: '003_ensure_personal_tags_schema_and_backfill',
     up: async () => {
       await runQuery(
-        `CREATE TABLE IF NOT EXISTS personal_tags.tags (
+        `CREATE TABLE IF NOT EXISTS personal_data.tags (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL UNIQUE
         )`,
@@ -180,7 +180,7 @@ const migrations = [
       );
 
       await runQuery(
-        `CREATE TABLE IF NOT EXISTS personal_tags.choreography_tags (
+        `CREATE TABLE IF NOT EXISTS personal_data.choreography_tags (
           choreography_id INTEGER NOT NULL,
           tag_id INTEGER NOT NULL,
           PRIMARY KEY (choreography_id, tag_id)
@@ -202,14 +202,14 @@ const migrations = [
 
       if (legacyTagsTable && legacyJunctionTable) {
         await runQuery(
-          `INSERT OR IGNORE INTO personal_tags.tags (id, name)
+          `INSERT OR IGNORE INTO personal_data.tags (id, name)
            SELECT id, name FROM main.tags`,
           [],
           dbName,
         );
 
         await runQuery(
-          `INSERT OR IGNORE INTO personal_tags.choreography_tags (choreography_id, tag_id)
+          `INSERT OR IGNORE INTO personal_data.choreography_tags (choreography_id, tag_id)
            SELECT choreography_id, tag_id FROM main.choreography_tags`,
           [],
           dbName,
@@ -332,6 +332,39 @@ const migrations = [
         [],
         dbName,
       );
+    },
+  },
+  {
+    id: '007_move_saved_filters_to_personal_data',
+    up: async () => {
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS personal_data.saved_filter_configurations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL UNIQUE,
+          filters_json TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
+        [],
+        dbName,
+      );
+
+      const legacyTable = await getQuery(
+        `SELECT name FROM main.sqlite_master WHERE type = 'table' AND name = 'saved_filter_configurations'`,
+        [],
+        dbName,
+      );
+
+      if (legacyTable) {
+        await runQuery(
+          `INSERT OR IGNORE INTO personal_data.saved_filter_configurations (id, name, filters_json, created_at, updated_at)
+           SELECT id, name, filters_json, created_at, updated_at FROM main.saved_filter_configurations`,
+          [],
+          dbName,
+        );
+
+        await runQuery(`DROP TABLE main.saved_filter_configurations`, [], dbName);
+      }
     },
   },
 ];

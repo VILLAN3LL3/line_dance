@@ -103,8 +103,8 @@ export async function setupChoreographyTestDb() {
 
   await run(testDb, 'PRAGMA foreign_keys = ON');
 
-  // Attach a separate in-memory database for personal tags
-  await run(testDb, "ATTACH DATABASE ':memory:' AS personal_tags");
+  // Attach a separate in-memory database for personal data (tags + saved filters)
+  await run(testDb, "ATTACH DATABASE ':memory:' AS personal_data");
 
   await new Promise((resolve, reject) => {
     testDb.exec(SCHEMA, (err) => {
@@ -113,20 +113,30 @@ export async function setupChoreographyTestDb() {
     });
   });
 
-  // Create tags schema in the attached personal_tags database
+  // Create tables in the attached personal_data database
   await run(
     testDb,
-    `CREATE TABLE IF NOT EXISTS personal_tags.tags (
+    `CREATE TABLE IF NOT EXISTS personal_data.tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
   )`,
   );
   await run(
     testDb,
-    `CREATE TABLE IF NOT EXISTS personal_tags.choreography_tags (
+    `CREATE TABLE IF NOT EXISTS personal_data.choreography_tags (
     choreography_id INTEGER NOT NULL,
     tag_id INTEGER NOT NULL,
     PRIMARY KEY (choreography_id, tag_id)
+  )`,
+  );
+  await run(
+    testDb,
+    `CREATE TABLE IF NOT EXISTS personal_data.saved_filter_configurations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    filters_json TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`,
   );
 
@@ -142,20 +152,20 @@ export async function setupChoreographyTestDb() {
 }
 
 export async function clearChoreographyTables() {
-  // Delete choreography_tags from personal_tags DB first (no cross-DB FK cascade)
-  await run(testDb, 'DELETE FROM personal_tags.choreography_tags');
+  // Delete choreography_tags from personal_data DB first (no cross-DB FK cascade)
+  await run(testDb, 'DELETE FROM personal_data.choreography_tags');
   // Delete choreographies — FK ON DELETE CASCADE removes choreography_authors and choreography_step_figures
   await run(testDb, 'DELETE FROM choreographies');
   await run(testDb, 'DELETE FROM step_figure_components');
   await run(testDb, 'DELETE FROM authors');
-  await run(testDb, 'DELETE FROM personal_tags.tags');
+  await run(testDb, 'DELETE FROM personal_data.tags');
   await run(testDb, 'DELETE FROM step_figures');
   await run(testDb, 'DELETE FROM levels');
 
   try {
-    await run(testDb, 'DELETE FROM saved_filter_configurations');
+    await run(testDb, 'DELETE FROM personal_data.saved_filter_configurations');
   } catch {
-    // Table is created lazily on first access — may not exist yet
+    // Table may not exist in older test runs
   }
 
   try {

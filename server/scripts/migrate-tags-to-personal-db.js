@@ -1,6 +1,6 @@
 /**
  * One-time migration: copy tags and choreography_tags from data/line_dance.db
- * into data/personal_tags.db.
+ * into data/personal_data.db.
  *
  * Run once:  node migrate-tags-to-personal-db.js
  */
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const sourcePath = path.join(__dirname, '..', 'data', 'line_dance.db');
-const targetPath = path.join(__dirname, '..', 'data', 'personal_tags.db');
+const targetPath = path.join(__dirname, '..', 'data', 'personal_data.db');
 
 function open(filePath, mode) {
   return new Promise((resolve, reject) => {
@@ -112,7 +112,7 @@ async function main() {
 
   await close(source);
   await close(target);
-  console.log('Done. data/personal_tags.db is ready.');
+  console.log('Done. data/personal_data.db is ready.');
 }
 
 try {

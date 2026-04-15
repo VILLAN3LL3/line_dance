@@ -32,7 +32,7 @@ function resolveDatabasePath(inputPath, fallbackFileName) {
 const databases = {
   choreography: resolveDatabasePath(process.env.CHOREOGRAPHY_DB_PATH, 'line_dance.db'),
   danceGroups: resolveDatabasePath(process.env.DANCE_GROUPS_DB_PATH, 'dance_groups.db'),
-  tags: resolveDatabasePath(process.env.TAGS_DB_PATH, 'personal_tags.db'),
+  tags: resolveDatabasePath(process.env.TAGS_DB_PATH, 'personal_data.db'),
 };
 
 let dbConnections = {};
@@ -63,11 +63,11 @@ export function getDatabase(name = 'choreography') {
         fs.mkdirSync(path.dirname(tagsDbPath), { recursive: true });
       }
       dbReadyPromises[name] = new Promise((resolve, reject) => {
-        dbConnections[name].run(`ATTACH DATABASE ? AS personal_tags`, [tagsDbPath], (err) => {
+        dbConnections[name].run(`ATTACH DATABASE ? AS personal_data`, [tagsDbPath], (err) => {
           if (err) {
             if (process.env.NODE_ENV !== 'test') {
               process.stderr.write(
-                `[db] Failed to attach personal_tags database: ${err.message}\n`,
+                `[db] Failed to attach personal_data database: ${err.message}\n`,
               );
             }
             reject(err);

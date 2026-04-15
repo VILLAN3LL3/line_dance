@@ -17,7 +17,7 @@ async function ensureSavedFiltersTable() {
   }
 
   await runQuery(`
-    CREATE TABLE IF NOT EXISTS saved_filter_configurations (
+    CREATE TABLE IF NOT EXISTS personal_data.saved_filter_configurations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
       filters_json TEXT NOT NULL,
@@ -92,7 +92,7 @@ export async function getSavedFilterConfigurations(req, res) {
 
     const rows = await allQuery(
       `SELECT id, name, filters_json, created_at, updated_at
-       FROM saved_filter_configurations
+       FROM personal_data.saved_filter_configurations
        ORDER BY LOWER(name) ASC`,
     );
 
@@ -126,7 +126,7 @@ export async function saveFilterConfiguration(req, res) {
     const filtersJson = JSON.stringify(filters);
 
     await runQuery(
-      `INSERT INTO saved_filter_configurations (name, filters_json)
+      `INSERT INTO personal_data.saved_filter_configurations (name, filters_json)
        VALUES (?, ?)
        ON CONFLICT(name)
        DO UPDATE SET
@@ -137,7 +137,7 @@ export async function saveFilterConfiguration(req, res) {
 
     const saved = await getQuery(
       `SELECT id, name, filters_json, created_at, updated_at
-       FROM saved_filter_configurations
+       FROM personal_data.saved_filter_configurations
        WHERE name = ?`,
       [name],
     );
@@ -167,7 +167,7 @@ export async function updateSavedFilterConfiguration(req, res) {
 
     const existing = await getQuery(
       `SELECT id, name, filters_json, created_at, updated_at
-       FROM saved_filter_configurations
+       FROM personal_data.saved_filter_configurations
        WHERE id = ?`,
       [configurationId],
     );
@@ -198,7 +198,7 @@ export async function updateSavedFilterConfiguration(req, res) {
       : parseStoredFilters(existing.filters_json);
 
     await runQuery(
-      `UPDATE saved_filter_configurations
+      `UPDATE personal_data.saved_filter_configurations
        SET name = ?, filters_json = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
       [nextName, JSON.stringify(nextFilters), configurationId],
@@ -206,7 +206,7 @@ export async function updateSavedFilterConfiguration(req, res) {
 
     const updated = await getQuery(
       `SELECT id, name, filters_json, created_at, updated_at
-       FROM saved_filter_configurations
+       FROM personal_data.saved_filter_configurations
        WHERE id = ?`,
       [configurationId],
     );
@@ -237,7 +237,7 @@ export async function deleteSavedFilterConfiguration(req, res) {
       return res.status(400).json({ error: 'Invalid configuration id' });
     }
 
-    const result = await runQuery('DELETE FROM saved_filter_configurations WHERE id = ?', [
+    const result = await runQuery('DELETE FROM personal_data.saved_filter_configurations WHERE id = ?', [
       configurationId,
     ]);
 
@@ -322,9 +322,9 @@ export async function createChoreography(req, res) {
       choreography_id,
       tags,
       getTagId,
-      'personal_tags.choreography_tags',
+      'personal_data.choreography_tags',
       'tag_id',
-      'personal_tags.tags',
+      'personal_data.tags',
     );
 
     res.status(201).json({ id: choreography_id, message: 'Choreography created successfully' });
@@ -464,9 +464,9 @@ export async function updateChoreography(req, res) {
     await deleteAndReinsertRelationships(
       choreography_id,
       tags,
-      'personal_tags.choreography_tags',
+      'personal_data.choreography_tags',
       'tag_id',
-      'personal_tags.tags',
+      'personal_data.tags',
       getTagId,
     );
 
@@ -491,9 +491,9 @@ async function cleanupOrphanedRecords() {
 
     // Delete orphaned tags (not used by any choreography)
     await runQuery(
-      `DELETE FROM personal_tags.tags
+      `DELETE FROM personal_data.tags
        WHERE id NOT IN (
-         SELECT DISTINCT tag_id FROM personal_tags.choreography_tags WHERE tag_id IS NOT NULL
+         SELECT DISTINCT tag_id FROM personal_data.choreography_tags WHERE tag_id IS NOT NULL
        )`,
     );
 
@@ -532,7 +532,7 @@ async function cleanupOrphanedRecords() {
       `DELETE FROM choreography_authors WHERE choreography_id NOT IN (SELECT id FROM choreographies)`,
     );
     await runQuery(
-      `DELETE FROM personal_tags.choreography_tags WHERE choreography_id NOT IN (SELECT id FROM choreographies)`,
+      `DELETE FROM personal_data.choreography_tags WHERE choreography_id NOT IN (SELECT id FROM choreographies)`,
     );
     await runQuery(
       `DELETE FROM choreography_step_figures WHERE choreography_id NOT IN (SELECT id FROM choreographies)`,
@@ -554,7 +554,7 @@ export async function deleteChoreography(req, res) {
 
     // Remove join table entries first
     await runQuery('DELETE FROM choreography_authors WHERE choreography_id = ?', [choreography_id]);
-    await runQuery('DELETE FROM personal_tags.choreography_tags WHERE choreography_id = ?', [
+    await runQuery('DELETE FROM personal_data.choreography_tags WHERE choreography_id = ?', [
       choreography_id,
     ]);
     await runQuery('DELETE FROM choreography_step_figures WHERE choreography_id = ?', [
@@ -616,9 +616,9 @@ function buildFilterConditions(filterObj) {
 
   const tagsFilter = buildRelationshipFilter(
     tags,
-    'personal_tags.choreography_tags',
+    'personal_data.choreography_tags',
     'tag_id',
-    'personal_tags.tags',
+    'personal_data.tags',
   );
   joins.push(...tagsFilter.joins);
   conditions.push(...tagsFilter.conditions);
@@ -626,9 +626,9 @@ function buildFilterConditions(filterObj) {
 
   const excludedTagsFilter = buildExcludedRelationshipFilter(
     excluded_tags,
-    'personal_tags.choreography_tags',
+    'personal_data.choreography_tags',
     'tag_id',
-    'personal_tags.tags',
+    'personal_data.tags',
   );
   conditions.push(...excludedTagsFilter.conditions);
   params.push(...excludedTagsFilter.params);
@@ -1055,8 +1055,8 @@ async function enrichChoreography(choreography) {
   );
 
   const tags = await allQuery(
-    `SELECT t.name FROM personal_tags.tags t
-     INNER JOIN personal_tags.choreography_tags ct ON t.id = ct.tag_id
+    `SELECT t.name FROM personal_data.tags t
+     INNER JOIN personal_data.choreography_tags ct ON t.id = ct.tag_id
      WHERE ct.choreography_id = ?`,
     [choreography.id],
   );
@@ -1235,7 +1235,7 @@ async function runStepFigureMutation(callback) {
 }
 
 async function getTagId(name) {
-  const result = await getQuery('SELECT id FROM personal_tags.tags WHERE name = ?', [name]);
+  const result = await getQuery('SELECT id FROM personal_data.tags WHERE name = ?', [name]);
   return result ? result.id : null;
 }
 
@@ -1253,7 +1253,7 @@ export async function getLevels(req, res) {
 
 export async function getTags(req, res) {
   try {
-    const tags = await allQuery('SELECT name FROM personal_tags.tags ORDER BY name');
+    const tags = await allQuery('SELECT name FROM personal_data.tags ORDER BY name');
     res.json(tags.map((t) => t.name));
   } catch (error) {
     captureError(error);

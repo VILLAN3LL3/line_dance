@@ -349,7 +349,7 @@ describe('DELETE /api/choreographies/:id', () => {
 // ---------------------------------------------------------------------------
 
 describe('tags storage separation', () => {
-  it('stores tags tables only in personal_tags schema, not in main schema', async () => {
+  it('stores tags tables only in personal_data schema, not in main schema', async () => {
     const mainTables = await allQuery(
       `SELECT name
        FROM main.sqlite_master
@@ -359,7 +359,7 @@ describe('tags storage separation', () => {
 
     const personalTables = await allQuery(
       `SELECT name
-       FROM personal_tags.sqlite_master
+       FROM personal_data.sqlite_master
        WHERE type = 'table'
          AND name IN ('tags', 'choreography_tags')`,
     );
