@@ -51,24 +51,88 @@
   gap: 6px;
 }
 
-.level-color-beginner {
+.level-color-beginner-absolute {
+  background-color: #eaf4fd;
+  color: #244f73;
+}
+
+.level-color-beginner-easy {
+  background-color: #deecfb;
+  color: #1f5278;
+}
+
+.level-color-beginner-low,
+.level-color-beginner-base {
   background-color: #cfe3f7;
   color: #174f7a;
 }
 
-.level-color-improver {
+.level-color-beginner-high {
+  background-color: #bdd9f4;
+  color: #0f4772;
+}
+
+.level-color-improver-absolute {
+  background-color: #ebf8f0;
+  color: #1e6440;
+}
+
+.level-color-improver-easy {
+  background-color: #def4e8;
+  color: #1d623d;
+}
+
+.level-color-improver-low,
+.level-color-improver-base {
   background-color: #ceeedd;
   color: #1a5c35;
 }
 
-.level-color-intermediate {
+.level-color-improver-high {
+  background-color: #bddfcf;
+  color: #14562f;
+}
+
+.level-color-intermediate-absolute {
+  background-color: #fff0d8;
+  color: #7d470b;
+}
+
+.level-color-intermediate-easy {
+  background-color: #ffe9cc;
+  color: #7b4306;
+}
+
+.level-color-intermediate-low,
+.level-color-intermediate-base {
   background-color: #fce4c0;
   color: #7a4000;
 }
 
-.level-color-advanced {
+.level-color-intermediate-high {
+  background-color: #f7d5ab;
+  color: #743900;
+}
+
+.level-color-advanced-absolute {
+  background-color: #fee5e5;
+  color: #912c2c;
+}
+
+.level-color-advanced-easy {
+  background-color: #fcdbdb;
+  color: #8f2626;
+}
+
+.level-color-advanced-low,
+.level-color-advanced-base {
   background-color: #f8d0d0;
   color: #8b1f1f;
+}
+
+.level-color-advanced-high {
+  background-color: #f2bebe;
+  color: #821818;
 }
 
 .level-color-unknown {

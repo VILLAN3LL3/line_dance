@@ -5,15 +5,7 @@ import React, { useState } from "react";
 import { Choreography } from "../../types";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
-import {
-  ActionButton,
-  Card,
-  ExternalLink,
-  LevelBatch,
-  Tag,
-  TagGroup,
-  YouTubeVideo,
-} from "../shared/ui";
+import { ActionButton, Card, ExternalLink, LevelBatch, Tag, TagGroup, YouTubeVideo } from "../shared/ui";
 
 interface ChoreographyCardProps {
   choreography: Choreography;
@@ -262,7 +254,7 @@ const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = ({
       type="button"
       onClick={(event) => {
         event.stopPropagation();
-        void onCopy();
+        onCopy();
       }}
       className="btn-secondary btn-small copy-action"
       aria-label="Copy choreography details"

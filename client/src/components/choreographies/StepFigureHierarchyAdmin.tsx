@@ -2,22 +2,9 @@ import "../../styles/StepFigureHierarchyAdmin.css";
 
 import React, { useEffect, useMemo, useState } from "react";
 
-import {
-  createStepFigureDefinition,
-  deleteStepFigureDefinition,
-  getStepFigureHierarchy,
-  updateStepFigureDefinition,
-} from "../../api";
+import { createStepFigureDefinition, deleteStepFigureDefinition, getStepFigureHierarchy, updateStepFigureDefinition } from "../../api";
 import { StepFigureDefinition } from "../../types";
-import {
-  ActionButton,
-  ActionGroup,
-  confirmAction,
-  EmptyState,
-  ErrorMessage,
-  LoadingState,
-  Section,
-} from "../shared/ui";
+import { ActionButton, ActionGroup, confirmAction, EmptyState, ErrorMessage, LoadingState, Section } from "../shared/ui";
 import { ChoreographyFormListSection } from "./ChoreographyFormListSection";
 
 const StepFigureHierarchyAdmin: React.FC = () => {

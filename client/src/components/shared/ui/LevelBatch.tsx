@@ -14,10 +14,21 @@ interface LevelBatchProps {
 
 const getLevelColorClass = (level: string): string => {
   const l = level.toLowerCase();
-  if (l.includes("beginner")) return "level-color-beginner";
-  if (l.includes("improver")) return "level-color-improver";
-  if (l.includes("intermediate")) return "level-color-intermediate";
-  if (l.includes("advanced")) return "level-color-advanced";
+  let tier = "base";
+  if (l.includes("absolute")) {
+    tier = "absolute";
+  } else if (l.includes("easy")) {
+    tier = "easy";
+  } else if (l.includes("low")) {
+    tier = "low";
+  } else if (l.includes("high")) {
+    tier = "high";
+  }
+
+  if (l.includes("beginner")) return `level-color-beginner-${tier}`;
+  if (l.includes("improver")) return `level-color-improver-${tier}`;
+  if (l.includes("intermediate")) return `level-color-intermediate-${tier}`;
+  if (l.includes("advanced")) return `level-color-advanced-${tier}`;
   return "level-color-unknown";
 };
 
