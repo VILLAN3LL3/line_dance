@@ -121,6 +121,38 @@ describe("DanceGroupDetail", () => {
     expect(await screen.findByText("(WS 2099)")).toBeInTheDocument();
   });
 
+  it("shows the next planned course by default when no running courses exist", async () => {
+    vi.mocked(getDanceCourses).mockResolvedValue([
+      {
+        id: 3,
+        dance_group_id: 1,
+        dance_group_name: "Group One",
+        semester: "SS 2100",
+        start_date: "2100-04-01",
+        created_at: "2024-01-01",
+      },
+      {
+        id: 2,
+        dance_group_id: 1,
+        dance_group_name: "Group One",
+        semester: "WS 2099",
+        start_date: "2099-01-01",
+        created_at: "2024-01-01",
+      },
+    ]);
+
+    renderWithRoute();
+
+    await screen.findByText("Group One");
+
+    expect(screen.getByText("(WS 2099)")).toBeInTheDocument();
+    expect(screen.queryByText("(SS 2100)")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Planned" }));
+
+    expect(await screen.findByText("(SS 2100)")).toBeInTheDocument();
+  });
+
   it("updates max group level from the select", async () => {
     renderWithRoute();
     await screen.findByText("Group One");

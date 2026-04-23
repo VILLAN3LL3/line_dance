@@ -7,6 +7,7 @@ import {
   getBerlinTodayIso,
   getCourseStatus,
   getCourseStatusLabel,
+  normalizeDate,
 } from "../../utils/courseStatus";
 import { getYouTubePlaylistPageUrl } from "../../utils/youtube";
 import {
@@ -43,17 +44,63 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
 
   const berlinTodayIso = getBerlinTodayIso();
 
+  const coursesWithStatus = courses.map((course) => {
+    const courseSessions = sessionsByCourseId[course.id] ?? [];
+    const status = getCourseStatus(course, courseSessions, berlinTodayIso);
+
+    let nextPlannedDate: string | null = null;
+    if (status === "planned") {
+      if (courseSessions.length > 0) {
+        const nextSessionDate = courseSessions
+          .map((session) => normalizeDate(session.session_date))
+          .filter((date) => date > berlinTodayIso)
+          .sort((a, b) => a.localeCompare(b))[0];
+        if (nextSessionDate) {
+          nextPlannedDate = nextSessionDate;
+        }
+      }
+
+      if (!nextPlannedDate && course.start_date) {
+        const normalizedStartDate = normalizeDate(course.start_date);
+        if (normalizedStartDate > berlinTodayIso) {
+          nextPlannedDate = normalizedStartDate;
+        }
+      }
+    }
+
+    return { course, status, nextPlannedDate };
+  });
+
+  const hasRunningCourses = coursesWithStatus.some(({ status }) => status === "running");
+
+  const nextPlannedCourseId = hasRunningCourses
+    ? null
+    : [...coursesWithStatus]
+        .filter(({ status }) => status === "planned")
+        .sort((a, b) => {
+          const dateA = a.nextPlannedDate ?? "9999-12-31";
+          const dateB = b.nextPlannedDate ?? "9999-12-31";
+          const dateComparison = dateA.localeCompare(dateB);
+          if (dateComparison !== 0) {
+            return dateComparison;
+          }
+          return a.course.id - b.course.id;
+        })[0]?.course.id ?? null;
+
   const visibleCourseStatuses = new Set<CourseStatus>([
     "running",
     ...(showPlannedCourses ? ["planned" as const] : []),
     ...(showPassedCourses ? ["passed" as const] : []),
   ]);
 
-  const filteredCourses = courses.filter((course) => {
-    const courseSessions = sessionsByCourseId[course.id] ?? [];
-    const courseStatus = getCourseStatus(course, courseSessions, berlinTodayIso);
-    return visibleCourseStatuses.has(courseStatus);
-  });
+  const filteredCourses = coursesWithStatus
+    .filter(({ course, status }) => {
+      if (!showPlannedCourses && !showPassedCourses && !hasRunningCourses) {
+        return status === "planned" && course.id === nextPlannedCourseId;
+      }
+      return visibleCourseStatuses.has(status);
+    })
+    .map(({ course }) => course);
 
   let coursesContent: React.ReactNode;
   if (courses.length === 0) {
