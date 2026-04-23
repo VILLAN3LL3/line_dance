@@ -37,7 +37,7 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
   const overlayChoreography =
     overlayChoreographyId === null
       ? null
-      : availableChoreographies.find((item) => item.id === overlayChoreographyId) ?? null;
+      : (availableChoreographies.find((item) => item.id === overlayChoreographyId) ?? null);
 
   useEffect(() => {
     if (overlayChoreographyId === null) {
@@ -155,7 +155,10 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
           aria-label={`Choreography details: ${overlayChoreography.name}`}
           onClick={() => setOverlayChoreographyId(null)}
         >
-          <div className="choreography-overlay-content" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="choreography-overlay-content"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="choreography-overlay-header">
               <h4>Choreography Card</h4>
               <ActionButton variant="secondary" onClick={() => setOverlayChoreographyId(null)}>
