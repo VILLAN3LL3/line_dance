@@ -786,35 +786,45 @@ async function expandStepFigureNamesWithHierarchy(stepFigureParam) {
     return [];
   }
 
-  const placeholders = requestedNames.map(() => '?').join(',');
-  const expandedRows = await allQuery(
-    `WITH RECURSIVE requested(id) AS (
-       SELECT id
-       FROM step_figures
-       WHERE name IN (${placeholders})
-     ),
-     ancestors(id) AS (
-       SELECT id FROM requested
-       UNION
-       SELECT sfc.parent_step_figure_id
-       FROM step_figure_components sfc
-       INNER JOIN ancestors ON ancestors.id = sfc.child_step_figure_id
-     )
-     SELECT DISTINCT sf.name
-     FROM step_figures sf
-     INNER JOIN ancestors ON ancestors.id = sf.id
-     ORDER BY LOWER(sf.name) ASC`,
-    requestedNames,
+  const relations = await allQuery(
+    `SELECT parent.name AS parent_name, child.name AS child_name
+     FROM step_figure_components sfc
+     INNER JOIN step_figures parent ON parent.id = sfc.parent_step_figure_id
+     INNER JOIN step_figures child ON child.id = sfc.child_step_figure_id
+     ORDER BY parent.name ASC, child.name ASC`,
   );
 
-  const merged = new Set(requestedNames);
-  for (const row of expandedRows) {
-    if (row?.name) {
-      merged.add(row.name);
+  const childrenByParent = new Map();
+  for (const relation of relations) {
+    if (!childrenByParent.has(relation.parent_name)) {
+      childrenByParent.set(relation.parent_name, new Set());
+    }
+    childrenByParent.get(relation.parent_name).add(relation.child_name);
+  }
+
+  const expanded = new Set(requestedNames);
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+
+    for (const [parentName, children] of childrenByParent.entries()) {
+      if (expanded.has(parentName)) {
+        continue;
+      }
+
+      const matchingChildCount = Array.from(children).filter((childName) =>
+        expanded.has(childName),
+      ).length;
+
+      if (matchingChildCount > 1) {
+        expanded.add(parentName);
+        changed = true;
+      }
     }
   }
 
-  return Array.from(merged);
+  return Array.from(expanded);
 }
 
 async function expandStepFigureNamesForExactMode(stepFigureParam) {
@@ -853,10 +863,12 @@ async function expandStepFigureNamesForExactMode(stepFigureParam) {
         continue;
       }
 
-      const hasAllChildren = Array.from(requiredChildren).every((childName) =>
+      const matchingChildren = Array.from(requiredChildren).filter((childName) =>
         expanded.has(childName),
       );
-      if (hasAllChildren) {
+      const hasAllChildren = matchingChildren.length === requiredChildren.size;
+
+      if (hasAllChildren && matchingChildren.length > 1) {
         expanded.add(parentName);
         changed = true;
       }

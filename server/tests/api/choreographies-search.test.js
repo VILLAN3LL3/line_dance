@@ -188,7 +188,7 @@ describe('GET /api/choreographies/search — step_figures "any" mode', () => {
     expect(res.body.data).toHaveLength(2);
   });
 
-  it('matches choreographies tagged with composite figures when searching by a component figure', async () => {
+  it('does not match choreographies tagged only with a composite figure when searching by a single component', async () => {
     const rock = await createStepFigure('Rock Step');
     const shuffle = await createStepFigure('Shuffle');
     const lindy = await createStepFigure('Lindy Step', [rock.body.id, shuffle.body.id]);
@@ -204,6 +204,30 @@ describe('GET /api/choreographies/search — step_figures "any" mode', () => {
     });
 
     const res = await search({ step_figures: 'Rock Step', step_figures_match_mode: 'any' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.map((c) => c.name)).not.toContain('Composite Dance');
+  });
+
+  it('matches choreographies tagged with a composite figure when searching by multiple matching components', async () => {
+    const rock = await createStepFigure('Rock Step');
+    const shuffle = await createStepFigure('Shuffle');
+    const lindy = await createStepFigure('Lindy Step', [rock.body.id, shuffle.body.id]);
+
+    expect(rock.status).toBe(201);
+    expect(shuffle.status).toBe(201);
+    expect(lindy.status).toBe(201);
+
+    await post({
+      name: 'Composite Dance',
+      level: 'Beginner',
+      step_figures: ['Lindy Step'],
+    });
+
+    const res = await search({
+      step_figures: ['Rock Step', 'Shuffle'],
+      step_figures_match_mode: 'any',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.data.map((c) => c.name)).toContain('Composite Dance');
@@ -355,6 +379,28 @@ describe('GET /api/choreographies/search — step_figures "exact" mode', () => {
     });
     expect(includesLindy.status).toBe(200);
     expect(includesLindy.body.data.map((c) => c.name)).toContain('Composite Exact Dance');
+  });
+
+  it('does not infer single-child composite step figures in exact mode', async () => {
+    const kick = await createStepFigure('Kick');
+    const kickBall = await createStepFigure('Kick Ball x', [kick.body.id]);
+
+    expect(kick.status).toBe(201);
+    expect(kickBall.status).toBe(201);
+
+    await post({
+      name: 'Single Child Composite Exact Dance',
+      level: 'Beginner',
+      step_figures: ['Kick Ball x'],
+    });
+
+    const res = await search({
+      step_figures: ['Kick'],
+      step_figures_match_mode: 'exact',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.map((c) => c.name)).not.toContain('Single Child Composite Exact Dance');
   });
 });
 
