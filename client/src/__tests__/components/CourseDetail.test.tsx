@@ -1,7 +1,7 @@
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import {
   addChoreographyToSession,
@@ -174,5 +174,33 @@ describe("CourseDetail", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "Show passed sessions" }));
 
     expect(await screen.findByText("Passed")).toBeInTheDocument();
+  });
+
+  it("opens choreography card overlay when clicking a session choreography", async () => {
+    vi.mocked(getSessionChoreographies).mockResolvedValue([
+      {
+        id: 1,
+        session_id: 12,
+        choreography_id: 101,
+        created_at: "2024-01-01",
+      },
+    ]);
+
+    renderWithRoute();
+
+    await screen.findByText(/Course: 7/);
+
+    fireEvent.click(screen.getAllByRole("button", { name: /manage/i })[0]);
+
+    const openCardButton = await screen.findByRole("button", {
+      name: /Open choreography card for Dance One/i,
+    });
+    fireEvent.click(openCardButton);
+
+    const dialog = await screen.findByRole("dialog", {
+      name: /Choreography details: Dance One/i,
+    });
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByRole("heading", { name: "Dance One" })).toBeInTheDocument();
   });
 });

@@ -45,6 +45,19 @@ test.describe("Course Management", () => {
     await expect(sessionChoreographyItem).toHaveCount(1, { timeout: 30_000 });
     await expect(page.locator(".loading")).toHaveCount(0, { timeout: 30_000 });
 
+    await sessionChoreographyItem
+      .getByRole("button", { name: new RegExp(`Open choreography card for ${choreoName}`) })
+      .click();
+    const choreographyDialog = page.getByRole("dialog", {
+      name: new RegExp(`Choreography details: ${choreoName}`),
+    });
+    await expect(choreographyDialog).toBeVisible({ timeout: 30_000 });
+    await expect(choreographyDialog.getByRole("heading", { name: choreoName })).toBeVisible({
+      timeout: 30_000,
+    });
+    await choreographyDialog.getByRole("button", { name: /^Close$/i }).click();
+    await expect(choreographyDialog).toHaveCount(0, { timeout: 30_000 });
+
     const removeButton = sessionChoreographyItem.getByRole("button", { name: /^Remove$/i });
     await expect(removeButton).toBeEnabled({ timeout: 30_000 });
 

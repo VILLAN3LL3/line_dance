@@ -2,24 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { DanceCourse, Session } from "../../types";
-import {
-  CourseStatus,
-  getBerlinTodayIso,
-  getCourseStatus,
-  getCourseStatusLabel,
-  normalizeDate,
-} from "../../utils/courseStatus";
+import { CourseStatus, getBerlinTodayIso, getCourseStatus, getCourseStatusLabel, normalizeDate } from "../../utils/courseStatus";
 import { getYouTubePlaylistPageUrl } from "../../utils/youtube";
-import {
-  ActionButton,
-  ActionGroup,
-  CheckboxFilter,
-  EmptyState,
-  ExternalLink,
-  LoadingState,
-  Section,
-  StatusBadge,
-} from "../shared/ui";
+import { ActionButton, ActionGroup, CheckboxFilter, EmptyState, ExternalLink, LoadingState, Section, StatusBadge } from "../shared/ui";
 
 interface DanceGroupCoursesSectionProps {
   courses: DanceCourse[];
@@ -75,7 +60,7 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
 
   const nextPlannedCourseId = hasRunningCourses
     ? null
-    : [...coursesWithStatus]
+    : ([...coursesWithStatus]
         .filter(({ status }) => status === "planned")
         .sort((a, b) => {
           const dateA = a.nextPlannedDate ?? "9999-12-31";
@@ -85,7 +70,7 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
             return dateComparison;
           }
           return a.course.id - b.course.id;
-        })[0]?.course.id ?? null;
+        })[0]?.course.id ?? null);
 
   const visibleCourseStatuses = new Set<CourseStatus>([
     "running",

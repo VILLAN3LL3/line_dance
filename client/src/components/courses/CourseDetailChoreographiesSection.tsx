@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
+import { ChoreographyCard } from "../choreographies/ChoreographyCard";
 import { ActionButton, EmptyState, LevelBatch, Section } from "../shared/ui";
 
 import type { Choreography, Session, SessionChoreography } from "../../types";
@@ -31,6 +32,39 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
   onAddChoreography,
   onRemoveChoreography,
 }) => {
+  const [overlayChoreographyId, setOverlayChoreographyId] = useState<number | null>(null);
+
+  const overlayChoreography =
+    overlayChoreographyId === null
+      ? null
+      : availableChoreographies.find((item) => item.id === overlayChoreographyId) ?? null;
+
+  useEffect(() => {
+    if (overlayChoreographyId === null) {
+      return;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOverlayChoreographyId(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [overlayChoreographyId]);
+
+  useEffect(() => {
+    if (
+      overlayChoreographyId !== null &&
+      !sessionChoreographies.some((item) => item.choreography_id === overlayChoreographyId)
+    ) {
+      setOverlayChoreographyId(null);
+    }
+  }, [overlayChoreographyId, sessionChoreographies]);
+
   return (
     <Section
       title={`Choreographies for ${new Date(selectedSession.session_date).toLocaleDateString()}`}
@@ -82,10 +116,24 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
 
             return (
               <div key={sessionChoreography.id} className="choreography-item">
-                <div className="choreo-info">
-                  <h4>{choreography?.name}</h4>
-                  <LevelBatch level={choreography?.level || "UNKNOWN"} />
-                </div>
+                {choreography ? (
+                  <button
+                    type="button"
+                    className="choreo-preview-trigger"
+                    onClick={() => setOverlayChoreographyId(choreography.id)}
+                    aria-label={`Open choreography card for ${choreography.name}`}
+                  >
+                    <div className="choreo-info">
+                      <h4>{choreography.name}</h4>
+                      <LevelBatch level={choreography.level || "UNKNOWN"} />
+                    </div>
+                  </button>
+                ) : (
+                  <div className="choreo-info">
+                    <h4>Unknown choreography</h4>
+                    <LevelBatch level="UNKNOWN" />
+                  </div>
+                )}
                 <ActionButton
                   onClick={() => onRemoveChoreography(sessionChoreography.choreography_id)}
                   variant="delete"
@@ -96,6 +144,26 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
               </div>
             );
           })}
+        </div>
+      )}
+
+      {overlayChoreography && (
+        <div
+          className="choreography-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Choreography details: ${overlayChoreography.name}`}
+          onClick={() => setOverlayChoreographyId(null)}
+        >
+          <div className="choreography-overlay-content" onClick={(event) => event.stopPropagation()}>
+            <div className="choreography-overlay-header">
+              <h4>Choreography Card</h4>
+              <ActionButton variant="secondary" onClick={() => setOverlayChoreographyId(null)}>
+                Close
+              </ActionButton>
+            </div>
+            <ChoreographyCard choreography={overlayChoreography} videoEmbedMode="all" />
+          </div>
         </div>
       )}
     </Section>
