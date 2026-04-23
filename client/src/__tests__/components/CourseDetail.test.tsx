@@ -133,8 +133,11 @@ describe("CourseDetail", () => {
 
     await screen.findByText(/Course: 7/);
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const dateInput = document.querySelector<HTMLInputElement>('.session-form input[type="date"]')!;
+    const dateInput = document.querySelector<HTMLInputElement>('.session-form input[type="date"]');
+    expect(dateInput).not.toBeNull();
+    if (!dateInput) {
+      throw new Error("Session date input was not found");
+    }
     fireEvent.change(dateInput, { target: { value: "2025-02-01" } });
     fireEvent.click(screen.getByRole("button", { name: "+ Add Session" }));
 

@@ -5,6 +5,7 @@
  */
 import sqlite3 from 'sqlite3';
 import { setDatabaseConnection } from '../../scripts/db.js';
+import { runChoreographyMigrations } from '../../migrations/choreography-migrations.js';
 import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.js';
 
 let testDb = null;
@@ -26,9 +27,15 @@ export async function setupTestDb() {
 
   // Inject the in-memory DB before running migrations so all runQuery calls
   // in the migration system target this instance instead of the real file.
+  setDatabaseConnection('choreography', testDb);
   setDatabaseConnection('danceGroups', testDb);
 
-  // Run the real migrations — same schema as production
+  // The choreography schema expects an attached personal_data database.
+  await run(testDb, `ATTACH DATABASE ':memory:' AS personal_data`);
+
+  // Run real migrations in production order because dance-groups migrations
+  // now read canonical level values from the choreography schema.
+  await runChoreographyMigrations();
   await runDanceGroupsMigrations();
 
   return testDb;

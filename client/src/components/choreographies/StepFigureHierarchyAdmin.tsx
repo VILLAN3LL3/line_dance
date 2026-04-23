@@ -1,6 +1,6 @@
 import "../../styles/StepFigureHierarchyAdmin.css";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   createStepFigureDefinition,
@@ -73,9 +73,38 @@ const StepFigureHierarchyAdmin: React.FC = () => {
       .map((figure) => figure.name);
   }, [catalogStepFigures, editComponentIds, selectedFigure]);
 
+  const loadStepFigures = useCallback(async (preferredId?: number | null) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const figures = await getStepFigureHierarchy();
+      setStepFigures(figures);
+
+      if (figures.length === 0) {
+        setSelectedId(null);
+        return;
+      }
+
+      setSelectedId((currentSelectedId) => {
+        const requestedId = preferredId ?? currentSelectedId;
+        const nextSelected =
+          requestedId !== null && requestedId !== undefined
+            ? figures.find((figure) => figure.id === requestedId)?.id
+            : undefined;
+
+        return nextSelected ?? figures[0].id;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load step figures");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadStepFigures();
-  }, []);
+  }, [loadStepFigures]);
 
   useEffect(() => {
     if (!selectedFigure) {
@@ -89,33 +118,6 @@ const StepFigureHierarchyAdmin: React.FC = () => {
     setEditComponentInput("");
     setEditComponentIds(selectedFigure.components.map((component) => component.id));
   }, [selectedFigure]);
-
-  const loadStepFigures = async (preferredId?: number | null) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const figures = await getStepFigureHierarchy();
-      setStepFigures(figures);
-
-      if (figures.length === 0) {
-        setSelectedId(null);
-        return;
-      }
-
-      const requestedId = preferredId ?? selectedId;
-      const nextSelected =
-        requestedId !== null && requestedId !== undefined
-          ? figures.find((figure) => figure.id === requestedId)?.id
-          : undefined;
-
-      setSelectedId(nextSelected ?? figures[0].id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load step figures");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const addCreateComponentFromInput = () => {
     const componentName = newComponentInput.trim();

@@ -39,6 +39,12 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
       ? null
       : (availableChoreographies.find((item) => item.id === overlayChoreographyId) ?? null);
 
+  const isOverlayChoreographyInSession =
+    overlayChoreographyId !== null &&
+    sessionChoreographies.some((item) => item.choreography_id === overlayChoreographyId);
+
+  const visibleOverlayChoreography = isOverlayChoreographyInSession ? overlayChoreography : null;
+
   useEffect(() => {
     if (overlayChoreographyId === null) {
       return;
@@ -50,20 +56,11 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
       }
     };
 
-    window.addEventListener("keydown", handleEscape);
+    globalThis.window.addEventListener("keydown", handleEscape);
     return () => {
-      window.removeEventListener("keydown", handleEscape);
+      globalThis.window.removeEventListener("keydown", handleEscape);
     };
   }, [overlayChoreographyId]);
-
-  useEffect(() => {
-    if (
-      overlayChoreographyId !== null &&
-      !sessionChoreographies.some((item) => item.choreography_id === overlayChoreographyId)
-    ) {
-      setOverlayChoreographyId(null);
-    }
-  }, [overlayChoreographyId, sessionChoreographies]);
 
   return (
     <Section
@@ -147,27 +144,22 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
         </div>
       )}
 
-      {overlayChoreography && (
-        <div
+      {visibleOverlayChoreography && (
+        <dialog
+          open
           className="choreography-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Choreography details: ${overlayChoreography.name}`}
-          onClick={() => setOverlayChoreographyId(null)}
+          aria-label={`Choreography details: ${visibleOverlayChoreography.name}`}
         >
-          <div
-            className="choreography-overlay-content"
-            onClick={(event) => event.stopPropagation()}
-          >
+          <div className="choreography-overlay-content">
             <div className="choreography-overlay-header">
               <h4>Choreography Card</h4>
               <ActionButton variant="secondary" onClick={() => setOverlayChoreographyId(null)}>
                 Close
               </ActionButton>
             </div>
-            <ChoreographyCard choreography={overlayChoreography} videoEmbedMode="all" />
+            <ChoreographyCard choreography={visibleOverlayChoreography} videoEmbedMode="all" />
           </div>
-        </div>
+        </dialog>
       )}
     </Section>
   );
