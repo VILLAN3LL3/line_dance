@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { createChoreographyViaApi, createDanceCourseViaApi, createDanceGroupViaApi, createTrainerViaApi } from "../helpers/api";
+import {
+  createChoreographyViaApi,
+  createDanceCourseViaApi,
+  createDanceGroupViaApi,
+  createTrainerViaApi,
+} from "../helpers/api";
 
 test.describe("Course Management", () => {
   test("course detail supports session and choreography lifecycle", async ({ page, request }) => {
