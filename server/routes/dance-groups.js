@@ -96,7 +96,10 @@ function getAreaCodeLength(countryPrefix, nationalNumber) {
   const shortAreaPrefixLength = countryPrefix ? 2 : 3;
   const defaultAreaPrefixLength = countryPrefix ? 3 : 4;
 
-  if ((countryPrefix && nationalNumber.startsWith('1')) || (!countryPrefix && nationalNumber.startsWith('01'))) {
+  if (
+    (countryPrefix && nationalNumber.startsWith('1')) ||
+    (!countryPrefix && nationalNumber.startsWith('01'))
+  ) {
     return mobilePrefixLength;
   }
 
@@ -119,15 +122,7 @@ function formatPhoneSegments(countryPrefix, areaCode, subscriberNumber) {
 }
 
 function renderDancingPlaceholder(doc, layout) {
-  const {
-    linksWithQr,
-    columns,
-    leftMargin,
-    cardWidth,
-    columnGap,
-    gridStartY,
-    rowHeight,
-  } = layout;
+  const { linksWithQr, columns, leftMargin, cardWidth, columnGap, gridStartY, rowHeight } = layout;
 
   if (!dancingIconSvg || linksWithQr.length % columns === 0) {
     return;
@@ -793,10 +788,7 @@ export async function exportDanceCoursePdf(req, res) {
     const titleText = buildBalancedTwoLineTitle(doc, titleTextRaw, contentWidth);
     const titleHeight = doc.heightOfString(titleText, titleOptions);
 
-    doc
-      .fillColor(colors.title)
-      .fontSize(24)
-      .text(titleText, leftMargin, titleY, titleOptions);
+    doc.fillColor(colors.title).fontSize(24).text(titleText, leftMargin, titleY, titleOptions);
 
     const subtitleY = titleY + titleHeight + 6;
 
@@ -881,7 +873,8 @@ export async function exportDanceCoursePdf(req, res) {
       const emailRowHeight = Math.max(emailHeight, contactIconSize);
       const contactBlockHeight =
         nameHeight + contactLineGap + phoneRowHeight + contactLineGap + emailRowHeight;
-      const contactBlockTop = trainerBoxY + Math.max(8, (trainerBoxHeight - contactBlockHeight) / 2);
+      const contactBlockTop =
+        trainerBoxY + Math.max(8, (trainerBoxHeight - contactBlockHeight) / 2);
       const nameY = contactBlockTop;
       const phoneLineY = nameY + nameHeight + contactLineGap;
       const emailLineY = phoneLineY + phoneRowHeight + contactLineGap;
