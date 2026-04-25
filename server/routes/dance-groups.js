@@ -1,8 +1,33 @@
 import { runQuery, getQuery, allQuery } from '../scripts/db.js';
+import { readFileSync } from 'node:fs';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
+import SVGtoPDF from 'svg-to-pdfkit';
 
 const dbName = 'danceGroups';
+
+function loadOptionalAssetBuffer(relativeAssetPath) {
+  try {
+    return readFileSync(new URL(relativeAssetPath, import.meta.url));
+  } catch {
+    return null;
+  }
+}
+
+function loadOptionalAssetText(relativeAssetPath) {
+  try {
+    return readFileSync(new URL(relativeAssetPath, import.meta.url), 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+const trainerPhoneIcon = loadOptionalAssetBuffer('../assets/icons8-mobile-phone-90.png');
+const trainerEmailIcon = loadOptionalAssetBuffer('../assets/icons8-email-90.png');
+const dancingIconSvg = loadOptionalAssetText('../assets/dancing.svg');
+const dancingIconBackgroundSvg = dancingIconSvg
+  ? dancingIconSvg.replace('fill="#164E8A"', 'fill="#E8F3FF"')
+  : null;
 
 function captureError(error) {
   if (process.env.NODE_ENV === 'test') {
@@ -19,6 +44,153 @@ export function escapeVCardValue(value) {
     .replaceAll(';', String.raw`\;`)
     .replaceAll(',', String.raw`\,`)
     .replaceAll('\n', String.raw`\n`);
+}
+
+function formatPhoneNumberDin(number) {
+  const input = String(number ?? '').trim();
+  if (!input) {
+    return '';
+  }
+
+  const digits = input.replaceAll(/\D/g, '');
+  if (!digits) {
+    return input;
+  }
+
+  const { countryPrefix, nationalNumber } = parseGermanPhoneInput(input, digits);
+  if (!nationalNumber) {
+    return countryPrefix || input;
+  }
+
+  const areaCodeLength = getAreaCodeLength(countryPrefix, nationalNumber);
+  const boundedAreaCodeLength = Math.max(1, Math.min(areaCodeLength, nationalNumber.length));
+  const areaCode = nationalNumber.slice(0, boundedAreaCodeLength);
+  const subscriberNumber = nationalNumber.slice(boundedAreaCodeLength);
+
+  return formatPhoneSegments(countryPrefix, areaCode, subscriberNumber);
+}
+
+function parseGermanPhoneInput(input, digits) {
+  const hasPlusPrefix = input.startsWith('+');
+  const hasInternationalZeroPrefix = input.startsWith('00');
+  const isGermanInternational =
+    (hasPlusPrefix && digits.startsWith('49')) ||
+    (hasInternationalZeroPrefix && digits.startsWith('0049'));
+
+  let countryPrefix = '';
+  let nationalNumber = digits;
+
+  if (isGermanInternational) {
+    countryPrefix = '+49';
+    nationalNumber = hasInternationalZeroPrefix ? digits.slice(4) : digits.slice(2);
+    if (nationalNumber.startsWith('0')) {
+      nationalNumber = nationalNumber.slice(1);
+    }
+  }
+
+  return { countryPrefix, nationalNumber };
+}
+
+function getAreaCodeLength(countryPrefix, nationalNumber) {
+  const mobilePrefixLength = countryPrefix ? 3 : 4;
+  const shortAreaPrefixLength = countryPrefix ? 2 : 3;
+  const defaultAreaPrefixLength = countryPrefix ? 3 : 4;
+
+  if ((countryPrefix && nationalNumber.startsWith('1')) || (!countryPrefix && nationalNumber.startsWith('01'))) {
+    return mobilePrefixLength;
+  }
+
+  const shortAreaPrefixes = countryPrefix ? ['30', '40', '69', '89'] : ['030', '040', '069', '089'];
+  if (shortAreaPrefixes.some((prefix) => nationalNumber.startsWith(prefix))) {
+    return shortAreaPrefixLength;
+  }
+
+  return defaultAreaPrefixLength;
+}
+
+function formatPhoneSegments(countryPrefix, areaCode, subscriberNumber) {
+  if (!subscriberNumber) {
+    return countryPrefix ? `${countryPrefix} ${areaCode}` : areaCode;
+  }
+
+  return countryPrefix
+    ? `${countryPrefix} ${areaCode} ${subscriberNumber}`
+    : `${areaCode} ${subscriberNumber}`;
+}
+
+function renderDancingPlaceholder(doc, layout) {
+  const {
+    linksWithQr,
+    columns,
+    leftMargin,
+    cardWidth,
+    columnGap,
+    gridStartY,
+    rowHeight,
+  } = layout;
+
+  if (!dancingIconSvg || linksWithQr.length % columns === 0) {
+    return;
+  }
+
+  const emptySlotIndex = linksWithQr.length;
+  const emptyColumnIndex = emptySlotIndex % columns;
+  const emptyRowIndex = Math.floor(emptySlotIndex / columns);
+  const emptySlotX = leftMargin + emptyColumnIndex * (cardWidth + columnGap);
+  const emptySlotY = gridStartY + emptyRowIndex * rowHeight;
+  const dancingIconSize = 207.36;
+  const dancingIconX = emptySlotX + (cardWidth - dancingIconSize);
+  const dancingIconY = emptySlotY + (rowHeight - dancingIconSize) / 2;
+
+  if (dancingIconBackgroundSvg) {
+    SVGtoPDF(doc, dancingIconBackgroundSvg, dancingIconX - 18, dancingIconY - 14, {
+      width: dancingIconSize,
+      height: dancingIconSize,
+      preserveAspectRatio: 'xMaxYMid meet',
+    });
+  }
+
+  SVGtoPDF(doc, dancingIconSvg, dancingIconX, dancingIconY, {
+    width: dancingIconSize,
+    height: dancingIconSize,
+    preserveAspectRatio: 'xMaxYMid meet',
+  });
+}
+
+function buildBalancedTwoLineTitle(doc, rawTitle, maxWidth) {
+  const title = String(rawTitle ?? '').trim();
+  const words = title.split(/\s+/).filter(Boolean);
+
+  if (words.length < 4) {
+    return title;
+  }
+
+  const singleLineWidth = doc.widthOfString(title);
+  if (singleLineWidth <= maxWidth) {
+    return title;
+  }
+
+  let bestSplit = null;
+
+  for (let splitIndex = 2; splitIndex <= words.length - 2; splitIndex += 1) {
+    const line1 = words.slice(0, splitIndex).join(' ');
+    const line2 = words.slice(splitIndex).join(' ');
+    const width1 = doc.widthOfString(line1);
+    const width2 = doc.widthOfString(line2);
+    const overflow = Math.max(0, width1 - maxWidth) + Math.max(0, width2 - maxWidth);
+    const balancePenalty = Math.abs(width1 - width2);
+    const score = overflow * 100 + balancePenalty;
+
+    if (!bestSplit || score < bestSplit.score) {
+      bestSplit = { line1, line2, score };
+    }
+  }
+
+  if (!bestSplit) {
+    return title;
+  }
+
+  return `${bestSplit.line1}\n${bestSplit.line2}`;
 }
 
 // Dance Groups endpoints
@@ -606,31 +778,32 @@ export async function exportDanceCoursePdf(req, res) {
 
     // Friendly header panel
     const headerY = doc.y;
-    const headerHeight = 88;
+    const headerHeight = 108;
     doc
       .roundedRect(leftMargin, headerY, contentWidth, headerHeight, 10)
       .fillAndStroke(colors.headerBg, colors.headerBorder);
 
+    const titleY = headerY + 16;
+    const titleTextRaw = `${course.dance_group_name ?? 'Dance Group'}`;
+    const titleOptions = {
+      width: contentWidth,
+      align: 'center',
+    };
+    doc.fontSize(24);
+    const titleText = buildBalancedTwoLineTitle(doc, titleTextRaw, contentWidth);
+    const titleHeight = doc.heightOfString(titleText, titleOptions);
+
     doc
       .fillColor(colors.title)
       .fontSize(24)
-      .text(`${course.dance_group_name ?? 'Dance Group'}`, leftMargin, headerY + 16, {
-        width: contentWidth,
-        align: 'center',
-      });
+      .text(titleText, leftMargin, titleY, titleOptions);
+
+    const subtitleY = titleY + titleHeight + 6;
 
     doc
       .fillColor(colors.subtitle)
       .fontSize(14)
-      .text(`Kurs ${course.id} (${course.semester})`, leftMargin, headerY + 50, {
-        width: contentWidth,
-        align: 'center',
-      });
-
-    doc
-      .fillColor(colors.muted)
-      .fontSize(10)
-      .text(`Erstellt am ${new Date().toLocaleDateString('de-DE')}`, leftMargin, headerY + 70, {
+      .text(`Kurs #${course.id} (${course.semester})`, leftMargin, subtitleY, {
         width: contentWidth,
         align: 'center',
       });
@@ -639,12 +812,19 @@ export async function exportDanceCoursePdf(req, res) {
     doc.y = headerY + headerHeight + 18;
 
     // Session dates section
+    const weekdayAbbreviations = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
     const sessionDatesText =
       sessions.length > 0
-        ? sessions.map((s) => new Date(s.session_date).toLocaleDateString('de-DE')).join(', ')
+        ? sessions
+            .map((s) => {
+              const sessionDate = new Date(s.session_date);
+              const weekday = weekdayAbbreviations[sessionDate.getDay()] ?? '';
+              return `${weekday}, ${sessionDate.toLocaleDateString('de-DE')}`;
+            })
+            .join(' | ')
         : 'Keine Termine hinterlegt.';
     const sessionsTextWidth = contentWidth - 24;
-    const sessionsTextY = doc.y + 32;
+    const sessionsTextY = doc.y + 12;
     doc.fontSize(11);
     const sessionsTextHeight = doc.heightOfString(sessionDatesText, {
       width: sessionsTextWidth,
@@ -659,13 +839,6 @@ export async function exportDanceCoursePdf(req, res) {
     doc
       .roundedRect(leftMargin, sessionsBoxY, contentWidth, sessionsBoxHeight, 8)
       .fillAndStroke('#F8FAFC', '#E2E8F0');
-
-    doc
-      .fillColor(colors.title)
-      .fontSize(12)
-      .text('Termine', leftMargin + 12, sessionsBoxY + 10, {
-        width: contentWidth - 24,
-      });
 
     doc
       .fillColor(colors.subtitle)
@@ -686,28 +859,57 @@ export async function exportDanceCoursePdf(req, res) {
       .roundedRect(leftMargin, trainerBoxY, contentWidth, trainerBoxHeight, 8)
       .fillAndStroke('#F8FAFC', '#E2E8F0');
 
-    doc
-      .fillColor(colors.title)
-      .fontSize(12)
-      .text('Kursleitung', leftMargin + 12, trainerBoxY + 10, {
-        width: contentWidth - 24,
-      });
-
     if (hasTrainer) {
       doc.fillColor(colors.subtitle).fontSize(11);
+      const nameText = `${course.trainer_name}`;
+      const phoneText = `${formatPhoneNumberDin(course.trainer_phone)}`;
+      const emailText = `${course.trainer_email}`;
+      const contactLineWidth = contentWidth - trainerQrSize - 34;
+      const contactIconSize = 12;
+      const contactIconX = leftMargin + 12;
+      const contactTextX = contactIconX + contactIconSize + 5;
+      const contactTextWidth = contactLineWidth - (contactTextX - (leftMargin + 12));
+      const contactLineGap = 5;
 
-      doc.font('Helvetica-Bold').text(course.trainer_name, leftMargin + 12, trainerBoxY + 30, {
-        width: contentWidth - trainerQrSize - 34,
+      doc.font('Helvetica-Bold').fontSize(11);
+      const nameHeight = doc.heightOfString(nameText, { width: contactLineWidth });
+      doc.font('Helvetica').fontSize(11);
+      const phoneHeight = doc.heightOfString(phoneText, { width: contactTextWidth });
+      const emailHeight = doc.heightOfString(emailText, { width: contactTextWidth });
+
+      const phoneRowHeight = Math.max(phoneHeight, contactIconSize);
+      const emailRowHeight = Math.max(emailHeight, contactIconSize);
+      const contactBlockHeight =
+        nameHeight + contactLineGap + phoneRowHeight + contactLineGap + emailRowHeight;
+      const contactBlockTop = trainerBoxY + Math.max(8, (trainerBoxHeight - contactBlockHeight) / 2);
+      const nameY = contactBlockTop;
+      const phoneLineY = nameY + nameHeight + contactLineGap;
+      const emailLineY = phoneLineY + phoneRowHeight + contactLineGap;
+      const phoneIconY = phoneLineY + (phoneHeight - contactIconSize) / 2;
+      const emailIconY = emailLineY + (emailHeight - contactIconSize) / 2;
+
+      doc.font('Helvetica-Bold').text(nameText, leftMargin + 12, nameY, {
+        width: contactLineWidth,
       });
 
-      doc
-        .font('Helvetica')
-        .text(`Telefon: ${course.trainer_phone}`, leftMargin + 12, trainerBoxY + 48, {
-          width: contentWidth - trainerQrSize - 34,
-        })
-        .text(`E-Mail: ${course.trainer_email}`, leftMargin + 12, trainerBoxY + 66, {
-          width: contentWidth - trainerQrSize - 34,
+      if (trainerPhoneIcon) {
+        doc.image(trainerPhoneIcon, contactIconX, phoneIconY, {
+          fit: [contactIconSize, contactIconSize],
         });
+      }
+
+      if (trainerEmailIcon) {
+        doc.image(trainerEmailIcon, contactIconX, emailIconY, {
+          fit: [contactIconSize, contactIconSize],
+        });
+      }
+
+      doc.font('Helvetica').text(phoneText, contactTextX, phoneLineY, {
+        width: contactTextWidth,
+      });
+      doc.text(emailText, contactTextX, emailLineY, {
+        width: contactTextWidth,
+      });
 
       doc.image(trainerQr, trainerQrX, trainerQrY, { fit: [trainerQrSize, trainerQrSize] });
       doc
@@ -723,10 +925,15 @@ export async function exportDanceCoursePdf(req, res) {
           align: 'center',
         });
     } else {
+      const noTrainerText = 'Kein Trainer fuer diesen Kurs hinterlegt.';
+      const noTrainerTextHeight = doc.heightOfString(noTrainerText, {
+        width: contentWidth - 24,
+      });
+      const noTrainerTextY = trainerBoxY + (trainerBoxHeight - noTrainerTextHeight) / 2;
       doc
         .fillColor(colors.muted)
         .fontSize(11)
-        .text('Kein Trainer fuer diesen Kurs hinterlegt.', leftMargin + 12, trainerBoxY + 48, {
+        .text(noTrainerText, leftMargin + 12, noTrainerTextY, {
           width: contentWidth - 24,
         });
     }
@@ -784,6 +991,16 @@ export async function exportDanceCoursePdf(req, res) {
         .roundedRect(qrX - 3, qrY - 3, qrSize + 6, qrSize + 6, 6)
         .lineWidth(1)
         .stroke('#E5E7EB');
+    });
+
+    renderDancingPlaceholder(doc, {
+      linksWithQr,
+      columns,
+      leftMargin,
+      cardWidth,
+      columnGap,
+      gridStartY,
+      rowHeight,
     });
 
     doc.end();
