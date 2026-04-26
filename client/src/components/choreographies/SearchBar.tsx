@@ -2,13 +2,10 @@ import "../../styles/SearchBar.css";
 
 import React, { useState } from "react";
 
-import {
-  defaultSearchBarFilterValues,
-  searchBarValuesFromFilters,
-  useSearchBarFilters,
-} from "../../hooks/useSearchBarFilters";
+import { defaultSearchBarFilterValues, searchBarValuesFromFilters, useSearchBarFilters } from "../../hooks/useSearchBarFilters";
 import { SearchFilters } from "../../types";
 import { ActionButton } from "../shared/ui";
+import { ClearFiltersIcon } from "./ClearFiltersIcon";
 import { SearchBarAdvancedFilters } from "./SearchBarAdvancedFilters";
 
 interface SearchBarProps {
@@ -252,13 +249,26 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         />
       </div>
 
-      <button
-        type="button"
-        onClick={() => setShowAdvanced(!showAdvanced)}
-        className="btn-toggle-advanced"
-      >
-        {showAdvanced ? "▼" : "▶"} Advanced Filters
-      </button>
+      <div className="filter-toolbar">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="btn-toggle-advanced"
+        >
+          {showAdvanced ? "▼" : "▶"} Advanced Filters
+        </button>
+        <ActionButton
+          onClick={handleClearAllFilters}
+          variant="secondary"
+          disabled={isLoading}
+          className="btn-clear-filters"
+        >
+          <span className="clear-filters-icon" aria-hidden="true">
+            <ClearFiltersIcon />
+          </span>
+          <span>Clear All Filters</span>
+        </ActionButton>
+      </div>
 
       {showAdvanced && (
         <SearchBarAdvancedFilters
@@ -330,9 +340,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         <div className="search-actions">
           <ActionButton onClick={handleSearch} variant="primary" disabled={isLoading}>
             Apply Filters
-          </ActionButton>
-          <ActionButton onClick={handleClearAllFilters} variant="secondary" disabled={isLoading}>
-            Clear All Filters
           </ActionButton>
         </div>
       )}

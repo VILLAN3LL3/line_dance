@@ -42,6 +42,36 @@
   transform: translateY(-2px);
 }
 
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-toolbar .btn-toggle-advanced {
+  margin-top: 0;
+}
+
+.btn-clear-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clear-filters-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.clear-filters-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
 .advanced-filters {
   margin-top: 20px;
   padding-top: 20px;
