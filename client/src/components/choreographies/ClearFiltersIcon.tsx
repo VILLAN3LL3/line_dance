@@ -14,12 +14,6 @@ export const ClearFiltersIcon: React.FC<ClearFiltersIconProps> = ({ className })
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-    <path
-      d="M5 19L19 5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
+    <path d="M5 19L19 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
