@@ -144,7 +144,10 @@ function renderDancingPlaceholder(doc, layout, colors) {
   const dancingIconX = emptySlotX + (cardWidth - dancingIconSize);
   const dancingIconY = emptySlotY + (rowHeight - dancingIconSize) / 2;
 
-  const dancingIconBackgroundSvg = dancingIconSvg.replace('fill="#164E8A"', `fill="${colors.headerBg}"`);
+  const dancingIconBackgroundSvg = dancingIconSvg.replace(
+    'fill="#164E8A"',
+    `fill="${colors.headerBg}"`,
+  );
   if (dancingIconBackgroundSvg) {
     SVGtoPDF(doc, dancingIconBackgroundSvg, dancingIconX - 18, dancingIconY - 14, {
       width: dancingIconSize,
@@ -996,15 +999,19 @@ export async function exportDanceCoursePdf(req, res) {
         .stroke('#E5E7EB');
     });
 
-    renderDancingPlaceholder(doc, {
-      linksWithQr,
-      columns,
-      leftMargin,
-      cardWidth,
-      columnGap,
-      gridStartY,
-      rowHeight,
-    }, colors);
+    renderDancingPlaceholder(
+      doc,
+      {
+        linksWithQr,
+        columns,
+        leftMargin,
+        cardWidth,
+        columnGap,
+        gridStartY,
+        rowHeight,
+      },
+      colors,
+    );
 
     doc.end();
   } catch (error) {
