@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import SVGtoPDF from 'svg-to-pdfkit';
+import { hslToHex } from '../utils/colorUtils.js';
 
 const dbName = 'danceGroups';
 
@@ -25,9 +26,15 @@ function loadOptionalAssetText(relativeAssetPath) {
 const trainerPhoneIcon = loadOptionalAssetBuffer('../assets/icons8-mobile-phone-90.png');
 const trainerEmailIcon = loadOptionalAssetBuffer('../assets/icons8-email-90.png');
 const dancingIconSvg = loadOptionalAssetText('../assets/dancing.svg');
-const dancingIconBackgroundSvg = dancingIconSvg
-  ? dancingIconSvg.replace('fill="#164E8A"', 'fill="#E8F3FF"')
-  : null;
+
+function courseIdToColors(courseId) {
+  const hue = (courseId * 137.508) % 360;
+  return {
+    headerBg: hslToHex(hue, 75, 95),
+    headerBorder: hslToHex(hue, 55, 83),
+    title: hslToHex(hue, 72, 25),
+  };
+}
 
 function captureError(error) {
   if (process.env.NODE_ENV === 'test') {
@@ -121,7 +128,7 @@ function formatPhoneSegments(countryPrefix, areaCode, subscriberNumber) {
     : `${areaCode} ${subscriberNumber}`;
 }
 
-function renderDancingPlaceholder(doc, layout) {
+function renderDancingPlaceholder(doc, layout, colors) {
   const { linksWithQr, columns, leftMargin, cardWidth, columnGap, gridStartY, rowHeight } = layout;
 
   if (!dancingIconSvg || linksWithQr.length % columns === 0) {
@@ -137,6 +144,7 @@ function renderDancingPlaceholder(doc, layout) {
   const dancingIconX = emptySlotX + (cardWidth - dancingIconSize);
   const dancingIconY = emptySlotY + (rowHeight - dancingIconSize) / 2;
 
+  const dancingIconBackgroundSvg = dancingIconSvg.replace('fill="#164E8A"', `fill="${colors.headerBg}"`);
   if (dancingIconBackgroundSvg) {
     SVGtoPDF(doc, dancingIconBackgroundSvg, dancingIconX - 18, dancingIconY - 14, {
       width: dancingIconSize,
@@ -145,7 +153,8 @@ function renderDancingPlaceholder(doc, layout) {
     });
   }
 
-  SVGtoPDF(doc, dancingIconSvg, dancingIconX, dancingIconY, {
+  const dancingIconColoredSvg = dancingIconSvg.replace('fill="#164E8A"', `fill="${colors.title}"`);
+  SVGtoPDF(doc, dancingIconColoredSvg, dancingIconX, dancingIconY, {
     width: dancingIconSize,
     height: dancingIconSize,
     preserveAspectRatio: 'xMaxYMid meet',
@@ -756,10 +765,11 @@ export async function exportDanceCoursePdf(req, res) {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     doc.pipe(res);
 
+    const dynamicColors = courseIdToColors(course.id);
     const colors = {
-      headerBg: '#E8F3FF',
-      headerBorder: '#BFDDFC',
-      title: '#164E8A',
+      headerBg: dynamicColors.headerBg,
+      headerBorder: dynamicColors.headerBorder,
+      title: dynamicColors.title,
       subtitle: '#1F2937',
       muted: '#6B7280',
       cardBg: '#F9FAFB',
@@ -994,7 +1004,7 @@ export async function exportDanceCoursePdf(req, res) {
       columnGap,
       gridStartY,
       rowHeight,
-    });
+    }, colors);
 
     doc.end();
   } catch (error) {
