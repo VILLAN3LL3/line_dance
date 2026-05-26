@@ -184,12 +184,11 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
     />
 
     <div className="filter-section">
-      <div className="filter-label" aria-hidden="true">Minimum Rating</div>
+      <div className="filter-label" aria-hidden="true">
+        Minimum Rating
+      </div>
       <div className="rating-filter">
-        <StarRating
-          rating={minRating}
-          onChange={onMinRatingChange}
-        />
+        <StarRating rating={minRating} onChange={onMinRatingChange} />
         {minRating !== null && (
           <button
             type="button"

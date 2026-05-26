@@ -49,9 +49,7 @@ describe('GET /api/choreographies/:id — rating field', () => {
 describe('PUT /api/choreographies/:id/rating', () => {
   it('sets a rating and returns it', async () => {
     const { id } = await createChoreo();
-    const res = await request(app)
-      .put(`/api/choreographies/${id}/rating`)
-      .send({ rating: 3 });
+    const res = await request(app).put(`/api/choreographies/${id}/rating`).send({ rating: 3 });
     expect(res.status).toBe(200);
     expect(res.body.choreography_id).toBe(id);
     expect(res.body.rating).toBe(3);
@@ -59,18 +57,14 @@ describe('PUT /api/choreographies/:id/rating', () => {
 
   it('allows rating of 0', async () => {
     const { id } = await createChoreo();
-    const res = await request(app)
-      .put(`/api/choreographies/${id}/rating`)
-      .send({ rating: 0 });
+    const res = await request(app).put(`/api/choreographies/${id}/rating`).send({ rating: 0 });
     expect(res.status).toBe(200);
     expect(res.body.rating).toBe(0);
   });
 
   it('allows rating of 5', async () => {
     const { id } = await createChoreo();
-    const res = await request(app)
-      .put(`/api/choreographies/${id}/rating`)
-      .send({ rating: 5 });
+    const res = await request(app).put(`/api/choreographies/${id}/rating`).send({ rating: 5 });
     expect(res.status).toBe(200);
     expect(res.body.rating).toBe(5);
   });
@@ -78,26 +72,20 @@ describe('PUT /api/choreographies/:id/rating', () => {
   it('updates an existing rating', async () => {
     const { id } = await createChoreo();
     await request(app).put(`/api/choreographies/${id}/rating`).send({ rating: 2 });
-    const res = await request(app)
-      .put(`/api/choreographies/${id}/rating`)
-      .send({ rating: 5 });
+    const res = await request(app).put(`/api/choreographies/${id}/rating`).send({ rating: 5 });
     expect(res.status).toBe(200);
     expect(res.body.rating).toBe(5);
   });
 
   it('rejects a rating above 5', async () => {
     const { id } = await createChoreo();
-    const res = await request(app)
-      .put(`/api/choreographies/${id}/rating`)
-      .send({ rating: 6 });
+    const res = await request(app).put(`/api/choreographies/${id}/rating`).send({ rating: 6 });
     expect(res.status).toBe(400);
   });
 
   it('rejects a negative rating', async () => {
     const { id } = await createChoreo();
-    const res = await request(app)
-      .put(`/api/choreographies/${id}/rating`)
-      .send({ rating: -1 });
+    const res = await request(app).put(`/api/choreographies/${id}/rating`).send({ rating: -1 });
     expect(res.status).toBe(400);
   });
 
@@ -110,9 +98,7 @@ describe('PUT /api/choreographies/:id/rating', () => {
   });
 
   it('returns 404 for a non-existent choreography', async () => {
-    const res = await request(app)
-      .put('/api/choreographies/99999/rating')
-      .send({ rating: 3 });
+    const res = await request(app).put('/api/choreographies/99999/rating').send({ rating: 3 });
     expect(res.status).toBe(404);
   });
 });

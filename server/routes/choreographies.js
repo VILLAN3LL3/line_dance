@@ -297,10 +297,9 @@ export async function deleteChoreographyRating(req, res) {
       return res.status(400).json({ error: 'Invalid choreography id' });
     }
 
-    await runQuery(
-      'DELETE FROM personal_data.choreography_ratings WHERE choreography_id = ?',
-      [choreographyId],
-    );
+    await runQuery('DELETE FROM personal_data.choreography_ratings WHERE choreography_id = ?', [
+      choreographyId,
+    ]);
 
     res.json({ message: 'Rating removed' });
   } catch (error) {
@@ -703,9 +702,7 @@ function buildFilterConditions(filterObj) {
 
   const parsedMinRating = normalizeNonNegativeInteger(min_rating);
   if (parsedMinRating !== null && parsedMinRating >= 0 && parsedMinRating <= 5) {
-    joins.push(
-      'LEFT JOIN personal_data.choreography_ratings cr ON c.id = cr.choreography_id',
-    );
+    joins.push('LEFT JOIN personal_data.choreography_ratings cr ON c.id = cr.choreography_id');
     conditions.push('COALESCE(cr.rating, 0) >= ?');
     params.push(parsedMinRating);
   }
