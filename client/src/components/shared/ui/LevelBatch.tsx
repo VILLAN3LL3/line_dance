@@ -4,6 +4,7 @@ interface LevelBatchProps {
   level: string;
   className?: string;
   removeButtonClassName?: string;
+  trailingContent?: React.ReactNode;
   title?: string;
   isRemovable?: boolean;
   isSelected?: boolean;
@@ -36,6 +37,7 @@ export const LevelBatch: React.FC<LevelBatchProps> = ({
   level,
   className = "level-batch",
   removeButtonClassName = "btn-remove-level",
+  trailingContent,
   title,
   isRemovable = false,
   isSelected = false,
@@ -61,7 +63,8 @@ export const LevelBatch: React.FC<LevelBatchProps> = ({
         disabled={disabled}
         onClick={onClick}
       >
-        {level}
+        <span>{level}</span>
+        {trailingContent}
       </button>
     );
   }
@@ -69,6 +72,7 @@ export const LevelBatch: React.FC<LevelBatchProps> = ({
   return (
     <span className={classNames} title={title}>
       <span>{level}</span>
+      {trailingContent}
       {isRemovable && onRemove && (
         <button
           type="button"

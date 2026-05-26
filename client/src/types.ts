@@ -13,6 +13,7 @@ export interface Choreography {
   authors: string[];
   tags: string[];
   step_figures: string[];
+  rating: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +56,7 @@ export interface SearchFilters {
   tags?: string[];
   excluded_tags?: string[];
   authors?: string[];
+  min_rating?: number;
   sort_field?: string;
   sort_direction?: "asc" | "desc";
   page?: number;

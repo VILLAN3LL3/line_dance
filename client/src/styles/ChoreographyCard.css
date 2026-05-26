@@ -30,6 +30,14 @@
   gap: 10px;
 }
 
+.card-header-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .card-header h3 {
   font-size: 18px;
   margin: 0;
@@ -38,8 +46,8 @@
 }
 
 .level-badge {
-  background-color: #e0e0e0;
-  color: #555555;
+  background-color: var(--level-badge-bg, #e0e0e0);
+  color: var(--level-badge-fg, #555555);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
@@ -52,92 +60,92 @@
 }
 
 .level-color-beginner-absolute {
-  background-color: #eaf4fd;
-  color: #244f73;
+  --level-badge-bg: #eaf4fd;
+  --level-badge-fg: #244f73;
 }
 
 .level-color-beginner-easy {
-  background-color: #deecfb;
-  color: #1f5278;
+  --level-badge-bg: #deecfb;
+  --level-badge-fg: #1f5278;
 }
 
 .level-color-beginner-low,
 .level-color-beginner-base {
-  background-color: #cfe3f7;
-  color: #174f7a;
+  --level-badge-bg: #cfe3f7;
+  --level-badge-fg: #174f7a;
 }
 
 .level-color-beginner-high {
-  background-color: #bdd9f4;
-  color: #0f4772;
+  --level-badge-bg: #bdd9f4;
+  --level-badge-fg: #0f4772;
 }
 
 .level-color-improver-absolute {
-  background-color: #ebf8f0;
-  color: #1e6440;
+  --level-badge-bg: #ebf8f0;
+  --level-badge-fg: #1e6440;
 }
 
 .level-color-improver-easy {
-  background-color: #def4e8;
-  color: #1d623d;
+  --level-badge-bg: #def4e8;
+  --level-badge-fg: #1d623d;
 }
 
 .level-color-improver-low,
 .level-color-improver-base {
-  background-color: #ceeedd;
-  color: #1a5c35;
+  --level-badge-bg: #ceeedd;
+  --level-badge-fg: #1a5c35;
 }
 
 .level-color-improver-high {
-  background-color: #bddfcf;
-  color: #14562f;
+  --level-badge-bg: #bddfcf;
+  --level-badge-fg: #14562f;
 }
 
 .level-color-intermediate-absolute {
-  background-color: #fff0d8;
-  color: #7d470b;
+  --level-badge-bg: #fff0d8;
+  --level-badge-fg: #7d470b;
 }
 
 .level-color-intermediate-easy {
-  background-color: #ffe9cc;
-  color: #7b4306;
+  --level-badge-bg: #ffe9cc;
+  --level-badge-fg: #7b4306;
 }
 
 .level-color-intermediate-low,
 .level-color-intermediate-base {
-  background-color: #fce4c0;
-  color: #7a4000;
+  --level-badge-bg: #fce4c0;
+  --level-badge-fg: #7a4000;
 }
 
 .level-color-intermediate-high {
-  background-color: #f7d5ab;
-  color: #743900;
+  --level-badge-bg: #f7d5ab;
+  --level-badge-fg: #743900;
 }
 
 .level-color-advanced-absolute {
-  background-color: #fee5e5;
-  color: #912c2c;
+  --level-badge-bg: #fee5e5;
+  --level-badge-fg: #912c2c;
 }
 
 .level-color-advanced-easy {
-  background-color: #fcdbdb;
-  color: #8f2626;
+  --level-badge-bg: #fcdbdb;
+  --level-badge-fg: #8f2626;
 }
 
 .level-color-advanced-low,
 .level-color-advanced-base {
-  background-color: #f8d0d0;
-  color: #8b1f1f;
+  --level-badge-bg: #f8d0d0;
+  --level-badge-fg: #8b1f1f;
 }
 
 .level-color-advanced-high {
-  background-color: #f2bebe;
-  color: #821818;
+  --level-badge-bg: #f2bebe;
+  --level-badge-fg: #821818;
 }
 
 .level-color-unknown {
-  background-color: #e0e0e0;
-  color: #555555;
+  --level-badge-bg: #e0e0e0;
+  --level-badge-fg: #555555;
 }
 
 .btn-remove-level {
@@ -356,3 +364,134 @@
     max-width: 100%;
   }
 }
+
+.star-rating {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star-rating-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  border: 1px solid var(--level-badge-fg, #555555);
+  border-radius: 999px;
+  padding: 1px 6px;
+  overflow: hidden;
+  max-width: 44px;
+  transition: max-width 0.25s ease;
+}
+
+.star-rating-pill-expanded {
+  max-width: 156px;
+}
+
+.star-rating-pill-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  margin: 0;
+}
+
+.star-rating-pill-icon {
+  color: var(--level-badge-fg, #555555);
+  line-height: 1;
+}
+
+.star-rating-pill-value {
+  color: var(--level-badge-fg, #555555);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.star-rating-pill-summary:hover {
+  opacity: 0.92;
+}
+
+.star-rating-pill-summary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--level-badge-fg, #555555) 55%, white);
+  outline-offset: 1px;
+}
+
+.star-rating-pill-close-area {
+  width: 14px;
+  height: 18px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  flex: 0 0 14px;
+}
+
+.star-rating-pill-close-area:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--level-badge-fg, #555555) 55%, white);
+  outline-offset: 1px;
+}
+
+.star-rating-pill-editor {
+  display: inline-flex;
+  gap: 2px;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateX(6px);
+  transition: max-width 0.22s ease, opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+}
+
+.star-rating-pill-expanded .star-rating-pill-editor {
+  max-width: 130px;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.star {
+  font-size: 18px;
+  color: #d0d0d0;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.star-filled {
+  color: var(--color-primary);
+}
+
+.star-interactive {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  color: #d0d0d0;
+  font-size: 18px;
+  line-height: 1;
+  transition: color 0.15s ease, transform 0.1s ease;
+}
+
+.star-interactive.star-filled {
+  color: var(--color-primary);
+}
+
+.star-interactive:hover {
+  transform: scale(1.15);
+  color: var(--color-primary);
+}
+
+.level-badge .star,
+.level-badge .star-interactive {
+  color: color-mix(in srgb, var(--level-badge-fg, #555555) 32%, white);
+}
+
+.level-badge .star-filled,
+.level-badge .star-interactive.star-filled,
+.level-badge .star-interactive:hover {
+  color: var(--level-badge-fg, #555555);
+}
+

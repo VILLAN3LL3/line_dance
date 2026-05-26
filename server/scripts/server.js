@@ -25,6 +25,8 @@ import {
   updateSavedFilterConfiguration,
   deleteSavedFilterConfiguration,
   getMaxChoreographyCount,
+  rateChoreography,
+  deleteChoreographyRating,
 } from '../routes/choreographies.js';
 import {
   getDanceGroups,
@@ -85,6 +87,8 @@ app.get('/api/choreographies/max-count', getMaxChoreographyCount);
 app.get('/api/choreographies/:id', getChoreographyById);
 app.put('/api/choreographies/:id', updateChoreography);
 app.delete('/api/choreographies/:id', deleteChoreography);
+app.put('/api/choreographies/:id/rating', rateChoreography);
+app.delete('/api/choreographies/:id/rating', deleteChoreographyRating);
 app.get('/api/levels', getLevels);
 app.post('/api/levels', addLevel);
 app.get('/api/tags', getTags);

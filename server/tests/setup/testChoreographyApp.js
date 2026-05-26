@@ -25,6 +25,8 @@ import {
   saveFilterConfiguration,
   updateSavedFilterConfiguration,
   deleteSavedFilterConfiguration,
+  rateChoreography,
+  deleteChoreographyRating,
 } from '../../routes/choreographies.js';
 
 const app = express();
@@ -41,6 +43,8 @@ app.post('/api/choreographies', createChoreography);
 app.get('/api/choreographies/:id', getChoreographyById);
 app.put('/api/choreographies/:id', updateChoreography);
 app.delete('/api/choreographies/:id', deleteChoreography);
+app.put('/api/choreographies/:id/rating', rateChoreography);
+app.delete('/api/choreographies/:id/rating', deleteChoreographyRating);
 
 app.get('/api/levels', getLevels);
 app.post('/api/levels', addLevel);

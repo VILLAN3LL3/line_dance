@@ -2,11 +2,7 @@ import "../../styles/SearchBar.css";
 
 import React, { useState } from "react";
 
-import {
-  defaultSearchBarFilterValues,
-  searchBarValuesFromFilters,
-  useSearchBarFilters,
-} from "../../hooks/useSearchBarFilters";
+import { defaultSearchBarFilterValues, searchBarValuesFromFilters, useSearchBarFilters } from "../../hooks/useSearchBarFilters";
 import { SearchFilters } from "../../types";
 import { ActionButton } from "../shared/ui";
 import { ClearFiltersIcon } from "./ClearFiltersIcon";
@@ -60,6 +56,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     tags: values.includedTags.length > 0 ? values.includedTags : undefined,
     excluded_tags: values.excludedTags.length > 0 ? values.excludedTags : undefined,
     authors: values.selectedAuthors.length > 0 ? values.selectedAuthors : undefined,
+    min_rating: values.minRating ?? undefined,
   });
 
   const applyLoadedFilters = async (loadedFilters: SearchFilters) => {
@@ -335,6 +332,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onAddAuthorFromInput={addAuthorFromInput}
           onToggleAuthor={toggleAuthor}
           isLoading={isLoading}
+          minRating={values.minRating}
+          onMinRatingChange={(value) => setValues((prev) => ({ ...prev, minRating: value }))}
           buildFilters={buildFilters}
           applyLoadedFilters={applyLoadedFilters}
         />

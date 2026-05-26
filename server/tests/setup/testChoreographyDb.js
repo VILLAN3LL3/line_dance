@@ -139,6 +139,13 @@ export async function setupChoreographyTestDb() {
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`,
   );
+  await run(
+    testDb,
+    `CREATE TABLE IF NOT EXISTS personal_data.choreography_ratings (
+    choreography_id INTEGER PRIMARY KEY,
+    rating INTEGER NOT NULL CHECK (rating >= 0 AND rating <= 5)
+  )`,
+  );
 
   for (const level of DEFAULT_LEVELS) {
     await run(testDb, 'INSERT OR IGNORE INTO levels (name, value) VALUES (?, ?)', [
@@ -154,6 +161,7 @@ export async function setupChoreographyTestDb() {
 export async function clearChoreographyTables() {
   // Delete choreography_tags from personal_data DB first (no cross-DB FK cascade)
   await run(testDb, 'DELETE FROM personal_data.choreography_tags');
+  await run(testDb, 'DELETE FROM personal_data.choreography_ratings');
   // Delete choreographies — FK ON DELETE CASCADE removes choreography_authors and choreography_step_figures
   await run(testDb, 'DELETE FROM choreographies');
   await run(testDb, 'DELETE FROM step_figure_components');

@@ -2,18 +2,12 @@ import "../../styles/ChoreographyCard.css";
 
 import React, { useState } from "react";
 
+import { deleteChoreographyRating, setChoreographyRating } from "../../api";
 import { Choreography } from "../../types";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
-import {
-  ActionButton,
-  Card,
-  ExternalLink,
-  LevelBatch,
-  Tag,
-  TagGroup,
-  YouTubeVideo,
-} from "../shared/ui";
+import { ActionButton, Card, ExternalLink, LevelBatch, Tag, TagGroup, YouTubeVideo } from "../shared/ui";
+import { StarRating } from "./StarRating";
 
 interface ChoreographyCardProps {
   choreography: Choreography;
@@ -311,6 +305,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   const isDetailMode = videoEmbedMode === "all";
   const [isRestartExpanded, setIsRestartExpanded] = useState(false);
   const [isTagExpanded, setIsTagExpanded] = useState(false);
+  const [rating, setRating] = useState<number | null>(choreography.rating);
   const countWallSummary = getCountWallSummary(choreography);
   const demoEmbedUrl = getYouTubeVideoEmbedUrl(choreography.demo_video_url);
   const tutorialEmbedUrl = getYouTubeVideoEmbedUrl(choreography.tutorial_video_url);
@@ -331,13 +326,32 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
     }
   };
 
+  const handleRatingChange = async (newRating: number | null) => {
+    const previous = rating;
+    setRating(newRating);
+    try {
+      if (newRating === null) {
+        await deleteChoreographyRating(choreography.id);
+      } else {
+        await setChoreographyRating(choreography.id, newRating);
+      }
+    } catch {
+      setRating(previous);
+    }
+  };
+
   const header = (
     <>
       <h3>
         {choreography.name}
         {choreography.creation_year ? ` (${choreography.creation_year})` : ""}
       </h3>
-      <LevelBatch level={choreography.level} />
+      <div className="card-header-meta">
+        <LevelBatch
+          level={choreography.level}
+          trailingContent={<StarRating rating={rating} compact onChange={handleRatingChange} />}
+        />
+      </div>
     </>
   );
 

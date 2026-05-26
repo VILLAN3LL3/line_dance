@@ -6,6 +6,7 @@ import { SearchBarSavedConfigurationsPanel } from "./SearchBarSavedConfiguration
 import { SearchBarSelectableListFilter } from "./SearchBarSelectableListFilter";
 import { SearchBarStepFiguresFilter } from "./SearchBarStepFiguresFilter";
 import { SearchBarTagFilter } from "./SearchBarTagFilter";
+import { StarRating } from "./StarRating";
 
 import type { LevelOption, SearchFilters } from "../../types";
 interface SearchBarAdvancedFiltersProps {
@@ -56,6 +57,9 @@ interface SearchBarAdvancedFiltersProps {
   onToggleAuthor: (author: string) => void;
   // Shared
   isLoading: boolean;
+  // Rating filter
+  minRating: number | null;
+  onMinRatingChange: (value: number | null) => void;
   // For saved configurations panel
   buildFilters: () => SearchFilters;
   applyLoadedFilters: (filters: SearchFilters) => Promise<void>;
@@ -103,6 +107,8 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
   onAddAuthorFromInput,
   onToggleAuthor,
   isLoading,
+  minRating,
+  onMinRatingChange,
   buildFilters,
   applyLoadedFilters,
 }) => (
@@ -176,5 +182,25 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
       onAddFromInput={onAddAuthorFromInput}
       onToggleValue={onToggleAuthor}
     />
+
+    <div className="filter-section">
+      <div className="filter-label" aria-hidden="true">Minimum Rating</div>
+      <div className="rating-filter">
+        <StarRating
+          rating={minRating}
+          onChange={onMinRatingChange}
+        />
+        {minRating !== null && (
+          <button
+            type="button"
+            className="btn-clear-rating"
+            onClick={() => onMinRatingChange(null)}
+            disabled={isLoading}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+    </div>
   </div>
 );

@@ -367,6 +367,19 @@ const migrations = [
       }
     },
   },
+  {
+    id: '008_add_choreography_ratings',
+    up: async () => {
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS personal_data.choreography_ratings (
+          choreography_id INTEGER PRIMARY KEY,
+          rating INTEGER NOT NULL CHECK (rating >= 0 AND rating <= 5)
+        )`,
+        [],
+        dbName,
+      );
+    },
+  },
 ];
 
 export async function runChoreographyMigrations() {

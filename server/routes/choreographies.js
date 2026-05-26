@@ -73,6 +73,11 @@ export function normalizeSavedFilters(rawFilters) {
     normalized.max_count = parsedMaxCount;
   }
 
+  const parsedMinRating = Number.parseInt(String(rawFilters.min_rating), 10);
+  if (!Number.isNaN(parsedMinRating) && parsedMinRating >= 0 && parsedMinRating <= 5) {
+    normalized.min_rating = parsedMinRating;
+  }
+
   return normalized;
 }
 
@@ -250,6 +255,57 @@ export async function deleteSavedFilterConfiguration(req, res) {
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to delete configuration' });
+  }
+}
+
+export async function rateChoreography(req, res) {
+  try {
+    const choreographyId = Number.parseInt(req.params.id, 10);
+    if (Number.isNaN(choreographyId)) {
+      return res.status(400).json({ error: 'Invalid choreography id' });
+    }
+
+    const existing = await getQuery('SELECT id FROM choreographies WHERE id = ?', [choreographyId]);
+    if (!existing) {
+      return res.status(404).json({ error: 'Choreography not found' });
+    }
+
+    const raw = req.body?.rating;
+    const rating = Number.parseInt(String(raw), 10);
+    if (Number.isNaN(rating) || rating < 0 || rating > 5) {
+      return res.status(400).json({ error: 'Rating must be an integer between 0 and 5' });
+    }
+
+    await runQuery(
+      `INSERT INTO personal_data.choreography_ratings (choreography_id, rating)
+       VALUES (?, ?)
+       ON CONFLICT(choreography_id) DO UPDATE SET rating = excluded.rating`,
+      [choreographyId, rating],
+    );
+
+    res.json({ choreography_id: choreographyId, rating });
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to save rating' });
+  }
+}
+
+export async function deleteChoreographyRating(req, res) {
+  try {
+    const choreographyId = Number.parseInt(req.params.id, 10);
+    if (Number.isNaN(choreographyId)) {
+      return res.status(400).json({ error: 'Invalid choreography id' });
+    }
+
+    await runQuery(
+      'DELETE FROM personal_data.choreography_ratings WHERE choreography_id = ?',
+      [choreographyId],
+    );
+
+    res.json({ message: 'Rating removed' });
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to delete rating' });
   }
 }
 
@@ -589,6 +645,7 @@ function buildFilterConditions(filterObj) {
     tags,
     excluded_tags,
     authors,
+    min_rating,
   } = filterObj;
   const conditions = [];
   const params = [];
@@ -644,6 +701,15 @@ function buildFilterConditions(filterObj) {
   conditions.push(...authorsFilter.conditions);
   params.push(...authorsFilter.params);
 
+  const parsedMinRating = normalizeNonNegativeInteger(min_rating);
+  if (parsedMinRating !== null && parsedMinRating >= 0 && parsedMinRating <= 5) {
+    joins.push(
+      'LEFT JOIN personal_data.choreography_ratings cr ON c.id = cr.choreography_id',
+    );
+    conditions.push('COALESCE(cr.rating, 0) >= ?');
+    params.push(parsedMinRating);
+  }
+
   return { conditions, params, joins, stepFilter };
 }
 
@@ -659,6 +725,7 @@ export async function searchChoreographies(req, res) {
       excluded_tags,
       authors,
       search,
+      min_rating,
     } = req.query;
 
     const matchMode = normalizeMatchMode(step_figures_match_mode);
@@ -677,6 +744,7 @@ export async function searchChoreographies(req, res) {
       tags,
       excluded_tags,
       authors,
+      min_rating,
     });
 
     let query =
@@ -1081,11 +1149,17 @@ async function enrichChoreography(choreography) {
     [choreography.id],
   );
 
+  const ratingRow = await getQuery(
+    `SELECT rating FROM personal_data.choreography_ratings WHERE choreography_id = ?`,
+    [choreography.id],
+  );
+
   return {
     ...choreography,
     authors: authors.map((a) => a.name),
     tags: tags.map((t) => t.name),
     step_figures: step_figures.map((sf) => sf.name),
+    rating: ratingRow ? ratingRow.rating : null,
   };
 }
 

@@ -16,6 +16,7 @@ export interface SearchBarFilterValues {
   excludedTags: string[];
   selectedAuthors: string[];
   tagMode: "include" | "exclude";
+  minRating: number | null;
   inputLevel: string;
   inputFigure: string;
   inputTag: string;
@@ -35,6 +36,7 @@ export const defaultSearchBarFilterValues = (maxCountLimit = 0): SearchBarFilter
   excludedTags: [],
   selectedAuthors: [],
   tagMode: "include",
+  minRating: null,
   inputLevel: "",
   inputFigure: "",
   inputTag: "",
@@ -66,6 +68,7 @@ export const searchBarValuesFromFilters = (
     (!filters.tags || filters.tags.length === 0)
       ? "exclude"
       : "include",
+  minRating: typeof filters.min_rating === "number" ? filters.min_rating : null,
   inputLevel: "",
   inputFigure: "",
   inputTag: "",
