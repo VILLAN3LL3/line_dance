@@ -23,6 +23,7 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
     step_figures: ["Weave", "Rock Step"],
     restart_information: "Has restart",
     tag_information: "Has tag",
+    rating: null,
     created_at: "2024-01-01T00:00:00.000Z",
     updated_at: "2024-01-02T00:00:00.000Z",
     ...overrides,

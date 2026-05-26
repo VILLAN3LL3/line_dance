@@ -86,6 +86,7 @@ describe("DanceGroupDetail", () => {
           authors: [],
           tags: [],
           step_figures: ["Mambo"],
+          rating: null,
           created_at: "2024-01-01",
           updated_at: "2024-01-01",
         },

@@ -19,6 +19,7 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
     step_figures: ["Vine", "Rock Step"],
     restart_information: "Restart after wall 3",
     tag_information: "Tag after chorus",
+    rating: null,
     created_at: "2025-01-01T00:00:00.000Z",
     updated_at: "2025-01-02T00:00:00.000Z",
     ...overrides,

@@ -23,6 +23,7 @@ function makeChoreo(overrides: Partial<Choreography> = {}): Choreography {
     authors: [],
     tags: ["a"],
     step_figures: ["Mambo"],
+    rating: null,
     created_at: "2020-01-01T00:00:00.000Z",
     updated_at: "2020-01-01T00:00:00.000Z",
     ...overrides,
