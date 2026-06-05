@@ -1068,7 +1068,9 @@ function buildRelationshipFilter(items, relationshipTable, relationshipPkCol, en
       `INNER JOIN ${relationshipTable} ON c.id = ${relationshipTable}.choreography_id`,
       `INNER JOIN ${entityTable} ON ${relationshipTable}.${relationshipPkCol} = ${entityTable}.id`,
     ];
-    result.conditions = [`LOWER(${entityTable}.name) IN (${itemList.map(() => 'LOWER(?)').join(',')})`];
+    result.conditions = [
+      `LOWER(${entityTable}.name) IN (${itemList.map(() => 'LOWER(?)').join(',')})`,
+    ];
     result.params = itemList;
   }
   return result;
@@ -1337,7 +1339,9 @@ async function runStepFigureMutation(callback) {
 }
 
 async function getTagId(name) {
-  const result = await getQuery('SELECT id FROM personal_data.tags WHERE UPPER(name) = UPPER(?)', [name]);
+  const result = await getQuery('SELECT id FROM personal_data.tags WHERE UPPER(name) = UPPER(?)', [
+    name,
+  ]);
   return result ? result.id : null;
 }
 
