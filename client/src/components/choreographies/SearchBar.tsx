@@ -2,11 +2,7 @@ import "../../styles/SearchBar.css";
 
 import React, { useState } from "react";
 
-import {
-  defaultSearchBarFilterValues,
-  searchBarValuesFromFilters,
-  useSearchBarFilters,
-} from "../../hooks/useSearchBarFilters";
+import { defaultSearchBarFilterValues, searchBarValuesFromFilters, useSearchBarFilters } from "../../hooks/useSearchBarFilters";
 import { SearchFilters } from "../../types";
 import { ActionButton } from "../shared/ui";
 import { ClearFiltersIcon } from "./ClearFiltersIcon";
@@ -77,12 +73,20 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     await onSearch(buildFilters());
   };
 
+  const normalizeText = (value: string) => value.trim().toLowerCase();
+  const includesIgnoreCase = (items: string[], value: string) =>
+    items.some((item) => normalizeText(item) === normalizeText(value));
+  const filterOutIgnoreCase = (items: string[], value: string) =>
+    items.filter((item) => normalizeText(item) !== normalizeText(value));
+  const findOptionIgnoreCase = (options: string[], value: string) =>
+    options.find((option) => normalizeText(option) === normalizeText(value));
+
   const toggleFigure = (figure: string) => {
     if (values.withoutStepFigures) return;
     setValues((prev) => ({
       ...prev,
-      selectedFigures: prev.selectedFigures.includes(figure)
-        ? prev.selectedFigures.filter((f) => f !== figure)
+      selectedFigures: includesIgnoreCase(prev.selectedFigures, figure)
+        ? filterOutIgnoreCase(prev.selectedFigures, figure)
         : [...prev.selectedFigures, figure],
     }));
   };
@@ -90,22 +94,22 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const removeIncludedTag = (tag: string) => {
     setValues((prev) => ({
       ...prev,
-      includedTags: prev.includedTags.filter((t) => t !== tag),
+      includedTags: filterOutIgnoreCase(prev.includedTags, tag),
     }));
   };
 
   const removeExcludedTag = (tag: string) => {
     setValues((prev) => ({
       ...prev,
-      excludedTags: prev.excludedTags.filter((t) => t !== tag),
+      excludedTags: filterOutIgnoreCase(prev.excludedTags, tag),
     }));
   };
 
   const toggleAuthor = (author: string) => {
     setValues((prev) => ({
       ...prev,
-      selectedAuthors: prev.selectedAuthors.includes(author)
-        ? prev.selectedAuthors.filter((a) => a !== author)
+      selectedAuthors: includesIgnoreCase(prev.selectedAuthors, author)
+        ? filterOutIgnoreCase(prev.selectedAuthors, author)
         : [...prev.selectedAuthors, author],
     }));
   };
@@ -113,10 +117,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const addFigureFromInput = (figureValue?: string) => {
     if (values.withoutStepFigures) return;
     const trimmed = (figureValue ?? values.inputFigure).trim();
-    if (trimmed && !values.selectedFigures.includes(trimmed)) {
+    const normalizedFigure = findOptionIgnoreCase(figureOptions, trimmed) ?? trimmed;
+    if (normalizedFigure && !includesIgnoreCase(values.selectedFigures, normalizedFigure)) {
       setValues((prev) => ({
         ...prev,
-        selectedFigures: [...prev.selectedFigures, trimmed],
+        selectedFigures: [...prev.selectedFigures, normalizedFigure],
         inputFigure: "",
       }));
     }
@@ -128,13 +133,15 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       return;
     }
 
+    const normalizedTag = findOptionIgnoreCase(tagOptions, trimmed) ?? trimmed;
+
     if (tagMode === "include") {
       setValues((prev) => ({
         ...prev,
-        includedTags: prev.includedTags.includes(trimmed)
+        includedTags: includesIgnoreCase(prev.includedTags, normalizedTag)
           ? prev.includedTags
-          : [...prev.includedTags, trimmed],
-        excludedTags: prev.excludedTags.filter((tag) => tag !== trimmed),
+          : [...prev.includedTags, normalizedTag],
+        excludedTags: filterOutIgnoreCase(prev.excludedTags, normalizedTag),
         inputTag: "",
       }));
       return;
@@ -142,20 +149,21 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
     setValues((prev) => ({
       ...prev,
-      excludedTags: prev.excludedTags.includes(trimmed)
+      excludedTags: includesIgnoreCase(prev.excludedTags, normalizedTag)
         ? prev.excludedTags
-        : [...prev.excludedTags, trimmed],
-      includedTags: prev.includedTags.filter((tag) => tag !== trimmed),
+        : [...prev.excludedTags, normalizedTag],
+      includedTags: filterOutIgnoreCase(prev.includedTags, normalizedTag),
       inputTag: "",
     }));
   };
 
   const addAuthorFromInput = (authorValue?: string) => {
     const trimmed = (authorValue ?? values.inputAuthor).trim();
-    if (trimmed && !values.selectedAuthors.includes(trimmed)) {
+    const normalizedAuthor = findOptionIgnoreCase(authorOptions, trimmed) ?? trimmed;
+    if (normalizedAuthor && !includesIgnoreCase(values.selectedAuthors, normalizedAuthor)) {
       setValues((prev) => ({
         ...prev,
-        selectedAuthors: [...prev.selectedAuthors, trimmed],
+        selectedAuthors: [...prev.selectedAuthors, normalizedAuthor],
         inputAuthor: "",
       }));
     }
@@ -164,8 +172,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const toggleLevel = (level: string) => {
     setValues((prev) => ({
       ...prev,
-      selectedLevel: prev.selectedLevel.includes(level)
-        ? prev.selectedLevel.filter((l) => l !== level)
+      selectedLevel: includesIgnoreCase(prev.selectedLevel, level)
+        ? filterOutIgnoreCase(prev.selectedLevel, level)
         : [...prev.selectedLevel, level],
     }));
   };
@@ -177,10 +185,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   const addLevelFromInput = (levelValue?: string) => {
     const trimmed = (levelValue ?? values.inputLevel).trim();
-    if (trimmed && levelOptions.includes(trimmed) && !values.selectedLevel.includes(trimmed)) {
+    const normalizedLevel = findOptionIgnoreCase(levelOptions, trimmed);
+    if (normalizedLevel && !includesIgnoreCase(values.selectedLevel, normalizedLevel)) {
       setValues((prev) => ({
         ...prev,
-        selectedLevel: [...prev.selectedLevel, trimmed],
+        selectedLevel: [...prev.selectedLevel, normalizedLevel],
         inputLevel: "",
       }));
     }
@@ -197,11 +206,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const handleFigureInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (values.withoutStepFigures) return;
     const value = e.target.value;
+    const trimmed = value.trim();
     setValues((prev) => ({ ...prev, inputFigure: value }));
     if (
-      value.trim() &&
-      figureOptions.includes(value.trim()) &&
-      !values.selectedFigures.includes(value.trim()) &&
+      trimmed &&
+      findOptionIgnoreCase(figureOptions, trimmed) &&
+      !includesIgnoreCase(values.selectedFigures, trimmed) &&
       isDatalistSelection(e)
     ) {
       addFigureFromInput(value);
@@ -210,12 +220,13 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleTagInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    const trimmed = value.trim();
     setValues((prev) => ({ ...prev, inputTag: value }));
     if (
-      value.trim() &&
-      tagOptions.includes(value.trim()) &&
-      !values.includedTags.includes(value.trim()) &&
-      !values.excludedTags.includes(value.trim()) &&
+      trimmed &&
+      findOptionIgnoreCase(tagOptions, trimmed) &&
+      !includesIgnoreCase(values.includedTags, trimmed) &&
+      !includesIgnoreCase(values.excludedTags, trimmed) &&
       isDatalistSelection(e)
     ) {
       addTagFromInput(value, values.tagMode);
@@ -224,11 +235,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleAuthorInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    const trimmed = value.trim();
     setValues((prev) => ({ ...prev, inputAuthor: value }));
     if (
-      value.trim() &&
-      authorOptions.includes(value.trim()) &&
-      !values.selectedAuthors.includes(value.trim()) &&
+      trimmed &&
+      findOptionIgnoreCase(authorOptions, trimmed) &&
+      !includesIgnoreCase(values.selectedAuthors, trimmed) &&
       isDatalistSelection(e)
     ) {
       addAuthorFromInput(value);

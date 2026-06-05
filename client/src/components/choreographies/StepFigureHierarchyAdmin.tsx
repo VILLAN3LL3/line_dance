@@ -2,22 +2,9 @@ import "../../styles/StepFigureHierarchyAdmin.css";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import {
-  createStepFigureDefinition,
-  deleteStepFigureDefinition,
-  getStepFigureHierarchy,
-  updateStepFigureDefinition,
-} from "../../api";
+import { createStepFigureDefinition, deleteStepFigureDefinition, getStepFigureHierarchy, updateStepFigureDefinition } from "../../api";
 import { StepFigureDefinition } from "../../types";
-import {
-  ActionButton,
-  ActionGroup,
-  confirmAction,
-  EmptyState,
-  ErrorMessage,
-  LoadingState,
-  Section,
-} from "../shared/ui";
+import { ActionButton, ActionGroup, confirmAction, EmptyState, ErrorMessage, LoadingState, Section } from "../shared/ui";
 import { ChoreographyFormListSection } from "./ChoreographyFormListSection";
 
 const StepFigureHierarchyAdmin: React.FC = () => {
@@ -37,8 +24,9 @@ const StepFigureHierarchyAdmin: React.FC = () => {
 
   const selectedFigure = stepFigures.find((figure) => figure.id === selectedId) || null;
   const isInitialLoading = isLoading && stepFigures.length === 0;
-  const figureIdByName = useMemo(
-    () => new Map(stepFigures.map((figure) => [figure.name, figure.id])),
+  const normalizeText = (value: string) => value.trim().toLowerCase();
+  const figureIdByNameLower = useMemo(
+    () => new Map(stepFigures.map((figure) => [normalizeText(figure.name), figure.id])),
     [stepFigures],
   );
   const figureNameById = useMemo(
@@ -121,7 +109,7 @@ const StepFigureHierarchyAdmin: React.FC = () => {
 
   const addCreateComponentFromInput = () => {
     const componentName = newComponentInput.trim();
-    const componentId = figureIdByName.get(componentName);
+    const componentId = figureIdByNameLower.get(normalizeText(componentName));
 
     if (!componentId) {
       setNewComponentInput("");
@@ -138,7 +126,7 @@ const StepFigureHierarchyAdmin: React.FC = () => {
     }
 
     const componentName = editComponentInput.trim();
-    const componentId = figureIdByName.get(componentName);
+    const componentId = figureIdByNameLower.get(normalizeText(componentName));
 
     if (!componentId || componentId === selectedFigure.id) {
       setEditComponentInput("");
@@ -150,7 +138,7 @@ const StepFigureHierarchyAdmin: React.FC = () => {
   };
 
   const removeCreateComponent = (componentName: string) => {
-    const componentId = figureIdByName.get(componentName);
+    const componentId = figureIdByNameLower.get(normalizeText(componentName));
     if (!componentId) {
       return;
     }
@@ -158,7 +146,7 @@ const StepFigureHierarchyAdmin: React.FC = () => {
   };
 
   const removeEditComponent = (componentName: string) => {
-    const componentId = figureIdByName.get(componentName);
+    const componentId = figureIdByNameLower.get(normalizeText(componentName));
     if (!componentId) {
       return;
     }
@@ -166,13 +154,13 @@ const StepFigureHierarchyAdmin: React.FC = () => {
   };
 
   const handleCreateComponentInputBlur = () => {
-    if (createComponentOptions.includes(newComponentInput.trim())) {
+    if (figureIdByNameLower.has(normalizeText(newComponentInput))) {
       addCreateComponentFromInput();
     }
   };
 
   const handleEditComponentInputBlur = () => {
-    if (editComponentOptions.includes(editComponentInput.trim())) {
+    if (figureIdByNameLower.has(normalizeText(editComponentInput))) {
       addEditComponentFromInput();
     }
   };

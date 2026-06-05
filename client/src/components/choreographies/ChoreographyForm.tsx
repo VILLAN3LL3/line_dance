@@ -93,12 +93,19 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     }
   };
 
+  const normalizeText = (value: string) => value.trim().toLowerCase();
+  const includesIgnoreCase = (items: string[], value: string) =>
+    items.some((item) => normalizeText(item) === normalizeText(value));
+  const findOptionIgnoreCase = (options: string[], value: string) =>
+    options.find((option) => normalizeText(option) === normalizeText(value));
+
   const addAuthor = (authorValue?: string) => {
     const author = (authorValue ?? currentAuthor).trim();
-    if (author && !formData.authors.includes(author)) {
+    const normalizedAuthor = findOptionIgnoreCase(authorsFromDb, author) ?? author;
+    if (normalizedAuthor && !includesIgnoreCase(formData.authors, normalizedAuthor)) {
       setFormData((prev) => ({
         ...prev,
-        authors: [...prev.authors, author],
+        authors: [...prev.authors, normalizedAuthor],
       }));
     }
     setCurrentAuthor("");
@@ -106,10 +113,11 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
   const addTag = (tagValue?: string) => {
     const tag = (tagValue ?? currentTag).trim();
-    if (tag && !formData.tags.includes(tag)) {
+    const normalizedTag = findOptionIgnoreCase(tagsFromDb, tag) ?? tag;
+    if (normalizedTag && !includesIgnoreCase(formData.tags, normalizedTag)) {
       setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, tag],
+        tags: [...prev.tags, normalizedTag],
       }));
     }
     setCurrentTag("");
@@ -117,10 +125,11 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
   const addFigure = (figureValue?: string) => {
     const figure = (figureValue ?? currentFigure).trim();
-    if (figure && !formData.step_figures.includes(figure)) {
+    const normalizedFigure = findOptionIgnoreCase(figuresFromDb, figure) ?? figure;
+    if (normalizedFigure && !includesIgnoreCase(formData.step_figures, normalizedFigure)) {
       setFormData((prev) => ({
         ...prev,
-        step_figures: [...prev.step_figures, figure],
+        step_figures: [...prev.step_figures, normalizedFigure],
       }));
     }
     setCurrentFigure("");
@@ -154,43 +163,46 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
   const handleAuthorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    const trimmed = value.trim();
     setCurrentAuthor(value);
 
     if (
-      value.trim() &&
-      authorsFromDb.includes(value.trim()) &&
-      !formData.authors.includes(value.trim()) &&
+      trimmed &&
+      findOptionIgnoreCase(authorsFromDb, trimmed) &&
+      !includesIgnoreCase(formData.authors, trimmed) &&
       isDatalistSelection(e)
     ) {
-      addAuthor(value.trim());
+      addAuthor(trimmed);
     }
   };
 
   const handleFigureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    const trimmed = value.trim();
     setCurrentFigure(value);
 
     if (
-      value.trim() &&
-      figuresFromDb.includes(value.trim()) &&
-      !formData.step_figures.includes(value.trim()) &&
+      trimmed &&
+      findOptionIgnoreCase(figuresFromDb, trimmed) &&
+      !includesIgnoreCase(formData.step_figures, trimmed) &&
       isDatalistSelection(e)
     ) {
-      addFigure(value.trim());
+      addFigure(trimmed);
     }
   };
 
   const handleTagChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    const trimmed = value.trim();
     setCurrentTag(value);
 
     if (
-      value.trim() &&
-      tagsFromDb.includes(value.trim()) &&
-      !formData.tags.includes(value.trim()) &&
+      trimmed &&
+      findOptionIgnoreCase(tagsFromDb, trimmed) &&
+      !includesIgnoreCase(formData.tags, trimmed) &&
       isDatalistSelection(e)
     ) {
-      addTag(value.trim());
+      addTag(trimmed);
     }
   };
 
@@ -198,8 +210,8 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     const normalized = currentAuthor.trim();
     if (
       normalized &&
-      authorsFromDb.includes(normalized) &&
-      !formData.authors.includes(normalized)
+      findOptionIgnoreCase(authorsFromDb, normalized) &&
+      !includesIgnoreCase(formData.authors, normalized)
     ) {
       addAuthor(normalized);
     }
@@ -209,8 +221,8 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     const normalized = currentFigure.trim();
     if (
       normalized &&
-      figuresFromDb.includes(normalized) &&
-      !formData.step_figures.includes(normalized)
+      findOptionIgnoreCase(figuresFromDb, normalized) &&
+      !includesIgnoreCase(formData.step_figures, normalized)
     ) {
       addFigure(normalized);
     }
@@ -218,7 +230,11 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
   const handleTagBlur = () => {
     const normalized = currentTag.trim();
-    if (normalized && tagsFromDb.includes(normalized) && !formData.tags.includes(normalized)) {
+    if (
+      normalized &&
+      findOptionIgnoreCase(tagsFromDb, normalized) &&
+      !includesIgnoreCase(formData.tags, normalized)
+    ) {
       addTag(normalized);
     }
   };

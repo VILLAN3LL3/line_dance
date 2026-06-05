@@ -652,7 +652,9 @@ function buildFilterConditions(filterObj) {
 
   if (search) {
     // Normalize smart/curly apostrophes in both source and query for consistent title matching.
-    conditions.push("REPLACE(REPLACE(c.name, char(8217), ''''), char(8216), '''') LIKE ?");
+    conditions.push(
+      "LOWER(REPLACE(REPLACE(c.name, char(8217), ''''), char(8216), '''')) LIKE LOWER(?)",
+    );
     params.push(`%${normalizeSearchText(search)}%`);
   }
 
@@ -794,6 +796,28 @@ function normalizeQueryParam(param) {
   return param ? [param] : [];
 }
 
+function normalizeUniqueTextQueryParam(param) {
+  const normalizedItems = [];
+  const seen = new Set();
+
+  for (const value of normalizeQueryParam(param)) {
+    const trimmed = String(value).trim();
+    if (!trimmed) {
+      continue;
+    }
+
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    normalizedItems.push(trimmed);
+  }
+
+  return normalizedItems;
+}
+
 function normalizeNonNegativeInteger(value) {
   const parsed = Number.parseInt(String(value), 10);
   return Number.isNaN(parsed) || parsed < 0 ? null : parsed;
@@ -843,9 +867,7 @@ function normalizeSearchText(rawText) {
 }
 
 async function expandStepFigureNamesWithHierarchy(stepFigureParam) {
-  const requestedNames = normalizeQueryParam(stepFigureParam)
-    .map((value) => String(value).trim())
-    .filter(Boolean);
+  const requestedNames = normalizeUniqueTextQueryParam(stepFigureParam);
 
   if (requestedNames.length === 0) {
     return [];
@@ -868,22 +890,24 @@ async function expandStepFigureNamesWithHierarchy(stepFigureParam) {
   }
 
   const expanded = new Set(requestedNames);
+  const expandedLower = new Set(requestedNames.map((name) => name.toLowerCase()));
   let changed = true;
 
   while (changed) {
     changed = false;
 
     for (const [parentName, children] of childrenByParent.entries()) {
-      if (expanded.has(parentName)) {
+      if (expandedLower.has(parentName.toLowerCase())) {
         continue;
       }
 
       const matchingChildCount = Array.from(children).filter((childName) =>
-        expanded.has(childName),
+        expandedLower.has(childName.toLowerCase()),
       ).length;
 
       if (matchingChildCount > 1) {
         expanded.add(parentName);
+        expandedLower.add(parentName.toLowerCase());
         changed = true;
       }
     }
@@ -893,9 +917,7 @@ async function expandStepFigureNamesWithHierarchy(stepFigureParam) {
 }
 
 async function expandStepFigureNamesForExactMode(stepFigureParam) {
-  const requestedNames = normalizeQueryParam(stepFigureParam)
-    .map((value) => String(value).trim())
-    .filter(Boolean);
+  const requestedNames = normalizeUniqueTextQueryParam(stepFigureParam);
 
   if (requestedNames.length === 0) {
     return [];
@@ -918,23 +940,25 @@ async function expandStepFigureNamesForExactMode(stepFigureParam) {
   }
 
   const expanded = new Set(requestedNames);
+  const expandedLower = new Set(requestedNames.map((name) => name.toLowerCase()));
   let changed = true;
 
   while (changed) {
     changed = false;
 
     for (const [parentName, requiredChildren] of requiredChildrenByParent.entries()) {
-      if (expanded.has(parentName)) {
+      if (expandedLower.has(parentName.toLowerCase())) {
         continue;
       }
 
       const matchingChildren = Array.from(requiredChildren).filter((childName) =>
-        expanded.has(childName),
+        expandedLower.has(childName.toLowerCase()),
       );
       const hasAllChildren = matchingChildren.length === requiredChildren.size;
 
       if (hasAllChildren && matchingChildren.length > 1) {
         expanded.add(parentName);
+        expandedLower.add(parentName.toLowerCase());
         changed = true;
       }
     }
@@ -979,24 +1003,22 @@ function buildStepFiguresFilter(step_figures, step_figures_match_mode, without_s
     result.joins = ['LEFT JOIN choreography_step_figures csfNo ON c.id = csfNo.choreography_id'];
     result.conditions = ['csfNo.choreography_id IS NULL'];
   } else if (step_figures) {
-    const figures = normalizeQueryParam(step_figures);
+    const figures = normalizeUniqueTextQueryParam(step_figures);
     if (figures.length > 0) {
       if (matchMode === 'exact') {
         result.joins = [
           'LEFT JOIN choreography_step_figures csf_all ON c.id = csf_all.choreography_id',
           'LEFT JOIN step_figures sf_all ON csf_all.step_figure_id = sf_all.id',
         ];
-        const placeholders = figures.map(() => '?').join(',');
         result.groupBy = ' GROUP BY c.id';
-        result.having = ` HAVING COUNT(DISTINCT sf_all.id) > 0 AND COUNT(DISTINCT CASE WHEN sf_all.name IN (${placeholders}) THEN sf_all.id END) = COUNT(DISTINCT sf_all.id)`;
+        result.having = ` HAVING COUNT(DISTINCT sf_all.id) > 0 AND COUNT(DISTINCT CASE WHEN LOWER(sf_all.name) IN (${figures.map(() => 'LOWER(?)').join(',')}) THEN sf_all.id END) = COUNT(DISTINCT sf_all.id)`;
         result.havingParams = figures;
       } else {
         result.joins = [
           'INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id',
           'INNER JOIN step_figures sf ON csf.step_figure_id = sf.id',
         ];
-        const placeholders = figures.map(() => '?').join(',');
-        result.conditions = [`sf.name IN (${placeholders})`];
+        result.conditions = [`LOWER(sf.name) IN (${figures.map(() => 'LOWER(?)').join(',')})`];
         result.params = figures;
         if (matchMode === 'all' && figures.length > 1) {
           result.groupBy = ' GROUP BY c.id';
@@ -1040,14 +1062,13 @@ function buildLevelFilter(level, max_level_value) {
 
 function buildRelationshipFilter(items, relationshipTable, relationshipPkCol, entityTable) {
   const result = { joins: [], conditions: [], params: [] };
-  const itemList = normalizeQueryParam(items);
+  const itemList = normalizeUniqueTextQueryParam(items);
   if (itemList.length > 0) {
     result.joins = [
       `INNER JOIN ${relationshipTable} ON c.id = ${relationshipTable}.choreography_id`,
       `INNER JOIN ${entityTable} ON ${relationshipTable}.${relationshipPkCol} = ${entityTable}.id`,
     ];
-    const placeholders = itemList.map(() => '?').join(',');
-    result.conditions = [`${entityTable}.name IN (${placeholders})`];
+    result.conditions = [`LOWER(${entityTable}.name) IN (${itemList.map(() => 'LOWER(?)').join(',')})`];
     result.params = itemList;
   }
   return result;
@@ -1055,14 +1076,11 @@ function buildRelationshipFilter(items, relationshipTable, relationshipPkCol, en
 
 function buildExcludedRelationshipFilter(items, relationshipTable, relationshipPkCol, entityTable) {
   const result = { conditions: [], params: [] };
-  const itemList = normalizeQueryParam(items)
-    .map((value) => String(value).trim())
-    .filter(Boolean);
+  const itemList = normalizeUniqueTextQueryParam(items);
 
   if (itemList.length > 0) {
-    const placeholders = itemList.map(() => '?').join(',');
     result.conditions = [
-      `NOT EXISTS (SELECT 1 FROM ${relationshipTable} excluded_rel INNER JOIN ${entityTable} excluded_entity ON excluded_rel.${relationshipPkCol} = excluded_entity.id WHERE excluded_rel.choreography_id = c.id AND excluded_entity.name IN (${placeholders}))`,
+      `NOT EXISTS (SELECT 1 FROM ${relationshipTable} excluded_rel INNER JOIN ${entityTable} excluded_entity ON excluded_rel.${relationshipPkCol} = excluded_entity.id WHERE excluded_rel.choreography_id = c.id AND LOWER(excluded_entity.name) IN (${itemList.map(() => 'LOWER(?)').join(',')}))`,
     ];
     result.params = itemList;
   }
@@ -1161,12 +1179,12 @@ async function enrichChoreography(choreography) {
 }
 
 async function getAuthorId(name) {
-  const result = await getQuery('SELECT id FROM authors WHERE name = ?', [name]);
+  const result = await getQuery('SELECT id FROM authors WHERE UPPER(name) = UPPER(?)', [name]);
   return result ? result.id : null;
 }
 
 async function getStepFigureId(name) {
-  const result = await getQuery('SELECT id FROM step_figures WHERE name = ?', [name]);
+  const result = await getQuery('SELECT id FROM step_figures WHERE UPPER(name) = UPPER(?)', [name]);
   return result ? result.id : null;
 }
 
@@ -1319,7 +1337,7 @@ async function runStepFigureMutation(callback) {
 }
 
 async function getTagId(name) {
-  const result = await getQuery('SELECT id FROM personal_data.tags WHERE name = ?', [name]);
+  const result = await getQuery('SELECT id FROM personal_data.tags WHERE UPPER(name) = UPPER(?)', [name]);
   return result ? result.id : null;
 }
 

@@ -188,6 +188,13 @@ describe('GET /api/choreographies/search — step_figures "any" mode', () => {
     expect(res.body.data).toHaveLength(2);
   });
 
+  it('matches step figures case-insensitively', async () => {
+    await seedDances();
+    const res = await search({ step_figures: 'weave', step_figures_match_mode: 'any' });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(2);
+  });
+
   it('does not match choreographies tagged only with a composite figure when searching by a single component', async () => {
     const rock = await createStepFigure('Rock Step');
     const shuffle = await createStepFigure('Shuffle');
@@ -432,6 +439,14 @@ describe('GET /api/choreographies/search — tags filter', () => {
     expect(res.body.data[0].name).toBe('Cha Cha Fun');
   });
 
+  it('matches included tags case-insensitively', async () => {
+    await seedDances();
+    const res = await search({ tags: 'FUN' });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Cha Cha Fun');
+  });
+
   it('returns choreographies matching any of multiple tags', async () => {
     await seedDances();
     const res = await search({ tags: ['fun', 'slow'] });
@@ -442,6 +457,14 @@ describe('GET /api/choreographies/search — tags filter', () => {
   it('excludes choreographies that have any excluded_tags', async () => {
     await seedDances();
     const res = await search({ excluded_tags: ['classic'] });
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Cha Cha Fun');
+  });
+
+  it('matches excluded tags case-insensitively', async () => {
+    await seedDances();
+    const res = await search({ excluded_tags: ['CLASSIC'] });
+    expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
     expect(res.body.data[0].name).toBe('Cha Cha Fun');
   });
@@ -463,6 +486,14 @@ describe('GET /api/choreographies/search — authors filter', () => {
   it('returns choreographies by a specific author', async () => {
     await seedDances();
     const res = await search({ authors: 'Bob' });
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Argentine Tango');
+  });
+
+  it('matches authors case-insensitively', async () => {
+    await seedDances();
+    const res = await search({ authors: 'bob' });
+    expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
     expect(res.body.data[0].name).toBe('Argentine Tango');
   });
