@@ -10,6 +10,8 @@ export interface Choreography {
   creation_year?: number;
   tag_information?: string;
   restart_information?: string;
+  song?: string;
+  artist?: string;
   authors: string[];
   tags: string[];
   step_figures: string[];
@@ -29,7 +31,8 @@ export interface ChoreographyFormData {
   creation_year?: number;
   tag_information?: string;
   restart_information?: string;
-
+  song?: string;
+  artist?: string;
   authors: string[];
   tags: string[];
   step_figures: string[];
@@ -47,6 +50,7 @@ export interface PaginatedResponse<T> {
 
 export interface SearchFilters {
   search?: string;
+  song_artist?: string;
   level?: string[];
   max_level_value?: number;
   max_count?: number;

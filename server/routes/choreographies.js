@@ -38,6 +38,9 @@ export function normalizeSavedFilters(rawFilters) {
   const search = normalizeStringField(rawFilters.search);
   if (search) normalized.search = search;
 
+  const songArtist = normalizeStringField(rawFilters.song_artist);
+  if (songArtist) normalized.song_artist = songArtist;
+
   const level = normalizeStringArray(rawFilters.level);
   if (level.length > 0) normalized.level = level;
 
@@ -321,6 +324,8 @@ export async function createChoreography(req, res) {
       creation_year,
       tag_information,
       restart_information,
+      song,
+      artist,
       authors,
       tags,
       step_figures,
@@ -340,8 +345,8 @@ export async function createChoreography(req, res) {
     }
 
     const choreoResult = await runQuery(
-      `INSERT INTO choreographies (name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level_id, creation_year, tag_information, restart_information)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO choreographies (name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level_id, creation_year, tag_information, restart_information, song, artist)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         step_sheet_link || null,
@@ -353,6 +358,8 @@ export async function createChoreography(req, res) {
         creation_year || null,
         tag_information || null,
         restart_information || null,
+        song || null,
+        artist || null,
       ],
     );
 
@@ -455,6 +462,8 @@ export async function updateChoreography(req, res) {
       creation_year,
       tag_information,
       restart_information,
+      song,
+      artist,
       authors,
       tags,
       step_figures,
@@ -491,10 +500,12 @@ export async function updateChoreography(req, res) {
       creation_year || null,
       tag_information || null,
       restart_information || null,
+      song || null,
+      artist || null,
     ];
     const updateQuery = levelId
-      ? `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, level_id = ?, creation_year = ?, tag_information = ?, restart_information = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
-      : `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, creation_year = ?, tag_information = ?, restart_information = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+      ? `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, level_id = ?, creation_year = ?, tag_information = ?, restart_information = ?, song = ?, artist = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+      : `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, creation_year = ?, tag_information = ?, restart_information = ?, song = ?, artist = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
 
     const updateParams = levelId
       ? [...updateFields.slice(0, 6), levelId, ...updateFields.slice(6), choreography_id]
@@ -636,6 +647,7 @@ export async function deleteChoreography(req, res) {
 function buildFilterConditions(filterObj) {
   const {
     search,
+    song_artist,
     level,
     max_level_value,
     step_figures,
@@ -656,6 +668,13 @@ function buildFilterConditions(filterObj) {
       "LOWER(REPLACE(REPLACE(c.name, char(8217), ''''), char(8216), '''')) LIKE LOWER(?)",
     );
     params.push(`%${normalizeSearchText(search)}%`);
+  }
+
+  if (song_artist) {
+    // Search for song or artist (case-insensitive, partial match)
+    conditions.push("(LOWER(c.song) LIKE LOWER(?) OR LOWER(c.artist) LIKE LOWER(?))");
+    const searchTerm = `%${song_artist}%`;
+    params.push(searchTerm, searchTerm);
   }
 
   const levelFilter = buildLevelFilter(level, max_level_value);
@@ -724,6 +743,7 @@ export async function searchChoreographies(req, res) {
       excluded_tags,
       authors,
       search,
+      song_artist,
       min_rating,
     } = req.query;
 
@@ -735,6 +755,7 @@ export async function searchChoreographies(req, res) {
 
     const { conditions, params, joins, stepFilter } = buildFilterConditions({
       search,
+      song_artist,
       level,
       max_level_value,
       step_figures: expandedStepFigures,

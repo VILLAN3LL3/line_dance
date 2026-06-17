@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS choreographies (
   creation_year INTEGER,
   tag_information TEXT,
   restart_information TEXT,
+  song TEXT,
+  artist TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (level_id) REFERENCES levels(id)

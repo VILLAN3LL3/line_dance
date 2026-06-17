@@ -259,6 +259,8 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           count={formData.count}
           wall_count={formData.wall_count}
           creation_year={formData.creation_year}
+          song={formData.song}
+          artist={formData.artist}
           levels={levels}
           onChange={handleChange}
         />

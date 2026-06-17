@@ -1,0 +1,112 @@
+.song-search-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.song-search-buttons-compact {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.song-info {
+  display: block;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.song-info strong {
+  display: block;
+  color: var(--color-primary);
+  margin-bottom: 4px;
+}
+
+.artist-name {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.song-name {
+  display: block;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 400;
+  word-break: break-word;
+}
+
+.song-search-buttons-compact .song-info {
+  display: none;
+}
+
+.button-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.song-search-buttons-compact .button-group {
+  gap: 4px;
+}
+
+.btn-youtube,
+.btn-spotify {
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  color: rgb(255, 255, 255);
+}
+
+.song-search-buttons-compact .btn-youtube,
+.song-search-buttons-compact .btn-spotify {
+  padding: 6px 10px;
+  font-size: 13px;
+  gap: 4px;
+}
+
+.btn-youtube {
+  background-color: #ff0000;
+}
+
+.btn-youtube:hover {
+  background-color: #cc0000;
+  transform: scale(1.05);
+}
+
+.btn-youtube:active {
+  transform: scale(0.95);
+}
+
+.btn-spotify {
+  background-color: #1db954;
+}
+
+.btn-spotify:hover {
+  background-color: #1aa34a;
+  transform: scale(1.05);
+}
+
+.btn-spotify:active {
+  transform: scale(0.95);
+}
+
+.music-section {
+  font-size: 13px;
+}

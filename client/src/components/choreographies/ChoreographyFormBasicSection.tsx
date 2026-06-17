@@ -13,6 +13,8 @@ interface ChoreographyFormBasicSectionProps {
   count?: number;
   wall_count?: number;
   creation_year?: number;
+  song?: string;
+  artist?: string;
   levels: LevelOption[];
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
@@ -25,6 +27,8 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
   count,
   wall_count,
   creation_year,
+  song,
+  artist,
   levels,
   onChange,
 }) => (
@@ -83,6 +87,30 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
           value={creation_year || ""}
           onChange={onChange}
           placeholder="e.g., 2023"
+        />
+      </FormField>
+    </div>
+
+    <div className="form-row">
+      <FormField label="Song" htmlFor="song" className="form-group">
+        <input
+          type="text"
+          id="song"
+          name="song"
+          value={song || ""}
+          onChange={onChange}
+          placeholder="Enter song name"
+        />
+      </FormField>
+
+      <FormField label="Artist" htmlFor="artist" className="form-group">
+        <input
+          type="text"
+          id="artist"
+          name="artist"
+          value={artist || ""}
+          onChange={onChange}
+          placeholder="Enter artist name"
         />
       </FormField>
     </div>

@@ -2,11 +2,7 @@ import "../../styles/SearchBar.css";
 
 import React, { useState } from "react";
 
-import {
-  defaultSearchBarFilterValues,
-  searchBarValuesFromFilters,
-  useSearchBarFilters,
-} from "../../hooks/useSearchBarFilters";
+import { defaultSearchBarFilterValues, searchBarValuesFromFilters, useSearchBarFilters } from "../../hooks/useSearchBarFilters";
 import { SearchFilters } from "../../types";
 import { ActionButton } from "../shared/ui";
 import { ClearFiltersIcon } from "./ClearFiltersIcon";
@@ -39,6 +35,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   const buildFilters = (): SearchFilters => ({
     search: values.searchTerm || undefined,
+    song_artist: values.songArtistTerm || undefined,
     level:
       values.levelMode === "selected" && values.selectedLevel.length > 0
         ? values.selectedLevel
@@ -259,6 +256,20 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           placeholder="Search choreographies by name..."
           value={values.searchTerm}
           onChange={(e) => setValues((prev) => ({ ...prev, searchTerm: e.target.value }))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSearch();
+            }
+          }}
+          onBlur={handleSearch}
+          className="search-input"
+          disabled={isLoading}
+        />
+        <input
+          type="text"
+          placeholder="Search by song or artist..."
+          value={values.songArtistTerm}
+          onChange={(e) => setValues((prev) => ({ ...prev, songArtistTerm: e.target.value }))}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               handleSearch();

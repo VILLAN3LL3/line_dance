@@ -14,6 +14,8 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
     step_sheet_link: "https://example.com/step-sheet",
     demo_video_url: "https://example.com/demo",
     tutorial_video_url: "https://example.com/tutorial",
+    song: "Bohemian Rhapsody",
+    artist: "Queen",
     authors: ["Alice", "Bob"],
     tags: ["Classic", "Showcase"],
     step_figures: ["Vine", "Rock Step"],
@@ -33,6 +35,15 @@ describe("buildChoreographyClipboardText", () => {
     expect(text).toContain("Bohemian Rhapsody (2025)");
     expect(text).toContain("Level: Intermediate");
     expect(text).toContain("Count / Wall: 64 / 2");
+    expect(text).toContain("Music:");
+    expect(text).toContain("• Song: Bohemian Rhapsody");
+    expect(text).toContain("• Artist: Queen");
+    expect(text).toContain(
+      "• YouTube Search: https://www.youtube.com/results?search_query=Queen+Bohemian+Rhapsody",
+    );
+    expect(text).toContain(
+      "• Spotify Search: https://open.spotify.com/search/Queen Bohemian+Rhapsody",
+    );
     expect(text).toContain("Authors:");
     expect(text).toContain("• Alice");
     expect(text).toContain("Step Figures:");
@@ -60,12 +71,15 @@ describe("buildChoreographyClipboardText", () => {
         step_sheet_link: undefined,
         demo_video_url: undefined,
         tutorial_video_url: undefined,
+        song: undefined,
+        artist: undefined,
       }),
     );
 
     expect(text).toContain("Bohemian Rhapsody");
     expect(text).toContain("Level: Intermediate");
     expect(text).not.toContain("Count / Wall:");
+    expect(text).not.toContain("Music:");
     expect(text).not.toContain("Authors:");
     expect(text).not.toContain("Step Figures:");
     expect(text).not.toContain("Sequence Notes:");

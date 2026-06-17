@@ -6,15 +6,8 @@ import { deleteChoreographyRating, setChoreographyRating } from "../../api";
 import { Choreography } from "../../types";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
-import {
-  ActionButton,
-  Card,
-  ExternalLink,
-  LevelBatch,
-  Tag,
-  TagGroup,
-  YouTubeVideo,
-} from "../shared/ui";
+import { ActionButton, Card, ExternalLink, LevelBatch, Tag, TagGroup, YouTubeVideo } from "../shared/ui";
+import { SongSearchButtons } from "./SongSearchButtons";
 import { StarRating } from "./StarRating";
 
 interface ChoreographyCardProps {
@@ -137,6 +130,12 @@ const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = ({
         </div>
       )}
 
+      {isDetailMode && (choreography.song || choreography.artist) && (
+        <div className="music-section">
+          <SongSearchButtons song={choreography.song} artist={choreography.artist} />
+        </div>
+      )}
+
       {(choreography.step_figures.length > 0 || isDetailMode) && (
         <div className="step-figures">
           <strong>Step Figures:</strong>
@@ -235,6 +234,7 @@ const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = ({
           )}
         </div>
       )}
+
     </>
   );
 };

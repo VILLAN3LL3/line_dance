@@ -5,6 +5,7 @@ import { LevelOption, SearchFilters } from "../types";
 
 export interface SearchBarFilterValues {
   searchTerm: string;
+  songArtistTerm: string;
   levelMode: "selected" | "max";
   selectedLevel: string[];
   maxLevelValue: number | null;
@@ -25,6 +26,7 @@ export interface SearchBarFilterValues {
 
 export const defaultSearchBarFilterValues = (maxCountLimit = 0): SearchBarFilterValues => ({
   searchTerm: "",
+  songArtistTerm: "",
   levelMode: "selected",
   selectedLevel: [],
   maxLevelValue: null,
@@ -48,6 +50,7 @@ export const searchBarValuesFromFilters = (
   maxCountLimit: number,
 ): SearchBarFilterValues => ({
   searchTerm: filters.search || "",
+  songArtistTerm: filters.song_artist || "",
   levelMode:
     filters.max_level_value !== undefined &&
     (!Array.isArray(filters.level) || filters.level.length === 0)
