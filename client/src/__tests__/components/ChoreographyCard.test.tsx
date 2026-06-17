@@ -41,6 +41,8 @@ describe("ChoreographyCard", () => {
     expect(screen.getByText(/Tags:/)).toBeInTheDocument();
     expect(screen.getByText("Restart 🔁")).toBeInTheDocument();
     expect(screen.getByText("Tag 🌉")).toBeInTheDocument();
+    expect(screen.queryByText("Restart Information")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tag Information")).not.toBeInTheDocument();
 
     expect(screen.getByRole("link", { name: /open step sheet in a new tab/i })).toHaveAttribute(
       "href",
@@ -54,6 +56,24 @@ describe("ChoreographyCard", () => {
       "href",
       "https://example.com/tutorial",
     );
+  });
+
+  it("shows restart/tag badges in small cards even without step figures", () => {
+    render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          step_figures: [],
+          restart_information: "Restart after wall 2",
+          tag_information: "Tag after chorus",
+        })}
+      />,
+    );
+
+    expect(screen.getByText("Restart 🔁")).toBeInTheDocument();
+    expect(screen.getByText("Tag 🌉")).toBeInTheDocument();
+    expect(screen.queryByText("No step figures")).not.toBeInTheDocument();
+    expect(screen.queryByText("Restart Information")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tag Information")).not.toBeInTheDocument();
   });
 
   it("embeds only one YouTube video in default single mode (demo has priority)", () => {

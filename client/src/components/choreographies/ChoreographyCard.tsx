@@ -118,6 +118,11 @@ const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = ({
   const primaryEmbedTitle = demoEmbedUrl
     ? `Demo video for ${choreography.name}`
     : `Tutorial video for ${choreography.name}`;
+  const hasRestartInformation = Boolean(choreography.restart_information?.trim());
+  const hasTagInformation = Boolean(choreography.tag_information?.trim());
+  const showStepFigureBadges = !isDetailMode && (hasRestartInformation || hasTagInformation);
+  const showStepFiguresSection =
+    choreography.step_figures.length > 0 || isDetailMode || showStepFigureBadges;
   const showPrimaryEmbed = !isDetailMode && Boolean(primaryEmbedUrl);
   const showDemoLink = !isDetailMode && !showPrimaryEmbed && Boolean(choreography.demo_video_url);
   const showTutorialLink =
@@ -144,18 +149,18 @@ const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = ({
         </div>
       )}
 
-      {(choreography.step_figures.length > 0 || isDetailMode) && (
+      {showStepFiguresSection && (
         <div className="step-figures">
           <strong>Step Figures:</strong>
-          {choreography.step_figures.length > 0 ? (
+          {choreography.step_figures.length > 0 || showStepFigureBadges ? (
             <TagGroup className="tag-list">
               {choreography.step_figures.map((figure) => (
                 <Tag key={figure} value={figure} className="tag-small" />
               ))}
-              {choreography.restart_information && (
+              {hasRestartInformation && !isDetailMode && (
                 <Tag value="Restart 🔁" className="tag-small" title="Has restart information" />
               )}
-              {choreography.tag_information && (
+              {hasTagInformation && !isDetailMode && (
                 <Tag value="Tag 🌉" className="tag-small" title="Has tag information" />
               )}
             </TagGroup>
@@ -165,21 +170,25 @@ const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = ({
         </div>
       )}
 
-      <InfoSection
-        title="Restart Information"
-        value={choreography.restart_information}
-        isDetailMode={isDetailMode}
-        isExpanded={isRestartExpanded}
-        onToggle={onRestartToggle}
-      />
+      {isDetailMode && (
+        <>
+          <InfoSection
+            title="Restart Information"
+            value={choreography.restart_information}
+            isDetailMode={isDetailMode}
+            isExpanded={isRestartExpanded}
+            onToggle={onRestartToggle}
+          />
 
-      <InfoSection
-        title="Tag Information"
-        value={choreography.tag_information}
-        isDetailMode={isDetailMode}
-        isExpanded={isTagExpanded}
-        onToggle={onTagToggle}
-      />
+          <InfoSection
+            title="Tag Information"
+            value={choreography.tag_information}
+            isDetailMode={isDetailMode}
+            isExpanded={isTagExpanded}
+            onToggle={onTagToggle}
+          />
+        </>
+      )}
 
       {(choreography.tags.length > 0 || isDetailMode) && (
         <div className="tags">
