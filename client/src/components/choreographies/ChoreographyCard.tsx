@@ -6,15 +6,7 @@ import { deleteChoreographyRating, setChoreographyRating } from "../../api";
 import { Choreography } from "../../types";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
-import {
-  ActionButton,
-  Card,
-  ExternalLink,
-  LevelBatch,
-  Tag,
-  TagGroup,
-  YouTubeVideo,
-} from "../shared/ui";
+import { ActionButton, Card, ExternalLink, LevelBatch, Tag, TagGroup, YouTubeVideo } from "../shared/ui";
 import { SongSearchButtons } from "./SongSearchButtons";
 import { StarRating } from "./StarRating";
 
