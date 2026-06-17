@@ -25,12 +25,11 @@ export const useSavedFilterConfigurations = ({
   const [isSavingConfiguration, setIsSavingConfiguration] = useState(false);
   const [isUpdatingConfiguration, setIsUpdatingConfiguration] = useState(false);
   const [isDeletingConfiguration, setIsDeletingConfiguration] = useState(false);
-  const [isLoadingConfigurations, setIsLoadingConfigurations] = useState(false);
+  const [isLoadingConfigurations, setIsLoadingConfigurations] = useState(true);
   const [configurationMessage, setConfigurationMessage] = useState<string | null>(null);
   const [configurationError, setConfigurationError] = useState<string | null>(null);
 
   const loadSavedConfigurations = async () => {
-    setIsLoadingConfigurations(true);
     try {
       const configurations = await getSavedFilterConfigurations();
       setSavedConfigurations(configurations);
@@ -43,16 +42,17 @@ export const useSavedFilterConfigurations = ({
   };
 
   useEffect(() => {
-    loadSavedConfigurations();
+    queueMicrotask(() => {
+      void loadSavedConfigurations();
+    });
   }, []);
 
-  useEffect(() => {
+  const handleSelectConfigurationId = (nextConfigurationId: string) => {
+    setSelectedConfigurationId(nextConfigurationId);
     const selected =
-      savedConfigurations.find((config) => String(config.id) === selectedConfigurationId) || null;
-    if (selected) {
-      setConfigurationName(selected.name);
-    }
-  }, [selectedConfigurationId, savedConfigurations]);
+      savedConfigurations.find((config) => String(config.id) === nextConfigurationId) || null;
+    setConfigurationName(selected?.name ?? "");
+  };
 
   const isBusy = useMemo(
     () => isLoading || isSavingConfiguration || isUpdatingConfiguration || isDeletingConfiguration,
@@ -76,7 +76,7 @@ export const useSavedFilterConfigurations = ({
     try {
       const saved = await saveFilterConfiguration(name, buildFilters());
       setConfigurationName(saved.name);
-      setSelectedConfigurationId(String(saved.id));
+      handleSelectConfigurationId(String(saved.id));
       setConfigurationMessage(`Saved "${saved.name}"`);
       await loadSavedConfigurations();
     } catch (error) {
@@ -184,8 +184,7 @@ export const useSavedFilterConfigurations = ({
     setConfigurationMessage(null);
     try {
       await deleteSavedFilterConfiguration(selected.id);
-      setSelectedConfigurationId("");
-      setConfigurationName("");
+      handleSelectConfigurationId("");
       setConfigurationMessage(`Deleted "${selected.name}"`);
       await loadSavedConfigurations();
     } catch (error) {
@@ -199,7 +198,7 @@ export const useSavedFilterConfigurations = ({
   return {
     savedConfigurations,
     selectedConfigurationId,
-    setSelectedConfigurationId,
+    setSelectedConfigurationId: handleSelectConfigurationId,
     configurationName,
     setConfigurationName,
     isSavingConfiguration,

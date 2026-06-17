@@ -32,6 +32,7 @@ const DanceGroupDetail: React.FC = () => {
   const navigate = useNavigate();
   const { groupId } = useParams<{ groupId: string }>();
   const parsedGroupId = Number(groupId);
+  const routeError = Number.isFinite(parsedGroupId) ? null : "Invalid dance group id";
   const [group, setGroup] = useState<DanceGroup | null>(null);
   const [courses, setCourses] = useState<DanceCourse[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -79,12 +80,13 @@ const DanceGroupDetail: React.FC = () => {
   }, [parsedGroupId]);
 
   useEffect(() => {
-    if (!Number.isFinite(parsedGroupId)) {
-      setError("Invalid dance group id");
+    if (routeError) {
       return;
     }
-    void loadData();
-  }, [parsedGroupId, loadData]);
+    queueMicrotask(() => {
+      void loadData();
+    });
+  }, [routeError, loadData]);
 
   const handleDeleteCourse = async (courseId: number) => {
     if (!confirmAction("Are you sure you want to delete this course and all related sessions?")) {
@@ -160,6 +162,7 @@ const DanceGroupDetail: React.FC = () => {
         <h2>{group?.name ?? "Dance Group"}</h2>
       </div>
 
+      {routeError && <ErrorMessage message={routeError} />}
       {error && <ErrorMessage message={error} />}
 
       <div className="detail-content">

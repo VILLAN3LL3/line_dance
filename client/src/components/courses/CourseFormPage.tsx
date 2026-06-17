@@ -21,6 +21,12 @@ const CourseFormPage: React.FC = () => {
   const parsedGroupId = Number(groupId);
   const parsedCourseId = courseId ? Number(courseId) : null;
   const isEditMode = parsedCourseId !== null && Number.isFinite(parsedCourseId);
+  let routeError: string | null = null;
+  if (Number.isNaN(parsedGroupId)) {
+    routeError = "Invalid dance group id";
+  } else if (courseId && Number.isNaN(Number(courseId))) {
+    routeError = "Invalid course id";
+  }
 
   const [group, setGroup] = useState<DanceGroup | null>(null);
   const [trainers, setTrainers] = useState<Trainer[]>([]);
@@ -77,17 +83,14 @@ const CourseFormPage: React.FC = () => {
   }, [parsedGroupId, isEditMode, parsedCourseId]);
 
   useEffect(() => {
-    if (!Number.isFinite(parsedGroupId)) {
-      setError("Invalid dance group id");
-      return;
-    }
-    if (courseId && !Number.isFinite(Number(courseId))) {
-      setError("Invalid course id");
+    if (routeError) {
       return;
     }
 
-    void loadData();
-  }, [parsedGroupId, courseId, loadData]);
+    queueMicrotask(() => {
+      void loadData();
+    });
+  }, [routeError, loadData]);
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -146,6 +149,7 @@ const CourseFormPage: React.FC = () => {
         <p className="course-form-subtitle">Editing course #{existingCourse.id}</p>
       )}
 
+      {routeError && <ErrorMessage message={routeError} />}
       {error && <ErrorMessage message={error} />}
 
       <form className="course-form-card" onSubmit={handleSubmit}>

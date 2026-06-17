@@ -15,9 +15,13 @@ const ChoreographyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const choreographyId = Number(id);
   const isEditQueryMode = new URLSearchParams(location.search).get("edit") === "1";
+  const hasValidChoreographyId = Number.isFinite(choreographyId);
 
   const [choreography, setChoreography] = useState<Choreography | null>(null);
-  const [view, setView] = useState<"view" | "edit">("view");
+  const [view, setView] = useState<"view" | "edit">(() => {
+    const state = location.state as { editMode?: boolean } | null;
+    return state?.editMode || isEditQueryMode ? "edit" : "view";
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,19 +40,14 @@ const ChoreographyDetail: React.FC = () => {
   }, [choreographyId]);
 
   useEffect(() => {
-    if (!Number.isFinite(choreographyId)) {
-      setError("Invalid choreography ID");
+    if (!hasValidChoreographyId) {
       return;
     }
 
-    // Check if we should start in edit mode
-    const state = location.state as { editMode?: boolean } | null;
-    if (state?.editMode || isEditQueryMode) {
-      setView("edit");
-    }
-
-    void loadChoreography();
-  }, [choreographyId, isEditQueryMode, location.state, loadChoreography]);
+    queueMicrotask(() => {
+      void loadChoreography();
+    });
+  }, [hasValidChoreographyId, loadChoreography]);
 
   useEffect(() => {
     // Clear location state after using it
@@ -96,6 +95,10 @@ const ChoreographyDetail: React.FC = () => {
 
   if (isLoading && !choreography) {
     return <LoadingState />;
+  }
+
+  if (!hasValidChoreographyId) {
+    return <ErrorMessage message="Invalid choreography ID" />;
   }
 
   if (error && !choreography) {

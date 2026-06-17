@@ -25,6 +25,10 @@ const CourseDetail: React.FC = () => {
   const { groupId, courseId } = useParams<{ groupId: string; courseId: string }>();
   const parsedGroupId = Number(groupId);
   const parsedCourseId = Number(courseId);
+  const routeError =
+    Number.isFinite(parsedGroupId) && Number.isFinite(parsedCourseId)
+      ? null
+      : "Invalid route parameters";
   const [course, setCourse] = useState<DanceCourse | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
@@ -108,12 +112,13 @@ const CourseDetail: React.FC = () => {
   }, [parsedGroupId, parsedCourseId, selectedSessionId]);
 
   useEffect(() => {
-    if (!Number.isFinite(parsedGroupId) || !Number.isFinite(parsedCourseId)) {
-      setError("Invalid route parameters");
+    if (routeError) {
       return;
     }
-    void loadData();
-  }, [parsedGroupId, parsedCourseId, loadData]);
+    queueMicrotask(() => {
+      void loadData();
+    });
+  }, [routeError, loadData]);
 
   const handleCreateSession = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -277,6 +282,7 @@ const CourseDetail: React.FC = () => {
         </h2>
       </div>
 
+      {routeError && <ErrorMessage message={routeError} />}
       {error && <ErrorMessage message={error} />}
 
       <div className="detail-content">

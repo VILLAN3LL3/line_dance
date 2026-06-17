@@ -29,13 +29,7 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (mode === "list") {
-      void loadDanceGroups();
-    }
-  }, [mode]);
-
-  const loadDanceGroups = async () => {
+  async function loadDanceGroups() {
     setIsLoading(true);
     setError(null);
     try {
@@ -47,7 +41,15 @@ export const DanceGroupsAdmin: React.FC<DanceGroupsAdminProps> = ({ mode = "list
     } finally {
       setIsLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    if (mode === "list") {
+      queueMicrotask(() => {
+        void loadDanceGroups();
+      });
+    }
+  }, [mode]);
 
   const handleCreate = async (e: { preventDefault: () => void }) => {
     e.preventDefault();

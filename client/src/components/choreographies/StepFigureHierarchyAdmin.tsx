@@ -32,7 +32,7 @@ const StepFigureHierarchyAdmin: React.FC = () => {
   const [editComponentInput, setEditComponentInput] = useState("");
   const [editComponentIds, setEditComponentIds] = useState<number[]>([]);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const selectedFigure = stepFigures.find((figure) => figure.id === selectedId) || null;
@@ -74,51 +74,56 @@ const StepFigureHierarchyAdmin: React.FC = () => {
       .map((figure) => figure.name);
   }, [catalogStepFigures, editComponentIds, selectedFigure]);
 
-  const loadStepFigures = useCallback(async (preferredId?: number | null) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const figures = await getStepFigureHierarchy();
-      setStepFigures(figures);
-
-      if (figures.length === 0) {
-        setSelectedId(null);
-        return;
-      }
-
-      setSelectedId((currentSelectedId) => {
-        const requestedId = preferredId ?? currentSelectedId;
-        const nextSelected =
-          requestedId !== null && requestedId !== undefined
-            ? figures.find((figure) => figure.id === requestedId)?.id
-            : undefined;
-
-        return nextSelected ?? figures[0].id;
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load step figures");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadStepFigures();
-  }, [loadStepFigures]);
-
-  useEffect(() => {
-    if (!selectedFigure) {
+  const applySelectedFigure = useCallback((figure: StepFigureDefinition | null) => {
+    if (!figure) {
       setEditName("");
       setEditComponentInput("");
       setEditComponentIds([]);
       return;
     }
 
-    setEditName(selectedFigure.name);
+    setEditName(figure.name);
     setEditComponentInput("");
-    setEditComponentIds(selectedFigure.components.map((component) => component.id));
-  }, [selectedFigure]);
+    setEditComponentIds(figure.components.map((component) => component.id));
+  }, []);
+
+  const loadStepFigures = useCallback(async (preferredId?: number | null, fallbackId?: number | null) => {
+    try {
+      const figures = await getStepFigureHierarchy();
+      setStepFigures(figures);
+
+      if (figures.length === 0) {
+        setSelectedId(null);
+        applySelectedFigure(null);
+        return;
+      }
+
+      const requestedId = preferredId ?? fallbackId;
+      const nextSelectedFigure =
+        requestedId !== null && requestedId !== undefined
+          ? figures.find((figure) => figure.id === requestedId) ?? figures[0]
+          : figures[0];
+
+      setSelectedId(nextSelectedFigure.id);
+      applySelectedFigure(nextSelectedFigure);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load step figures");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [applySelectedFigure]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadStepFigures();
+    });
+  }, [loadStepFigures]);
+
+  const handleSelectFigure = (figureId: number) => {
+    const figure = stepFigures.find((item) => item.id === figureId) ?? null;
+    setSelectedId(figureId);
+    applySelectedFigure(figure);
+  };
 
   const addCreateComponentFromInput = () => {
     const componentName = newComponentInput.trim();
@@ -262,7 +267,7 @@ const StepFigureHierarchyAdmin: React.FC = () => {
             type="button"
             key={figure.id}
             className={`step-figure-admin__list-item ${selectedId === figure.id ? "active" : ""}`}
-            onClick={() => setSelectedId(figure.id)}
+            onClick={() => handleSelectFigure(figure.id)}
           >
             <div>
               <strong>{figure.name}</strong>
