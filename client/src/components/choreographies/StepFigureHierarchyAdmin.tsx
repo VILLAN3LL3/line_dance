@@ -87,31 +87,34 @@ const StepFigureHierarchyAdmin: React.FC = () => {
     setEditComponentIds(figure.components.map((component) => component.id));
   }, []);
 
-  const loadStepFigures = useCallback(async (preferredId?: number | null, fallbackId?: number | null) => {
-    try {
-      const figures = await getStepFigureHierarchy();
-      setStepFigures(figures);
+  const loadStepFigures = useCallback(
+    async (preferredId?: number | null, fallbackId?: number | null) => {
+      try {
+        const figures = await getStepFigureHierarchy();
+        setStepFigures(figures);
 
-      if (figures.length === 0) {
-        setSelectedId(null);
-        applySelectedFigure(null);
-        return;
+        if (figures.length === 0) {
+          setSelectedId(null);
+          applySelectedFigure(null);
+          return;
+        }
+
+        const requestedId = preferredId ?? fallbackId;
+        const nextSelectedFigure =
+          requestedId !== null && requestedId !== undefined
+            ? (figures.find((figure) => figure.id === requestedId) ?? figures[0])
+            : figures[0];
+
+        setSelectedId(nextSelectedFigure.id);
+        applySelectedFigure(nextSelectedFigure);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load step figures");
+      } finally {
+        setIsLoading(false);
       }
-
-      const requestedId = preferredId ?? fallbackId;
-      const nextSelectedFigure =
-        requestedId !== null && requestedId !== undefined
-          ? figures.find((figure) => figure.id === requestedId) ?? figures[0]
-          : figures[0];
-
-      setSelectedId(nextSelectedFigure.id);
-      applySelectedFigure(nextSelectedFigure);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load step figures");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [applySelectedFigure]);
+    },
+    [applySelectedFigure],
+  );
 
   useEffect(() => {
     queueMicrotask(() => {
