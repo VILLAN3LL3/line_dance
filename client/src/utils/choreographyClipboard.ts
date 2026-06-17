@@ -60,7 +60,7 @@ export function buildChoreographyClipboardText(choreography: Choreography): stri
     ...(countWall ? [`Count / Wall: ${countWall}`] : []),
     ...buildMusicSection(choreography),
     ...(choreography.authors.length > 0
-      ? ["", "Authors:", ...choreography.authors.map((author) => `• ${author}`)]
+      ? ["", "Choreographers:", ...choreography.authors.map((author) => `• ${author}`)]
       : []),
     ...(choreography.step_figures.length > 0
       ? ["", "Step Figures:", ...choreography.step_figures.map((figure) => `• ${figure}`)]

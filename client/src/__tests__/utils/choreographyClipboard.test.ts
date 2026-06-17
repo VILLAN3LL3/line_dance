@@ -44,7 +44,7 @@ describe("buildChoreographyClipboardText", () => {
     expect(text).toContain(
       "• Spotify Search: https://open.spotify.com/search/Queen Bohemian+Rhapsody",
     );
-    expect(text).toContain("Authors:");
+    expect(text).toContain("Choreographers:");
     expect(text).toContain("• Alice");
     expect(text).toContain("Step Figures:");
     expect(text).toContain("• Vine");
@@ -80,7 +80,7 @@ describe("buildChoreographyClipboardText", () => {
     expect(text).toContain("Level: Intermediate");
     expect(text).not.toContain("Count / Wall:");
     expect(text).not.toContain("Music:");
-    expect(text).not.toContain("Authors:");
+    expect(text).not.toContain("Choreographers:");
     expect(text).not.toContain("Step Figures:");
     expect(text).not.toContain("Sequence Notes:");
     expect(text).not.toContain("Tags:");

@@ -170,13 +170,13 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
     />
 
     <SearchBarSelectableListFilter
-      label="Authors"
+      label="Choreographers"
       inputId="author-input"
       listId="authors-list"
       inputValue={inputAuthor}
       options={authorOptions}
       selectedValues={selectedAuthors}
-      placeholder="Add author..."
+      placeholder="Add choreographer..."
       isLoading={isLoading}
       onInputChange={(e) => onAuthorInput(e as React.ChangeEvent<HTMLInputElement>)}
       onAddFromInput={onAddAuthorFromInput}

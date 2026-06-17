@@ -139,7 +139,7 @@ const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = ({
 
       {choreography.authors.length > 0 && (
         <div className="authors">
-          <strong>Authors:</strong> {choreography.authors.join(", ")}
+          <strong>Choreographers:</strong> {choreography.authors.join(", ")}
         </div>
       )}
 

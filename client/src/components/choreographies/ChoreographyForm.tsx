@@ -266,13 +266,13 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
         />
 
         <ChoreographyFormListSection
-          title="Authors"
+          title="Choreographers"
           listId="authors-list"
           inputValue={currentAuthor}
           options={authorsFromDb}
           selectedValues={formData.authors}
-          placeholder="Author name"
-          addButtonLabel="Add Author"
+          placeholder="Choreographer name"
+          addButtonLabel="Add Choreographer"
           onInputChange={handleAuthorChange}
           onInputBlur={handleAuthorBlur}
           onAdd={() => addAuthor()}

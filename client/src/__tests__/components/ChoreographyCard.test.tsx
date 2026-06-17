@@ -37,7 +37,7 @@ describe("ChoreographyCard", () => {
     expect(screen.getByText("Neon Waltz (2024)")).toBeInTheDocument();
     expect(screen.getByText("Intermediate")).toBeInTheDocument();
     expect(screen.getByText(/Count\/Wall:/)).toBeInTheDocument();
-    expect(screen.getByText(/Authors:/)).toBeInTheDocument();
+    expect(screen.getByText(/Choreographers:/)).toBeInTheDocument();
     expect(screen.getByText(/Tags:/)).toBeInTheDocument();
     expect(screen.getByText("Restart 🔁")).toBeInTheDocument();
     expect(screen.getByText("Tag 🌉")).toBeInTheDocument();
