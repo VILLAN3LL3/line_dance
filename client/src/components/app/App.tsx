@@ -53,6 +53,30 @@ export const App: React.FC = () => {
   const [currentFilters, setCurrentFilters] = useState(getInitialFilters);
   const lastInitialLoadSignatureRef = useRef<string | null>(null);
 
+  async function loadChoreographies(filters: SearchFilters = {}, isInitialLoad = false) {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await searchChoreographies({ ...filters, page: 1, limit: 10000 });
+
+      setChoreographies(result.data);
+      setPagination({
+        page: 1,
+        limit: result.data.length,
+        total: result.data.length,
+        totalPages: 1,
+      });
+      if (!isInitialLoad) {
+        setCurrentFilters(filters);
+      }
+    } catch (err) {
+      setError("Failed to load choreographies");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   // Load choreographies on mount or when location changes
   useEffect(() => {
     const initialFilters = getInitialFilters();
@@ -81,30 +105,6 @@ export const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem("currentFilters", JSON.stringify(currentFilters));
   }, [currentFilters]);
-
-  const loadChoreographies = async (filters: SearchFilters = {}, isInitialLoad = false) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await searchChoreographies({ ...filters, page: 1, limit: 10000 });
-
-      setChoreographies(result.data);
-      setPagination({
-        page: 1,
-        limit: result.data.length,
-        total: result.data.length,
-        totalPages: 1,
-      });
-      if (!isInitialLoad) {
-        setCurrentFilters(filters);
-      }
-    } catch (err) {
-      setError("Failed to load choreographies");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const returnToList = async (filters = currentFilters) => {
     setView("list");

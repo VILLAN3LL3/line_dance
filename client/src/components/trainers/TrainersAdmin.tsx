@@ -28,11 +28,7 @@ const TrainersAdmin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void loadTrainers();
-  }, []);
-
-  const loadTrainers = async () => {
+  async function loadTrainers() {
     setIsLoading(true);
     setError(null);
     try {
@@ -44,7 +40,13 @@ const TrainersAdmin: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadTrainers();
+    });
+  }, []);
 
   const handleCreate = async (e: { preventDefault: () => void }) => {
     e.preventDefault();

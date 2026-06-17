@@ -1,4 +1,5 @@
 import "./styles/index.css";
+import "./styles/SongSearchButtons.css";
 import "./styles/theme.css";
 
 import React from "react";
