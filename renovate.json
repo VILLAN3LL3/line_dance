@@ -11,8 +11,10 @@
   },
   "packageRules": [
     {
-      "matchPackagePrefixes": ["@emnapi/"],
-      "groupName": "emnapi"
+      "groupName": "emnapi",
+      "matchPackageNames": [
+        "@emnapi/{/,}**"
+      ]
     },
     {
       "matchUpdateTypes": ["minor", "patch"],
