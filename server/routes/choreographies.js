@@ -672,7 +672,7 @@ function buildFilterConditions(filterObj) {
 
   if (song_artist) {
     // Search for song or artist (case-insensitive, partial match)
-    conditions.push("(LOWER(c.song) LIKE LOWER(?) OR LOWER(c.artist) LIKE LOWER(?))");
+    conditions.push('(LOWER(c.song) LIKE LOWER(?) OR LOWER(c.artist) LIKE LOWER(?))');
     const searchTerm = `%${song_artist}%`;
     params.push(searchTerm, searchTerm);
   }

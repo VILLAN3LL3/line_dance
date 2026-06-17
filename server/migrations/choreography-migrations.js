@@ -383,16 +383,8 @@ const migrations = [
   {
     id: '009_add_song_and_artist_columns',
     up: async () => {
-      await runQuery(
-        `ALTER TABLE choreographies ADD COLUMN song TEXT`,
-        [],
-        dbName,
-      );
-      await runQuery(
-        `ALTER TABLE choreographies ADD COLUMN artist TEXT`,
-        [],
-        dbName,
-      );
+      await runQuery(`ALTER TABLE choreographies ADD COLUMN song TEXT`, [], dbName);
+      await runQuery(`ALTER TABLE choreographies ADD COLUMN artist TEXT`, [], dbName);
     },
   },
 ];

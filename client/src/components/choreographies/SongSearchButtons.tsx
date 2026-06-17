@@ -21,7 +21,7 @@ export const SongSearchButtons: React.FC<SongSearchButtonsProps> = ({
   }
 
   const encodeSearchQuery = (text: string): string => {
-    return encodeURIComponent(text.trim()).replaceAll('%20', '+');
+    return encodeURIComponent(text.trim()).replaceAll("%20", "+");
   };
 
   const youtubeQuery = `${encodeSearchQuery(artist)}+${encodeSearchQuery(song)}`;
@@ -63,7 +63,9 @@ export const SongSearchButtons: React.FC<SongSearchButtonsProps> = ({
     <div className="song-search-buttons">
       <p className="song-info">
         <strong>Song:</strong>
-        <span className="song-name">{song} by {artist}</span>
+        <span className="song-name">
+          {song} by {artist}
+        </span>
       </p>
       <div className="button-group">
         <ActionButton
