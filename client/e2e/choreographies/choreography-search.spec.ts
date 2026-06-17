@@ -17,8 +17,8 @@ test.describe("Choreography Search", () => {
     await page.getByPlaceholder("e.g., 64").fill("32");
     await page.getByPlaceholder("e.g., 4").fill("4");
 
-    await page.getByPlaceholder("Author name").fill("E2E Author");
-    await page.getByRole("button", { name: /Add Author/i }).click();
+    await page.getByPlaceholder("Choreographer name").fill("E2E Author");
+    await page.getByRole("button", { name: /Add Choreographer/i }).click();
 
     await page.getByPlaceholder(/Step figure name/i).fill("Vine");
     await page.getByRole("button", { name: /Add Figure/i }).click();
