@@ -446,7 +446,7 @@ const migrations = [
         ['CF', 'CAF', 'Central African Republic'],
         ['CG', 'COG', 'Congo'],
         ['CH', 'CHE', 'Switzerland'],
-        ['CI', 'CIV', 'Côte d\'Ivoire'],
+        ['CI', 'CIV', "Côte d'Ivoire"],
         ['CK', 'COK', 'Cook Islands'],
         ['CL', 'CHL', 'Chile'],
         ['CM', 'CMR', 'Cameroon'],
@@ -680,7 +680,7 @@ const migrations = [
       // that differ from the official ISO 3166-1 alpha-3 codes
       const aliases = [
         ['IRE', 'IE'], // Ireland (official ISO 3-char: IRL)
-        ['UK',  'GB'], // United Kingdom (official ISO 2-char: GB)
+        ['UK', 'GB'], // United Kingdom (official ISO 2-char: GB)
         ['ENG', 'GB'], // England (part of GB, no separate ISO code)
         ['SCO', 'GB'], // Scotland (part of GB, no separate ISO code)
         ['WAL', 'GB'], // Wales (part of GB, no separate ISO code) – 3-char variant
@@ -703,7 +703,7 @@ const migrations = [
     id: '012_add_missing_country_code_aliases',
     up: async () => {
       const aliases = [
-        ['UK',  'GB'], // United Kingdom (official ISO 2-char: GB)
+        ['UK', 'GB'], // United Kingdom (official ISO 2-char: GB)
         ['WLS', 'GB'], // Wales – alt abbreviation
         ['INA', 'ID'], // Indonesia (official ISO 2-char: ID)
         ['BUL', 'BG'], // Bulgaria (official ISO 2-char: BG)

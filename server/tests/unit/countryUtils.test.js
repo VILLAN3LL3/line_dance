@@ -36,7 +36,7 @@ describe('Country Utils', () => {
     it('should handle country code at different positions', () => {
       const result1 = parseAuthorName('Mozart (AT)');
       const result2 = parseAuthorName('A B C D E (US)');
-      
+
       expect(result1).toEqual({ name: 'Mozart', code: 'AT' });
       expect(result2).toEqual({ name: 'A B C D E', code: 'US' });
     });
@@ -50,16 +50,16 @@ describe('Country Utils', () => {
       const result1 = parseAuthorName('Author (De)');
       const result2 = parseAuthorName('Author (de)');
       const result3 = parseAuthorName('Author (dE)');
-      
+
       expect(result1.code).toBeNull();
       expect(result2.code).toBeNull();
       expect(result3.code).toBeNull();
     });
 
     it('should require exactly 2 uppercase letters', () => {
-      const result1 = parseAuthorName('Author (D)');  // Too short
-      const result2 = parseAuthorName('Author (DEU)');  // Too long
-      
+      const result1 = parseAuthorName('Author (D)'); // Too short
+      const result2 = parseAuthorName('Author (DEU)'); // Too long
+
       expect(result1.code).toBeNull();
       expect(result2.code).toBeNull();
     });
