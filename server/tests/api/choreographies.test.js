@@ -521,3 +521,65 @@ describe('lookup endpoints', () => {
     expect(res.body).toEqual(['Cha Cha', 'Rock Step']);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Country codes — API returns raw codes, lookup via /api/country-codes
+// ---------------------------------------------------------------------------
+
+describe('Country codes in authors', () => {
+  it('returns author names with country codes unchanged in the API response', async () => {
+    const created = await createChoreo({
+      name: 'International Dance',
+      level: 'Beginner',
+      authors: ['Bettina Haag (DE)', 'Swiss Author (CH)'],
+    });
+
+    const res = await request(app).get(`/api/choreographies/${created.id}`);
+    expect(res.status).toBe(200);
+    expect(res.body.authors).toEqual(['Bettina Haag (DE)', 'Swiss Author (CH)']);
+  });
+
+  it('returns author names unchanged in list endpoint', async () => {
+    await createChoreo({
+      name: 'Dance With Author Code',
+      level: 'Beginner',
+      authors: ['German Author (DE)'],
+    });
+
+    const res = await request(app).get('/api/choreographies');
+    expect(res.status).toBe(200);
+    const match = res.body.data.find((c) => c.name === 'Dance With Author Code');
+    expect(match.authors).toEqual(['German Author (DE)']);
+  });
+});
+
+describe('GET /api/country-codes', () => {
+  it('returns a map of ISO codes to country names', async () => {
+    const res = await request(app).get('/api/country-codes');
+    expect(res.status).toBe(200);
+    expect(typeof res.body).toBe('object');
+    // Both 2-char and 3-char codes should be present
+    expect(res.body['DE']).toBe('Germany');
+    expect(res.body['DEU']).toBe('Germany');
+    expect(res.body['CH']).toBe('Switzerland');
+    expect(res.body['CHE']).toBe('Switzerland');
+  });
+
+  it('includes community aliases like IRE for Ireland', async () => {
+    const res = await request(app).get('/api/country-codes');
+    expect(res.status).toBe(200);
+    // IRE => Ireland
+    expect(res.body['IRE']).toBe('Ireland');
+    expect(res.body['IE']).toBe('Ireland');
+    expect(res.body['IRL']).toBe('Ireland');
+    // UK => United Kingdom
+    expect(res.body['UK']).toBe('United Kingdom');
+    expect(res.body['GB']).toBe('United Kingdom');
+    // INA => Indonesia
+    expect(res.body['INA']).toBe('Indonesia');
+    // BUL => Bulgaria
+    expect(res.body['BUL']).toBe('Bulgaria');
+    // WLS => United Kingdom
+    expect(res.body['WLS']).toBe('United Kingdom');
+  });
+});

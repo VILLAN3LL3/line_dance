@@ -2,7 +2,7 @@ import "../../styles/ChoreographyCard.css";
 
 import React, { useState } from "react";
 
-import { deleteChoreographyRating, setChoreographyRating } from "../../api";
+import { deleteChoreographyRating, getCountryCodes, setChoreographyRating } from "../../api";
 import { Choreography } from "../../types";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
@@ -340,7 +340,8 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   };
 
   const copyToClipboard = async () => {
-    const text = buildChoreographyClipboardText(choreography);
+    const countryCodes = await getCountryCodes().catch(() => ({}));
+    const text = buildChoreographyClipboardText(choreography, countryCodes);
 
     try {
       await navigator.clipboard.writeText(text);

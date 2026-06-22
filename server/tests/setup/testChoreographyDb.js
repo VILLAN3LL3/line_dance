@@ -98,6 +98,19 @@ CREATE TABLE IF NOT EXISTS choreography_step_figures (
   FOREIGN KEY (choreography_id) REFERENCES choreographies(id) ON DELETE CASCADE,
   FOREIGN KEY (step_figure_id) REFERENCES step_figures(id)
 );
+
+CREATE TABLE IF NOT EXISTS countries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  iso_2_code TEXT NOT NULL UNIQUE,
+  iso_3_code TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS country_code_aliases (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  alias TEXT NOT NULL UNIQUE,
+  country_id INTEGER NOT NULL REFERENCES countries(id)
+);
 `;
 
 export async function setupChoreographyTestDb() {
@@ -156,6 +169,55 @@ export async function setupChoreographyTestDb() {
     ]);
   }
 
+  // Populate test countries data (subset of commonly used countries)
+  const testCountries = [
+    ['DE', 'DEU', 'Germany'],
+    ['CH', 'CHE', 'Switzerland'],
+    ['IE', 'IRL', 'Ireland'],
+    ['GB', 'GBR', 'United Kingdom'],
+    ['ID', 'IDN', 'Indonesia'],
+    ['BG', 'BGR', 'Bulgaria'],
+    ['US', 'USA', 'United States'],
+    ['FR', 'FRA', 'France'],
+    ['CI', 'CIV', "Côte d'Ivoire"],
+    ['PF', 'PYF', 'French Polynesia'],
+  ];
+
+  for (const [iso2, iso3, name] of testCountries) {
+    await run(
+      testDb,
+      'INSERT OR IGNORE INTO countries (iso_2_code, iso_3_code, name) VALUES (?, ?, ?)',
+      [iso2, iso3, name],
+    );
+  }
+
+  // Seed community aliases
+  await run(
+    testDb,
+    `INSERT OR IGNORE INTO country_code_aliases (alias, country_id)
+     SELECT 'IRE', id FROM countries WHERE iso_2_code = 'IE'`,
+  );
+  await run(
+    testDb,
+    `INSERT OR IGNORE INTO country_code_aliases (alias, country_id)
+     SELECT 'UK', id FROM countries WHERE iso_2_code = 'GB'`,
+  );
+  await run(
+    testDb,
+    `INSERT OR IGNORE INTO country_code_aliases (alias, country_id)
+     SELECT 'INA', id FROM countries WHERE iso_2_code = 'ID'`,
+  );
+  await run(
+    testDb,
+    `INSERT OR IGNORE INTO country_code_aliases (alias, country_id)
+     SELECT 'BUL', id FROM countries WHERE iso_2_code = 'BG'`,
+  );
+  await run(
+    testDb,
+    `INSERT OR IGNORE INTO country_code_aliases (alias, country_id)
+     SELECT 'WLS', id FROM countries WHERE iso_2_code = 'GB'`,
+  );
+
   setDatabaseConnection('choreography', testDb);
   return testDb;
 }
@@ -170,7 +232,7 @@ export async function clearChoreographyTables() {
   await run(testDb, 'DELETE FROM authors');
   await run(testDb, 'DELETE FROM personal_data.tags');
   await run(testDb, 'DELETE FROM step_figures');
-  await run(testDb, 'DELETE FROM levels');
+  // Note: Do NOT delete from countries table - it's a static lookup table
 
   try {
     await run(testDb, 'DELETE FROM personal_data.saved_filter_configurations');

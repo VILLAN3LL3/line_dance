@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
+import {
+  buildChoreographyClipboardText,
+  formatAuthorForClipboard,
+} from "../../utils/choreographyClipboard";
 
 import type { Choreography } from "../../types";
 function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
@@ -85,5 +88,69 @@ describe("buildChoreographyClipboardText", () => {
     expect(text).not.toContain("Sequence Notes:");
     expect(text).not.toContain("Tags:");
     expect(text).not.toContain("Links:");
+  });
+
+  it("replaces ISO 2-char country code in author name with full country name", () => {
+    const countryCodes = { DE: "Germany", CH: "Switzerland" };
+    const text = buildChoreographyClipboardText(
+      makeChoreography({ authors: ["Bettina Haag (DE)", "Jo Smith (CH)"] }),
+      countryCodes,
+    );
+    expect(text).toContain("• Bettina Haag (Germany)");
+    expect(text).toContain("• Jo Smith (Switzerland)");
+    expect(text).not.toContain("(DE)");
+    expect(text).not.toContain("(CH)");
+  });
+
+  it("leaves author unchanged when country code is not in the map", () => {
+    const text = buildChoreographyClipboardText(
+      makeChoreography({ authors: ["Bettina Haag (DE)"] }),
+      {},
+    );
+    expect(text).toContain("• Bettina Haag (DE)");
+  });
+
+  it("leaves author unchanged when no country code suffix is present", () => {
+    const countryCodes = { DE: "Germany" };
+    const text = buildChoreographyClipboardText(
+      makeChoreography({ authors: ["Bettina Haag"] }),
+      countryCodes,
+    );
+    expect(text).toContain("• Bettina Haag");
+  });
+
+  it("uses empty country map by default (no substitution)", () => {
+    const text = buildChoreographyClipboardText(
+      makeChoreography({ authors: ["Bettina Haag (DE)"] }),
+    );
+    expect(text).toContain("• Bettina Haag (DE)");
+  });
+});
+
+describe("formatAuthorForClipboard", () => {
+  const countryCodes = { DE: "Germany", CH: "Switzerland", AUT: "Austria" };
+
+  it("replaces 2-char ISO code with country name", () => {
+    expect(formatAuthorForClipboard("Bettina Haag (DE)", countryCodes)).toBe(
+      "Bettina Haag (Germany)",
+    );
+  });
+
+  it("replaces 3-char ISO code with country name", () => {
+    expect(formatAuthorForClipboard("Hans Muster (AUT)", countryCodes)).toBe(
+      "Hans Muster (Austria)",
+    );
+  });
+
+  it("returns original string when code is not in map", () => {
+    expect(formatAuthorForClipboard("John Doe (US)", countryCodes)).toBe("John Doe (US)");
+  });
+
+  it("returns original string when no country code suffix", () => {
+    expect(formatAuthorForClipboard("Bettina Haag", countryCodes)).toBe("Bettina Haag");
+  });
+
+  it("returns original string for empty input", () => {
+    expect(formatAuthorForClipboard("", countryCodes)).toBe("");
   });
 });

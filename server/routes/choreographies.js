@@ -1192,9 +1192,11 @@ async function enrichChoreography(choreography) {
     [choreography.id],
   );
 
+  const authorNames = authors.map((a) => a.name);
+
   return {
     ...choreography,
-    authors: authors.map((a) => a.name),
+    authors: authorNames,
     tags: tags.map((t) => t.name),
     step_figures: step_figures.map((sf) => sf.name),
     rating: ratingRow ? ratingRow.rating : null,
@@ -1609,5 +1611,34 @@ export async function getMaxChoreographyCount(req, res) {
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch max choreography count' });
+  }
+}
+
+export async function getCountryCodes(req, res) {
+  try {
+    const rows = await allQuery(
+      'SELECT iso_2_code, iso_3_code, name FROM countries ORDER BY iso_2_code',
+    );
+    // Return a map of both 2-char and 3-char codes to country name
+    const result = {};
+    for (const r of rows) {
+      result[r.iso_2_code] = r.name;
+      result[r.iso_3_code] = r.name;
+    }
+
+    // Also include community aliases (e.g. IRE => Ireland)
+    const aliases = await allQuery(
+      `SELECT a.alias, c.name
+       FROM country_code_aliases a
+       JOIN countries c ON a.country_id = c.id`,
+    );
+    for (const a of aliases) {
+      result[a.alias] = a.name;
+    }
+
+    res.json(result);
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch country codes' });
   }
 }

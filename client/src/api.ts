@@ -125,6 +125,11 @@ export async function getAuthors(): Promise<string[]> {
   return response.data;
 }
 
+export async function getCountryCodes(): Promise<Record<string, string>> {
+  const response = await api.get("/country-codes");
+  return response.data;
+}
+
 export async function addLevel(name: string): Promise<{ id: number; name: string; value: number }> {
   try {
     const response = await api.post("/levels", { name });

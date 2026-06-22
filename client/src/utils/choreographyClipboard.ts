@@ -1,5 +1,24 @@
 import type { Choreography } from "../types";
 
+/**
+ * Replace ISO country code suffix in an author name with the full country name.
+ * e.g. "Bettina Haag (DE)" => "Bettina Haag (Germany)"
+ * Falls back to original string if code is not found in the map.
+ */
+export function formatAuthorForClipboard(
+  author: string,
+  countryCodes: Record<string, string>,
+): string {
+  const match = /^(.+?)\s*\(([A-Z]{2,3})\)$/.exec(author);
+  if (match) {
+    const countryName = countryCodes[match[2]];
+    if (countryName) {
+      return `${match[1].trim()} (${countryName})`;
+    }
+  }
+  return author;
+}
+
 function buildTitle(choreography: Choreography): string {
   return choreography.creation_year
     ? `${choreography.name} (${choreography.creation_year})`
@@ -49,9 +68,15 @@ function buildMusicSection(choreography: Choreography): string[] {
   return musicLines;
 }
 
-export function buildChoreographyClipboardText(choreography: Choreography): string {
+export function buildChoreographyClipboardText(
+  choreography: Choreography,
+  countryCodes: Record<string, string> = {},
+): string {
   const title = buildTitle(choreography);
   const countWall = buildCountWall(choreography);
+  const formattedAuthors = choreography.authors.map((a) =>
+    formatAuthorForClipboard(a, countryCodes),
+  );
 
   const sections: string[] = [
     title,
@@ -59,8 +84,8 @@ export function buildChoreographyClipboardText(choreography: Choreography): stri
     `Level: ${choreography.level}`,
     ...(countWall ? [`Count / Wall: ${countWall}`] : []),
     ...buildMusicSection(choreography),
-    ...(choreography.authors.length > 0
-      ? ["", "Choreographers:", ...choreography.authors.map((author) => `• ${author}`)]
+    ...(formattedAuthors.length > 0
+      ? ["", "Choreographers:", ...formattedAuthors.map((author) => `• ${author}`)]
       : []),
     ...(choreography.step_figures.length > 0
       ? ["", "Step Figures:", ...choreography.step_figures.map((figure) => `• ${figure}`)]

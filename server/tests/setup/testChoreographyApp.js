@@ -27,9 +27,11 @@ import {
   deleteSavedFilterConfiguration,
   rateChoreography,
   deleteChoreographyRating,
+  getCountryCodes,
 } from '../../routes/choreographies.js';
 
 const app = express();
+app.disable('x-powered-by');
 // Mirror the production setting so bracket-notation array params (level[]=, step_figures[]=)
 // are parsed correctly by the qs library, matching real browser request behaviour.
 app.set('query parser', 'extended');
@@ -56,6 +58,8 @@ app.post('/api/step_figures', createStepFigure);
 app.put('/api/step_figures/:id', updateStepFigure);
 app.delete('/api/step_figures/:id', deleteStepFigure);
 app.get('/api/step_figures', getStepFigures);
+
+app.get('/api/country-codes', getCountryCodes);
 
 app.get('/api/saved-filters', getSavedFilterConfigurations);
 app.post('/api/saved-filters', saveFilterConfiguration);
