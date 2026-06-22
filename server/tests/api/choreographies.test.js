@@ -472,6 +472,7 @@ describe('POST /api/levels', () => {
       'EASY ADVANCED',
       'ADVANCED',
       'HIGH ADVANCED',
+      'Pro',
     ]);
   });
 

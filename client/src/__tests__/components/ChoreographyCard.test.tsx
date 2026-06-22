@@ -1,9 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { ChoreographyCard } from "../../components/choreographies/ChoreographyCard";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
+
+vi.mock("../../api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../api")>()),
+  getCountryCodes: vi.fn().mockResolvedValue({}),
+  deleteChoreographyRating: vi.fn().mockResolvedValue(undefined),
+  setChoreographyRating: vi.fn().mockResolvedValue(undefined),
+}));
 
 import type { Choreography } from "../../types";
 
@@ -148,7 +155,9 @@ describe("ChoreographyCard", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /copy choreography details/i }));
 
-    expect(writeText).toHaveBeenCalledTimes(1);
-    expect(writeText).toHaveBeenCalledWith(buildChoreographyClipboardText(choreography));
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledTimes(1);
+      expect(writeText).toHaveBeenCalledWith(buildChoreographyClipboardText(choreography, {}));
+    });
   });
 });
