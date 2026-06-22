@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { buildChoreographyClipboardText, formatAuthorForClipboard } from "../../utils/choreographyClipboard";
+import {
+  buildChoreographyClipboardText,
+  formatAuthorForClipboard,
+} from "../../utils/choreographyClipboard";
 
 import type { Choreography } from "../../types";
 function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
