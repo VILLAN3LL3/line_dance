@@ -42,7 +42,7 @@ describe("buildChoreographyClipboardText", () => {
       "• YouTube Search: https://www.youtube.com/results?search_query=Queen+Bohemian+Rhapsody",
     );
     expect(text).toContain(
-      "• Spotify Search: https://open.spotify.com/search/Queen Bohemian+Rhapsody",
+      "• Spotify Search: https://open.spotify.com/search/Queen+Bohemian+Rhapsody",
     );
     expect(text).toContain("Choreographers:");
     expect(text).toContain("• Alice");

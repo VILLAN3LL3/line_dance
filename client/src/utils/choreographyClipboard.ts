@@ -38,7 +38,7 @@ function buildMusicSection(choreography: Choreography): string[] {
     const encodeSearchQuery = (text: string): string =>
       encodeURIComponent(text.trim()).replaceAll("%20", "+");
     const youtubeQuery = `${encodeSearchQuery(choreography.artist)}+${encodeSearchQuery(choreography.song)}`;
-    const spotifyQuery = `${encodeSearchQuery(choreography.artist)} ${encodeSearchQuery(choreography.song)}`;
+    const spotifyQuery = `${encodeSearchQuery(choreography.artist)}+${encodeSearchQuery(choreography.song)}`;
 
     musicLines.push(
       `• YouTube Search: https://www.youtube.com/results?search_query=${youtubeQuery}`,

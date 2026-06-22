@@ -23,7 +23,7 @@ export const SongSearchButtons: React.FC<SongSearchButtonsProps> = ({
   };
 
   const youtubeQuery = `${encodeSearchQuery(artist)}+${encodeSearchQuery(song)}`;
-  const spotifyQuery = `${encodeSearchQuery(artist)} ${encodeSearchQuery(song)}`;
+  const spotifyQuery = `${encodeSearchQuery(artist)}+${encodeSearchQuery(song)}`;
 
   const youtubeUrl = `https://www.youtube.com/results?search_query=${youtubeQuery}`;
   const spotifyUrl = `https://open.spotify.com/search/${spotifyQuery}`;
