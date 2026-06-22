@@ -125,6 +125,118 @@ line_dance/
 - `/admin/groups/:groupId/courses/:courseId` - session and choreography management for a course
 - `/trainers` - trainer management
 
+## Local Production Server (PM2)
+
+The app can be run as a persistent local service using [PM2](https://pm2.keymetrics.io/), which auto-starts on login and rebuilds automatically after every commit.
+
+### How It Works
+
+- The Express server serves both the API (`/api/*`) and the built React frontend as static files — everything runs on a single port (`3001`).
+- PM2 manages the server process and integrates with macOS `launchd` so it starts on every login without any manual action.
+- A `post-commit` git hook (via husky) rebuilds the client and restarts PM2 after every `git commit`.
+
+### First-Time Setup
+
+**1. Install dependencies and build the client:**
+
+```bash
+npm install
+cd server && npm install && cd ..
+cd client && npm install && npm run build && cd ..
+```
+
+**2. Create your local PM2 config:**
+
+```bash
+cp .env.pm2.example .env.pm2
+# then edit .env.pm2 and set NODE_BINARY to the output of: which node
+```
+
+**3. Run database migrations:**
+
+```bash
+cd server && npm run migrate && cd ..
+```
+
+**3. Start the server with PM2:**
+
+```bash
+pm2 start ecosystem.config.js
+```
+
+**4. Register PM2 as a login item (run once, requires sudo):**
+
+```bash
+# PM2 will print the exact command to run — copy and execute it:
+pm2 startup launchd
+
+# Then save the current process list:
+pm2 save
+```
+
+The app is now available at **`http://localhost:3001`**.
+
+### Everyday PM2 Commands
+
+```bash
+pm2 status                      # show running processes
+pm2 logs line-dance             # tail live logs
+pm2 logs line-dance --lines 100 # view last 100 log lines
+pm2 restart line-dance          # restart the server
+pm2 stop line-dance             # stop the server
+pm2 start line-dance            # start a stopped server
+pm2 reload line-dance           # zero-downtime reload
+```
+
+### Auto-Deploy On Commit
+
+After every `git commit` the `post-commit` hook runs automatically:
+
+1. Rebuilds `client/dist/` with `npm run build`
+2. Restarts PM2 with the new build
+
+No manual steps needed — just commit and the running app updates itself.
+
+### Log Files
+
+PM2 writes logs to:
+
+- `logs/pm2-out.log` — stdout
+- `logs/pm2-error.log` — stderr
+
+### Uninstalling
+
+**1. Stop and remove the PM2 process:**
+
+```bash
+pm2 stop line-dance
+pm2 delete line-dance
+pm2 save   # persist the removal so it doesn't restart on next login
+```
+
+**2. Remove the launchd login item (requires sudo):**
+
+```bash
+pm2 unstartup launchd
+# PM2 prints a sudo command — copy and run it
+```
+
+**3. Optionally uninstall PM2 itself:**
+
+```bash
+npm uninstall -g pm2
+```
+
+**4. Remove generated files from the repo (optional):**
+
+```bash
+rm -rf client/dist logs/pm2-out.log logs/pm2-error.log
+```
+
+After uninstalling, switch back to the manual dev workflow described in [Run The App](#run-the-app).
+
+---
+
 ## Quick Start
 
 ### Prerequisites

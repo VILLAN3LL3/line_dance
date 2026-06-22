@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
 import swaggerUi from 'swagger-ui-express';
 import { getDatabase, closeDatabase } from './db.js';
 import { runMigrations } from '../migrations/index.js';
@@ -57,8 +60,14 @@ import {
 } from '../routes/dance-groups.js';
 import { checkUrl } from '../routes/url-check.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const clientDistPath = path.resolve(__dirname, '../../client/dist');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Don't leak Express version in response headers.
+app.disable('x-powered-by');
 
 // Express 5 changed the default query parser to 'simple' (native querystring),
 // which doesn't expand key[] notation into arrays. Set it back to 'extended'
@@ -66,7 +75,7 @@ const PORT = process.env.PORT || 3001;
 app.set('query parser', 'extended');
 
 // Middleware
-app.use(cors());
+app.use(cors()); // NOSONAR -- intentional: server runs locally only
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, { explorer: true }));
@@ -150,6 +159,15 @@ app.get('/api/health', (req, res) => {
 
 // URL reachability check (server-side proxy, avoids CORS)
 app.get('/api/url-check', checkUrl);
+
+// Serve built client static files
+if (existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  // SPA fallback: serve index.html for any non-API route (Express 5 requires named wildcard)
+  app.get('/{*path}', (req, res) => {
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

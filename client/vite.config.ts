@@ -23,7 +23,6 @@ export default defineConfig({
       },
     },
     cssCodeSplit: true,
-    write: false,
   },
   esbuild: {
     sourcemap: false,

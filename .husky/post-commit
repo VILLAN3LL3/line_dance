@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+echo "🔨 Building client..."
+cd client && npm run build && cd ..
+
+echo "🔄 Restarting line-dance server..."
+pm2 restart line-dance --update-env 2>/dev/null || pm2 start ecosystem.config.js
+
+echo "✅ Deploy complete — app running at http://localhost:3001"
