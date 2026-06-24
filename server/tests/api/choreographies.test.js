@@ -597,7 +597,9 @@ describe('GET /api/choreographies/duplicates', () => {
   });
 
   it('returns empty array when no name provided', async () => {
-    const res = await request(app).get('/api/choreographies/duplicates?level=Beginner&authors[]=Alice');
+    const res = await request(app).get(
+      '/api/choreographies/duplicates?level=Beginner&authors[]=Alice',
+    );
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
   });
@@ -613,7 +615,11 @@ describe('GET /api/choreographies/duplicates', () => {
   });
 
   it('detects a duplicate with same name, level, and overlapping author', async () => {
-    const created = await createChoreo({ name: 'River Dance', level: 'Beginner', authors: ['Alice'] });
+    const created = await createChoreo({
+      name: 'River Dance',
+      level: 'Beginner',
+      authors: ['Alice'],
+    });
 
     const res = await request(app).get(
       '/api/choreographies/duplicates?name=River+Dance&level=Beginner&authors[]=Alice',
@@ -657,7 +663,11 @@ describe('GET /api/choreographies/duplicates', () => {
   });
 
   it('excludes the choreography with the given exclude_id', async () => {
-    const created = await createChoreo({ name: 'River Dance', level: 'Beginner', authors: ['Alice'] });
+    const created = await createChoreo({
+      name: 'River Dance',
+      level: 'Beginner',
+      authors: ['Alice'],
+    });
 
     const res = await request(app).get(
       `/api/choreographies/duplicates?name=River+Dance&level=Beginner&authors[]=Alice&exclude_id=${created.id}`,

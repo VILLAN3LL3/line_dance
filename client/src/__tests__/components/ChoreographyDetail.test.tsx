@@ -127,7 +127,10 @@ describe("ChoreographyDetail", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save anyway" }));
 
     await waitFor(() => {
-      expect(updateChoreography).toHaveBeenCalledWith(1, expect.objectContaining({ name: "Neon Waltz" }));
+      expect(updateChoreography).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ name: "Neon Waltz" }),
+      );
     });
   });
 

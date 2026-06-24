@@ -33,7 +33,11 @@ const ChoreographyCreatePage: React.FC = () => {
     setError(null);
     setDuplicates([]);
     try {
-      const found = await checkChoreographyDuplicates(formData.name, formData.level, formData.authors);
+      const found = await checkChoreographyDuplicates(
+        formData.name,
+        formData.level,
+        formData.authors,
+      );
       if (found.length > 0) {
         setDuplicates(found);
         setPendingFormData(formData);

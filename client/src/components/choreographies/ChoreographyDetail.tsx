@@ -3,7 +3,12 @@ import "../../styles/ChoreographyDetail.css";
 import React, { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { checkChoreographyDuplicates, deleteChoreography, fetchChoreography, updateChoreography } from "../../api";
+import {
+  checkChoreographyDuplicates,
+  deleteChoreography,
+  fetchChoreography,
+  updateChoreography,
+} from "../../api";
 import { Choreography, ChoreographyFormData, DuplicateChoreography } from "../../types";
 import { BackButton, confirmAction, EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
 import { ChoreographyCard } from "./ChoreographyCard";
@@ -101,7 +106,12 @@ const ChoreographyDetail: React.FC = () => {
     setError(null);
     setDuplicates([]);
     try {
-      const found = await checkChoreographyDuplicates(data.name, data.level, data.authors, choreographyId);
+      const found = await checkChoreographyDuplicates(
+        data.name,
+        data.level,
+        data.authors,
+        choreographyId,
+      );
       if (found.length > 0) {
         setDuplicates(found);
         setPendingFormData(data);
@@ -171,7 +181,11 @@ const ChoreographyDetail: React.FC = () => {
             initialData={choreography}
             onSubmit={handleSubmit}
             isLoading={isLoading}
-            onCancel={() => { setDuplicates([]); setPendingFormData(null); setView("view"); }}
+            onCancel={() => {
+              setDuplicates([]);
+              setPendingFormData(null);
+              setView("view");
+            }}
           />
         </>
       )}

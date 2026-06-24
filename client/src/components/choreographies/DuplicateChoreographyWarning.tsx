@@ -28,8 +28,8 @@ export const DuplicateChoreographyWarning: React.FC<DuplicateChoreographyWarning
         <li key={d.id}>
           <Link to={`/choreographies/${d.id}`} target="_blank" rel="noopener noreferrer">
             {d.name}
-          </Link>
-          {" "}— {d.level}
+          </Link>{" "}
+          — {d.level}
           {d.authors.length > 0 ? ` · ${d.authors.join(", ")}` : ""}
         </li>
       ))}

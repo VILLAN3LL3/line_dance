@@ -3,7 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-import { checkChoreographyDuplicates, createChoreography, getAuthors, getLevels, getStepFigures, getTags } from "../../api";
+import {
+  checkChoreographyDuplicates,
+  createChoreography,
+  getAuthors,
+  getLevels,
+  getStepFigures,
+  getTags,
+} from "../../api";
 import ChoreographyCreatePage from "../../components/choreographies/ChoreographyCreatePage";
 
 const mockNavigate = vi.fn();
