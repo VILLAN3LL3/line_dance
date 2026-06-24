@@ -262,6 +262,11 @@ a.btn-edit:hover {
   color: var(--color-primary);
 }
 
+.duplicate-warning__actions {
+  display: flex;
+  gap: 8px;
+}
+
 .empty-state {
   text-align: center;
   padding: 60px 20px;
