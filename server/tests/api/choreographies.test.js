@@ -584,3 +584,95 @@ describe('GET /api/country-codes', () => {
     expect(res.body['WLS']).toBe('United Kingdom');
   });
 });
+
+// ---------------------------------------------------------------------------
+// GET /api/choreographies/duplicates
+// ---------------------------------------------------------------------------
+
+describe('GET /api/choreographies/duplicates', () => {
+  it('returns empty array when no authors provided', async () => {
+    const res = await request(app).get('/api/choreographies/duplicates?name=Test&level=Beginner');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('returns empty array when no name provided', async () => {
+    const res = await request(app).get('/api/choreographies/duplicates?level=Beginner&authors[]=Alice');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('returns empty array when no matching choreography exists', async () => {
+    await createChoreo({ name: 'Unique Dance', level: 'Beginner', authors: ['Alice'] });
+
+    const res = await request(app).get(
+      '/api/choreographies/duplicates?name=Other+Dance&level=Beginner&authors[]=Alice',
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('detects a duplicate with same name, level, and overlapping author', async () => {
+    const created = await createChoreo({ name: 'River Dance', level: 'Beginner', authors: ['Alice'] });
+
+    const res = await request(app).get(
+      '/api/choreographies/duplicates?name=River+Dance&level=Beginner&authors[]=Alice',
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].id).toBe(created.id);
+    expect(res.body[0].name).toBe('River Dance');
+    expect(res.body[0].level).toBe('BEGINNER');
+    expect(res.body[0].authors).toContain('Alice');
+  });
+
+  it('is case-insensitive for name matching', async () => {
+    await createChoreo({ name: 'River Dance', level: 'Beginner', authors: ['Alice'] });
+
+    const res = await request(app).get(
+      '/api/choreographies/duplicates?name=river+dance&level=Beginner&authors[]=Alice',
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+  });
+
+  it('does not match a different level', async () => {
+    await createChoreo({ name: 'River Dance', level: 'Beginner', authors: ['Alice'] });
+
+    const res = await request(app).get(
+      '/api/choreographies/duplicates?name=River+Dance&level=Intermediate&authors[]=Alice',
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('does not match when no authors overlap', async () => {
+    await createChoreo({ name: 'River Dance', level: 'Beginner', authors: ['Alice'] });
+
+    const res = await request(app).get(
+      '/api/choreographies/duplicates?name=River+Dance&level=Beginner&authors[]=Bob',
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('excludes the choreography with the given exclude_id', async () => {
+    const created = await createChoreo({ name: 'River Dance', level: 'Beginner', authors: ['Alice'] });
+
+    const res = await request(app).get(
+      `/api/choreographies/duplicates?name=River+Dance&level=Beginner&authors[]=Alice&exclude_id=${created.id}`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('detects partial author overlap (one shared out of multiple)', async () => {
+    await createChoreo({ name: 'River Dance', level: 'Beginner', authors: ['Alice', 'Carol'] });
+
+    const res = await request(app).get(
+      '/api/choreographies/duplicates?name=River+Dance&level=Beginner&authors[]=Alice&authors[]=Bob',
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+  });
+});

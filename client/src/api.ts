@@ -1,18 +1,8 @@
 import axios from "axios";
 
 import {
-  Choreography,
-  ChoreographyFormData,
-  DanceCourse,
-  DanceGroup,
-  LearnedChoreography,
-  LevelOption,
-  PaginatedResponse,
-  SavedFilterConfiguration,
-  SearchFilters,
-  Session,
-  SessionChoreography,
-  StepFigureDefinition,
+  Choreography, ChoreographyFormData, DanceCourse, DanceGroup, DuplicateChoreography, LearnedChoreography, LevelOption, PaginatedResponse,
+  SavedFilterConfiguration, SearchFilters, Session, SessionChoreography, StepFigureDefinition
 } from "./types";
 
 import type { Trainer } from "./types";
@@ -94,6 +84,18 @@ export async function updateChoreography(
 
 export async function deleteChoreography(id: number): Promise<{ message: string }> {
   const response = await api.delete(`/choreographies/${id}`);
+  return response.data;
+}
+
+export async function checkChoreographyDuplicates(
+  name: string,
+  level: string,
+  authors: string[],
+  excludeId?: number,
+): Promise<DuplicateChoreography[]> {
+  const response = await api.get("/choreographies/duplicates", {
+    params: { name, level, authors, exclude_id: excludeId },
+  });
   return response.data;
 }
 

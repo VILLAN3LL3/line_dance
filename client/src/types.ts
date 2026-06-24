@@ -151,3 +151,10 @@ export interface LearnedChoreography {
   first_learned_date: string;
   last_danced_date: string;
 }
+
+export interface DuplicateChoreography {
+  id: number;
+  name: string;
+  level: string;
+  authors: string[];
+}

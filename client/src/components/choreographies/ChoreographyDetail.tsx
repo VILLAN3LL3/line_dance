@@ -3,11 +3,12 @@ import "../../styles/ChoreographyDetail.css";
 import React, { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { deleteChoreography, fetchChoreography, updateChoreography } from "../../api";
-import { Choreography, ChoreographyFormData } from "../../types";
+import { checkChoreographyDuplicates, deleteChoreography, fetchChoreography, updateChoreography } from "../../api";
+import { Choreography, ChoreographyFormData, DuplicateChoreography } from "../../types";
 import { BackButton, confirmAction, EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
 import { ChoreographyCard } from "./ChoreographyCard";
 import { ChoreographyForm } from "./ChoreographyForm";
+import { DuplicateChoreographyWarning } from "./DuplicateChoreographyWarning";
 
 const ChoreographyDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ const ChoreographyDetail: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [duplicates, setDuplicates] = useState<DuplicateChoreography[]>([]);
+  const [pendingFormData, setPendingFormData] = useState<ChoreographyFormData | null>(null);
 
   const loadChoreography = useCallback(async () => {
     setIsLoading(true);
@@ -78,7 +81,7 @@ const ChoreographyDetail: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (data: ChoreographyFormData) => {
+  const doUpdate = async (data: ChoreographyFormData) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -91,6 +94,39 @@ const ChoreographyDetail: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = async (data: ChoreographyFormData) => {
+    setIsLoading(true);
+    setError(null);
+    setDuplicates([]);
+    try {
+      const found = await checkChoreographyDuplicates(data.name, data.level, data.authors, choreographyId);
+      if (found.length > 0) {
+        setDuplicates(found);
+        setPendingFormData(data);
+        setIsLoading(false);
+        return;
+      }
+      await doUpdate(data);
+    } catch (err) {
+      setError("Failed to update choreography");
+      console.error(err);
+      setIsLoading(false);
+    }
+  };
+
+  const handleConfirmUpdate = async () => {
+    if (pendingFormData) {
+      setDuplicates([]);
+      await doUpdate(pendingFormData);
+      setPendingFormData(null);
+    }
+  };
+
+  const handleCancelDuplicate = () => {
+    setDuplicates([]);
+    setPendingFormData(null);
   };
 
   if (isLoading && !choreography) {
@@ -123,12 +159,21 @@ const ChoreographyDetail: React.FC = () => {
           videoEmbedMode="all"
         />
       ) : (
-        <ChoreographyForm
-          initialData={choreography}
-          onSubmit={handleSubmit}
-          isLoading={isLoading}
-          onCancel={() => setView("view")}
-        />
+        <>
+          {duplicates.length > 0 && (
+            <DuplicateChoreographyWarning
+              duplicates={duplicates}
+              onConfirm={handleConfirmUpdate}
+              onCancel={handleCancelDuplicate}
+            />
+          )}
+          <ChoreographyForm
+            initialData={choreography}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+            onCancel={() => { setDuplicates([]); setPendingFormData(null); setView("view"); }}
+          />
+        </>
       )}
     </div>
   );

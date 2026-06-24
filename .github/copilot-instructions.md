@@ -19,6 +19,7 @@ After planning, confirm with the user: _"Planning complete. Ready to implement?"
 Execute the planned changes:
 - Write code following the planned architecture
 - Implement components, tests, and API changes as designed
+- **After every file edit: use `get_errors` to check the VS Code Problems tab for compile errors and lint warnings before moving on**
 - Add/update tests incrementally
 - Update documentation (README, comments, JSDoc)
 

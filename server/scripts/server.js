@@ -31,6 +31,7 @@ import {
   getMaxChoreographyCount,
   rateChoreography,
   deleteChoreographyRating,
+  checkDuplicateChoreographies,
 } from '../routes/choreographies.js';
 import {
   getDanceGroups,
@@ -94,6 +95,7 @@ app.post('/api/choreographies', createChoreography);
 app.get('/api/choreographies', getChoreographies);
 app.get('/api/choreographies/search', searchChoreographies);
 app.get('/api/choreographies/max-count', getMaxChoreographyCount);
+app.get('/api/choreographies/duplicates', checkDuplicateChoreographies);
 app.get('/api/choreographies/:id', getChoreographyById);
 app.put('/api/choreographies/:id', updateChoreography);
 app.delete('/api/choreographies/:id', deleteChoreography);

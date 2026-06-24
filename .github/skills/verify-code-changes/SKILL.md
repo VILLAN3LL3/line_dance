@@ -1,6 +1,6 @@
 ---
 name: verify-code-changes
-description: "Run comprehensive verification on code changes: lint, type check, test, build, and security scan. Use when: finished a todo/task and want to verify everything passes before commit. Runs linter, TypeScript compiler, test suite, builds both client and server, and security audits. Fixes issues and reformats code."
+description: "Run comprehensive verification on code changes: check Problems tab, lint, type check, test, build, and security scan. Use when: finished a todo/task and want to verify everything passes before commit. ALWAYS start by checking the VS Code Problems tab with get_errors tool — this catches compile errors and lint warnings instantly without running any commands. Then runs linter, TypeScript compiler, test suite, builds both client and server, and security audits. Fixes issues and reformats code."
 ---
 
 # Verify Code Changes
@@ -10,6 +10,7 @@ A multi-step workflow to ensure all code changes pass quality gates before commi
 ## When to Use
 
 Invoke this skill whenever you think you have finished a todo/task and want to verify that:
+- ✅ No errors in the VS Code Problems tab (get_errors)
 - ✅ Linting passes (ESLint)
 - ✅ Type checking passes (TypeScript)
 - ✅ Tests pass (Vitest)
@@ -18,6 +19,23 @@ Invoke this skill whenever you think you have finished a todo/task and want to v
 - ✅ Code is properly formatted (Prettier)
 
 ## Verification Steps
+
+### Step 0: Check the Problems Tab (ALWAYS FIRST)
+**Use the `get_errors` tool immediately after every code change — before running any terminal commands.**
+
+This uses VS Code's language server to surface TypeScript compile errors, ESLint diagnostics, and other static analysis issues in real time. It is faster than running the CLI tools and catches issues the terminal might miss.
+
+```
+get_errors (no arguments — checks all files)
+```
+
+Fix every error and warning shown before proceeding to the next step. Re-run `get_errors` after each fix to confirm the Problems tab is clean.
+
+**Common issues caught here:**
+- Nested ternary operators (ESLint: extract to independent statement)
+- Missing required props on React components
+- Unused imports or variables
+- Type mismatches
 
 ### Step 1: Client-Side Verification
 Verify the client (React + TypeScript) passes all checks:
@@ -84,14 +102,16 @@ npm audit
 
 ## What to Do If Verification Fails
 
-1. **Review the error**: Read the full error message in the problems tab or terminal output.
-2. **Fix the issue**: Address the root cause (missing field, type mismatch, test assertion, etc.).
-3. **Re-run verification**: Run this skill again to confirm the fix.
-4. **Repeat until passing**: Continue until all steps pass.
+1. **Check Problems tab first**: Use `get_errors` — it's the fastest feedback loop.
+2. **Review the error**: Read the full error message in the problems tab or terminal output.
+3. **Fix the issue**: Address the root cause (missing field, type mismatch, test assertion, etc.).
+4. **Re-run `get_errors`**: Confirm the Problems tab is clean before re-running terminal checks.
+5. **Repeat until passing**: Continue until all steps pass.
 
 ## Expected Outcomes
 
 ✅ **All checks pass**: Safe to commit.  
+❌ **Problems tab has errors**: Fix before running any terminal commands.  
 ❌ **Lint/type check fails**: Fix code quality issues before proceeding.  
 ❌ **Tests fail**: Debug test failures and fix the underlying code.  
 ❌ **E2E tests fail**: Rerun to confirm it's not flaky; check browser automation logs.  

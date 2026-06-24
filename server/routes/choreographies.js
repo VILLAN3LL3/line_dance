@@ -397,6 +397,65 @@ export async function createChoreography(req, res) {
   }
 }
 
+export async function checkDuplicateChoreographies(req, res) {
+  try {
+    const { name, level, exclude_id } = req.query;
+    const rawAuthors = req.query.authors;
+    let coercedAuthors;
+    if (Array.isArray(rawAuthors)) {
+      coercedAuthors = rawAuthors;
+    } else if (rawAuthors) {
+      coercedAuthors = [rawAuthors];
+    } else {
+      coercedAuthors = [];
+    }
+    const authors = normalizeStringArray(coercedAuthors);
+
+    if (!name || !level || authors.length === 0) {
+      return res.json([]);
+    }
+
+    const excludeId = Number.parseInt(exclude_id, 10);
+    const hasExcludeId = Number.isFinite(excludeId) && excludeId > 0;
+
+    const authorUpperPlaceholders = authors.map(() => 'UPPER(?)').join(', ');
+    const params = [name, level, ...(hasExcludeId ? [excludeId] : []), ...authors];
+
+    const rows = await allQuery(
+      `SELECT c.id, c.name, l.name AS level
+       FROM choreographies c
+       JOIN levels l ON c.level_id = l.id
+       WHERE UPPER(c.name) = UPPER(?)
+         AND UPPER(l.name) = UPPER(?)
+         ${hasExcludeId ? 'AND c.id != ?' : ''}
+         AND c.id IN (
+           SELECT ca.choreography_id
+           FROM choreography_authors ca
+           JOIN authors a ON a.id = ca.author_id
+           WHERE UPPER(a.name) IN (${authorUpperPlaceholders})
+         )`,
+      params,
+    );
+
+    const enriched = await Promise.all(
+      rows.map(async (row) => {
+        const rowAuthors = await allQuery(
+          `SELECT a.name FROM authors a
+           JOIN choreography_authors ca ON ca.author_id = a.id
+           WHERE ca.choreography_id = ?`,
+          [row.id],
+        );
+        return { ...row, authors: rowAuthors.map((a) => a.name) };
+      }),
+    );
+
+    return res.json(enriched);
+  } catch (error) {
+    captureError(error);
+    return res.status(500).json({ error: 'Failed to check duplicates' });
+  }
+}
+
 export async function getChoreographies(req, res) {
   try {
     const page = Number.parseInt(req.query.page, 10) || 1;
