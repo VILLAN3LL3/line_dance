@@ -1,15 +1,7 @@
 import React from "react";
 
 import { getSessionBadgeLabel, getSessionBadgeStatus } from "../../utils/courseStatus";
-import {
-  ActionButton,
-  ActionGroup,
-  CheckboxFilter,
-  EmptyState,
-  LoadingState,
-  Section,
-  StatusBadge,
-} from "../shared/ui";
+import { ActionButton, ActionGroup, CheckboxFilter, EmptyState, LoadingState, Section, StatusBadge } from "../shared/ui";
 
 import type { Session } from "../../types";
 
@@ -209,11 +201,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                       >
                         Confirm Swap
                       </ActionButton>
-                      <ActionButton
-                        variant="secondary"
-                        onClick={onCancelSwap}
-                        disabled={isLoading}
-                      >
+                      <ActionButton variant="secondary" onClick={onCancelSwap} disabled={isLoading}>
                         Cancel
                       </ActionButton>
                     </div>
