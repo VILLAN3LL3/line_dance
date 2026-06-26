@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 import { getSessionBadgeLabel, getSessionBadgeStatus } from "../../utils/courseStatus";
 import {
@@ -11,7 +12,7 @@ import {
   StatusBadge,
 } from "../shared/ui";
 
-import type { Session } from "../../types";
+import type { Session, StepFigureSuggestion } from "../../types";
 
 type CourseDetailSessionsSectionProps = {
   sessions: Session[];
@@ -42,6 +43,9 @@ type CourseDetailSessionsSectionProps = {
   onSwapTargetChange: (value: string) => void;
   onConfirmSwap: (sessionId: number) => void;
   onCancelSwap: () => void;
+  sessionSuggestions: Record<number, StepFigureSuggestion[]>;
+  suggestingForSessionId: number | null;
+  onToggleSuggestions: (sessionId: number) => void;
 };
 
 const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = ({
@@ -73,7 +77,11 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
   onSwapTargetChange,
   onConfirmSwap,
   onCancelSwap,
+  sessionSuggestions,
+  suggestingForSessionId,
+  onToggleSuggestions,
 }) => {
+  const navigate = useNavigate();
   let sessionsContent: React.ReactNode;
   if (sessions.length === 0) {
     sessionsContent = <EmptyState>No sessions yet</EmptyState>;
@@ -172,6 +180,17 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                       Swap
                     </ActionButton>
                     <ActionButton
+                      onClick={() => onToggleSuggestions(session.id)}
+                      variant="secondary"
+                      disabled={isLoading}
+                    >
+                      {suggestingForSessionId === session.id
+                        ? "Loading…"
+                        : Object.prototype.hasOwnProperty.call(sessionSuggestions, session.id)
+                          ? "Hide Suggestions"
+                          : "Suggest"}
+                    </ActionButton>
+                    <ActionButton
                       onClick={() => onDeleteSession(session.id)}
                       variant="delete"
                       disabled={isLoading}
@@ -212,6 +231,44 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                       <ActionButton variant="secondary" onClick={onCancelSwap} disabled={isLoading}>
                         Cancel
                       </ActionButton>
+                    </div>
+                  )}
+                  {Object.prototype.hasOwnProperty.call(sessionSuggestions, session.id) && (
+                    <div className="session-suggestions-row">
+                      {sessionSuggestions[session.id].length === 0 ? (
+                        <span className="session-suggestions-empty">
+                          No suggestions — all matching choreographies already covered
+                        </span>
+                      ) : (
+                        <>
+                          <span className="session-suggestions-label">Next step figure:</span>
+                          <div className="session-suggestions-list">
+                            {sessionSuggestions[session.id].map((s) => (
+                              <button
+                                key={s.step_figure}
+                                type="button"
+                                className="suggestion-figure-btn"
+                                onClick={() =>
+                                  navigate("/", {
+                                    state: {
+                                      initialFilters: {
+                                        step_figures: [s.step_figure],
+                                        step_figures_match_mode: "all",
+                                      },
+                                    },
+                                  })
+                                }
+                                title={`Show choreographies with ${s.step_figure}`}
+                              >
+                                {s.step_figure}
+                                <span className="suggestion-count">
+                                  +{s.additional_choreographies}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </>

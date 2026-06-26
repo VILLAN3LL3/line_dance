@@ -1410,3 +1410,94 @@ export async function getStepFigureSuggestions(req, res) {
     res.status(500).json({ error: 'Failed to compute step figure suggestions' });
   }
 }
+
+export async function getSessionStepFigureSuggestions(req, res) {
+  try {
+    const sessionId = Number.parseInt(req.params.sessionId, 10);
+    if (!Number.isFinite(sessionId) || sessionId <= 0) {
+      return res.status(400).json({ error: 'Invalid session ID' });
+    }
+
+    const session = await getQuery(
+      'SELECT id, dance_course_id, session_date FROM sessions WHERE id = ?',
+      [sessionId],
+      dbName,
+    );
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const course = await getQuery(
+      'SELECT id, dance_group_id FROM dance_courses WHERE id = ?',
+      [session.dance_course_id],
+      dbName,
+    );
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+
+    const berlinNow = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    const todayIso = berlinNow.toISOString().slice(0, 10);
+
+    const [learnedRows, priorSessionChoreoRows] = await Promise.all([
+      allQuery(
+        `SELECT choreography_id FROM learned_choreographies
+         WHERE dance_group_id = ? AND first_learned_date < ?`,
+        [course.dance_group_id, todayIso],
+        dbName,
+      ),
+      allQuery(
+        `SELECT DISTINCT sc.choreography_id
+         FROM sessions s
+         INNER JOIN session_choreographies sc ON s.id = sc.session_id
+         WHERE s.dance_course_id = ? AND s.session_date < ?`,
+        [session.dance_course_id, session.session_date],
+        dbName,
+      ),
+    ]);
+
+    const allKnownChoreoIds = [
+      ...new Set([
+        ...learnedRows.map((r) => r.choreography_id),
+        ...priorSessionChoreoRows.map((r) => r.choreography_id),
+      ]),
+    ];
+
+    if (allKnownChoreoIds.length === 0) {
+      return res.json([]);
+    }
+
+    const idPlaceholders = allKnownChoreoIds.map(() => '?').join(',');
+
+    const suggestions = await allQuery(
+      `WITH known_figures AS (
+         SELECT DISTINCT LOWER(sf.name) AS name_lower
+         FROM choreography_step_figures csf
+         INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+         WHERE csf.choreography_id IN (${idPlaceholders})
+       ),
+       candidate_choreographies AS (
+         SELECT
+           MIN(CASE WHEN LOWER(sf.name) NOT IN (SELECT name_lower FROM known_figures)
+               THEN sf.name END) AS missing_figure
+         FROM choreographies c
+         INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
+         INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+         GROUP BY c.id
+         HAVING SUM(CASE WHEN LOWER(sf.name) NOT IN (SELECT name_lower FROM known_figures)
+                    THEN 1 ELSE 0 END) = 1
+       )
+       SELECT missing_figure AS step_figure, COUNT(*) AS additional_choreographies
+       FROM candidate_choreographies
+       GROUP BY LOWER(missing_figure)
+       ORDER BY additional_choreographies DESC, step_figure ASC
+       LIMIT 5`,
+      allKnownChoreoIds,
+    );
+
+    res.json(suggestions);
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to compute session step figure suggestions' });
+  }
+}

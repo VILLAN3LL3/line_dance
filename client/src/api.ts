@@ -419,6 +419,13 @@ export async function swapSessions(
   return response.data;
 }
 
+export async function getSessionStepFigureSuggestions(
+  sessionId: number,
+): Promise<StepFigureSuggestion[]> {
+  const response = await api.get(`/sessions/${sessionId}/step-figure-suggestions`);
+  return response.data;
+}
+
 // Learned Choreographies API
 
 export async function getLearnedChoreographies(

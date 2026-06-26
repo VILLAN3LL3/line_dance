@@ -10,12 +10,13 @@ import {
   fetchChoreographies,
   getDanceCourses,
   getSessionChoreographies,
+  getSessionStepFigureSuggestions,
   getSessions,
   removeChoreographyFromSession,
   swapSessions,
   updateSession,
 } from "../../api";
-import { Choreography, DanceCourse, Session, SessionChoreography } from "../../types";
+import { Choreography, DanceCourse, Session, SessionChoreography, StepFigureSuggestion } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
 import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
 import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
@@ -42,6 +43,10 @@ const CourseDetail: React.FC = () => {
   const [editSessionComment, setEditSessionComment] = useState("");
   const [swappingSessionId, setSwappingSessionId] = useState<number | null>(null);
   const [swapTargetSessionId, setSwapTargetSessionId] = useState("");
+  const [sessionSuggestions, setSessionSuggestions] = useState<
+    Record<number, StepFigureSuggestion[]>
+  >({});
+  const [suggestingForSessionId, setSuggestingForSessionId] = useState<number | null>(null);
   const [showPassedSessions, setShowPassedSessions] = useState(false);
   const [selectedChoreographyId, setSelectedChoreographyId] = useState<string>("");
   const [selectedChoreographyQuery, setSelectedChoreographyQuery] = useState("");
@@ -166,6 +171,26 @@ const CourseDetail: React.FC = () => {
   const handleCancelSwap = () => {
     setSwappingSessionId(null);
     setSwapTargetSessionId("");
+  };
+
+  const handleToggleSuggestions = async (sessionId: number) => {
+    if (Object.prototype.hasOwnProperty.call(sessionSuggestions, sessionId)) {
+      setSessionSuggestions((prev) => {
+        const next = { ...prev };
+        delete next[sessionId];
+        return next;
+      });
+      return;
+    }
+    setSuggestingForSessionId(sessionId);
+    try {
+      const suggestions = await getSessionStepFigureSuggestions(sessionId);
+      setSessionSuggestions((prev) => ({ ...prev, [sessionId]: suggestions }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load suggestions");
+    } finally {
+      setSuggestingForSessionId(null);
+    }
   };
 
   const handleConfirmSwap = async (sessionId: number) => {
@@ -350,6 +375,9 @@ const CourseDetail: React.FC = () => {
           onSwapTargetChange={setSwapTargetSessionId}
           onConfirmSwap={handleConfirmSwap}
           onCancelSwap={handleCancelSwap}
+          sessionSuggestions={sessionSuggestions}
+          suggestingForSessionId={suggestingForSessionId}
+          onToggleSuggestions={handleToggleSuggestions}
         />
 
         {selectedSession && (

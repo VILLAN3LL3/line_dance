@@ -60,6 +60,7 @@ import {
   updateGroupMaxLevel,
   getStepFigureSuggestions,
   swapSessions,
+  getSessionStepFigureSuggestions,
 } from '../routes/dance-groups.js';
 import { checkUrl } from '../routes/url-check.js';
 
@@ -156,6 +157,7 @@ app.delete('/api/session-choreographies/:id', removeChoreographyFromSession);
 
 // Session swap (specific route before generic :id routes)
 app.post('/api/sessions/:sessionId/swap/:targetSessionId', swapSessions);
+app.get('/api/sessions/:sessionId/step-figure-suggestions', getSessionStepFigureSuggestions);
 
 // Learned Choreographies View
 app.get('/api/learned-choreographies', getLearnedChoreographies);
