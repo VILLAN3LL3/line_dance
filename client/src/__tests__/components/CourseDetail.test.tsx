@@ -4,16 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import {
-  addChoreographyToSession,
-  createSession,
-  deleteSession,
-  fetchChoreographies,
-  getDanceCourses,
-  getSessionChoreographies,
-  getSessionStepFigureSuggestions,
-  getSessions,
-  removeChoreographyFromSession,
-  swapSessions,
+  addChoreographyToSession, createSession, deleteSession, fetchChoreographies, getDanceCourses, getSessionChoreographies, getSessions,
+  getSessionStepFigureSuggestions, removeChoreographyFromSession, swapSessions
 } from "../../api";
 import CourseDetail from "../../components/courses/CourseDetail";
 

@@ -599,9 +599,7 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
       .post('/api/sessions')
       .send({ dance_course_id: course.id, session_date: '2099-12-01' });
 
-    const res = await request(app).get(
-      `/api/sessions/${session.body.id}/step-figure-suggestions`,
-    );
+    const res = await request(app).get(`/api/sessions/${session.body.id}/step-figure-suggestions`);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.suggestions)).toBe(true);
     expect(Array.isArray(res.body.known_step_figures)).toBe(true);
@@ -619,7 +617,13 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
 
     const vineChoreo = await request(app)
       .post('/api/choreographies')
-      .send({ name: 'Vine Dance', level: 'BEGINNER', authors: [], tags: [], step_figures: ['Vine'] });
+      .send({
+        name: 'Vine Dance',
+        level: 'BEGINNER',
+        authors: [],
+        tags: [],
+        step_figures: ['Vine'],
+      });
     await request(app)
       .post('/api/session-choreographies')
       .send({ session_id: pastSession.body.id, choreography_id: vineChoreo.body.id });
@@ -634,7 +638,13 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
     // Choreo unlocked by Cross (requires Vine + Cross)
     await request(app)
       .post('/api/choreographies')
-      .send({ name: 'Cross Dance', level: 'BEGINNER', authors: [], tags: [], step_figures: ['Vine', 'Cross'] });
+      .send({
+        name: 'Cross Dance',
+        level: 'BEGINNER',
+        authors: [],
+        tags: [],
+        step_figures: ['Vine', 'Cross'],
+      });
 
     const res = await request(app).get(
       `/api/sessions/${targetSession.body.id}/step-figure-suggestions`,
@@ -660,14 +670,26 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
 
     const grapevineChoreo = await request(app)
       .post('/api/choreographies')
-      .send({ name: 'Grapevine Dance', level: 'BEGINNER', authors: [], tags: [], step_figures: ['Grapevine'] });
+      .send({
+        name: 'Grapevine Dance',
+        level: 'BEGINNER',
+        authors: [],
+        tags: [],
+        step_figures: ['Grapevine'],
+      });
     await request(app)
       .post('/api/session-choreographies')
       .send({ session_id: priorSession.body.id, choreography_id: grapevineChoreo.body.id });
 
     await request(app)
       .post('/api/choreographies')
-      .send({ name: 'Kick Dance', level: 'BEGINNER', authors: [], tags: [], step_figures: ['Grapevine', 'Kick'] });
+      .send({
+        name: 'Kick Dance',
+        level: 'BEGINNER',
+        authors: [],
+        tags: [],
+        step_figures: ['Grapevine', 'Kick'],
+      });
 
     const res = await request(app).get(
       `/api/sessions/${targetSession.body.id}/step-figure-suggestions`,
@@ -689,9 +711,7 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
       .post('/api/sessions')
       .send({ dance_course_id: course.body.id, session_date: '2099-12-01' });
 
-    const res = await request(app).get(
-      `/api/sessions/${session.body.id}/step-figure-suggestions`,
-    );
+    const res = await request(app).get(`/api/sessions/${session.body.id}/step-figure-suggestions`);
     expect(res.body.max_level_value).toBe(30);
   });
 
@@ -712,14 +732,24 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
 
     await request(app)
       .post('/api/choreographies')
-      .send({ name: 'Advanced Single', level: 'ADVANCED', authors: [], tags: [], step_figures: ['AdvancedFigure'] });
+      .send({
+        name: 'Advanced Single',
+        level: 'ADVANCED',
+        authors: [],
+        tags: [],
+        step_figures: ['AdvancedFigure'],
+      });
     await request(app)
       .post('/api/choreographies')
-      .send({ name: 'Beginner Single', level: 'BEGINNER', authors: [], tags: [], step_figures: ['BeginnerFigure'] });
+      .send({
+        name: 'Beginner Single',
+        level: 'BEGINNER',
+        authors: [],
+        tags: [],
+        step_figures: ['BeginnerFigure'],
+      });
 
-    const res = await request(app).get(
-      `/api/sessions/${session.body.id}/step-figure-suggestions`,
-    );
+    const res = await request(app).get(`/api/sessions/${session.body.id}/step-figure-suggestions`);
     expect(res.body.suggestions.every((s) => s.step_figure !== 'AdvancedFigure')).toBe(true);
     expect(res.body.suggestions.some((s) => s.step_figure === 'BeginnerFigure')).toBe(true);
   });

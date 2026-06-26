@@ -666,9 +666,7 @@ describe('GET /api/choreographies/search — required_step_figures filter', () =
   it('requires ALL listed figures (AND semantics)', async () => {
     await seedDances();
     // Only Waltz has both Rock Step AND Weave
-    const res = await searchRaw(
-      'required_step_figures[]=Rock+Step&required_step_figures[]=Weave',
-    );
+    const res = await searchRaw('required_step_figures[]=Rock+Step&required_step_figures[]=Weave');
     expect(res.body.data).toHaveLength(1);
     expect(res.body.data[0].name).toBe('Waltz in the Rain');
   });

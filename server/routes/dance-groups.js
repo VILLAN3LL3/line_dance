@@ -1351,11 +1351,7 @@ export async function getStepFigureSuggestions(req, res) {
       return Number.isNaN(parsed) || parsed < 0 ? null : parsed;
     })();
 
-    const group = await getQuery(
-      'SELECT id FROM dance_groups WHERE id = ?',
-      [groupId],
-      dbName,
-    );
+    const group = await getQuery('SELECT id FROM dance_groups WHERE id = ?', [groupId], dbName);
     if (!group) {
       return res.status(404).json({ error: 'Group not found' });
     }
