@@ -4,11 +4,25 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  addChoreographyToSession, createSession, deleteSession, fetchChoreographies, getDanceCourses, getSessionChoreographies, getSessions,
-  getSessionStepFigureSuggestions, removeChoreographyFromSession, swapSessions, updateSession
+  addChoreographyToSession,
+  createSession,
+  deleteSession,
+  fetchChoreographies,
+  getDanceCourses,
+  getSessionChoreographies,
+  getSessions,
+  getSessionStepFigureSuggestions,
+  removeChoreographyFromSession,
+  swapSessions,
+  updateSession,
 } from "../../api";
 import {
-  Choreography, DanceCourse, Session, SessionChoreography, SessionStepFigureSuggestionsResult, StepFigureSuggestion
+  Choreography,
+  DanceCourse,
+  Session,
+  SessionChoreography,
+  SessionStepFigureSuggestionsResult,
+  StepFigureSuggestion,
 } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
 import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
