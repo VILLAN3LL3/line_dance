@@ -1,16 +1,7 @@
 import React from "react";
 
 import { getSessionBadgeLabel, getSessionBadgeStatus } from "../../utils/courseStatus";
-import {
-  ActionButton,
-  ActionGroup,
-  CheckboxFilter,
-  EmptyState,
-  LoadingState,
-  Section,
-  StatusBadge,
-} from "../shared/ui";
-
+import { ActionButton, ActionGroup, CheckboxFilter, EmptyState, LoadingState, Section, StatusBadge } from "../shared/ui";
 import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
 
 import type { Choreography, Session, SessionChoreography, StepFigureSuggestion } from "../../types";
