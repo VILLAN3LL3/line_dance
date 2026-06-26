@@ -1224,6 +1224,97 @@ export async function removeChoreographyFromSession(req, res) {
   }
 }
 
+export async function swapSessions(req, res) {
+  try {
+    const sessionIdA = Number.parseInt(req.params.sessionId, 10);
+    const sessionIdB = Number.parseInt(req.params.targetSessionId, 10);
+
+    if (!Number.isFinite(sessionIdA) || !Number.isFinite(sessionIdB) || sessionIdA === sessionIdB) {
+      return res.status(400).json({ error: 'Invalid session IDs' });
+    }
+
+    const sessionA = await getQuery(
+      'SELECT id, dance_course_id, comment FROM sessions WHERE id = ?',
+      [sessionIdA],
+      dbName,
+    );
+    const sessionB = await getQuery(
+      'SELECT id, dance_course_id, comment FROM sessions WHERE id = ?',
+      [sessionIdB],
+      dbName,
+    );
+
+    if (!sessionA || !sessionB) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    if (sessionA.dance_course_id !== sessionB.dance_course_id) {
+      return res.status(400).json({ error: 'Sessions must belong to the same course' });
+    }
+
+    const choreosA = await allQuery(
+      'SELECT choreography_id FROM session_choreographies WHERE session_id = ?',
+      [sessionIdA],
+      dbName,
+    );
+    const choreosB = await allQuery(
+      'SELECT choreography_id FROM session_choreographies WHERE session_id = ?',
+      [sessionIdB],
+      dbName,
+    );
+
+    await runQuery('BEGIN TRANSACTION', [], dbName);
+    try {
+      await runQuery(
+        'DELETE FROM session_choreographies WHERE session_id = ?',
+        [sessionIdA],
+        dbName,
+      );
+      await runQuery(
+        'DELETE FROM session_choreographies WHERE session_id = ?',
+        [sessionIdB],
+        dbName,
+      );
+
+      for (const c of choreosA) {
+        await runQuery(
+          'INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, ?)',
+          [sessionIdB, c.choreography_id],
+          dbName,
+        );
+      }
+      for (const c of choreosB) {
+        await runQuery(
+          'INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, ?)',
+          [sessionIdA, c.choreography_id],
+          dbName,
+        );
+      }
+
+      await runQuery(
+        'UPDATE sessions SET comment = ? WHERE id = ?',
+        [sessionB.comment, sessionIdA],
+        dbName,
+      );
+      await runQuery(
+        'UPDATE sessions SET comment = ? WHERE id = ?',
+        [sessionA.comment, sessionIdB],
+        dbName,
+      );
+
+      await runQuery('COMMIT', [], dbName);
+    } catch (err) {
+      await runQuery('ROLLBACK', [], dbName);
+      throw err;
+    }
+
+    res.json({ message: 'Sessions swapped successfully' });
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to swap sessions' });
+  }
+}
+
 // Learned Choreographies view
 
 export async function getLearnedChoreographies(req, res) {

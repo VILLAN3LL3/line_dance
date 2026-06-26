@@ -36,6 +36,12 @@ type CourseDetailSessionsSectionProps = {
   onEditSessionCommentChange: (value: string) => void;
   onSaveEditSession: (sessionId: number) => void;
   onCancelEditSession: () => void;
+  swappingSessionId: number | null;
+  swapTargetSessionId: string;
+  onStartSwap: (sessionId: number) => void;
+  onSwapTargetChange: (value: string) => void;
+  onConfirmSwap: (sessionId: number) => void;
+  onCancelSwap: () => void;
 };
 
 const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = ({
@@ -61,6 +67,12 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
   onEditSessionCommentChange,
   onSaveEditSession,
   onCancelEditSession,
+  swappingSessionId,
+  swapTargetSessionId,
+  onStartSwap,
+  onSwapTargetChange,
+  onConfirmSwap,
+  onCancelSwap,
 }) => {
   let sessionsContent: React.ReactNode;
   if (sessions.length === 0) {
@@ -153,6 +165,13 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                       Edit
                     </ActionButton>
                     <ActionButton
+                      onClick={() => onStartSwap(session.id)}
+                      variant="secondary"
+                      disabled={isLoading}
+                    >
+                      Swap
+                    </ActionButton>
+                    <ActionButton
                       onClick={() => onDeleteSession(session.id)}
                       variant="delete"
                       disabled={isLoading}
@@ -160,6 +179,45 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                       Delete
                     </ActionButton>
                   </ActionGroup>
+                  {swappingSessionId === session.id && (
+                    <div className="session-swap-row">
+                      <select
+                        value={swapTargetSessionId}
+                        onChange={(e) => onSwapTargetChange(e.target.value)}
+                        disabled={isLoading}
+                        className="session-swap-select"
+                      >
+                        <option value="">Select session to swap with…</option>
+                        {sessions
+                          .filter((s) => s.id !== session.id)
+                          .map((s) => (
+                            <option key={s.id} value={String(s.id)}>
+                              {new Date(s.session_date).toLocaleDateString("de-DE", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                                weekday: "short",
+                              })}
+                              {s.comment ? ` — ${s.comment}` : ""}
+                            </option>
+                          ))}
+                      </select>
+                      <ActionButton
+                        variant="primary"
+                        onClick={() => onConfirmSwap(session.id)}
+                        disabled={isLoading || !swapTargetSessionId}
+                      >
+                        Confirm Swap
+                      </ActionButton>
+                      <ActionButton
+                        variant="secondary"
+                        onClick={onCancelSwap}
+                        disabled={isLoading}
+                      >
+                        Cancel
+                      </ActionButton>
+                    </div>
+                  )}
                 </>
               )}
             </div>

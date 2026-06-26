@@ -411,6 +411,14 @@ export async function removeChoreographyFromSession(id: number): Promise<{ messa
   return response.data;
 }
 
+export async function swapSessions(
+  sessionId: number,
+  targetSessionId: number,
+): Promise<{ message: string }> {
+  const response = await api.post(`/sessions/${sessionId}/swap/${targetSessionId}`);
+  return response.data;
+}
+
 // Learned Choreographies API
 
 export async function getLearnedChoreographies(

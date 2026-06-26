@@ -12,6 +12,7 @@ import {
   getSessionChoreographies,
   getSessions,
   removeChoreographyFromSession,
+  swapSessions,
   updateSession,
 } from "../../api";
 import { Choreography, DanceCourse, Session, SessionChoreography } from "../../types";
@@ -39,6 +40,8 @@ const CourseDetail: React.FC = () => {
   const [editingSessionId, setEditingSessionId] = useState<number | null>(null);
   const [editSessionDate, setEditSessionDate] = useState("");
   const [editSessionComment, setEditSessionComment] = useState("");
+  const [swappingSessionId, setSwappingSessionId] = useState<number | null>(null);
+  const [swapTargetSessionId, setSwapTargetSessionId] = useState("");
   const [showPassedSessions, setShowPassedSessions] = useState(false);
   const [selectedChoreographyId, setSelectedChoreographyId] = useState<string>("");
   const [selectedChoreographyQuery, setSelectedChoreographyQuery] = useState("");
@@ -146,10 +149,42 @@ const CourseDetail: React.FC = () => {
     setEditingSessionId(session.id);
     setEditSessionDate(session.session_date.slice(0, 10));
     setEditSessionComment(session.comment ?? "");
+    setSwappingSessionId(null);
+    setSwapTargetSessionId("");
   };
 
   const handleCancelEditSession = () => {
     setEditingSessionId(null);
+  };
+
+  const handleStartSwap = (sessionId: number) => {
+    setSwappingSessionId(sessionId);
+    setSwapTargetSessionId("");
+    setEditingSessionId(null);
+  };
+
+  const handleCancelSwap = () => {
+    setSwappingSessionId(null);
+    setSwapTargetSessionId("");
+  };
+
+  const handleConfirmSwap = async (sessionId: number) => {
+    if (!swapTargetSessionId) return;
+    if (!confirmAction("Swap choreographies and comments between these two sessions?")) return;
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const targetId = Number.parseInt(swapTargetSessionId, 10);
+      await swapSessions(sessionId, targetId);
+      setSwappingSessionId(null);
+      setSwapTargetSessionId("");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to swap sessions");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSaveEditSession = async (sessionId: number) => {
@@ -309,6 +344,12 @@ const CourseDetail: React.FC = () => {
           onEditSessionCommentChange={setEditSessionComment}
           onSaveEditSession={handleSaveEditSession}
           onCancelEditSession={handleCancelEditSession}
+          swappingSessionId={swappingSessionId}
+          swapTargetSessionId={swapTargetSessionId}
+          onStartSwap={handleStartSwap}
+          onSwapTargetChange={setSwapTargetSessionId}
+          onConfirmSwap={handleConfirmSwap}
+          onCancelSwap={handleCancelSwap}
         />
 
         {selectedSession && (
