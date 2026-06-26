@@ -2,15 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getSessionBadgeLabel, getSessionBadgeStatus } from "../../utils/courseStatus";
-import {
-  ActionButton,
-  ActionGroup,
-  CheckboxFilter,
-  EmptyState,
-  LoadingState,
-  Section,
-  StatusBadge,
-} from "../shared/ui";
+import { ActionButton, ActionGroup, CheckboxFilter, EmptyState, LoadingState, Section, StatusBadge } from "../shared/ui";
 
 import type { Session, StepFigureSuggestion } from "../../types";
 
@@ -49,6 +41,17 @@ type CourseDetailSessionsSectionProps = {
   suggestingForSessionId: number | null;
   onToggleSuggestions: (sessionId: number) => void;
 };
+
+function getSuggestLabel(
+  suggestingForSessionId: number | null,
+  sessionSuggestions: Record<number, StepFigureSuggestion[]>,
+  sessionId: number,
+): string {
+  if (suggestingForSessionId === sessionId) return "Loading…";
+  if (Object.prototype.hasOwnProperty.call(sessionSuggestions, sessionId))
+    return "Hide Suggestions";
+  return "Suggest";
+}
 
 const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = ({
   sessions,
@@ -249,8 +252,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                                 type="button"
                                 className="suggestion-figure-btn"
                                 onClick={() => {
-                                  const knownFigures =
-                                    sessionKnownFigures[session.id] ?? [];
+                                  const knownFigures = sessionKnownFigures[session.id] ?? [];
                                   navigate("/", {
                                     state: {
                                       initialFilters: {
