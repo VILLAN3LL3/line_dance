@@ -382,6 +382,10 @@
   }
 }
 
+.learned-sections {
+  display: contents;
+}
+
 .suggestion-description {
   margin: 0 0 12px 0;
   color: var(--color-text-muted);
