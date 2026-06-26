@@ -1,9 +1,21 @@
 import axios from "axios";
 
 import {
-  Choreography, ChoreographyFormData, DanceCourse, DanceGroup, DuplicateChoreography, LearnedChoreography, LevelOption, PaginatedResponse,
-  SavedFilterConfiguration, SearchFilters, Session, SessionChoreography, SessionStepFigureSuggestionsResult, StepFigureDefinition,
-  StepFigureSuggestion
+  Choreography,
+  ChoreographyFormData,
+  DanceCourse,
+  DanceGroup,
+  DuplicateChoreography,
+  LearnedChoreography,
+  LevelOption,
+  PaginatedResponse,
+  SavedFilterConfiguration,
+  SearchFilters,
+  Session,
+  SessionChoreography,
+  SessionStepFigureSuggestionsResult,
+  StepFigureDefinition,
+  StepFigureSuggestion,
 } from "./types";
 
 import type { Trainer } from "./types";
