@@ -29,6 +29,11 @@ async function ensureSavedFiltersTable() {
   savedFiltersTableReady = true;
 }
 
+function assignNonEmptyArray(target, key, rawValue) {
+  const arr = normalizeStringArray(rawValue);
+  if (arr.length > 0) target[key] = arr;
+}
+
 export function normalizeSavedFilters(rawFilters) {
   if (!rawFilters || typeof rawFilters !== 'object' || Array.isArray(rawFilters)) {
     return {};
@@ -49,8 +54,7 @@ export function normalizeSavedFilters(rawFilters) {
     normalized.max_level_value = parsedMaxLevelValue;
   }
 
-  const stepFigures = normalizeStringArray(rawFilters.step_figures);
-  if (stepFigures.length > 0) normalized.step_figures = stepFigures;
+  assignNonEmptyArray(normalized, 'step_figures', rawFilters.step_figures);
 
   if (['all', 'any', 'exact'].includes(rawFilters.step_figures_match_mode)) {
     normalized.step_figures_match_mode = rawFilters.step_figures_match_mode;
@@ -60,6 +64,8 @@ export function normalizeSavedFilters(rawFilters) {
     normalized.without_step_figures = true;
   }
 
+  assignNonEmptyArray(normalized, 'required_step_figures', rawFilters.required_step_figures);
+
   const tags = normalizeStringArray(rawFilters.tags);
   if (tags.length > 0) normalized.tags = tags;
 
@@ -68,8 +74,7 @@ export function normalizeSavedFilters(rawFilters) {
   );
   if (excludedTags.length > 0) normalized.excluded_tags = excludedTags;
 
-  const authors = normalizeStringArray(rawFilters.authors);
-  if (authors.length > 0) normalized.authors = authors;
+  assignNonEmptyArray(normalized, 'authors', rawFilters.authors);
 
   const parsedMaxCount = Number.parseInt(String(rawFilters.max_count), 10);
   if (!Number.isNaN(parsedMaxCount) && parsedMaxCount >= 0) {
@@ -712,6 +717,7 @@ function buildFilterConditions(filterObj) {
     step_figures,
     step_figures_match_mode,
     without_step_figures,
+    required_step_figures,
     tags,
     excluded_tags,
     authors,
@@ -787,6 +793,16 @@ function buildFilterConditions(filterObj) {
     params.push(parsedMinRating);
   }
 
+  const requiredFigures = normalizeUniqueTextQueryParam(required_step_figures);
+  for (const figure of requiredFigures) {
+    conditions.push(
+      `EXISTS (SELECT 1 FROM choreography_step_figures req_csf
+               INNER JOIN step_figures req_sf ON req_csf.step_figure_id = req_sf.id
+               WHERE req_csf.choreography_id = c.id AND LOWER(req_sf.name) = LOWER(?))`,
+    );
+    params.push(figure);
+  }
+
   return { conditions, params, joins, stepFilter };
 }
 
@@ -798,6 +814,7 @@ export async function searchChoreographies(req, res) {
       step_figures,
       step_figures_match_mode,
       without_step_figures,
+      required_step_figures,
       tags,
       excluded_tags,
       authors,
@@ -820,6 +837,7 @@ export async function searchChoreographies(req, res) {
       step_figures: expandedStepFigures,
       step_figures_match_mode,
       without_step_figures,
+      required_step_figures,
       tags,
       excluded_tags,
       authors,

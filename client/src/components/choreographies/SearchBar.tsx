@@ -58,6 +58,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         ? values.stepFiguresMatchMode
         : undefined,
     without_step_figures: values.withoutStepFigures || undefined,
+    required_step_figures: values.requiredFigures.length > 0 ? values.requiredFigures : undefined,
     tags: values.includedTags.length > 0 ? values.includedTags : undefined,
     excluded_tags: values.excludedTags.length > 0 ? values.excludedTags : undefined,
     authors: values.selectedAuthors.length > 0 ? values.selectedAuthors : undefined,
@@ -93,6 +94,13 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       selectedFigures: includesIgnoreCase(prev.selectedFigures, figure)
         ? filterOutIgnoreCase(prev.selectedFigures, figure)
         : [...prev.selectedFigures, figure],
+    }));
+  };
+
+  const toggleRequiredFigure = (figure: string) => {
+    setValues((prev) => ({
+      ...prev,
+      requiredFigures: filterOutIgnoreCase(prev.requiredFigures, figure),
     }));
   };
 
@@ -337,9 +345,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           figureOptions={figureOptions}
           withoutStepFigures={values.withoutStepFigures}
           stepFiguresMatchMode={values.stepFiguresMatchMode}
+          requiredFigures={values.requiredFigures}
           onFigureInput={handleFigureInput}
           onAddFigureFromInput={addFigureFromInput}
           onToggleFigure={toggleFigure}
+          onToggleRequiredFigure={toggleRequiredFigure}
           onWithoutStepFiguresChange={(checked) => {
             setValues((prev) => ({
               ...prev,

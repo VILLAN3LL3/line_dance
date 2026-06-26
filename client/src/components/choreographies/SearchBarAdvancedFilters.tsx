@@ -32,9 +32,11 @@ interface SearchBarAdvancedFiltersProps {
   figureOptions: string[];
   withoutStepFigures: boolean;
   stepFiguresMatchMode: "all" | "any" | "exact";
+  requiredFigures: string[];
   onFigureInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAddFigureFromInput: (value?: string) => void;
   onToggleFigure: (figure: string) => void;
+  onToggleRequiredFigure: (figure: string) => void;
   onWithoutStepFiguresChange: (checked: boolean) => void;
   onStepFiguresMatchModeChange: (mode: "all" | "any" | "exact") => void;
   // Tags
@@ -85,9 +87,11 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
   figureOptions,
   withoutStepFigures,
   stepFiguresMatchMode,
+  requiredFigures,
   onFigureInput,
   onAddFigureFromInput,
   onToggleFigure,
+  onToggleRequiredFigure,
   onWithoutStepFiguresChange,
   onStepFiguresMatchModeChange,
   inputTag,
@@ -147,10 +151,12 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
       figureOptions={figureOptions}
       withoutStepFigures={withoutStepFigures}
       stepFiguresMatchMode={stepFiguresMatchMode}
+      requiredFigures={requiredFigures}
       isLoading={isLoading}
       onFigureInput={onFigureInput}
       onAddFigureFromInput={onAddFigureFromInput}
       onToggleFigure={onToggleFigure}
+      onToggleRequiredFigure={onToggleRequiredFigure}
       onWithoutStepFiguresChange={onWithoutStepFiguresChange}
       onStepFiguresMatchModeChange={onStepFiguresMatchModeChange}
     />

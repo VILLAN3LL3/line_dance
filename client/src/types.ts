@@ -56,6 +56,7 @@ export interface SearchFilters {
   max_count?: number;
   step_figures?: string[];
   step_figures_match_mode?: "all" | "any" | "exact";
+  required_step_figures?: string[];
   without_step_figures?: boolean;
   tags?: string[];
   excluded_tags?: string[];

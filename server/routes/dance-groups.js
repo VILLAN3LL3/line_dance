@@ -1309,7 +1309,7 @@ export async function getStepFigureSuggestions(req, res) {
        FROM candidate_choreographies
        GROUP BY LOWER(missing_figure)
        ORDER BY additional_choreographies DESC, step_figure ASC
-       LIMIT 10`,
+       LIMIT 5`,
       params,
     );
 

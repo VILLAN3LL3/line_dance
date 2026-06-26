@@ -427,7 +427,7 @@ export async function getStepFigureSuggestions(
   maxLevelValue?: number | null,
 ): Promise<StepFigureSuggestion[]> {
   const response = await api.get(`/dance-groups/${groupId}/step-figure-suggestions`, {
-    params: maxLevelValue != null ? { max_level_value: maxLevelValue } : {},
+    params: maxLevelValue == null ? {} : { max_level_value: maxLevelValue },
   });
   return response.data;
 }

@@ -13,6 +13,7 @@ export interface SearchBarFilterValues {
   selectedFigures: string[];
   stepFiguresMatchMode: "all" | "any" | "exact";
   withoutStepFigures: boolean;
+  requiredFigures: string[];
   includedTags: string[];
   excludedTags: string[];
   selectedAuthors: string[];
@@ -34,6 +35,7 @@ export const defaultSearchBarFilterValues = (maxCountLimit = 0): SearchBarFilter
   selectedFigures: [],
   stepFiguresMatchMode: "all",
   withoutStepFigures: false,
+  requiredFigures: [],
   includedTags: [],
   excludedTags: [],
   selectedAuthors: [],
@@ -62,6 +64,7 @@ export const searchBarValuesFromFilters = (
   selectedFigures: filters.step_figures || [],
   stepFiguresMatchMode: filters.step_figures_match_mode || "all",
   withoutStepFigures: !!filters.without_step_figures,
+  requiredFigures: filters.required_step_figures || [],
   includedTags: filters.tags || [],
   excludedTags: filters.excluded_tags || [],
   selectedAuthors: filters.authors || [],

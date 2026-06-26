@@ -55,6 +55,7 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
     const initialFilters = {
       step_figures: [...learnedStepFigures, suggestedFigure],
       step_figures_match_mode: "exact" as const,
+      required_step_figures: [suggestedFigure],
       ...(maxGroupLevelValue === null ? {} : { max_level_value: maxGroupLevelValue }),
     };
 

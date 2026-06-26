@@ -8,10 +8,12 @@ interface SearchBarStepFiguresFilterProps {
   figureOptions: string[];
   withoutStepFigures: boolean;
   stepFiguresMatchMode: "all" | "any" | "exact";
+  requiredFigures: string[];
   isLoading: boolean;
   onFigureInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAddFigureFromInput: (value?: string) => void;
   onToggleFigure: (figure: string) => void;
+  onToggleRequiredFigure: (figure: string) => void;
   onWithoutStepFiguresChange: (checked: boolean) => void;
   onStepFiguresMatchModeChange: (mode: "all" | "any" | "exact") => void;
 }
@@ -22,10 +24,12 @@ export const SearchBarStepFiguresFilter: React.FC<SearchBarStepFiguresFilterProp
   figureOptions,
   withoutStepFigures,
   stepFiguresMatchMode,
+  requiredFigures,
   isLoading,
   onFigureInput,
   onAddFigureFromInput,
   onToggleFigure,
+  onToggleRequiredFigure,
   onWithoutStepFiguresChange,
   onStepFiguresMatchModeChange,
 }) => (
@@ -121,5 +125,24 @@ export const SearchBarStepFiguresFilter: React.FC<SearchBarStepFiguresFilterProp
         />
       ))}
     </TagGroup>
+
+    {requiredFigures.length > 0 && (
+      <div className="required-figures">
+        <span className="required-figures-label">Also required:</span>
+        <TagGroup className="filter-tags">
+          {requiredFigures.map((figure) => (
+            <Tag
+              key={figure}
+              value={figure}
+              className="filter-tag filter-tag--required"
+              removeButtonClassName="btn-remove-tag"
+              isRemovable
+              disabled={isLoading}
+              onRemove={() => onToggleRequiredFigure(figure)}
+            />
+          ))}
+        </TagGroup>
+      </div>
+    )}
   </div>
 );
