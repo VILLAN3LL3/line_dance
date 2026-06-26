@@ -164,3 +164,9 @@ export interface StepFigureSuggestion {
   step_figure: string;
   additional_choreographies: number;
 }
+
+export interface SessionStepFigureSuggestionsResult {
+  suggestions: StepFigureSuggestion[];
+  known_step_figures: string[];
+  max_level_value: number | null;
+}

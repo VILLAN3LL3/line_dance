@@ -44,6 +44,8 @@ type CourseDetailSessionsSectionProps = {
   onConfirmSwap: (sessionId: number) => void;
   onCancelSwap: () => void;
   sessionSuggestions: Record<number, StepFigureSuggestion[]>;
+  sessionKnownFigures: Record<number, string[]>;
+  sessionMaxLevelValue: number | null;
   suggestingForSessionId: number | null;
   onToggleSuggestions: (sessionId: number) => void;
 };
@@ -78,6 +80,8 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
   onConfirmSwap,
   onCancelSwap,
   sessionSuggestions,
+  sessionKnownFigures,
+  sessionMaxLevelValue,
   suggestingForSessionId,
   onToggleSuggestions,
 }) => {
@@ -184,11 +188,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                       variant="secondary"
                       disabled={isLoading}
                     >
-                      {suggestingForSessionId === session.id
-                        ? "Loading…"
-                        : Object.prototype.hasOwnProperty.call(sessionSuggestions, session.id)
-                          ? "Hide Suggestions"
-                          : "Suggest"}
+                      {getSuggestLabel(suggestingForSessionId, sessionSuggestions, session.id)}
                     </ActionButton>
                     <ActionButton
                       onClick={() => onDeleteSession(session.id)}
@@ -248,16 +248,22 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                                 key={s.step_figure}
                                 type="button"
                                 className="suggestion-figure-btn"
-                                onClick={() =>
+                                onClick={() => {
+                                  const knownFigures =
+                                    sessionKnownFigures[session.id] ?? [];
                                   navigate("/", {
                                     state: {
                                       initialFilters: {
-                                        step_figures: [s.step_figure],
-                                        step_figures_match_mode: "all",
+                                        step_figures: [...knownFigures, s.step_figure],
+                                        step_figures_match_mode: "exact" as const,
+                                        required_step_figures: [s.step_figure],
+                                        ...(sessionMaxLevelValue == null
+                                          ? {}
+                                          : { max_level_value: sessionMaxLevelValue }),
                                       },
                                     },
-                                  })
-                                }
+                                  });
+                                }}
                                 title={`Show choreographies with ${s.step_figure}`}
                               >
                                 {s.step_figure}

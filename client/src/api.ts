@@ -14,6 +14,7 @@ import {
   Session,
   SessionChoreography,
   StepFigureDefinition,
+  SessionStepFigureSuggestionsResult,
   StepFigureSuggestion,
 } from "./types";
 
@@ -421,7 +422,7 @@ export async function swapSessions(
 
 export async function getSessionStepFigureSuggestions(
   sessionId: number,
-): Promise<StepFigureSuggestion[]> {
+): Promise<SessionStepFigureSuggestionsResult> {
   const response = await api.get(`/sessions/${sessionId}/step-figure-suggestions`);
   return response.data;
 }

@@ -1362,12 +1362,15 @@ export async function getStepFigureSuggestions(req, res) {
       dbName,
     );
 
-    if (learnedRows.length === 0) {
-      return res.json([]);
-    }
-
     const learnedChoreographyIds = learnedRows.map((r) => r.choreography_id);
-    const idPlaceholders = learnedChoreographyIds.map(() => '?').join(',');
+
+    const knownFiguresCte =
+      learnedChoreographyIds.length > 0
+        ? `SELECT DISTINCT LOWER(sf.name) AS name_lower
+           FROM choreography_step_figures csf
+           INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+           WHERE csf.choreography_id IN (${learnedChoreographyIds.map(() => '?').join(',')})`
+        : 'SELECT NULL AS name_lower WHERE 1=0';
 
     const levelCondition =
       maxLevelValue === null ? '' : 'AND (l.value IS NOT NULL AND l.value <= ?)';
@@ -1378,10 +1381,7 @@ export async function getStepFigureSuggestions(req, res) {
 
     const suggestions = await allQuery(
       `WITH known_figures AS (
-         SELECT DISTINCT LOWER(sf.name) AS name_lower
-         FROM choreography_step_figures csf
-         INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
-         WHERE csf.choreography_id IN (${idPlaceholders})
+         ${knownFiguresCte}
        ),
        candidate_choreographies AS (
          SELECT
@@ -1450,8 +1450,9 @@ export async function getSessionStepFigureSuggestions(req, res) {
         `SELECT DISTINCT sc.choreography_id
          FROM sessions s
          INNER JOIN session_choreographies sc ON s.id = sc.session_id
-         WHERE s.dance_course_id = ? AND s.session_date < ?`,
-        [session.dance_course_id, session.session_date],
+         INNER JOIN dance_courses dc ON s.dance_course_id = dc.id
+         WHERE dc.dance_group_id = ? AND s.session_date < ?`,
+        [course.dance_group_id, session.session_date],
         dbName,
       ),
     ]);
@@ -1463,18 +1464,37 @@ export async function getSessionStepFigureSuggestions(req, res) {
       ]),
     ];
 
-    if (allKnownChoreoIds.length === 0) {
-      return res.json([]);
-    }
+    const [group, knownStepFigureRows] = await Promise.all([
+      getQuery(
+        'SELECT max_group_level_value FROM dance_groups WHERE id = ?',
+        [course.dance_group_id],
+        dbName,
+      ),
+      allKnownChoreoIds.length > 0
+        ? allQuery(
+            `SELECT DISTINCT sf.name AS step_figure
+             FROM choreography_step_figures csf
+             INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+             WHERE csf.choreography_id IN (${allKnownChoreoIds.map(() => '?').join(',')})`,
+            allKnownChoreoIds,
+          )
+        : Promise.resolve([]),
+    ]);
 
-    const idPlaceholders = allKnownChoreoIds.map(() => '?').join(',');
+    const known_step_figures = knownStepFigureRows.map((r) => r.step_figure);
+    const max_level_value = group?.max_group_level_value ?? null;
+
+    const knownFiguresCte =
+      allKnownChoreoIds.length > 0
+        ? `SELECT DISTINCT LOWER(sf.name) AS name_lower
+           FROM choreography_step_figures csf
+           INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+           WHERE csf.choreography_id IN (${allKnownChoreoIds.map(() => '?').join(',')})`
+        : 'SELECT NULL AS name_lower WHERE 1=0';
 
     const suggestions = await allQuery(
       `WITH known_figures AS (
-         SELECT DISTINCT LOWER(sf.name) AS name_lower
-         FROM choreography_step_figures csf
-         INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
-         WHERE csf.choreography_id IN (${idPlaceholders})
+         ${knownFiguresCte}
        ),
        candidate_choreographies AS (
          SELECT
@@ -1495,7 +1515,7 @@ export async function getSessionStepFigureSuggestions(req, res) {
       allKnownChoreoIds,
     );
 
-    res.json(suggestions);
+    res.json({ suggestions, known_step_figures, max_level_value });
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to compute session step figure suggestions' });

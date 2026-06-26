@@ -21,6 +21,7 @@ import {
   DanceCourse,
   Session,
   SessionChoreography,
+  SessionStepFigureSuggestionsResult,
   StepFigureSuggestion,
 } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
@@ -52,6 +53,8 @@ const CourseDetail: React.FC = () => {
   const [sessionSuggestions, setSessionSuggestions] = useState<
     Record<number, StepFigureSuggestion[]>
   >({});
+  const [sessionKnownFigures, setSessionKnownFigures] = useState<Record<number, string[]>>({});
+  const [sessionMaxLevelValue, setSessionMaxLevelValue] = useState<number | null>(null);
   const [suggestingForSessionId, setSuggestingForSessionId] = useState<number | null>(null);
   const [showPassedSessions, setShowPassedSessions] = useState(false);
   const [selectedChoreographyId, setSelectedChoreographyId] = useState<string>("");
@@ -186,12 +189,20 @@ const CourseDetail: React.FC = () => {
         delete next[sessionId];
         return next;
       });
+      setSessionKnownFigures((prev) => {
+        const next = { ...prev };
+        delete next[sessionId];
+        return next;
+      });
       return;
     }
     setSuggestingForSessionId(sessionId);
     try {
-      const suggestions = await getSessionStepFigureSuggestions(sessionId);
-      setSessionSuggestions((prev) => ({ ...prev, [sessionId]: suggestions }));
+      const result: SessionStepFigureSuggestionsResult =
+        await getSessionStepFigureSuggestions(sessionId);
+      setSessionSuggestions((prev) => ({ ...prev, [sessionId]: result.suggestions }));
+      setSessionKnownFigures((prev) => ({ ...prev, [sessionId]: result.known_step_figures }));
+      setSessionMaxLevelValue(result.max_level_value);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load suggestions");
     } finally {
@@ -382,6 +393,8 @@ const CourseDetail: React.FC = () => {
           onConfirmSwap={handleConfirmSwap}
           onCancelSwap={handleCancelSwap}
           sessionSuggestions={sessionSuggestions}
+          sessionKnownFigures={sessionKnownFigures}
+          sessionMaxLevelValue={sessionMaxLevelValue}
           suggestingForSessionId={suggestingForSessionId}
           onToggleSuggestions={handleToggleSuggestions}
         />
