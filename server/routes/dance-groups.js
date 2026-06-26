@@ -1503,6 +1503,8 @@ export async function getSessionStepFigureSuggestions(req, res) {
          FROM choreographies c
          INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
          INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+         LEFT JOIN levels l ON c.level_id = l.id
+         WHERE 1=1 ${max_level_value === null ? '' : 'AND (l.value IS NOT NULL AND l.value <= ?)'}
          GROUP BY c.id
          HAVING SUM(CASE WHEN LOWER(sf.name) NOT IN (SELECT name_lower FROM known_figures)
                     THEN 1 ELSE 0 END) = 1
@@ -1512,7 +1514,7 @@ export async function getSessionStepFigureSuggestions(req, res) {
        GROUP BY LOWER(missing_figure)
        ORDER BY additional_choreographies DESC, step_figure ASC
        LIMIT 5`,
-      allKnownChoreoIds,
+      max_level_value === null ? allKnownChoreoIds : [...allKnownChoreoIds, max_level_value],
     );
 
     res.json({ suggestions, known_step_figures, max_level_value });
