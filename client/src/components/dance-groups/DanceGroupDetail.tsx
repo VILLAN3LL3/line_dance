@@ -13,6 +13,7 @@ import {
   getLearnedChoreographies,
   getLevels,
   getSessions,
+  getStepFigureSuggestions,
   updateGroupMaxLevel,
 } from "../../api";
 import {
@@ -22,6 +23,7 @@ import {
   LearnedChoreography,
   LevelOption,
   Session,
+  StepFigureSuggestion,
 } from "../../types";
 import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
 import { DanceGroupCoursesSection } from "./DanceGroupCoursesSection";
@@ -38,6 +40,7 @@ const DanceGroupDetail: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [learnedChoreographies, setLearnedChoreographies] = useState<LearnedChoreography[]>([]);
   const [choreographies, setChoreographies] = useState<Choreography[]>([]);
+  const [stepFigureSuggestions, setStepFigureSuggestions] = useState<StepFigureSuggestion[]>([]);
   const [maxGroupLevelValue, setMaxGroupLevelValue] = useState<number | null>(null);
   const [levelOptions, setLevelOptions] = useState<LevelOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,6 +74,12 @@ const DanceGroupDetail: React.FC = () => {
       setChoreographies(choreosData.data);
       setMaxGroupLevelValue(maxLevelData.max_group_level_value);
       setLevelOptions(fetchedLevelOptions);
+
+      const suggestions = await getStepFigureSuggestions(
+        parsedGroupId,
+        maxLevelData.max_group_level_value,
+      );
+      setStepFigureSuggestions(suggestions);
     } catch (err) {
       setError("Failed to load group data");
       console.error(err);
@@ -185,6 +194,7 @@ const DanceGroupDetail: React.FC = () => {
         <DanceGroupLearnedSection
           learnedChoreographies={learnedChoreographies}
           choreographies={choreographies}
+          stepFigureSuggestions={stepFigureSuggestions}
           maxGroupLevelValue={maxGroupLevelValue}
           groupName={group?.name ?? "this group"}
           isLoading={isLoading}

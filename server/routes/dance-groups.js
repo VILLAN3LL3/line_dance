@@ -1247,3 +1247,75 @@ export async function getLearnedChoreographies(req, res) {
     res.status(500).json({ error: 'Failed to fetch learned choreographies' });
   }
 }
+
+export async function getStepFigureSuggestions(req, res) {
+  try {
+    const groupId = Number.parseInt(req.params.groupId, 10);
+    if (!Number.isFinite(groupId) || groupId <= 0) {
+      return res.status(400).json({ error: 'Invalid group ID' });
+    }
+
+    const maxLevelValue = (() => {
+      const parsed = Number.parseInt(String(req.query.max_level_value), 10);
+      return Number.isNaN(parsed) || parsed < 0 ? null : parsed;
+    })();
+
+    // Approximate Berlin time (UTC+2) to match client-side date logic
+    const berlinNow = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    const todayIso = berlinNow.toISOString().slice(0, 10);
+
+    const learnedRows = await allQuery(
+      `SELECT choreography_id FROM learned_choreographies
+       WHERE dance_group_id = ? AND first_learned_date < ?`,
+      [groupId, todayIso],
+      dbName,
+    );
+
+    if (learnedRows.length === 0) {
+      return res.json([]);
+    }
+
+    const learnedChoreographyIds = learnedRows.map((r) => r.choreography_id);
+    const idPlaceholders = learnedChoreographyIds.map(() => '?').join(',');
+
+    const levelCondition =
+      maxLevelValue === null ? '' : 'AND (l.value IS NOT NULL AND l.value <= ?)';
+    const params = [...learnedChoreographyIds];
+    if (maxLevelValue !== null) {
+      params.push(maxLevelValue);
+    }
+
+    const suggestions = await allQuery(
+      `WITH known_figures AS (
+         SELECT DISTINCT LOWER(sf.name) AS name_lower
+         FROM choreography_step_figures csf
+         INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+         WHERE csf.choreography_id IN (${idPlaceholders})
+       ),
+       candidate_choreographies AS (
+         SELECT
+           MIN(CASE WHEN LOWER(sf.name) NOT IN (SELECT name_lower FROM known_figures)
+               THEN sf.name END) AS missing_figure
+         FROM choreographies c
+         INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
+         INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+         LEFT JOIN levels l ON c.level_id = l.id
+         WHERE 1=1 ${levelCondition}
+         GROUP BY c.id
+         HAVING SUM(CASE WHEN LOWER(sf.name) NOT IN (SELECT name_lower FROM known_figures)
+                    THEN 1 ELSE 0 END) = 1
+       )
+       SELECT missing_figure AS step_figure, COUNT(*) AS additional_choreographies
+       FROM candidate_choreographies
+       GROUP BY LOWER(missing_figure)
+       ORDER BY additional_choreographies DESC, step_figure ASC
+       LIMIT 10`,
+      params,
+    );
+
+    res.json(suggestions);
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to compute step figure suggestions' });
+  }
+}

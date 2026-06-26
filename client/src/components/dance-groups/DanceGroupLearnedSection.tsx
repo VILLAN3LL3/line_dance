@@ -1,13 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Choreography, LearnedChoreography } from "../../types";
+import { Choreography, LearnedChoreography, StepFigureSuggestion } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
 import { ActionButton, EmptyState, LevelBatch, Section, TagGroup } from "../shared/ui";
 
 interface DanceGroupLearnedSectionProps {
   learnedChoreographies: LearnedChoreography[];
   choreographies: Choreography[];
+  stepFigureSuggestions: StepFigureSuggestion[];
   maxGroupLevelValue: number | null;
   groupName: string;
   isLoading: boolean;
@@ -16,6 +17,7 @@ interface DanceGroupLearnedSectionProps {
 export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> = ({
   learnedChoreographies,
   choreographies,
+  stepFigureSuggestions,
   maxGroupLevelValue,
   groupName,
   isLoading,
@@ -38,6 +40,20 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
   const handleSearchChoreographies = () => {
     const initialFilters = {
       step_figures: learnedStepFigures,
+      step_figures_match_mode: "exact" as const,
+      ...(maxGroupLevelValue === null ? {} : { max_level_value: maxGroupLevelValue }),
+    };
+
+    navigate("/", {
+      state: {
+        initialFilters,
+      },
+    });
+  };
+
+  const handleSearchWithSuggestion = (suggestedFigure: string) => {
+    const initialFilters = {
+      step_figures: [...learnedStepFigures, suggestedFigure],
       step_figures_match_mode: "exact" as const,
       ...(maxGroupLevelValue === null ? {} : { max_level_value: maxGroupLevelValue }),
     };
@@ -75,6 +91,33 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
           </>
         )}
       </Section>
+
+      {stepFigureSuggestions.length > 0 && (
+        <Section title="Next Step Figure to Learn">
+          <p className="suggestion-description">
+            Adding one of these step figures to the learned set would unlock the most new
+            choreographies:
+          </p>
+          <div className="suggestion-list">
+            {stepFigureSuggestions.map((s) => (
+              <div key={s.step_figure} className="suggestion-item">
+                <button
+                  className="suggestion-figure-btn"
+                  onClick={() => handleSearchWithSuggestion(s.step_figure)}
+                  disabled={isLoading}
+                  title={`Preview choreographies matching with ${s.step_figure} added`}
+                >
+                  {s.step_figure}
+                </button>
+                <span className="suggestion-count">
+                  +{s.additional_choreographies} choreograph
+                  {s.additional_choreographies === 1 ? "y" : "ies"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
 
       <Section title={`Learned Choreographies for ${groupName}`}>
         {learnedChoreographies.length === 0 ? (

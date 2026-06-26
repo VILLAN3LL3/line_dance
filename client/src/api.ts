@@ -14,6 +14,7 @@ import {
   Session,
   SessionChoreography,
   StepFigureDefinition,
+  StepFigureSuggestion,
 } from "./types";
 
 import type { Trainer } from "./types";
@@ -417,6 +418,16 @@ export async function getLearnedChoreographies(
 ): Promise<LearnedChoreography[]> {
   const response = await api.get("/learned-choreographies", {
     params: danceGroupId ? { dance_group_id: danceGroupId } : {},
+  });
+  return response.data;
+}
+
+export async function getStepFigureSuggestions(
+  groupId: number,
+  maxLevelValue?: number | null,
+): Promise<StepFigureSuggestion[]> {
+  const response = await api.get(`/dance-groups/${groupId}/step-figure-suggestions`, {
+    params: maxLevelValue != null ? { max_level_value: maxLevelValue } : {},
   });
   return response.data;
 }

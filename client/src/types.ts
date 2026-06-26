@@ -158,3 +158,8 @@ export interface DuplicateChoreography {
   level: string;
   authors: string[];
 }
+
+export interface StepFigureSuggestion {
+  step_figure: string;
+  additional_choreographies: number;
+}

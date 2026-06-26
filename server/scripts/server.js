@@ -58,6 +58,7 @@ import {
   getLearnedChoreographies,
   getGroupMaxLevel,
   updateGroupMaxLevel,
+  getStepFigureSuggestions,
 } from '../routes/dance-groups.js';
 import { checkUrl } from '../routes/url-check.js';
 
@@ -122,6 +123,7 @@ app.post('/api/dance-groups', createDanceGroup);
 // Specific routes must come before generic :id routes
 app.get('/api/dance-groups/:groupId/max-level', getGroupMaxLevel);
 app.put('/api/dance-groups/:groupId/max-level', updateGroupMaxLevel);
+app.get('/api/dance-groups/:groupId/step-figure-suggestions', getStepFigureSuggestions);
 // Generic routes after specific ones
 app.get('/api/dance-groups/:id', getDanceGroupById);
 app.put('/api/dance-groups/:id', updateDanceGroup);
