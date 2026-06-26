@@ -71,6 +71,22 @@ All code changes must pass:
 - ✅ Accessibility standards (a11y)
 - ✅ Clean code principles (reusability, modularity, naming, documentation)
 
+## Test Requirements (Mandatory)
+
+Every feature or bug fix **must** include tests. Do not skip this.
+
+**Server-side changes** → add to `server/tests/api/`:
+- New endpoint: test happy path + 404/400 error cases
+- New filter/query param: test filtering logic, AND semantics for multiple values, combined with other filters
+- New business logic: test core algorithm, edge cases, cross-entity interactions
+- When adding route handlers: register them in `server/tests/setup/testApp.js`
+
+**Client-side changes** → add to `client/src/__tests__/components/`:
+- New button/action: test it triggers the correct API call
+- New toggle: test shows content when active, hides when toggled again
+- New form: test submitting calls handler with correct arguments
+- New API function used: add it to `vi.mock("../../api")` factory AND `beforeEach` defaults
+
 No commits without passing verification.
 
 ## Design System & Consistency

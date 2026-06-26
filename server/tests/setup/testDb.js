@@ -52,6 +52,12 @@ export async function clearAllTables() {
   for (const table of tables) {
     await run(testDb, `DELETE FROM ${table}`);
   }
+  // Clear choreography tables — ordering respects FK constraints.
+  // DELETE FROM choreographies cascades to choreography_authors and choreography_step_figures.
+  await run(testDb, 'DELETE FROM choreographies');
+  await run(testDb, 'DELETE FROM step_figure_components');
+  await run(testDb, 'DELETE FROM step_figures');
+  await run(testDb, 'DELETE FROM authors');
   // Reset autoincrement counters; sqlite_sequence is created on first insert,
   // so this is a no-op until data has been inserted.
   try {

@@ -143,6 +143,32 @@ Examples:
 - **E2E tests**: Happy paths + key error scenarios
 - **Server routes**: 100% coverage for API endpoints
 
+#### Mandatory: Write Tests for Every Feature
+Every feature implementation **must** include tests. This is not optional.
+
+**Server-side API changes → add to `server/tests/api/`:**
+- New `GET` endpoint → test: happy path, 404 for missing resource, invalid param → 400
+- New `POST`/`PUT` endpoint → test: creates/updates correctly, validates required fields, returns right status codes
+- New filter/query param → test: filters correctly (AND semantics if multiple), case-insensitivity, combined with other filters, empty result case
+- New business logic → test: core algorithm behavior, edge cases (empty set, max limits), cross-entity interactions
+
+**Client-side component changes → add to `client/src/__tests__/components/`:**
+- New button/action → test: clicking triggers correct API call (or navigates correctly)
+- New toggle/visibility → test: shows content when active, hides when toggled again
+- New form element → test: submitting calls correct handler with right arguments
+- New loading state → test: shows loading indicator during async operation
+- New API mock function → add it to `vi.mock("../../api")` factory and `beforeEach` default
+
+**Pattern: one `describe` block per new endpoint or major UI feature, covering:**
+1. Happy path (correct result)
+2. Edge case (empty input, limit reached, no data)
+3. Error path (404, 400 with meaningful message)
+4. Interaction with related features (combined filters, cross-entity effects)
+
+**Use the existing test infrastructure:**
+- Server: `testApp.js` + `testDb.js` — extend when adding new route handlers
+- Client: Vitest + Testing Library — mock new API functions in `vi.mock` factory
+
 ---
 
 ### Step 4: Design UX/UI Consistency

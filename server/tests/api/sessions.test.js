@@ -506,3 +506,226 @@ describe('GET /api/learned-choreographies', () => {
     expect(res.body[0].choreography_id).toBe(10);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Session Swap
+// ---------------------------------------------------------------------------
+
+async function createTwoSessionsInSameCourse() {
+  const { group, course } = await createGroupAndCourse('Swap Group');
+  const s1 = await request(app)
+    .post('/api/sessions')
+    .send({ dance_course_id: course.id, session_date: '2026-10-01', comment: 'Session A' });
+  const s2 = await request(app)
+    .post('/api/sessions')
+    .send({ dance_course_id: course.id, session_date: '2026-10-08', comment: 'Session B' });
+  return { group, course, s1: s1.body, s2: s2.body };
+}
+
+describe('POST /api/sessions/:sessionId/swap/:targetSessionId', () => {
+  it('swaps comments between two sessions in the same course', async () => {
+    const { s1, s2 } = await createTwoSessionsInSameCourse();
+    const res = await request(app).post(`/api/sessions/${s1.id}/swap/${s2.id}`);
+    expect(res.status).toBe(200);
+
+    const all = await request(app).get('/api/sessions');
+    const updated1 = all.body.find((s) => s.id === s1.id);
+    const updated2 = all.body.find((s) => s.id === s2.id);
+    expect(updated1.comment).toBe('Session B');
+    expect(updated2.comment).toBe('Session A');
+  });
+
+  it('swaps choreographies between two sessions', async () => {
+    const { s1, s2 } = await createTwoSessionsInSameCourse();
+
+    const cA = await request(app)
+      .post('/api/choreographies')
+      .send({ name: 'Choreo Alpha', level: 'BEGINNER', authors: [], tags: [], step_figures: [] });
+    const cB = await request(app)
+      .post('/api/choreographies')
+      .send({ name: 'Choreo Beta', level: 'BEGINNER', authors: [], tags: [], step_figures: [] });
+
+    await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: s1.id, choreography_id: cA.body.id });
+    await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: s2.id, choreography_id: cB.body.id });
+
+    await request(app).post(`/api/sessions/${s1.id}/swap/${s2.id}`);
+
+    const sc1 = await request(app).get(`/api/session-choreographies?session_id=${s1.id}`);
+    const sc2 = await request(app).get(`/api/session-choreographies?session_id=${s2.id}`);
+    expect(sc1.body[0].choreography_id).toBe(cB.body.id);
+    expect(sc2.body[0].choreography_id).toBe(cA.body.id);
+  });
+
+  it('returns 400 when sessions belong to different courses', async () => {
+    const { course: c1 } = await createGroupAndCourse('Diff Group 1');
+    const { course: c2 } = await createGroupAndCourse('Diff Group 2');
+    const s1 = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: c1.id, session_date: '2026-10-01' });
+    const s2 = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: c2.id, session_date: '2026-10-08' });
+
+    const res = await request(app).post(`/api/sessions/${s1.body.id}/swap/${s2.body.id}`);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/same course/i);
+  });
+
+  it('returns 400 when swapping a session with itself', async () => {
+    const { s1 } = await createTwoSessionsInSameCourse();
+    const res = await request(app).post(`/api/sessions/${s1.id}/swap/${s1.id}`);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 when target session does not exist', async () => {
+    const { s1 } = await createTwoSessionsInSameCourse();
+    const res = await request(app).post(`/api/sessions/${s1.id}/swap/99999`);
+    expect(res.status).toBe(404);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Session Step Figure Suggestions
+// ---------------------------------------------------------------------------
+
+describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
+  it('returns { suggestions, known_step_figures, max_level_value }', async () => {
+    const { course } = await createGroupAndCourse('Shape Group');
+    const session = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.id, session_date: '2099-12-01' });
+
+    const res = await request(app).get(
+      `/api/sessions/${session.body.id}/step-figure-suggestions`,
+    );
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.suggestions)).toBe(true);
+    expect(Array.isArray(res.body.known_step_figures)).toBe(true);
+    expect('max_level_value' in res.body).toBe(true);
+  });
+
+  it('suggests step figures based on prior sessions from all group courses', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'CrossCourse Group' });
+    const course1 = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.body.id, semester: 'WS 2024' });
+    const pastSession = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course1.body.id, session_date: '2020-06-01' });
+
+    const vineChoreo = await request(app)
+      .post('/api/choreographies')
+      .send({ name: 'Vine Dance', level: 'BEGINNER', authors: [], tags: [], step_figures: ['Vine'] });
+    await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: pastSession.body.id, choreography_id: vineChoreo.body.id });
+
+    const course2 = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.body.id, semester: 'SS 2025' });
+    const targetSession = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course2.body.id, session_date: '2099-12-01' });
+
+    // Choreo unlocked by Cross (requires Vine + Cross)
+    await request(app)
+      .post('/api/choreographies')
+      .send({ name: 'Cross Dance', level: 'BEGINNER', authors: [], tags: [], step_figures: ['Vine', 'Cross'] });
+
+    const res = await request(app).get(
+      `/api/sessions/${targetSession.body.id}/step-figure-suggestions`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.suggestions).toHaveLength(1);
+    expect(res.body.suggestions[0].step_figure).toBe('Cross');
+    expect(res.body.known_step_figures).toContain('Vine');
+  });
+
+  it('does not suggest step figures already covered by prior sessions', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Prior Group' });
+    const course = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.body.id, semester: 'WS 2025' });
+
+    const priorSession = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.body.id, session_date: '2026-09-01' });
+    const targetSession = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.body.id, session_date: '2099-12-01' });
+
+    const grapevineChoreo = await request(app)
+      .post('/api/choreographies')
+      .send({ name: 'Grapevine Dance', level: 'BEGINNER', authors: [], tags: [], step_figures: ['Grapevine'] });
+    await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: priorSession.body.id, choreography_id: grapevineChoreo.body.id });
+
+    await request(app)
+      .post('/api/choreographies')
+      .send({ name: 'Kick Dance', level: 'BEGINNER', authors: [], tags: [], step_figures: ['Grapevine', 'Kick'] });
+
+    const res = await request(app).get(
+      `/api/sessions/${targetSession.body.id}/step-figure-suggestions`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.suggestions.some((s) => s.step_figure === 'Kick')).toBe(true);
+    expect(res.body.suggestions.every((s) => s.step_figure !== 'Grapevine')).toBe(true);
+  });
+
+  it('returns max_level_value from the group setting', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'MaxLevel Group' });
+    await request(app)
+      .put(`/api/dance-groups/${group.body.id}/max-level`)
+      .send({ max_group_level_value: 30 });
+    const course = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.body.id, semester: 'WS 2025' });
+    const session = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.body.id, session_date: '2099-12-01' });
+
+    const res = await request(app).get(
+      `/api/sessions/${session.body.id}/step-figure-suggestions`,
+    );
+    expect(res.body.max_level_value).toBe(30);
+  });
+
+  it('applies max_level_value to filter out above-level choreographies', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Filter Level Group' });
+    const levelsRes = await request(app).get('/api/levels');
+    const beginnerValue = levelsRes.body.find((l) => l.name === 'BEGINNER')?.value;
+    await request(app)
+      .put(`/api/dance-groups/${group.body.id}/max-level`)
+      .send({ max_group_level_value: beginnerValue });
+
+    const course = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.body.id, semester: 'SS 2025' });
+    const session = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.body.id, session_date: '2099-12-01' });
+
+    await request(app)
+      .post('/api/choreographies')
+      .send({ name: 'Advanced Single', level: 'ADVANCED', authors: [], tags: [], step_figures: ['AdvancedFigure'] });
+    await request(app)
+      .post('/api/choreographies')
+      .send({ name: 'Beginner Single', level: 'BEGINNER', authors: [], tags: [], step_figures: ['BeginnerFigure'] });
+
+    const res = await request(app).get(
+      `/api/sessions/${session.body.id}/step-figure-suggestions`,
+    );
+    expect(res.body.suggestions.every((s) => s.step_figure !== 'AdvancedFigure')).toBe(true);
+    expect(res.body.suggestions.some((s) => s.step_figure === 'BeginnerFigure')).toBe(true);
+  });
+
+  it('returns 404 for non-existent session', async () => {
+    const res = await request(app).get('/api/sessions/99999/step-figure-suggestions');
+    expect(res.status).toBe(404);
+  });
+});

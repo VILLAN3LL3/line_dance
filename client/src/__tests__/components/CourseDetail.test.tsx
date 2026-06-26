@@ -10,8 +10,10 @@ import {
   fetchChoreographies,
   getDanceCourses,
   getSessionChoreographies,
+  getSessionStepFigureSuggestions,
   getSessions,
   removeChoreographyFromSession,
+  swapSessions,
 } from "../../api";
 import CourseDetail from "../../components/courses/CourseDetail";
 
@@ -32,8 +34,11 @@ vi.mock("../../api", () => ({
   fetchChoreographies: vi.fn(),
   getDanceCourses: vi.fn(),
   getSessionChoreographies: vi.fn(),
+  getSessionStepFigureSuggestions: vi.fn(),
   getSessions: vi.fn(),
   removeChoreographyFromSession: vi.fn(),
+  swapSessions: vi.fn(),
+  updateSession: vi.fn(),
 }));
 
 describe("CourseDetail", () => {
@@ -117,6 +122,12 @@ describe("CourseDetail", () => {
     });
     vi.mocked(deleteSession).mockResolvedValue({ message: "ok" });
     vi.mocked(removeChoreographyFromSession).mockResolvedValue({ message: "ok" });
+    vi.mocked(swapSessions).mockResolvedValue({ message: "Sessions swapped successfully" });
+    vi.mocked(getSessionStepFigureSuggestions).mockResolvedValue({
+      suggestions: [],
+      known_step_figures: [],
+      max_level_value: null,
+    });
   });
 
   function renderWithRoute() {
@@ -206,5 +217,70 @@ describe("CourseDetail", () => {
     });
     expect(dialog).toBeInTheDocument();
     expect(within(dialog).getByRole("heading", { name: "Dance One" })).toBeInTheDocument();
+  });
+
+  it("shows swap dropdown when Swap button is clicked and calls swapSessions on confirm", async () => {
+    renderWithRoute();
+    await screen.findByText(/Course: 7/);
+
+    // Click Swap on the first visible (planned) session
+    fireEvent.click(screen.getByRole("button", { name: /^Swap$/i }));
+
+    // Dropdown should appear with placeholder option
+    const select = await screen.findByRole("combobox");
+    expect(select).toBeInTheDocument();
+
+    // Confirm button is disabled until a target is selected
+    const confirmBtn = screen.getByRole("button", { name: /confirm swap/i });
+    expect(confirmBtn).toBeDisabled();
+
+    // Cancel hides the dropdown
+    fireEvent.click(screen.getByRole("button", { name: /^Cancel$/i }));
+    await waitFor(() => {
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    });
+  });
+
+  it("loads and displays step figure suggestions when Suggest button is clicked", async () => {
+    vi.mocked(getSessionStepFigureSuggestions).mockResolvedValue({
+      suggestions: [{ step_figure: "Grapevine", additional_choreographies: 3 }],
+      known_step_figures: ["Vine"],
+      max_level_value: 30,
+    });
+
+    renderWithRoute();
+    await screen.findByText(/Course: 7/);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Suggest$/i }));
+
+    // Button label transitions to "Hide Suggestions" after loading
+    expect(await screen.findByRole("button", { name: /hide suggestions/i })).toBeInTheDocument();
+
+    // The suggestion pill is rendered
+    expect(await screen.findByText(/Grapevine/)).toBeInTheDocument();
+    expect(screen.getByText(/\+3/)).toBeInTheDocument();
+
+    expect(getSessionStepFigureSuggestions).toHaveBeenCalledOnce();
+  });
+
+  it("hides suggestions when Hide Suggestions is clicked", async () => {
+    vi.mocked(getSessionStepFigureSuggestions).mockResolvedValue({
+      suggestions: [{ step_figure: "Kick", additional_choreographies: 1 }],
+      known_step_figures: [],
+      max_level_value: null,
+    });
+
+    renderWithRoute();
+    await screen.findByText(/Course: 7/);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Suggest$/i }));
+    await screen.findByRole("button", { name: /hide suggestions/i });
+
+    fireEvent.click(screen.getByRole("button", { name: /hide suggestions/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Kick/)).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^Suggest$/i })).toBeInTheDocument();
+    });
   });
 });

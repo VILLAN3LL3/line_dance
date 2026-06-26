@@ -648,3 +648,59 @@ describe('GET /api/choreographies/search — combined filters', () => {
     expect(res.body.data[0].name).toBe('Waltz in the Rain');
   });
 });
+
+// ---------------------------------------------------------------------------
+// required_step_figures filter
+// ---------------------------------------------------------------------------
+
+describe('GET /api/choreographies/search — required_step_figures filter', () => {
+  it('returns only choreographies that contain the required step figure', async () => {
+    await seedDances();
+    // Waltz has Rock Step, Cha Cha has Rock Step, Tango does not
+    const res = await searchRaw('required_step_figures[]=Rock+Step');
+    expect(res.status).toBe(200);
+    const names = res.body.data.map((c) => c.name).sort();
+    expect(names).toEqual(['Cha Cha Fun', 'Waltz in the Rain']);
+  });
+
+  it('requires ALL listed figures (AND semantics)', async () => {
+    await seedDances();
+    // Only Waltz has both Rock Step AND Weave
+    const res = await searchRaw(
+      'required_step_figures[]=Rock+Step&required_step_figures[]=Weave',
+    );
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Waltz in the Rain');
+  });
+
+  it('returns empty when no choreography has the required figure', async () => {
+    await seedDances();
+    const res = await searchRaw('required_step_figures[]=NonExistentFigure');
+    expect(res.body.data).toHaveLength(0);
+  });
+
+  it('is case-insensitive', async () => {
+    await seedDances();
+    const res = await searchRaw('required_step_figures[]=rock+step');
+    expect(res.body.data).toHaveLength(2);
+  });
+
+  it('combines with exact step_figures_match_mode', async () => {
+    await seedDances();
+    // exact {Rock Step, Weave} → only Waltz; required Weave → still only Waltz
+    const res = await searchRaw(
+      'step_figures[]=Rock+Step&step_figures[]=Weave&step_figures_match_mode=exact&required_step_figures[]=Weave',
+    );
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Waltz in the Rain');
+  });
+
+  it('combines with level filter', async () => {
+    await seedDances();
+    // Rock Step is in Waltz (Beginner) and Cha Cha (Intermediate)
+    // With level=Beginner only Waltz should remain
+    const res = await searchRaw('required_step_figures[]=Rock+Step&level=Beginner');
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe('Waltz in the Rain');
+  });
+});

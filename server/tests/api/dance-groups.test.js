@@ -149,3 +149,147 @@ describe('DELETE /api/dance-groups/:id', () => {
     expect(courses.body).toHaveLength(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Step Figure Suggestions
+// ---------------------------------------------------------------------------
+
+async function seedChoreo(name, level, stepFigures) {
+  return request(app)
+    .post('/api/choreographies')
+    .send({ name, level, count: 32, authors: [], tags: [], step_figures: stepFigures });
+}
+
+describe('GET /api/dance-groups/:groupId/step-figure-suggestions', () => {
+  it('returns empty array for group with no choreography data at all', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Empty Group' });
+    const res = await request(app).get(
+      `/api/dance-groups/${group.body.id}/step-figure-suggestions`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('returns suggestions even when group has no learned choreographies (beginner group)', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'New Group' });
+    await seedChoreo('One Step Dance', 'BEGINNER', ['Basic Step']);
+    await seedChoreo('Two Step Dance', 'BEGINNER', ['Basic Step', 'Extra Step']);
+
+    const res = await request(app).get(
+      `/api/dance-groups/${group.body.id}/step-figure-suggestions`,
+    );
+    expect(res.status).toBe(200);
+    // 'One Step Dance' has 1 step figure → Basic Step is a valid suggestion
+    expect(res.body.some((s) => s.step_figure === 'Basic Step')).toBe(true);
+  });
+
+  it('suggests step figures that unlock the most choreographies', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Learned Group' });
+    const course = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.body.id, semester: 'WS 2024' });
+    const session = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.body.id, session_date: '2020-01-01' });
+
+    const foundation = await seedChoreo('Foundation Dance', 'BEGINNER', ['Foundation']);
+    await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: session.body.id, choreography_id: foundation.body.id });
+
+    // Two dances unlocked by Vine
+    await seedChoreo('Vine Dance 1', 'BEGINNER', ['Foundation', 'Vine']);
+    await seedChoreo('Vine Dance 2', 'BEGINNER', ['Foundation', 'Vine']);
+    // One dance unlocked by Cross
+    await seedChoreo('Cross Dance', 'BEGINNER', ['Foundation', 'Cross']);
+
+    const res = await request(app).get(
+      `/api/dance-groups/${group.body.id}/step-figure-suggestions`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.body[0].step_figure).toBe('Vine');
+    expect(res.body[0].additional_choreographies).toBe(2);
+    expect(res.body[1].step_figure).toBe('Cross');
+    expect(res.body[1].additional_choreographies).toBe(1);
+  });
+
+  it('excludes step figures already known by the group', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Known Group' });
+    const course = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.body.id, semester: 'WS 2024' });
+    const session = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.body.id, session_date: '2020-01-01' });
+
+    const known = await seedChoreo('Known Dance', 'BEGINNER', ['Known Step', 'Other Step']);
+    await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: session.body.id, choreography_id: known.body.id });
+
+    const res = await request(app).get(
+      `/api/dance-groups/${group.body.id}/step-figure-suggestions`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.every((s) => s.step_figure !== 'Known Step')).toBe(true);
+    expect(res.body.every((s) => s.step_figure !== 'Other Step')).toBe(true);
+  });
+
+  it('respects max_level_value filter', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Level Group' });
+    const course = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.body.id, semester: 'SS 2024' });
+    const session = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.body.id, session_date: '2020-01-01' });
+
+    const base = await seedChoreo('Base Dance', 'BEGINNER', ['Base Step']);
+    await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: session.body.id, choreography_id: base.body.id });
+
+    await seedChoreo('Advanced Dance', 'ADVANCED', ['Base Step', 'Advanced Move']);
+    await seedChoreo('Beginner Dance', 'BEGINNER', ['Base Step', 'Easy Move']);
+
+    const levelsRes = await request(app).get('/api/levels');
+    const beginnerValue = levelsRes.body.find((l) => l.name === 'BEGINNER')?.value;
+
+    const res = await request(app).get(
+      `/api/dance-groups/${group.body.id}/step-figure-suggestions?max_level_value=${beginnerValue}`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.some((s) => s.step_figure === 'Easy Move')).toBe(true);
+    expect(res.body.every((s) => s.step_figure !== 'Advanced Move')).toBe(true);
+  });
+
+  it('limits results to at most 5 suggestions', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Limit Group' });
+    const course = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.body.id, semester: 'WS 2023' });
+    const session = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.body.id, session_date: '2020-01-01' });
+
+    const common = await seedChoreo('Common Dance', 'BEGINNER', ['Common Step']);
+    await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: session.body.id, choreography_id: common.body.id });
+
+    for (let i = 1; i <= 7; i++) {
+      await seedChoreo(`Figure Dance ${i}`, 'BEGINNER', ['Common Step', `Unique Figure ${i}`]);
+    }
+
+    const res = await request(app).get(
+      `/api/dance-groups/${group.body.id}/step-figure-suggestions`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBeLessThanOrEqual(5);
+  });
+
+  it('returns 404 for non-existent group', async () => {
+    const res = await request(app).get('/api/dance-groups/99999/step-figure-suggestions');
+    expect(res.status).toBe(404);
+  });
+});
