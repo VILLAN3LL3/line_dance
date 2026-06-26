@@ -24,14 +24,24 @@ export const App: React.FC = () => {
     return saved === "card" || saved === "table" ? saved : "card";
   };
 
-  // Initialize filters from location state or localStorage
+  // Initialize filters from location state, URL params, or localStorage
   const getInitialFilters = useCallback((): SearchFilters => {
-    // Check if we have initial filters from location state
+    // 1. Location state (same-tab navigation)
     if (routeInitialFilters) {
       return routeInitialFilters;
     }
 
-    // Otherwise use localStorage
+    // 2. URL ?filters= param (new-tab navigation)
+    const filtersParam = new URLSearchParams(location.search).get("filters");
+    if (filtersParam) {
+      try {
+        return JSON.parse(filtersParam) as SearchFilters;
+      } catch {
+        // ignore malformed param
+      }
+    }
+
+    // 3. localStorage
     const saved = localStorage.getItem("currentFilters");
     if (saved) {
       try {
@@ -41,7 +51,7 @@ export const App: React.FC = () => {
       }
     }
     return {};
-  }, [routeInitialFilters]);
+  }, [routeInitialFilters, location.search]);
 
   const [view, setView] = useState<View>("list");
   const [displayMode, setDisplayMode] = useState<"card" | "table">(getInitialDisplayMode);
@@ -90,11 +100,13 @@ export const App: React.FC = () => {
     setCurrentFilters(initialFilters);
     loadChoreographies(initialFilters, true);
 
-    // Clear location state after using it
+    // Clear location state / URL params after using them
     if (routeInitialFilters) {
       globalThis.history.replaceState({}, document.title);
+    } else if (new URLSearchParams(location.search).has("filters")) {
+      globalThis.history.replaceState({}, document.title, globalThis.location.pathname);
     }
-  }, [getInitialFilters, routeInitialFilters, location.key]);
+  }, [getInitialFilters, routeInitialFilters, location.key, location.search]);
 
   // Save display mode to localStorage when it changes
   useEffect(() => {

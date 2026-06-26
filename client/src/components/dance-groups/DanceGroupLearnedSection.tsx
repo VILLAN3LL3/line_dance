@@ -59,11 +59,11 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
       ...(maxGroupLevelValue === null ? {} : { max_level_value: maxGroupLevelValue }),
     };
 
-    navigate("/", {
-      state: {
-        initialFilters,
-      },
-    });
+    globalThis.open(
+      "/?filters=" + encodeURIComponent(JSON.stringify(initialFilters)),
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   return (

@@ -1,5 +1,4 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 
 import { getSessionBadgeLabel, getSessionBadgeStatus } from "../../utils/courseStatus";
 import {
@@ -96,7 +95,6 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
   suggestingForSessionId,
   onToggleSuggestions,
 }) => {
-  const navigate = useNavigate();
   let sessionsContent: React.ReactNode;
   if (sessions.length === 0) {
     sessionsContent = <EmptyState>No sessions yet</EmptyState>;
@@ -261,18 +259,20 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                                 className="suggestion-figure-btn"
                                 onClick={() => {
                                   const knownFigures = sessionKnownFigures[session.id] ?? [];
-                                  navigate("/", {
-                                    state: {
-                                      initialFilters: {
-                                        step_figures: [...knownFigures, s.step_figure],
-                                        step_figures_match_mode: "exact" as const,
-                                        required_step_figures: [s.step_figure],
-                                        ...(sessionMaxLevelValue == null
-                                          ? {}
-                                          : { max_level_value: sessionMaxLevelValue }),
-                                      },
-                                    },
-                                  });
+                                  const initialFilters = {
+                                    step_figures: [...knownFigures, s.step_figure],
+                                    step_figures_match_mode: "exact" as const,
+                                    required_step_figures: [s.step_figure],
+                                    ...(sessionMaxLevelValue == null
+                                      ? {}
+                                      : { max_level_value: sessionMaxLevelValue }),
+                                  };
+                                  globalThis.open(
+                                    "/?filters=" +
+                                      encodeURIComponent(JSON.stringify(initialFilters)),
+                                    "_blank",
+                                    "noopener,noreferrer",
+                                  );
                                 }}
                                 title={`Show choreographies with ${s.step_figure}`}
                               >
