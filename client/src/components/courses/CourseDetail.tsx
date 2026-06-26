@@ -26,7 +26,6 @@ import {
 } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
 import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
-import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
 import CourseDetailSessionsSection from "./CourseDetailSessionsSection";
 
 const CourseDetail: React.FC = () => {
@@ -397,23 +396,16 @@ const CourseDetail: React.FC = () => {
           sessionMaxLevelValue={sessionMaxLevelValue}
           suggestingForSessionId={suggestingForSessionId}
           onToggleSuggestions={handleToggleSuggestions}
+          selectedChoreographyId={selectedChoreographyId}
+          selectedChoreographyQuery={selectedChoreographyQuery}
+          selectableChoreographies={selectableChoreographies}
+          sessionChoreographies={sessionChoreographies}
+          availableChoreographies={availableChoreographies}
+          getChoreographyOptionLabel={getChoreographyOptionLabel}
+          onChoreographyInputChange={handleChoreographyInputChange}
+          onAddChoreography={handleAddChoreography}
+          onRemoveChoreography={handleRemoveChoreography}
         />
-
-        {selectedSession && (
-          <CourseDetailChoreographiesSection
-            selectedSession={selectedSession}
-            isLoading={isLoading}
-            selectedChoreographyId={selectedChoreographyId}
-            selectedChoreographyQuery={selectedChoreographyQuery}
-            selectableChoreographies={selectableChoreographies}
-            sessionChoreographies={sessionChoreographies}
-            availableChoreographies={availableChoreographies}
-            getChoreographyOptionLabel={getChoreographyOptionLabel}
-            onChoreographyInputChange={handleChoreographyInputChange}
-            onAddChoreography={handleAddChoreography}
-            onRemoveChoreography={handleRemoveChoreography}
-          />
-        )}
       </div>
     </div>
   );

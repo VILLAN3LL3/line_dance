@@ -11,7 +11,9 @@ import {
   StatusBadge,
 } from "../shared/ui";
 
-import type { Session, StepFigureSuggestion } from "../../types";
+import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
+
+import type { Choreography, Session, SessionChoreography, StepFigureSuggestion } from "../../types";
 
 type CourseDetailSessionsSectionProps = {
   sessions: Session[];
@@ -47,6 +49,16 @@ type CourseDetailSessionsSectionProps = {
   sessionMaxLevelValue: number | null;
   suggestingForSessionId: number | null;
   onToggleSuggestions: (sessionId: number) => void;
+  // Choreography management (rendered inside selected session card)
+  selectedChoreographyId: string;
+  selectedChoreographyQuery: string;
+  selectableChoreographies: Choreography[];
+  sessionChoreographies: SessionChoreography[];
+  availableChoreographies: Choreography[];
+  getChoreographyOptionLabel: (choreography: Choreography) => string;
+  onChoreographyInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onAddChoreography: (event: React.SyntheticEvent<HTMLFormElement>) => void;
+  onRemoveChoreography: (choreographyId: number) => void;
 };
 
 function getSuggestLabel(
@@ -94,6 +106,15 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
   sessionMaxLevelValue,
   suggestingForSessionId,
   onToggleSuggestions,
+  selectedChoreographyId,
+  selectedChoreographyQuery,
+  selectableChoreographies,
+  sessionChoreographies,
+  availableChoreographies,
+  getChoreographyOptionLabel,
+  onChoreographyInputChange,
+  onAddChoreography,
+  onRemoveChoreography,
 }) => {
   let sessionsContent: React.ReactNode;
   if (sessions.length === 0) {
@@ -241,6 +262,21 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                         Cancel
                       </ActionButton>
                     </div>
+                  )}
+                  {selectedSessionId === session.id && (
+                    <CourseDetailChoreographiesSection
+                      selectedSession={session}
+                      isLoading={isLoading}
+                      selectedChoreographyId={selectedChoreographyId}
+                      selectedChoreographyQuery={selectedChoreographyQuery}
+                      selectableChoreographies={selectableChoreographies}
+                      sessionChoreographies={sessionChoreographies}
+                      availableChoreographies={availableChoreographies}
+                      getChoreographyOptionLabel={getChoreographyOptionLabel}
+                      onChoreographyInputChange={onChoreographyInputChange}
+                      onAddChoreography={onAddChoreography}
+                      onRemoveChoreography={onRemoveChoreography}
+                    />
                   )}
                   {Object.prototype.hasOwnProperty.call(sessionSuggestions, session.id) && (
                     <div className="session-suggestions-row">
