@@ -79,6 +79,13 @@
   border-color: transparent;
 }
 
+.results-count {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
 .choreographies-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));

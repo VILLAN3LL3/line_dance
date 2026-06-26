@@ -105,6 +105,11 @@ export const AppListView: React.FC<AppListViewProps> = ({
         >
           Table
         </button>
+        {!isLoading && (
+          <span className="results-count">
+            {choreographies.length} {choreographies.length === 1 ? "choreography" : "choreographies"} found
+          </span>
+        )}
       </div>
 
       {content}
