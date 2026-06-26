@@ -272,6 +272,12 @@ const CourseDetail: React.FC = () => {
   };
 
   const handleSelectSession = async (session: Session) => {
+    if (selectedSession?.id === session.id) {
+      setSelectedSession(null);
+      setSelectedChoreographyId("");
+      setSelectedChoreographyQuery("");
+      return;
+    }
     setSelectedSession(session);
     setSelectedChoreographyId("");
     setSelectedChoreographyQuery("");

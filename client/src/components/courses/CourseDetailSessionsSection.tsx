@@ -196,7 +196,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                       className={selectedSessionId === session.id ? "active" : undefined}
                       disabled={isLoading}
                     >
-                      {selectedSessionId === session.id ? "✓ " : ""}Manage
+                      {selectedSessionId === session.id ? "Close" : "Manage"}
                     </ActionButton>
                     <ActionButton
                       onClick={() => onStartEditSession(session)}
