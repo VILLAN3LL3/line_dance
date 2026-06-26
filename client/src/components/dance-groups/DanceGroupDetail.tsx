@@ -4,27 +4,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  deleteDanceCourse,
-  exportDanceCoursePdf,
-  fetchChoreographies,
-  getDanceCourses,
-  getDanceGroup,
-  getGroupMaxLevel,
-  getLearnedChoreographies,
-  getLevels,
-  getSessions,
-  getStepFigureSuggestions,
-  updateGroupMaxLevel,
+  deleteDanceCourse, exportDanceCoursePdf, fetchChoreographies, getDanceCourses, getDanceGroup, getGroupMaxLevel, getLearnedChoreographies,
+  getLevels, getSessions, getStepFigureSuggestions, updateGroupMaxLevel
 } from "../../api";
-import {
-  Choreography,
-  DanceCourse,
-  DanceGroup,
-  LearnedChoreography,
-  LevelOption,
-  Session,
-  StepFigureSuggestion,
-} from "../../types";
+import { Choreography, DanceCourse, DanceGroup, LearnedChoreography, LevelOption, Session, StepFigureSuggestion } from "../../types";
 import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
 import { DanceGroupCoursesSection } from "./DanceGroupCoursesSection";
 import { DanceGroupLearnedSection } from "./DanceGroupLearnedSection";
