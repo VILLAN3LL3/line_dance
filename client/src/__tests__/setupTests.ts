@@ -4,6 +4,8 @@ import { afterEach } from "vitest";
 
 import { cleanup } from "@testing-library/react";
 
+window.HTMLElement.prototype.scrollIntoView = () => {};
+
 afterEach(() => {
   cleanup();
 });
