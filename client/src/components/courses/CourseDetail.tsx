@@ -4,17 +4,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  addChoreographyToSession,
-  createSession,
-  deleteSession,
-  fetchChoreographies,
-  getDanceCourses,
-  getSessionChoreographies,
-  getSessionStepFigureSuggestions,
-  getSessions,
-  removeChoreographyFromSession,
-  swapSessions,
-  updateSession,
+  addChoreographyToSession, createSession, deleteSession, fetchChoreographies, getDanceCourses, getSessionChoreographies, getSessions,
+  getSessionStepFigureSuggestions, removeChoreographyFromSession, swapSessions, updateSession
 } from "../../api";
 import { Choreography, DanceCourse, Session, SessionChoreography, StepFigureSuggestion } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
