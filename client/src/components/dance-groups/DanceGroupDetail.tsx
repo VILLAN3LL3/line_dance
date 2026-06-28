@@ -4,26 +4,12 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  deleteDanceCourse,
-  exportDanceCoursePdf,
-  fetchChoreographies,
-  getDanceCourses,
-  getDanceGroup,
-  getGroupMaxLevel,
-  getLearnedChoreographies,
-  getLevels,
-  getSessions,
-  getStepFigureSuggestions,
-  updateGroupMaxLevel,
+  deleteDanceCourse, exportDanceCoursePdf, fetchChoreographies, getDanceCourses, getDanceGroup, getGroupBaseStepFigures, getGroupMaxLevel,
+  getLearnedChoreographies, getLevels, getSessions, getStepFigureSuggestions, getStepFiguresWithIds, updateGroupBaseStepFigures,
+  updateGroupMaxLevel
 } from "../../api";
 import {
-  Choreography,
-  DanceCourse,
-  DanceGroup,
-  LearnedChoreography,
-  LevelOption,
-  Session,
-  StepFigureSuggestion,
+  Choreography, DanceCourse, DanceGroup, LearnedChoreography, LevelOption, Session, StepFigureOption, StepFigureSuggestion
 } from "../../types";
 import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
 import { DanceGroupCoursesSection } from "./DanceGroupCoursesSection";
@@ -43,6 +29,8 @@ const DanceGroupDetail: React.FC = () => {
   const [stepFigureSuggestions, setStepFigureSuggestions] = useState<StepFigureSuggestion[]>([]);
   const [maxGroupLevelValue, setMaxGroupLevelValue] = useState<number | null>(null);
   const [levelOptions, setLevelOptions] = useState<LevelOption[]>([]);
+  const [baseStepFigures, setBaseStepFigures] = useState<StepFigureOption[]>([]);
+  const [allStepFigures, setAllStepFigures] = useState<StepFigureOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,6 +46,8 @@ const DanceGroupDetail: React.FC = () => {
         choreosData,
         maxLevelData,
         fetchedLevelOptions,
+        baseStepFiguresData,
+        allStepFiguresData,
       ] = await Promise.all([
         getDanceGroup(parsedGroupId),
         getDanceCourses(parsedGroupId),
@@ -66,6 +56,8 @@ const DanceGroupDetail: React.FC = () => {
         fetchChoreographies(1, 10000),
         getGroupMaxLevel(parsedGroupId),
         getLevels(),
+        getGroupBaseStepFigures(parsedGroupId),
+        getStepFiguresWithIds(),
       ]);
       setGroup(groupData);
       setCourses(coursesData);
@@ -74,6 +66,8 @@ const DanceGroupDetail: React.FC = () => {
       setChoreographies(choreosData.data);
       setMaxGroupLevelValue(maxLevelData.max_group_level_value);
       setLevelOptions(fetchedLevelOptions);
+      setBaseStepFigures(baseStepFiguresData);
+      setAllStepFigures(allStepFiguresData);
 
       const suggestions = await getStepFigureSuggestions(
         parsedGroupId,
@@ -156,6 +150,16 @@ const DanceGroupDetail: React.FC = () => {
     }
   };
 
+  const handleBaseStepFiguresChange = async (stepFigureIds: number[]) => {
+    try {
+      const updated = await updateGroupBaseStepFigures(parsedGroupId, stepFigureIds);
+      setBaseStepFigures(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update base step figures");
+      console.error(err);
+    }
+  };
+
   const sessionsByCourseId = sessions.reduce<Record<number, Session[]>>((acc, session) => {
     if (!acc[session.dance_course_id]) {
       acc[session.dance_course_id] = [];
@@ -198,6 +202,9 @@ const DanceGroupDetail: React.FC = () => {
           maxGroupLevelValue={maxGroupLevelValue}
           groupName={group?.name ?? "this group"}
           isLoading={isLoading}
+          baseStepFigures={baseStepFigures}
+          allStepFigures={allStepFigures}
+          onBaseStepFiguresChange={handleBaseStepFiguresChange}
         />
       </div>
     </div>

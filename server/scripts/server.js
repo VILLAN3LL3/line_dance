@@ -18,6 +18,7 @@ import {
   addLevel,
   getTags,
   getStepFigures,
+  getStepFiguresWithIds,
   getStepFigureHierarchy,
   createStepFigure,
   updateStepFigure,
@@ -61,6 +62,8 @@ import {
   getStepFigureSuggestions,
   swapSessions,
   getSessionStepFigureSuggestions,
+  getGroupBaseStepFigures,
+  updateGroupBaseStepFigures,
 } from '../routes/dance-groups.js';
 import { checkUrl } from '../routes/url-check.js';
 
@@ -114,6 +117,7 @@ app.post('/api/step_figures', createStepFigure);
 app.put('/api/step_figures/:id', updateStepFigure);
 app.delete('/api/step_figures/:id', deleteStepFigure);
 app.get('/api/step_figures', getStepFigures);
+app.get('/api/step_figures/with-ids', getStepFiguresWithIds);
 app.get('/api/saved-filters', getSavedFilterConfigurations);
 app.post('/api/saved-filters', saveFilterConfiguration);
 app.patch('/api/saved-filters/:id', updateSavedFilterConfiguration);
@@ -126,6 +130,8 @@ app.post('/api/dance-groups', createDanceGroup);
 app.get('/api/dance-groups/:groupId/max-level', getGroupMaxLevel);
 app.put('/api/dance-groups/:groupId/max-level', updateGroupMaxLevel);
 app.get('/api/dance-groups/:groupId/step-figure-suggestions', getStepFigureSuggestions);
+app.get('/api/dance-groups/:groupId/base-step-figures', getGroupBaseStepFigures);
+app.put('/api/dance-groups/:groupId/base-step-figures', updateGroupBaseStepFigures);
 // Generic routes after specific ones
 app.get('/api/dance-groups/:id', getDanceGroupById);
 app.put('/api/dance-groups/:id', updateDanceGroup);

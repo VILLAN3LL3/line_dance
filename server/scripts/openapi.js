@@ -24,8 +24,25 @@ export const openApiSpec = {
     { name: 'Session Choreographies' },
     { name: 'Learned Choreographies' },
     { name: 'Group Max Level' },
+    { name: 'Group Base Step Figures' },
   ],
   paths: {
+    '/api/openapi.json': {
+      get: {
+        tags: ['Health'],
+        summary: 'Get OpenAPI spec',
+        responses: {
+          200: {
+            description: 'OpenAPI 3.0 specification document',
+            content: {
+              'application/json': {
+                schema: { type: 'object' },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/health': {
       get: {
         tags: ['Health'],
@@ -173,6 +190,45 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/choreographies/duplicates': {
+      get: {
+        tags: ['Choreographies'],
+        summary: 'Check for duplicate choreographies by name, level, and authors',
+        parameters: [
+          { name: 'name', in: 'query', required: true, schema: { type: 'string' } },
+          { name: 'level', in: 'query', required: true, schema: { type: 'string' } },
+          {
+            name: 'authors',
+            in: 'query',
+            required: true,
+            schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
+          },
+          { name: 'exclude_id', in: 'query', required: false, schema: { type: 'integer' } },
+        ],
+        responses: {
+          200: {
+            description: 'Matching duplicate choreographies',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'integer' },
+                      name: { type: 'string' },
+                      level: { type: 'string' },
+                      authors: { type: 'array', items: { type: 'string' } },
+                    },
+                    required: ['id', 'name', 'level', 'authors'],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/choreographies/max-count': {
       get: {
         tags: ['Metadata'],
@@ -187,6 +243,59 @@ export const openApiSpec = {
                   properties: { max_count: { type: 'integer' } },
                   required: ['max_count'],
                 },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/choreographies/{id}/rating': {
+      put: {
+        tags: ['Choreographies'],
+        summary: 'Set personal rating for a choreography',
+        parameters: [{ $ref: '#/components/parameters/IdPath' }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { rating: { type: 'integer', minimum: 0, maximum: 5 } },
+                required: ['rating'],
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Saved rating',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    choreography_id: { type: 'integer' },
+                    rating: { type: 'integer' },
+                  },
+                  required: ['choreography_id', 'rating'],
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+      delete: {
+        tags: ['Choreographies'],
+        summary: 'Remove personal rating for a choreography',
+        parameters: [{ $ref: '#/components/parameters/IdPath' }],
+        responses: {
+          200: {
+            description: 'Rating removed',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/MessageResponse' },
               },
             },
           },
@@ -343,6 +452,26 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/country-codes': {
+      get: {
+        tags: ['Metadata'],
+        summary: 'Get country code → name map',
+        responses: {
+          200: {
+            description: 'Object mapping ISO-2, ISO-3, and alias codes to country names',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  additionalProperties: { type: 'string' },
+                  example: { DE: 'Germany', DEU: 'Germany', GER: 'Germany' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/step_figures': {
       get: {
         tags: ['Step Figures'],
@@ -379,6 +508,25 @@ export const openApiSpec = {
             },
           },
           400: { $ref: '#/components/responses/BadRequest' },
+        },
+      },
+    },
+    '/api/step_figures/with-ids': {
+      get: {
+        tags: ['Step Figures'],
+        summary: 'Get all step figures with their database IDs',
+        responses: {
+          200: {
+            description: 'Step figures with IDs',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/StepFigureOption' },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -581,6 +729,109 @@ export const openApiSpec = {
               },
             },
           },
+        },
+      },
+    },
+    '/api/dance-groups/{groupId}/step-figure-suggestions': {
+      get: {
+        tags: ['Dance Groups'],
+        summary: 'Get step figure suggestions for a dance group',
+        parameters: [
+          {
+            name: 'groupId',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+          },
+          {
+            name: 'max_level_value',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 0 },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Ranked step figure suggestions',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/StepFigureSuggestion' },
+                },
+              },
+            },
+          },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/api/dance-groups/{groupId}/base-step-figures': {
+      get: {
+        tags: ['Group Base Step Figures'],
+        summary: 'Get base step figures configured for a dance group',
+        parameters: [
+          {
+            name: 'groupId',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Base step figures',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/StepFigureOption' },
+                },
+              },
+            },
+          },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+      put: {
+        tags: ['Group Base Step Figures'],
+        summary: 'Replace base step figures for a dance group',
+        parameters: [
+          {
+            name: 'groupId',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  step_figure_ids: { type: 'array', items: { type: 'integer' } },
+                },
+                required: ['step_figure_ids'],
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Updated base step figures',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/StepFigureOption' },
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
         },
       },
     },
@@ -1027,6 +1278,75 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/sessions/{sessionId}/swap/{targetSessionId}': {
+      post: {
+        tags: ['Sessions'],
+        summary: 'Swap choreographies and comments between two sessions in the same course',
+        parameters: [
+          {
+            name: 'sessionId',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+          },
+          {
+            name: 'targetSessionId',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Swap successful',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/MessageResponse' },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/api/sessions/{sessionId}/step-figure-suggestions': {
+      get: {
+        tags: ['Sessions'],
+        summary: 'Get step figure suggestions for a specific session',
+        parameters: [
+          {
+            name: 'sessionId',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Step figure suggestions with known figures and level cap',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    suggestions: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/StepFigureSuggestion' },
+                    },
+                    known_step_figures: { type: 'array', items: { type: 'string' } },
+                    max_level_value: { type: 'integer', nullable: true },
+                  },
+                  required: ['suggestions', 'known_step_figures', 'max_level_value'],
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
     '/api/learned-choreographies': {
       get: {
         tags: ['Learned Choreographies'],
@@ -1210,9 +1530,12 @@ export const openApiSpec = {
           creation_year: { type: 'integer', nullable: true },
           tag_information: { type: 'string', nullable: true },
           restart_information: { type: 'string', nullable: true },
+          song: { type: 'string', nullable: true },
+          artist: { type: 'string', nullable: true },
           authors: { type: 'array', items: { type: 'string' } },
           tags: { type: 'array', items: { type: 'string' } },
           step_figures: { type: 'array', items: { type: 'string' } },
+          rating: { type: 'integer', nullable: true, minimum: 0, maximum: 5 },
           created_at: { type: 'string', nullable: true },
           updated_at: { type: 'string', nullable: true },
         },
@@ -1230,6 +1553,8 @@ export const openApiSpec = {
           creation_year: { type: 'integer' },
           tag_information: { type: 'string' },
           restart_information: { type: 'string' },
+          song: { type: 'string' },
+          artist: { type: 'string' },
           authors: { type: 'array', items: { type: 'string' } },
           tags: { type: 'array', items: { type: 'string' } },
           step_figures: { type: 'array', items: { type: 'string' } },
@@ -1410,13 +1735,28 @@ export const openApiSpec = {
         properties: {
           dance_group_id: { type: 'integer' },
           dance_group_name: { type: 'string' },
-          dance_course_id: { type: 'integer' },
-          semester: { type: 'string' },
           choreography_id: { type: 'integer' },
-          choreography_name: { type: 'string' },
+          times_danced: { type: 'integer' },
           first_learned_date: { type: 'string', format: 'date' },
           last_danced_date: { type: 'string', format: 'date' },
         },
+        required: ['dance_group_id', 'dance_group_name', 'choreography_id', 'times_danced', 'first_learned_date', 'last_danced_date'],
+      },
+      StepFigureOption: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          name: { type: 'string' },
+        },
+        required: ['id', 'name'],
+      },
+      StepFigureSuggestion: {
+        type: 'object',
+        properties: {
+          step_figure: { type: 'string' },
+          additional_choreographies: { type: 'integer' },
+        },
+        required: ['step_figure', 'additional_choreographies'],
       },
     },
   },

@@ -43,6 +43,7 @@ export async function setupTestDb() {
 
 export async function clearAllTables() {
   const tables = [
+    'group_base_step_figures',
     'session_choreographies',
     'sessions',
     'dance_courses',

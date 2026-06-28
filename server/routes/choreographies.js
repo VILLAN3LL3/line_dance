@@ -1529,6 +1529,16 @@ export async function getStepFigures(req, res) {
   }
 }
 
+export async function getStepFiguresWithIds(req, res) {
+  try {
+    const figures = await allQuery('SELECT id, name FROM step_figures ORDER BY name');
+    res.json(figures);
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch step figures' });
+  }
+}
+
 export async function getStepFigureHierarchy(req, res) {
   try {
     const stepFigures = await getStepFigureDetails();

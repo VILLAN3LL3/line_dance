@@ -1,21 +1,9 @@
 import axios from "axios";
 
 import {
-  Choreography,
-  ChoreographyFormData,
-  DanceCourse,
-  DanceGroup,
-  DuplicateChoreography,
-  LearnedChoreography,
-  LevelOption,
-  PaginatedResponse,
-  SavedFilterConfiguration,
-  SearchFilters,
-  Session,
-  SessionChoreography,
-  SessionStepFigureSuggestionsResult,
-  StepFigureDefinition,
-  StepFigureSuggestion,
+  Choreography, ChoreographyFormData, DanceCourse, DanceGroup, DuplicateChoreography, LearnedChoreography, LevelOption, PaginatedResponse,
+  SavedFilterConfiguration, SearchFilters, Session, SessionChoreography, SessionStepFigureSuggestionsResult, StepFigureDefinition,
+  StepFigureOption, StepFigureSuggestion
 } from "./types";
 
 import type { Trainer } from "./types";
@@ -159,6 +147,26 @@ export async function addLevel(name: string): Promise<{ id: number; name: string
 
 export async function getStepFigures(): Promise<string[]> {
   const response = await api.get("/step_figures");
+  return response.data;
+}
+
+export async function getStepFiguresWithIds(): Promise<StepFigureOption[]> {
+  const response = await api.get("/step_figures/with-ids");
+  return response.data;
+}
+
+export async function getGroupBaseStepFigures(groupId: number): Promise<StepFigureOption[]> {
+  const response = await api.get(`/dance-groups/${groupId}/base-step-figures`);
+  return response.data;
+}
+
+export async function updateGroupBaseStepFigures(
+  groupId: number,
+  stepFigureIds: number[],
+): Promise<StepFigureOption[]> {
+  const response = await api.put(`/dance-groups/${groupId}/base-step-figures`, {
+    step_figure_ids: stepFigureIds,
+  });
   return response.data;
 }
 

@@ -291,6 +291,58 @@
   cursor: pointer;
 }
 
+.base-step-figures-editor {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.base-step-figures-label {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0 0 8px 0;
+}
+
+.base-step-figures-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.base-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 10px;
+}
+
+.base-tag-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.6;
+  padding: 0 2px;
+  transition: opacity 0.15s;
+}
+
+.base-tag-remove:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.base-step-figures-add {
+  font-size: 13px;
+  padding: 3px 8px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
 .learned-table {
   width: 100%;
   border-collapse: collapse;

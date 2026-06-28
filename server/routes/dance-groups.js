@@ -377,6 +377,85 @@ export async function updateGroupMaxLevel(req, res) {
   }
 }
 
+export async function getGroupBaseStepFigures(req, res) {
+  try {
+    const groupId = Number.parseInt(req.params.groupId, 10);
+    if (!Number.isFinite(groupId) || groupId <= 0) {
+      return res.status(400).json({ error: 'Invalid group ID' });
+    }
+    const group = await getQuery('SELECT id FROM dance_groups WHERE id = ?', [groupId], dbName);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    const rows = await allQuery(
+      'SELECT step_figure_id FROM group_base_step_figures WHERE dance_group_id = ? ORDER BY step_figure_id ASC',
+      [groupId],
+      dbName,
+    );
+    if (rows.length === 0) return res.json([]);
+
+    const ids = rows.map((r) => r.step_figure_id);
+    const figures = await allQuery(
+      `SELECT id, name FROM step_figures WHERE id IN (${ids.map(() => '?').join(',')}) ORDER BY name ASC`,
+      ids,
+    );
+    return res.json(figures);
+  } catch (error) {
+    captureError(error);
+    return res.status(500).json({ error: 'Failed to fetch base step figures' });
+  }
+}
+
+export async function updateGroupBaseStepFigures(req, res) {
+  try {
+    const groupId = Number.parseInt(req.params.groupId, 10);
+    if (!Number.isFinite(groupId) || groupId <= 0) {
+      return res.status(400).json({ error: 'Invalid group ID' });
+    }
+    const group = await getQuery('SELECT id FROM dance_groups WHERE id = ?', [groupId], dbName);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    const { step_figure_ids } = req.body;
+    if (
+      !Array.isArray(step_figure_ids) ||
+      !step_figure_ids.every((id) => Number.isInteger(id) && id > 0)
+    ) {
+      return res
+        .status(400)
+        .json({ error: 'step_figure_ids must be an array of positive integers' });
+    }
+
+    await runQuery(
+      'DELETE FROM group_base_step_figures WHERE dance_group_id = ?',
+      [groupId],
+      dbName,
+    );
+    for (const id of step_figure_ids) {
+      await runQuery(
+        'INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id) VALUES (?, ?)',
+        [groupId, id],
+        dbName,
+      );
+    }
+
+    const rows = await allQuery(
+      'SELECT step_figure_id FROM group_base_step_figures WHERE dance_group_id = ? ORDER BY step_figure_id ASC',
+      [groupId],
+      dbName,
+    );
+    if (rows.length === 0) return res.json([]);
+
+    const ids = rows.map((r) => r.step_figure_id);
+    const figures = await allQuery(
+      `SELECT id, name FROM step_figures WHERE id IN (${ids.map(() => '?').join(',')}) ORDER BY name ASC`,
+      ids,
+    );
+    return res.json(figures);
+  } catch (error) {
+    captureError(error);
+    return res.status(500).json({ error: 'Failed to update base step figures' });
+  }
+}
+
 export async function deleteDanceGroup(req, res) {
   try {
     const { id } = req.params;
@@ -1317,6 +1396,77 @@ export async function swapSessions(req, res) {
 
 // Learned Choreographies view
 
+/**
+ * Builds the known_figures CTE fragment and parameter list for step figure suggestion queries.
+ * Merges step figures from already-known choreographies with the group's base step figures.
+ *
+ * @param {number} groupId - Dance group ID (used to fetch base step figures)
+ * @param {number[]} knownChoreoIds - Choreography IDs already known/danced by the group
+ * @returns {Promise<{ knownFiguresCte: string, cteParams: number[], known_step_figures: string[] }>}
+ */
+async function buildKnownStepFiguresCte(groupId, knownChoreoIds) {
+  const baseStepFigureRows = await allQuery(
+    'SELECT step_figure_id FROM group_base_step_figures WHERE dance_group_id = ?',
+    [groupId],
+    dbName,
+  );
+  const baseStepFigureIds = baseStepFigureRows.map((r) => r.step_figure_id);
+
+  const [choreoFigureRows, baseNameRows] = await Promise.all([
+    knownChoreoIds.length > 0
+      ? allQuery(
+          `SELECT DISTINCT sf.name AS step_figure
+           FROM choreography_step_figures csf
+           INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+           WHERE csf.choreography_id IN (${knownChoreoIds.map(() => '?').join(',')})`,
+          knownChoreoIds,
+        )
+      : Promise.resolve([]),
+    baseStepFigureIds.length > 0
+      ? allQuery(
+          `SELECT name FROM step_figures WHERE id IN (${baseStepFigureIds.map(() => '?').join(',')})`,
+          baseStepFigureIds,
+        )
+      : Promise.resolve([]),
+  ]);
+
+  const choreoFigureNames = choreoFigureRows.map((r) => r.step_figure);
+  const baseFigureNames = baseNameRows.map((r) => r.name);
+  const choreoFigureSet = new Set(choreoFigureNames);
+  const known_step_figures = [
+    ...choreoFigureNames,
+    ...baseFigureNames.filter((n) => !choreoFigureSet.has(n)),
+  ];
+
+  const learnedPart =
+    knownChoreoIds.length > 0
+      ? `SELECT DISTINCT LOWER(sf.name) AS name_lower
+         FROM choreography_step_figures csf
+         INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
+         WHERE csf.choreography_id IN (${knownChoreoIds.map(() => '?').join(',')})`
+      : null;
+
+  const basePart =
+    baseStepFigureIds.length > 0
+      ? `SELECT DISTINCT LOWER(name) AS name_lower
+         FROM step_figures
+         WHERE id IN (${baseStepFigureIds.map(() => '?').join(',')})`
+      : null;
+
+  let knownFiguresCte;
+  if (learnedPart && basePart) {
+    knownFiguresCte = `${learnedPart}\n       UNION\n       ${basePart}`;
+  } else if (learnedPart) {
+    knownFiguresCte = learnedPart;
+  } else if (basePart) {
+    knownFiguresCte = basePart;
+  } else {
+    knownFiguresCte = 'SELECT NULL AS name_lower WHERE 1=0';
+  }
+
+  return { knownFiguresCte, cteParams: [...knownChoreoIds, ...baseStepFigureIds], known_step_figures };
+}
+
 export async function getLearnedChoreographies(req, res) {
   try {
     const { dance_group_id } = req.query;
@@ -1366,23 +1516,16 @@ export async function getStepFigureSuggestions(req, res) {
       [groupId, todayIso],
       dbName,
     );
-
     const learnedChoreographyIds = learnedRows.map((r) => r.choreography_id);
 
-    const knownFiguresCte =
-      learnedChoreographyIds.length > 0
-        ? `SELECT DISTINCT LOWER(sf.name) AS name_lower
-           FROM choreography_step_figures csf
-           INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
-           WHERE csf.choreography_id IN (${learnedChoreographyIds.map(() => '?').join(',')})`
-        : 'SELECT NULL AS name_lower WHERE 1=0';
+    const { knownFiguresCte, cteParams } = await buildKnownStepFiguresCte(
+      groupId,
+      learnedChoreographyIds,
+    );
 
     const levelCondition =
       maxLevelValue === null ? '' : 'AND (l.value IS NOT NULL AND l.value <= ?)';
-    const params = [...learnedChoreographyIds];
-    if (maxLevelValue !== null) {
-      params.push(maxLevelValue);
-    }
+    const params = maxLevelValue === null ? cteParams : [...cteParams, maxLevelValue];
 
     const suggestions = await allQuery(
       `WITH known_figures AS (
@@ -1469,33 +1612,19 @@ export async function getSessionStepFigureSuggestions(req, res) {
       ]),
     ];
 
-    const [group, knownStepFigureRows] = await Promise.all([
+    const [group, knownStepData] = await Promise.all([
       getQuery(
         'SELECT max_group_level_value FROM dance_groups WHERE id = ?',
         [course.dance_group_id],
         dbName,
       ),
-      allKnownChoreoIds.length > 0
-        ? allQuery(
-            `SELECT DISTINCT sf.name AS step_figure
-             FROM choreography_step_figures csf
-             INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
-             WHERE csf.choreography_id IN (${allKnownChoreoIds.map(() => '?').join(',')})`,
-            allKnownChoreoIds,
-          )
-        : Promise.resolve([]),
+      buildKnownStepFiguresCte(course.dance_group_id, allKnownChoreoIds),
     ]);
+    const { knownFiguresCte, cteParams, known_step_figures } = knownStepData;
 
-    const known_step_figures = knownStepFigureRows.map((r) => r.step_figure);
     const max_level_value = group?.max_group_level_value ?? null;
-
-    const knownFiguresCte =
-      allKnownChoreoIds.length > 0
-        ? `SELECT DISTINCT LOWER(sf.name) AS name_lower
-           FROM choreography_step_figures csf
-           INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
-           WHERE csf.choreography_id IN (${allKnownChoreoIds.map(() => '?').join(',')})`
-        : 'SELECT NULL AS name_lower WHERE 1=0';
+    const suggestionParams =
+      max_level_value === null ? cteParams : [...cteParams, max_level_value];
 
     const suggestions = await allQuery(
       `WITH known_figures AS (
@@ -1519,7 +1648,7 @@ export async function getSessionStepFigureSuggestions(req, res) {
        GROUP BY LOWER(missing_figure)
        ORDER BY additional_choreographies DESC, step_figure ASC
        LIMIT 5`,
-      max_level_value === null ? allKnownChoreoIds : [...allKnownChoreoIds, max_level_value],
+      suggestionParams,
     );
 
     res.json({ suggestions, known_step_figures, max_level_value });

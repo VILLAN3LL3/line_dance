@@ -32,12 +32,15 @@ import {
   getStepFigureSuggestions,
   swapSessions,
   getSessionStepFigureSuggestions,
+  getGroupBaseStepFigures,
+  updateGroupBaseStepFigures,
 } from '../../routes/dance-groups.js';
 import {
   createChoreography,
   searchChoreographies,
   getLevels,
   getStepFigures,
+  getStepFiguresWithIds,
   createStepFigure,
 } from '../../routes/choreographies.js';
 import { openApiSpec } from '../../scripts/openapi.js';
@@ -52,6 +55,8 @@ app.post('/api/dance-groups', createDanceGroup);
 app.get('/api/dance-groups/:groupId/max-level', getGroupMaxLevel);
 app.put('/api/dance-groups/:groupId/max-level', updateGroupMaxLevel);
 app.get('/api/dance-groups/:groupId/step-figure-suggestions', getStepFigureSuggestions);
+app.get('/api/dance-groups/:groupId/base-step-figures', getGroupBaseStepFigures);
+app.put('/api/dance-groups/:groupId/base-step-figures', updateGroupBaseStepFigures);
 app.get('/api/dance-groups/:id', getDanceGroupById);
 app.put('/api/dance-groups/:id', updateDanceGroup);
 app.delete('/api/dance-groups/:id', deleteDanceGroup);
@@ -90,6 +95,7 @@ app.get('/api/levels', getLevels);
 app.post('/api/choreographies', createChoreography);
 app.get('/api/choreographies/search', searchChoreographies);
 app.get('/api/step_figures', getStepFigures);
+app.get('/api/step_figures/with-ids', getStepFiguresWithIds);
 app.post('/api/step_figures', createStepFigure);
 
 // Meta endpoints

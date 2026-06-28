@@ -288,8 +288,96 @@ describe('GET /api/dance-groups/:groupId/step-figure-suggestions', () => {
     expect(res.body.length).toBeLessThanOrEqual(5);
   });
 
+  it('treats base step figures as already known (excludes them from suggestions)', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Base Known Group' });
+    const vine = await seedBaseFigure('VineFigure');
+    await request(app)
+      .put(`/api/dance-groups/${group.body.id}/base-step-figures`)
+      .send({ step_figure_ids: [vine.id] });
+
+    // Choreo requires VineFigure (base, already known) + NewFigure (unknown)
+    await seedChoreo('Unlockable Dance', 'BEGINNER', ['VineFigure', 'NewFigure']);
+
+    const res = await request(app).get(
+      `/api/dance-groups/${group.body.id}/step-figure-suggestions`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.every((s) => s.step_figure !== 'VineFigure')).toBe(true);
+    expect(res.body.some((s) => s.step_figure === 'NewFigure')).toBe(true);
+  });
+
   it('returns 404 for non-existent group', async () => {
     const res = await request(app).get('/api/dance-groups/99999/step-figure-suggestions');
+    expect(res.status).toBe(404);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Base Step Figures
+// ---------------------------------------------------------------------------
+
+describe('GET /api/dance-groups/:groupId/base-step-figures', () => {
+  it('returns empty array for a group with no base step figures', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
+    const res = await request(app).get(`/api/dance-groups/${group.body.id}/base-step-figures`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('returns 404 for non-existent group', async () => {
+    const res = await request(app).get('/api/dance-groups/99999/base-step-figures');
+    expect(res.status).toBe(404);
+  });
+});
+
+async function seedBaseFigure(name) {
+  const res = await request(app).post('/api/step_figures').send({ name });
+  return res.body;
+}
+
+describe('PUT /api/dance-groups/:groupId/base-step-figures', () => {
+  it('sets base step figures and returns them as {id, name} objects', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
+    const figA = await seedBaseFigure('Grapevine');
+    const figB = await seedBaseFigure('Mambo');
+
+    const res = await request(app)
+      .put(`/api/dance-groups/${group.body.id}/base-step-figures`)
+      .send({ step_figure_ids: [figA.id, figB.id] });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+    expect(res.body.map((f) => f.name).sort()).toEqual(['Grapevine', 'Mambo']);
+    expect(res.body[0]).toMatchObject({ id: expect.any(Number), name: expect.any(String) });
+  });
+
+  it('replacing with empty array clears all base figures', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
+    const fig = await seedBaseFigure('Kick');
+    await request(app)
+      .put(`/api/dance-groups/${group.body.id}/base-step-figures`)
+      .send({ step_figure_ids: [fig.id] });
+
+    const res = await request(app)
+      .put(`/api/dance-groups/${group.body.id}/base-step-figures`)
+      .send({ step_figure_ids: [] });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('returns 400 if step_figure_ids is not an array', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
+    const res = await request(app)
+      .put(`/api/dance-groups/${group.body.id}/base-step-figures`)
+      .send({ step_figure_ids: 'bad' });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 for non-existent group', async () => {
+    const res = await request(app)
+      .put('/api/dance-groups/99999/base-step-figures')
+      .send({ step_figure_ids: [] });
     expect(res.status).toBe(404);
   });
 });

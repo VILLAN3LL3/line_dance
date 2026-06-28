@@ -1,19 +1,12 @@
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import {
-  deleteDanceCourse,
-  exportDanceCoursePdf,
-  fetchChoreographies,
-  getDanceCourses,
-  getDanceGroup,
-  getGroupMaxLevel,
-  getLearnedChoreographies,
-  getLevels,
-  getSessions,
-  updateGroupMaxLevel,
+  deleteDanceCourse, exportDanceCoursePdf, fetchChoreographies, getDanceCourses, getDanceGroup, getGroupBaseStepFigures, getGroupMaxLevel,
+  getLearnedChoreographies, getLevels, getSessions, getStepFigureSuggestions, getStepFiguresWithIds, updateGroupBaseStepFigures,
+  updateGroupMaxLevel
 } from "../../api";
 import DanceGroupDetail from "../../components/dance-groups/DanceGroupDetail";
 
@@ -33,10 +26,14 @@ vi.mock("../../api", () => ({
   fetchChoreographies: vi.fn(),
   getDanceCourses: vi.fn(),
   getDanceGroup: vi.fn(),
+  getGroupBaseStepFigures: vi.fn(),
   getGroupMaxLevel: vi.fn(),
   getLevels: vi.fn(),
   getLearnedChoreographies: vi.fn(),
   getSessions: vi.fn(),
+  getStepFigureSuggestions: vi.fn(),
+  getStepFiguresWithIds: vi.fn(),
+  updateGroupBaseStepFigures: vi.fn(),
   updateGroupMaxLevel: vi.fn(),
 }));
 
@@ -97,6 +94,10 @@ describe("DanceGroupDetail", () => {
     vi.mocked(exportDanceCoursePdf).mockResolvedValue(
       new Blob(["pdf"], { type: "application/pdf" }),
     );
+    vi.mocked(getStepFigureSuggestions).mockResolvedValue([]);
+    vi.mocked(getGroupBaseStepFigures).mockResolvedValue([]);
+    vi.mocked(getStepFiguresWithIds).mockResolvedValue([]);
+    vi.mocked(updateGroupBaseStepFigures).mockResolvedValue([]);
   });
 
   function renderWithRoute() {
@@ -175,5 +176,109 @@ describe("DanceGroupDetail", () => {
       "href",
       "https://www.youtube.com/playlist?list=PL1234567890",
     );
+  });
+
+  it("includes base step figures in the learned step figures tag cloud", async () => {
+    vi.mocked(getGroupBaseStepFigures).mockResolvedValue([
+      { id: 1, name: "Hip Bump" },
+      { id: 2, name: "Kick" },
+    ]);
+    vi.mocked(getLearnedChoreographies).mockResolvedValue([]);
+
+    renderWithRoute();
+    await screen.findByText("Group One");
+
+    const tagCloud = document.querySelector(".tags-container")!;
+    expect(within(tagCloud).getByText("Hip Bump")).toBeInTheDocument();
+    expect(within(tagCloud).getByText("Kick")).toBeInTheDocument();
+  });
+
+  it("merges base and choreo-derived step figures without duplicates", async () => {
+    vi.mocked(getGroupBaseStepFigures).mockResolvedValue([{ id: 1, name: "Mambo" }]);
+    vi.mocked(getLearnedChoreographies).mockResolvedValue([
+      {
+        dance_group_id: 1,
+        dance_group_name: "Group One",
+        choreography_id: 10,
+        times_danced: 2,
+        first_learned_date: "2020-01-01",
+        last_danced_date: "2024-01-01",
+      },
+    ]);
+    // choreography 10 has step_figure "Mambo" (same as base figure)
+
+    renderWithRoute();
+    await screen.findByText("Group One");
+
+    // The tag cloud should contain exactly one "Mambo" entry
+    const tagCloud = document.querySelector(".tags-container");
+    const mamboTags = tagCloud ? [...tagCloud.querySelectorAll(".tag")].filter((t) => t.textContent === "Mambo") : [];
+    expect(mamboTags).toHaveLength(1);
+  });
+
+  it("removes a base step figure when the remove button is clicked", async () => {
+    vi.mocked(getGroupBaseStepFigures).mockResolvedValue([
+      { id: 1, name: "Hip Bump" },
+      { id: 2, name: "Kick" },
+    ]);
+    vi.mocked(updateGroupBaseStepFigures).mockResolvedValue([{ id: 2, name: "Kick" }]);
+
+    renderWithRoute();
+    await screen.findByText("Group One");
+    await screen.findByLabelText("Remove Hip Bump");
+
+    fireEvent.click(screen.getByLabelText("Remove Hip Bump"));
+
+    await waitFor(() => {
+      expect(updateGroupBaseStepFigures).toHaveBeenCalledWith(1, [2]);
+    });
+  });
+
+  it("adds a base step figure when selected from the dropdown", async () => {
+    vi.mocked(getGroupBaseStepFigures).mockResolvedValue([{ id: 1, name: "Hip Bump" }]);
+    vi.mocked(getStepFiguresWithIds).mockResolvedValue([
+      { id: 1, name: "Hip Bump" },
+      { id: 2, name: "Vine" },
+    ]);
+    vi.mocked(updateGroupBaseStepFigures).mockResolvedValue([
+      { id: 1, name: "Hip Bump" },
+      { id: 2, name: "Vine" },
+    ]);
+
+    renderWithRoute();
+    await screen.findByText("Group One");
+    const select = await screen.findByLabelText("Add base step figure");
+
+    fireEvent.change(select, { target: { value: "2" } });
+
+    await waitFor(() => {
+      expect(updateGroupBaseStepFigures).toHaveBeenCalledWith(1, [1, 2]);
+    });
+  });
+
+  it("shows base and choreo-derived figures combined and sorted alphabetically", async () => {
+    vi.mocked(getGroupBaseStepFigures).mockResolvedValue([
+      { id: 1, name: "Kick" },
+      { id: 2, name: "Hip Bump" },
+    ]);
+    vi.mocked(getLearnedChoreographies).mockResolvedValue([
+      {
+        dance_group_id: 1,
+        dance_group_name: "Group One",
+        choreography_id: 10,
+        times_danced: 1,
+        first_learned_date: "2020-01-01",
+        last_danced_date: "2024-01-01",
+      },
+    ]);
+    // choreography 10 has step_figure "Mambo"
+
+    renderWithRoute();
+    await screen.findByText("Group One");
+
+    const tagCloud = document.querySelector(".tags-container");
+    const names = tagCloud ? [...tagCloud.querySelectorAll(".tag")].map((t) => t.textContent ?? "") : [];
+    expect(names.length).toBeGreaterThan(0);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
   });
 });

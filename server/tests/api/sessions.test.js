@@ -754,6 +754,48 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
     expect(res.body.suggestions.some((s) => s.step_figure === 'BeginnerFigure')).toBe(true);
   });
 
+  it('includes base step figures in known_step_figures', async () => {
+    const { group, course } = await createGroupAndCourse('Base SF Group');
+    const fig = await request(app).post('/api/step_figures').send({ name: 'BaseKnownFigure' });
+    await request(app)
+      .put(`/api/dance-groups/${group.id}/base-step-figures`)
+      .send({ step_figure_ids: [fig.body.id] });
+
+    const session = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.id, session_date: '2099-12-01' });
+
+    const res = await request(app).get(`/api/sessions/${session.body.id}/step-figure-suggestions`);
+    expect(res.status).toBe(200);
+    expect(res.body.known_step_figures).toContain('BaseKnownFigure');
+  });
+
+  it('treats base step figures as already known (excludes them from session suggestions)', async () => {
+    const { group, course } = await createGroupAndCourse('Base Session Group');
+    const fig = await request(app).post('/api/step_figures').send({ name: 'SessionBaseFigure' });
+    await request(app)
+      .put(`/api/dance-groups/${group.id}/base-step-figures`)
+      .send({ step_figure_ids: [fig.body.id] });
+
+    // Choreo requires SessionBaseFigure (base, already known) + NewSessionFigure (unknown)
+    await request(app).post('/api/choreographies').send({
+      name: 'Session Unlockable',
+      level: 'BEGINNER',
+      authors: [],
+      tags: [],
+      step_figures: ['SessionBaseFigure', 'NewSessionFigure'],
+    });
+
+    const session = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.id, session_date: '2099-12-01' });
+
+    const res = await request(app).get(`/api/sessions/${session.body.id}/step-figure-suggestions`);
+    expect(res.status).toBe(200);
+    expect(res.body.suggestions.every((s) => s.step_figure !== 'SessionBaseFigure')).toBe(true);
+    expect(res.body.suggestions.some((s) => s.step_figure === 'NewSessionFigure')).toBe(true);
+  });
+
   it('returns 404 for non-existent session', async () => {
     const res = await request(app).get('/api/sessions/99999/step-figure-suggestions');
     expect(res.status).toBe(404);

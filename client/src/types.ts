@@ -95,6 +95,11 @@ export interface StepFigureDefinition {
   used_by_choreography_count: number;
 }
 
+export interface StepFigureOption {
+  id: number;
+  name: string;
+}
+
 // Dance Groups Types
 export interface DanceGroup {
   id: number;

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Choreography, LearnedChoreography, StepFigureSuggestion } from "../../types";
+import { Choreography, LearnedChoreography, StepFigureOption, StepFigureSuggestion } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
 import { ActionButton, EmptyState, LevelBatch, Section, TagGroup } from "../shared/ui";
 
@@ -12,6 +12,9 @@ interface DanceGroupLearnedSectionProps {
   maxGroupLevelValue: number | null;
   groupName: string;
   isLoading: boolean;
+  baseStepFigures: StepFigureOption[];
+  allStepFigures: StepFigureOption[];
+  onBaseStepFiguresChange: (stepFigureIds: number[]) => Promise<void>;
 }
 
 export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> = ({
@@ -21,13 +24,18 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
   maxGroupLevelValue,
   groupName,
   isLoading,
+  baseStepFigures,
+  allStepFigures,
+  onBaseStepFiguresChange,
 }) => {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
 
   const berlinTodayIso = getBerlinTodayIso();
 
-  const learnedStepFigures = Array.from(
+  const baseStepFigureNames = baseStepFigures.map((f) => f.name);
+
+  const learnedFromChoreos = Array.from(
     new Set(
       learnedChoreographies
         .filter((learned) => learned.first_learned_date < berlinTodayIso)
@@ -36,6 +44,10 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
             choreographies.find((c) => c.id === learned.choreography_id)?.step_figures ?? [],
         ),
     ),
+  );
+
+  const learnedStepFigures = Array.from(
+    new Set([...baseStepFigureNames, ...learnedFromChoreos]),
   ).sort((a, b) => a.localeCompare(b));
 
   const handleSearchChoreographies = () => {
@@ -67,6 +79,20 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
     );
   };
 
+  const baseIds = new Set(baseStepFigures.map((f) => f.id));
+  const addableStepFigures = allStepFigures.filter((f) => !baseIds.has(f.id));
+
+  const handleRemoveBase = (id: number) => {
+    void onBaseStepFiguresChange(baseStepFigures.filter((f) => f.id !== id).map((f) => f.id));
+  };
+
+  const handleAddBase = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = Number(e.target.value);
+    if (!id) return;
+    void onBaseStepFiguresChange([...baseStepFigures.map((f) => f.id), id]);
+    e.target.value = "";
+  };
+
   return (
     <div className="learned-sections">
       <Section title="Learned Step Figures">
@@ -89,6 +115,42 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
               >
                 Search Choreographies
               </ActionButton>
+            </div>
+            <div className="base-step-figures-editor">
+              <p className="base-step-figures-label">Base step figures (known before start):</p>
+              <div className="base-step-figures-tags">
+                {baseStepFigures.map((f) => (
+                  <span key={f.id} className="tag base-tag">
+                    {f.name}
+                    <button
+                      className="base-tag-remove"
+                      onClick={() => handleRemoveBase(f.id)}
+                      disabled={isLoading}
+                      aria-label={`Remove ${f.name}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                {addableStepFigures.length > 0 && (
+                  <select
+                    className="base-step-figures-add"
+                    onChange={handleAddBase}
+                    disabled={isLoading}
+                    defaultValue=""
+                    aria-label="Add base step figure"
+                  >
+                    <option value="" disabled>
+                      + Add figure…
+                    </option>
+                    {addableStepFigures.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
             </div>
           </>
         )}

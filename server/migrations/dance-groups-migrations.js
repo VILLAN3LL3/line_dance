@@ -226,6 +226,40 @@ const migrations = [
       await ensureColumnExists('sessions', 'comment', 'TEXT');
     },
   },
+  {
+    id: '009_add_group_base_step_figures',
+    up: async () => {
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS group_base_step_figures (
+          dance_group_id INTEGER NOT NULL,
+          step_figure_id INTEGER NOT NULL,
+          PRIMARY KEY (dance_group_id, step_figure_id),
+          FOREIGN KEY (dance_group_id) REFERENCES dance_groups(id) ON DELETE CASCADE
+        )`,
+        [],
+        dbName,
+      );
+
+      // Seed defaults for all existing groups
+      const groups = await allQuery(`SELECT id FROM dance_groups`, [], dbName);
+      const defaultNames = ['Hip Bump', 'Hip Sway', 'Kick', 'Run'];
+      for (const group of groups) {
+        for (const name of defaultNames) {
+          const figure = await getQuery(
+            `SELECT id FROM step_figures WHERE LOWER(name) = LOWER(?)`,
+            [name],
+          );
+          if (figure) {
+            await runQuery(
+              `INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id) VALUES (?, ?)`,
+              [group.id, figure.id],
+              dbName,
+            );
+          }
+        }
+      }
+    },
+  },
 ];
 
 export async function runDanceGroupsMigrations() {
