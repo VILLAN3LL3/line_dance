@@ -131,8 +131,8 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
                 type="checkbox"
                 checked={showAll}
                 onChange={(e) => setShowAll(e.target.checked)}
-              />
-              {" "}Show planned (not yet danced)
+              />{" "}
+              Show planned (not yet danced)
             </label>
             <table className="learned-table">
               <thead>
