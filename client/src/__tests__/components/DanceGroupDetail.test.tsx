@@ -4,20 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import {
-  deleteDanceCourse,
-  exportDanceCoursePdf,
-  fetchChoreographies,
-  getDanceCourses,
-  getDanceGroup,
-  getGroupBaseStepFigures,
-  getGroupMaxLevel,
-  getLearnedChoreographies,
-  getLevels,
-  getSessions,
-  getStepFigureSuggestions,
-  getStepFiguresWithIds,
-  updateGroupBaseStepFigures,
-  updateGroupMaxLevel,
+  deleteDanceCourse, exportDanceCoursePdf, fetchChoreographies, getDanceCourses, getDanceGroup, getGroupBaseStepFigures, getGroupMaxLevel,
+  getLearnedChoreographies, getLevels, getSessions, getStepFigureSuggestions, getStepFiguresWithIds, updateGroupBaseStepFigures,
+  updateGroupMaxLevel
 } from "../../api";
 import DanceGroupDetail from "../../components/dance-groups/DanceGroupDetail";
 
