@@ -199,7 +199,7 @@ describe("DanceGroupDetail", () => {
     renderWithRoute();
     await screen.findByText("Group One");
 
-    const tagCloud = document.querySelector(".tags-container")!;
+    const tagCloud = document.querySelector(".tags-container") as HTMLElement;
     expect(within(tagCloud).getByText("Hip Bump")).toBeInTheDocument();
     expect(within(tagCloud).getByText("Kick")).toBeInTheDocument();
   });
