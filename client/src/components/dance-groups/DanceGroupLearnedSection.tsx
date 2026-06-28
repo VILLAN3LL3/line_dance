@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Choreography, LearnedChoreography, StepFigureSuggestion } from "../../types";
@@ -23,6 +23,7 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
   isLoading,
 }) => {
   const navigate = useNavigate();
+  const [showAll, setShowAll] = useState(false);
 
   const berlinTodayIso = getBerlinTodayIso();
 
@@ -125,6 +126,14 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
           <EmptyState>No choreographies learned yet</EmptyState>
         ) : (
           <div className="learned-list">
+            <label className="learned-show-all-toggle">
+              <input
+                type="checkbox"
+                checked={showAll}
+                onChange={(e) => setShowAll(e.target.checked)}
+              />
+              {" "}Show planned (not yet danced)
+            </label>
             <table className="learned-table">
               <thead>
                 <tr>
@@ -137,6 +146,7 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
               </thead>
               <tbody>
                 {[...learnedChoreographies]
+                  .filter((learned) => showAll || learned.times_danced > 0)
                   .sort(
                     (a, b) =>
                       new Date(b.first_learned_date).getTime() -
