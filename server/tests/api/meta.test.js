@@ -64,8 +64,12 @@ describe('OpenAPI spec plausibility', () => {
     const missing = routes.filter(({ method, path }) => !openApiSpec.paths[path]?.[method]);
 
     if (missing.length > 0) {
-      const lines = missing.map(({ method, path }) => `  ${method.toUpperCase()} ${path}`).join('\n');
-      throw new Error(`Routes missing from OpenAPI spec (add them to scripts/openapi.js):\n${lines}`);
+      const lines = missing
+        .map(({ method, path }) => `  ${method.toUpperCase()} ${path}`)
+        .join('\n');
+      throw new Error(
+        `Routes missing from OpenAPI spec (add them to scripts/openapi.js):\n${lines}`,
+      );
     }
   });
 });

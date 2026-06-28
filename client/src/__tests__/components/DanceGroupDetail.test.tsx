@@ -4,9 +4,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import {
-  deleteDanceCourse, exportDanceCoursePdf, fetchChoreographies, getDanceCourses, getDanceGroup, getGroupBaseStepFigures, getGroupMaxLevel,
-  getLearnedChoreographies, getLevels, getSessions, getStepFigureSuggestions, getStepFiguresWithIds, updateGroupBaseStepFigures,
-  updateGroupMaxLevel
+  deleteDanceCourse,
+  exportDanceCoursePdf,
+  fetchChoreographies,
+  getDanceCourses,
+  getDanceGroup,
+  getGroupBaseStepFigures,
+  getGroupMaxLevel,
+  getLearnedChoreographies,
+  getLevels,
+  getSessions,
+  getStepFigureSuggestions,
+  getStepFiguresWithIds,
+  updateGroupBaseStepFigures,
+  updateGroupMaxLevel,
 } from "../../api";
 import DanceGroupDetail from "../../components/dance-groups/DanceGroupDetail";
 
@@ -212,7 +223,9 @@ describe("DanceGroupDetail", () => {
 
     // The tag cloud should contain exactly one "Mambo" entry
     const tagCloud = document.querySelector(".tags-container");
-    const mamboTags = tagCloud ? [...tagCloud.querySelectorAll(".tag")].filter((t) => t.textContent === "Mambo") : [];
+    const mamboTags = tagCloud
+      ? [...tagCloud.querySelectorAll(".tag")].filter((t) => t.textContent === "Mambo")
+      : [];
     expect(mamboTags).toHaveLength(1);
   });
 
@@ -277,7 +290,9 @@ describe("DanceGroupDetail", () => {
     await screen.findByText("Group One");
 
     const tagCloud = document.querySelector(".tags-container");
-    const names = tagCloud ? [...tagCloud.querySelectorAll(".tag")].map((t) => t.textContent ?? "") : [];
+    const names = tagCloud
+      ? [...tagCloud.querySelectorAll(".tag")].map((t) => t.textContent ?? "")
+      : [];
     expect(names.length).toBeGreaterThan(0);
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
   });

@@ -1464,7 +1464,11 @@ async function buildKnownStepFiguresCte(groupId, knownChoreoIds) {
     knownFiguresCte = 'SELECT NULL AS name_lower WHERE 1=0';
   }
 
-  return { knownFiguresCte, cteParams: [...knownChoreoIds, ...baseStepFigureIds], known_step_figures };
+  return {
+    knownFiguresCte,
+    cteParams: [...knownChoreoIds, ...baseStepFigureIds],
+    known_step_figures,
+  };
 }
 
 export async function getLearnedChoreographies(req, res) {
@@ -1623,8 +1627,7 @@ export async function getSessionStepFigureSuggestions(req, res) {
     const { knownFiguresCte, cteParams, known_step_figures } = knownStepData;
 
     const max_level_value = group?.max_group_level_value ?? null;
-    const suggestionParams =
-      max_level_value === null ? cteParams : [...cteParams, max_level_value];
+    const suggestionParams = max_level_value === null ? cteParams : [...cteParams, max_level_value];
 
     const suggestions = await allQuery(
       `WITH known_figures AS (

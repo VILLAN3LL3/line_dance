@@ -1740,7 +1740,14 @@ export const openApiSpec = {
           first_learned_date: { type: 'string', format: 'date' },
           last_danced_date: { type: 'string', format: 'date' },
         },
-        required: ['dance_group_id', 'dance_group_name', 'choreography_id', 'times_danced', 'first_learned_date', 'last_danced_date'],
+        required: [
+          'dance_group_id',
+          'dance_group_name',
+          'choreography_id',
+          'times_danced',
+          'first_learned_date',
+          'last_danced_date',
+        ],
       },
       StepFigureOption: {
         type: 'object',

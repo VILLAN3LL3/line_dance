@@ -778,13 +778,15 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
       .send({ step_figure_ids: [fig.body.id] });
 
     // Choreo requires SessionBaseFigure (base, already known) + NewSessionFigure (unknown)
-    await request(app).post('/api/choreographies').send({
-      name: 'Session Unlockable',
-      level: 'BEGINNER',
-      authors: [],
-      tags: [],
-      step_figures: ['SessionBaseFigure', 'NewSessionFigure'],
-    });
+    await request(app)
+      .post('/api/choreographies')
+      .send({
+        name: 'Session Unlockable',
+        level: 'BEGINNER',
+        authors: [],
+        tags: [],
+        step_figures: ['SessionBaseFigure', 'NewSessionFigure'],
+      });
 
     const session = await request(app)
       .post('/api/sessions')
