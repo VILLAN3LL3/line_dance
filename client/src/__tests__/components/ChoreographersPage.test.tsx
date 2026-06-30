@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { getAuthorStats, getLevels } from "../../api";
 import ChoreographersPage from "../../components/choreographies/ChoreographersPage";
+
 import type { AuthorStats, LevelOption } from "../../types";
 
 vi.mock("../../api", () => ({
@@ -50,9 +51,7 @@ describe("ChoreographersPage", () => {
     vi.mocked(getAuthorStats).mockRejectedValue(new Error("network"));
     render(<ChoreographersPage />);
     await waitFor(() =>
-      expect(
-        screen.getByText(/failed to load choreographer statistics/i),
-      ).toBeInTheDocument(),
+      expect(screen.getByText(/failed to load choreographer statistics/i)).toBeInTheDocument(),
     );
   });
 
@@ -73,9 +72,7 @@ describe("ChoreographersPage", () => {
 
     fireEvent.change(screen.getByPlaceholderText("Filter by name…"), { target: { value: "zzz" } });
 
-    expect(
-      screen.getByText(/no choreographers match the current filters/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/no choreographers match the current filters/i)).toBeInTheDocument();
   });
 
   it("filters by level — shows only authors with choreos at that level", async () => {
@@ -112,9 +109,7 @@ describe("ChoreographersPage", () => {
     render(<ChoreographersPage />);
     await waitFor(() => expect(screen.getByText("Alice")).toBeInTheDocument());
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /2 beginner choreographies by alice/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /2 beginner choreographies by alice/i }));
 
     const url = openSpy.mock.calls[0][0] as string;
     const decoded = decodeURIComponent(url.replace("/?filters=", ""));

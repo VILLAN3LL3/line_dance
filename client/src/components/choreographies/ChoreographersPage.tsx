@@ -41,7 +41,11 @@ const ChoreographersPage: React.FC = () => {
   }, []);
 
   const levelNames = useMemo(
-    () => levels.slice().sort((a, b) => a.value - b.value).map((l) => l.name),
+    () =>
+      levels
+        .slice()
+        .sort((a, b) => a.value - b.value)
+        .map((l) => l.name),
     [levels],
   );
 
@@ -126,10 +130,24 @@ const ChoreographersPage: React.FC = () => {
           <table className="choreographers-table">
             <thead>
               <tr>
-                <th onClick={() => handleSort("name")} aria-sort={sortField === "name" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}>
+                <th
+                  onClick={() => handleSort("name")}
+                  aria-sort={
+                    sortField === "name" ? (sortDir === "asc" ? "ascending" : "descending") : "none"
+                  }
+                >
                   Choreographer {sortIndicator("name")}
                 </th>
-                <th onClick={() => handleSort("total")} aria-sort={sortField === "total" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}>
+                <th
+                  onClick={() => handleSort("total")}
+                  aria-sort={
+                    sortField === "total"
+                      ? sortDir === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : "none"
+                  }
+                >
                   Total {sortIndicator("total")}
                 </th>
                 {levelNames.map((level) => (

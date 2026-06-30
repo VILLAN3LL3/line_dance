@@ -4,9 +4,9 @@ import React from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 
 import { App as ChoreographySearch } from "./app/App";
+import ChoreographersPage from "./choreographies/ChoreographersPage";
 import ChoreographyCreatePage from "./choreographies/ChoreographyCreatePage";
 import ChoreographyDetail from "./choreographies/ChoreographyDetail";
-import ChoreographersPage from "./choreographies/ChoreographersPage";
 import StepFigureHierarchyAdmin from "./choreographies/StepFigureHierarchyAdmin";
 import CourseDetail from "./courses/CourseDetail";
 import CourseFormPage from "./courses/CourseFormPage";
