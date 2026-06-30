@@ -137,9 +137,7 @@ const ChoreographersPage: React.FC = () => {
                     sortField === "name" ? (sortDir === "asc" ? "ascending" : "descending") : "none"
                   }
                 >
-                  <div className="th-rotated-inner">
-                    Choreographer {sortIndicator("name")}
-                  </div>
+                  <div className="th-rotated-inner">Choreographer {sortIndicator("name")}</div>
                 </th>
                 <th
                   className="th-rotated"
