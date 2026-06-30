@@ -77,6 +77,11 @@ const ChoreographersPage: React.FC = () => {
     }
   };
 
+  const ariaSort = (field: SortField): "ascending" | "descending" | "none" => {
+    if (sortField !== field) return "none";
+    return sortDir === "asc" ? "ascending" : "descending";
+  };
+
   const filtered = useMemo(() => {
     let rows = stats;
     if (nameFilter.trim()) {
@@ -144,22 +149,14 @@ const ChoreographersPage: React.FC = () => {
                 <th
                   className="th-name"
                   onClick={() => handleSort("name")}
-                  aria-sort={
-                    sortField === "name" ? (sortDir === "asc" ? "ascending" : "descending") : "none"
-                  }
+                  aria-sort={ariaSort("name")}
                 >
                   Choreographer {sortIndicator("name")}
                 </th>
                 <th
                   className="th-rotated"
                   onClick={() => handleSort("total")}
-                  aria-sort={
-                    sortField === "total"
-                      ? sortDir === "asc"
-                        ? "ascending"
-                        : "descending"
-                      : "none"
-                  }
+                  aria-sort={ariaSort("total")}
                 >
                   <div className="th-rotated-inner">Total {sortIndicator("total")}</div>
                 </th>
