@@ -65,12 +65,17 @@
 .sidebar-title-link {
   color: white;
   text-decoration: none;
-  font-size: 17px;
-  font-weight: 700;
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.15s;
   pointer-events: none;
+}
+
+.nav-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: inherit;
 }
 
 .sidebar--open .sidebar-title-link {
@@ -192,8 +197,10 @@
   .mobile-title-link {
     color: white;
     text-decoration: none;
+  }
+
+  .mobile-title-link .nav-title {
     font-size: 18px;
-    font-weight: 700;
   }
 
   /* Sidebar slides in over content */

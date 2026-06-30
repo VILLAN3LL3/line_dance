@@ -41,7 +41,7 @@ export const AppRouter: React.FC = () => {
           {isOpen ? "✕" : "☰"}
         </button>
         <Link to="/" className="mobile-title-link" onClick={closeMobile}>
-          💃 Line Dance
+          <h1 className="nav-title">💃 Line Dance</h1>
         </Link>
       </div>
 
@@ -61,7 +61,7 @@ export const AppRouter: React.FC = () => {
             ☰
           </button>
           <Link to="/" className="sidebar-title-link" aria-label="Line Dance Home">
-            💃 Line Dance
+            <h1 className="nav-title">💃 Line Dance</h1>
           </Link>
         </div>
 
