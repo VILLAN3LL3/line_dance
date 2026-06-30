@@ -119,7 +119,8 @@ const ChoreographersPage: React.FC = () => {
           onChange={(e) => setNameFilter(e.target.value)}
           aria-label="Filter by choreographer name"
         />
-        <div className="choreographers-level-filters" role="group" aria-label="Filter by level">
+        <fieldset className="choreographers-level-filters">
+          <legend className="sr-only">Filter by level</legend>
           {levelNames.map((level) => (
             <button
               key={level}
@@ -130,7 +131,7 @@ const ChoreographersPage: React.FC = () => {
               {level}
             </button>
           ))}
-        </div>
+        </fieldset>
       </div>
 
       {filtered.length === 0 ? (
@@ -144,7 +145,11 @@ const ChoreographersPage: React.FC = () => {
                   className="th-name"
                   onClick={() => handleSort("name")}
                   aria-sort={
-                    sortField === "name" ? (sortDir === "asc" ? "ascending" : "descending") : "none"
+                    sortField === "name"
+                      ? sortDir === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : "none"
                   }
                 >
                   Choreographer {sortIndicator("name")}

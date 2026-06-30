@@ -58,6 +58,9 @@
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 
 .level-filter-btn {
@@ -200,7 +203,6 @@
 }
 
 .level-count-btn {
-  background: none;
   border: none;
   padding: 3px 8px;
   border-radius: 999px;
