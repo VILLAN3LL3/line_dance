@@ -170,10 +170,6 @@
   text-align: center;
 }
 
-.choreographers-table th:first-child.th-rotated {
-  text-align: left;
-}
-
 .choreographers-table td:first-child {
   min-width: 240px;
 }
