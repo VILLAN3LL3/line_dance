@@ -47,11 +47,7 @@ export const AppRouter: React.FC = () => {
 
       {/* Backdrop for mobile */}
       {isOpen && (
-        <div
-          className="sidebar-overlay"
-          onClick={() => setIsOpen(false)}
-          aria-hidden="true"
-        />
+        <div className="sidebar-overlay" onClick={() => setIsOpen(false)} aria-hidden="true" />
       )}
 
       <aside className={`sidebar${isOpen ? " sidebar--open" : ""}`} aria-label="Main navigation">
