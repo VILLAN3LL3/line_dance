@@ -145,11 +145,7 @@ const ChoreographersPage: React.FC = () => {
                   className="th-name"
                   onClick={() => handleSort("name")}
                   aria-sort={
-                    sortField === "name"
-                      ? sortDir === "asc"
-                        ? "ascending"
-                        : "descending"
-                      : "none"
+                    sortField === "name" ? (sortDir === "asc" ? "ascending" : "descending") : "none"
                   }
                 >
                   Choreographer {sortIndicator("name")}
