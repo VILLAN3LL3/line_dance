@@ -1,0 +1,175 @@
+.choreographers-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+}
+
+.choreographers-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.choreographers-header h2 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.choreographers-count {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.choreographers-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+}
+
+.choreographers-name-filter {
+  flex: 1 1 200px;
+  min-width: 160px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.choreographers-name-filter:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.choreographers-level-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.level-filter-btn {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.02em;
+}
+
+.level-filter-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.level-filter-btn.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.choreographers-table-wrap {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  overflow-x: auto;
+}
+
+.choreographers-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.choreographers-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.choreographers-table th:hover {
+  background: var(--color-surface-soft);
+}
+
+.choreographers-table th .sort-indicator {
+  margin-left: 4px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.choreographers-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.choreographers-table tr:last-child td {
+  border-bottom: none;
+}
+
+.choreographers-table tr:hover td {
+  background: var(--color-surface-soft);
+}
+
+.author-name-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s;
+}
+
+.author-name-btn:hover {
+  text-decoration-color: var(--color-primary);
+}
+
+.level-count-btn {
+  background: none;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  transition: background 0.15s;
+}
+
+.level-count-btn:hover {
+  background: #ede5f5;
+  color: var(--color-primary);
+}
+
+.level-count-zero {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}

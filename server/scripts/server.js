@@ -24,6 +24,7 @@ import {
   updateStepFigure,
   deleteStepFigure,
   getAuthors,
+  getAuthorStats,
   getCountryCodes,
   getSavedFilterConfigurations,
   saveFilterConfiguration,
@@ -111,6 +112,7 @@ app.get('/api/levels', getLevels);
 app.post('/api/levels', addLevel);
 app.get('/api/tags', getTags);
 app.get('/api/authors', getAuthors);
+app.get('/api/authors/stats', getAuthorStats);
 app.get('/api/country-codes', getCountryCodes);
 app.get('/api/step_figures/hierarchy', getStepFigureHierarchy);
 app.post('/api/step_figures', createStepFigure);

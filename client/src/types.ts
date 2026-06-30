@@ -175,3 +175,9 @@ export interface SessionStepFigureSuggestionsResult {
   known_step_figures: string[];
   max_level_value: number | null;
 }
+
+export interface AuthorStats {
+  name: string;
+  total: number;
+  by_level: Record<string, number>;
+}

@@ -6,6 +6,7 @@ import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { App as ChoreographySearch } from "./app/App";
 import ChoreographyCreatePage from "./choreographies/ChoreographyCreatePage";
 import ChoreographyDetail from "./choreographies/ChoreographyDetail";
+import ChoreographersPage from "./choreographies/ChoreographersPage";
 import StepFigureHierarchyAdmin from "./choreographies/StepFigureHierarchyAdmin";
 import CourseDetail from "./courses/CourseDetail";
 import CourseFormPage from "./courses/CourseFormPage";
@@ -18,6 +19,7 @@ export const AppRouter: React.FC = () => {
   const location = useLocation();
   const swaggerDocsUrl = "http://localhost:3001/api/docs";
   const isStepFiguresRoute = location.pathname.startsWith("/admin/step-figures");
+  const isChoreographersRoute = location.pathname.startsWith("/choreographers");
   const isDanceGroupsRoute =
     location.pathname === "/admin" || location.pathname.startsWith("/admin/groups");
 
@@ -34,6 +36,14 @@ export const AppRouter: React.FC = () => {
             <li>
               <Link to="/" className={`nav-link ${location.pathname === "/" ? "active" : ""}`}>
                 🎵 Choreographies
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/choreographers"
+                className={`nav-link ${isChoreographersRoute ? "active" : ""}`}
+              >
+                🎭 Choreographers
               </Link>
             </li>
             <li>
@@ -79,6 +89,7 @@ export const AppRouter: React.FC = () => {
           <Route path="/" element={<ChoreographySearch />} />
           <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
           <Route path="/choreographies/:id" element={<ChoreographyDetail />} />
+          <Route path="/choreographers" element={<ChoreographersPage />} />
           <Route path="/admin" element={<DanceGroupsAdmin mode="list" />} />
           <Route path="/admin/step-figures" element={<StepFigureHierarchyAdmin />} />
           <Route path="/admin/groups/new" element={<DanceGroupsAdmin mode="create" />} />

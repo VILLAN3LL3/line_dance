@@ -452,6 +452,25 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/authors/stats': {
+      get: {
+        tags: ['Metadata'],
+        summary: 'Get choreography count statistics per author, broken down by level',
+        responses: {
+          200: {
+            description: 'Author stats',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/AuthorStats' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/country-codes': {
       get: {
         tags: ['Metadata'],
@@ -1764,6 +1783,18 @@ export const openApiSpec = {
           additional_choreographies: { type: 'integer' },
         },
         required: ['step_figure', 'additional_choreographies'],
+      },
+      AuthorStats: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          total: { type: 'integer' },
+          by_level: {
+            type: 'object',
+            additionalProperties: { type: 'integer' },
+          },
+        },
+        required: ['name', 'total', 'by_level'],
       },
     },
   },

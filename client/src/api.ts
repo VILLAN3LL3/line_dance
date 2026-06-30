@@ -141,6 +141,11 @@ export async function getAuthors(): Promise<string[]> {
   return response.data;
 }
 
+export async function getAuthorStats(): Promise<import("./types").AuthorStats[]> {
+  const response = await api.get("/authors/stats");
+  return response.data;
+}
+
 export async function getCountryCodes(): Promise<Record<string, string>> {
   const response = await api.get("/country-codes");
   return response.data;

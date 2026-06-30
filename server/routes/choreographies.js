@@ -1477,6 +1477,39 @@ export async function getAuthors(req, res) {
   }
 }
 
+export async function getAuthorStats(req, res) {
+  try {
+    const rows = await allQuery(
+      `SELECT a.name AS author_name, l.name AS level_name, COUNT(DISTINCT ca.choreography_id) AS count
+       FROM authors a
+       JOIN choreography_authors ca ON a.id = ca.author_id
+       JOIN choreographies c ON ca.choreography_id = c.id
+       LEFT JOIN levels l ON c.level_id = l.id
+       GROUP BY a.id, l.id
+       ORDER BY a.name ASC, l.name ASC`,
+    );
+
+    // Aggregate rows into per-author objects
+    const map = new Map();
+    for (const row of rows) {
+      if (!map.has(row.author_name)) {
+        map.set(row.author_name, { name: row.author_name, total: 0, by_level: {} });
+      }
+      const entry = map.get(row.author_name);
+      const count = Number(row.count);
+      entry.total += count;
+      if (row.level_name) {
+        entry.by_level[row.level_name] = count;
+      }
+    }
+
+    res.json([...map.values()]);
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch author stats' });
+  }
+}
+
 export async function addLevel(req, res) {
   try {
     const { name, value } = req.body;

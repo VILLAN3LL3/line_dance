@@ -20,6 +20,12 @@ __All code was written by GitHub Copilot. Use with caution.__
 - Switch between card and table views; filters and view mode persist in local storage
 - Create, edit, and delete choreographies with ratings (0–5)
 
+### Choreographers
+
+- Statistics page listing every choreographer with total choreography count, broken down by level
+- Filter by name and/or level; sort by name or total count
+- Click a choreographer name or a level count to open a pre-filtered choreography search in a new tab
+
 ### Dance Group Administration
 
 - Create, rename, and delete dance groups
@@ -120,6 +126,7 @@ API integration tests run against in-memory SQLite. Coverage includes:
 - Step figure suggestions (group-level and session-level) including base figure exclusion
 - Max group level management
 - Choreography CRUD, ratings, duplicate detection
+- Author statistics (totals and per-level breakdowns)
 - Search filters: `all`/`any`/`exact`, `max_level_value`, `excluded_tags`, `max_count`, hierarchy-aware matching
 - Step figure hierarchy CRUD and validation (cycles, delete protection)
 - Saved filter configuration lifecycle
@@ -133,6 +140,7 @@ API integration tests run against in-memory SQLite. Coverage includes:
 - Step figure hierarchy admin
 - Dance group admin and detail (including base step figures merge and dedup logic)
 - Course form and session management flows
+- Choreographers statistics page (filtering, sorting, window.open integration)
 
 ### E2E (Playwright)
 

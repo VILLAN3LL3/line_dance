@@ -42,6 +42,8 @@ import {
   getStepFigures,
   getStepFiguresWithIds,
   createStepFigure,
+  getAuthors,
+  getAuthorStats,
 } from '../../routes/choreographies.js';
 import { openApiSpec } from '../../scripts/openapi.js';
 
@@ -97,6 +99,8 @@ app.get('/api/choreographies/search', searchChoreographies);
 app.get('/api/step_figures', getStepFigures);
 app.get('/api/step_figures/with-ids', getStepFiguresWithIds);
 app.post('/api/step_figures', createStepFigure);
+app.get('/api/authors', getAuthors);
+app.get('/api/authors/stats', getAuthorStats);
 
 // Meta endpoints
 app.get('/api/openapi.json', (req, res) => {
