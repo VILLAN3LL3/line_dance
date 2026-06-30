@@ -1,6 +1,6 @@
 import "../styles/AppRouter.css";
 
-import React from "react";
+import React, { useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 
 import { App as ChoreographySearch } from "./app/App";
@@ -17,72 +17,134 @@ import TrainersAdmin from "./trainers/TrainersAdmin";
 
 export const AppRouter: React.FC = () => {
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(true);
   const swaggerDocsUrl = "http://localhost:3001/api/docs";
   const isStepFiguresRoute = location.pathname.startsWith("/admin/step-figures");
   const isChoreographersRoute = location.pathname.startsWith("/choreographers");
   const isDanceGroupsRoute =
     location.pathname === "/admin" || location.pathname.startsWith("/admin/groups");
 
+  const closeMobile = () => {
+    if (window.innerWidth < 768) setIsOpen(false);
+  };
+
   return (
-    <div className="app-router">
-      <nav className="main-nav">
-        <div className="nav-container">
-          <h1 className="nav-title">
-            <Link to="/" className="nav-title-link" aria-label="Line Dance Home">
-              💃 Line Dance
-            </Link>
-          </h1>
-          <ul className="nav-links">
+    <div className={`app-router${isOpen ? " sidebar-is-open" : ""}`}>
+      {/* Mobile-only top bar */}
+      <div className="mobile-header">
+        <button
+          className="sidebar-toggle"
+          onClick={() => setIsOpen((o) => !o)}
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isOpen}
+        >
+          {isOpen ? "✕" : "☰"}
+        </button>
+        <Link to="/" className="mobile-title-link" onClick={closeMobile}>
+          💃 Line Dance
+        </Link>
+      </div>
+
+      {/* Backdrop for mobile */}
+      {isOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside className={`sidebar${isOpen ? " sidebar--open" : ""}`} aria-label="Main navigation">
+        <div className="sidebar-header">
+          <button
+            className="sidebar-toggle"
+            onClick={() => setIsOpen((o) => !o)}
+            aria-label={isOpen ? "Collapse menu" : "Expand menu"}
+            aria-expanded={isOpen}
+          >
+            ☰
+          </button>
+          <Link to="/" className="sidebar-title-link" aria-label="Line Dance Home">
+            💃 Line Dance
+          </Link>
+        </div>
+
+        <nav>
+          <ul className="sidebar-links">
             <li>
-              <Link to="/" className={`nav-link ${location.pathname === "/" ? "active" : ""}`}>
-                🎵 Choreographies
+              <Link
+                to="/"
+                className={`sidebar-link${location.pathname === "/" ? " active" : ""}`}
+                title="Choreographies"
+                onClick={closeMobile}
+              >
+                <span className="sidebar-icon">🎵</span>
+                <span className="sidebar-label">Choreographies</span>
               </Link>
             </li>
             <li>
               <Link
                 to="/choreographers"
-                className={`nav-link ${isChoreographersRoute ? "active" : ""}`}
+                className={`sidebar-link${isChoreographersRoute ? " active" : ""}`}
+                title="Choreographers"
+                onClick={closeMobile}
               >
-                🎭 Choreographers
+                <span className="sidebar-icon">🎭</span>
+                <span className="sidebar-label">Choreographers</span>
               </Link>
             </li>
             <li>
               <Link
                 to="/admin"
-                className={`nav-link ${isDanceGroupsRoute && !isStepFiguresRoute ? "active" : ""}`}
+                className={`sidebar-link${
+                  isDanceGroupsRoute && !isStepFiguresRoute ? " active" : ""
+                }`}
+                title="Dance Groups"
+                onClick={closeMobile}
               >
-                👥 Dance Groups
+                <span className="sidebar-icon">👥</span>
+                <span className="sidebar-label">Dance Groups</span>
               </Link>
             </li>
             <li>
               <Link
                 to="/admin/step-figures"
-                className={`nav-link ${isStepFiguresRoute ? "active" : ""}`}
+                className={`sidebar-link${isStepFiguresRoute ? " active" : ""}`}
+                title="Step Figures"
+                onClick={closeMobile}
               >
-                🪜 Step Figures
+                <span className="sidebar-icon">🪜</span>
+                <span className="sidebar-label">Step Figures</span>
               </Link>
             </li>
             <li>
               <Link
                 to="/trainers"
-                className={`nav-link ${location.pathname.startsWith("/trainers") ? "active" : ""}`}
+                className={`sidebar-link${
+                  location.pathname.startsWith("/trainers") ? " active" : ""
+                }`}
+                title="Trainers"
+                onClick={closeMobile}
               >
-                🧑‍🏫 Trainers
+                <span className="sidebar-icon">🧑‍🏫</span>
+                <span className="sidebar-label">Trainers</span>
               </Link>
             </li>
-            <li>
-              <ExternalLink
-                href={swaggerDocsUrl}
-                className="nav-icon-link"
-                aria-label="Open API documentation"
-                title="Open API documentation"
-              >
-                ℹ️
-              </ExternalLink>
-            </li>
           </ul>
+        </nav>
+
+        <div className="sidebar-footer">
+          <ExternalLink
+            href={swaggerDocsUrl}
+            className="sidebar-link"
+            title="API Docs"
+            aria-label="Open API documentation"
+          >
+            <span className="sidebar-icon">ℹ️</span>
+            <span className="sidebar-label">API Docs</span>
+          </ExternalLink>
         </div>
-      </nav>
+      </aside>
 
       <main className="router-content">
         <Routes>
