@@ -103,6 +103,28 @@
   padding: 0;
 }
 
+.th-name {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  vertical-align: bottom;
+}
+
+.th-name:hover {
+  background: var(--color-surface-soft);
+}
+
+.th-name .sort-indicator {
+  margin-left: 4px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
 /* Rotated column headers */
 .th-rotated {
   padding: 9px 14px;

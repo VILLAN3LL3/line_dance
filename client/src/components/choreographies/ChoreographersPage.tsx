@@ -141,13 +141,13 @@ const ChoreographersPage: React.FC = () => {
             <thead>
               <tr>
                 <th
-                  className="th-rotated"
+                  className="th-name"
                   onClick={() => handleSort("name")}
                   aria-sort={
                     sortField === "name" ? (sortDir === "asc" ? "ascending" : "descending") : "none"
                   }
                 >
-                  <div className="th-rotated-inner">Choreographer {sortIndicator("name")}</div>
+                  Choreographer {sortIndicator("name")}
                 </th>
                 <th
                   className="th-rotated"
