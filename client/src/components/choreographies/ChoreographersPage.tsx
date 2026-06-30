@@ -30,14 +30,24 @@ const ChoreographersPage: React.FC = () => {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   useEffect(() => {
-    setIsLoading(true);
+    let cancelled = false;
     Promise.all([getAuthorStats(), getLevels()])
       .then(([s, l]) => {
-        setStats(s);
-        setLevels(l);
+        if (!cancelled) {
+          setStats(s);
+          setLevels(l);
+          setIsLoading(false);
+        }
       })
-      .catch(() => setError("Failed to load choreographer statistics."))
-      .finally(() => setIsLoading(false));
+      .catch(() => {
+        if (!cancelled) {
+          setError("Failed to load choreographer statistics.");
+          setIsLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const levelNames = useMemo(

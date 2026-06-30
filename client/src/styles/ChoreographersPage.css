@@ -105,14 +105,12 @@
 
 /* Rotated column headers */
 .th-rotated {
-  width: 44px;
-  min-width: 44px;
-  padding: 0;
-  height: 120px;
+  padding: 4px 8px;
   vertical-align: bottom;
-  text-align: left;
+  width: 32px;
+  min-width: 32px;
   user-select: none;
-  position: relative;
+  position: static;
 }
 
 .th-rotated:hover .th-rotated-inner {
@@ -120,16 +118,14 @@
 }
 
 .th-rotated-inner {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform-origin: left center;
-  transform: rotate(-45deg) translateX(-50%);
-  white-space: nowrap;
+  display: block;
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
   font-size: 12px;
   font-weight: 700;
   color: var(--color-primary);
-  line-height: 1;
+  white-space: nowrap;
+  text-align: left;
 }
 
 .th-rotated[aria-sort] {
@@ -137,7 +133,7 @@
 }
 
 .th-rotated .sort-indicator {
-  margin-left: 3px;
+  margin-top: 3px;
   color: var(--color-text-muted);
   font-size: 10px;
 }
@@ -149,7 +145,7 @@
 }
 
 .choreographers-table td:first-child {
-  min-width: 180px;
+  min-width: 240px;
 }
 
 .choreographers-table tr:last-child td {
