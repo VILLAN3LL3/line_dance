@@ -131,14 +131,18 @@ const ChoreographersPage: React.FC = () => {
             <thead>
               <tr>
                 <th
+                  className="th-rotated"
                   onClick={() => handleSort("name")}
                   aria-sort={
                     sortField === "name" ? (sortDir === "asc" ? "ascending" : "descending") : "none"
                   }
                 >
-                  Choreographer {sortIndicator("name")}
+                  <div className="th-rotated-inner">
+                    Choreographer {sortIndicator("name")}
+                  </div>
                 </th>
                 <th
+                  className="th-rotated"
                   onClick={() => handleSort("total")}
                   aria-sort={
                     sortField === "total"
@@ -148,10 +152,12 @@ const ChoreographersPage: React.FC = () => {
                       : "none"
                   }
                 >
-                  Total {sortIndicator("total")}
+                  <div className="th-rotated-inner">Total {sortIndicator("total")}</div>
                 </th>
                 {levelNames.map((level) => (
-                  <th key={level}>{level}</th>
+                  <th key={level} className="th-rotated">
+                    <div className="th-rotated-inner">{level}</div>
+                  </th>
                 ))}
               </tr>
             </thead>

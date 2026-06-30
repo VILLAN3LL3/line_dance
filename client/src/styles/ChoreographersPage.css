@@ -99,30 +99,57 @@
 }
 
 .choreographers-table th {
+  border-bottom: 2px solid var(--color-border);
+  padding: 0;
+}
+
+/* Rotated column headers */
+.th-rotated {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  height: 120px;
+  vertical-align: bottom;
   text-align: left;
-  padding: 10px 14px;
+  user-select: none;
+  position: relative;
+}
+
+.th-rotated:hover .th-rotated-inner {
+  color: var(--color-secondary);
+}
+
+.th-rotated-inner {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform-origin: left center;
+  transform: rotate(-45deg) translateX(-50%);
+  white-space: nowrap;
+  font-size: 12px;
   font-weight: 700;
   color: var(--color-primary);
-  border-bottom: 2px solid var(--color-border);
-  white-space: nowrap;
+  line-height: 1;
+}
+
+.th-rotated[aria-sort] {
   cursor: pointer;
-  user-select: none;
 }
 
-.choreographers-table th:hover {
-  background: var(--color-surface-soft);
-}
-
-.choreographers-table th .sort-indicator {
-  margin-left: 4px;
+.th-rotated .sort-indicator {
+  margin-left: 3px;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .choreographers-table td {
   padding: 9px 14px;
   border-bottom: 1px solid var(--color-border);
   vertical-align: middle;
+}
+
+.choreographers-table td:first-child {
+  min-width: 180px;
 }
 
 .choreographers-table tr:last-child td {
