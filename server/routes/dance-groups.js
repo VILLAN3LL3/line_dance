@@ -33,6 +33,13 @@ function courseIdToColors(courseId) {
     headerBg: hslToHex(hue, 75, 95),
     headerBorder: hslToHex(hue, 55, 83),
     title: hslToHex(hue, 72, 25),
+    // Neutral grays with a subtle hint of the primary hue mixed in
+    surfaceBg: hslToHex(hue, 20, 98),
+    surfaceBorder: hslToHex(hue, 18, 91),
+    cardBg: hslToHex(hue, 18, 98),
+    cardBorder: hslToHex(hue, 14, 85),
+    qrBorder: hslToHex(hue, 14, 91),
+    strongBorder: hslToHex(hue, 16, 84),
   };
 }
 
@@ -854,8 +861,12 @@ export async function exportDanceCoursePdf(req, res) {
       title: dynamicColors.title,
       subtitle: '#1F2937',
       muted: '#6B7280',
-      cardBg: '#F9FAFB',
-      cardBorder: '#D1D5DB',
+      surfaceBg: dynamicColors.surfaceBg,
+      surfaceBorder: dynamicColors.surfaceBorder,
+      qrBorder: dynamicColors.qrBorder,
+      strongBorder: dynamicColors.strongBorder,
+      cardBg: dynamicColors.cardBg,
+      cardBorder: dynamicColors.cardBorder,
     };
 
     const pageWidth = doc.page.width;
@@ -922,7 +933,7 @@ export async function exportDanceCoursePdf(req, res) {
 
     doc
       .roundedRect(leftMargin, sessionsBoxY, contentWidth, sessionsBoxHeight, 8)
-      .fillAndStroke('#F8FAFC', '#E2E8F0');
+      .fillAndStroke(colors.surfaceBg, colors.surfaceBorder);
 
     doc
       .fillColor(colors.subtitle)
@@ -941,7 +952,7 @@ export async function exportDanceCoursePdf(req, res) {
 
     doc
       .roundedRect(leftMargin, trainerBoxY, contentWidth, trainerBoxHeight, 8)
-      .fillAndStroke('#F8FAFC', '#E2E8F0');
+      .fillAndStroke(colors.surfaceBg, colors.surfaceBorder);
 
     if (hasTrainer) {
       doc.fillColor(colors.subtitle).fontSize(11);
@@ -1000,7 +1011,7 @@ export async function exportDanceCoursePdf(req, res) {
       doc
         .roundedRect(trainerQrX - 2, trainerQrY - 2, trainerQrSize + 4, trainerQrSize + 4, 4)
         .lineWidth(1)
-        .stroke('#CBD5E1');
+        .stroke(colors.strongBorder);
 
       doc
         .fillColor(colors.muted)
@@ -1075,7 +1086,7 @@ export async function exportDanceCoursePdf(req, res) {
       doc
         .roundedRect(qrX - 3, qrY - 3, qrSize + 6, qrSize + 6, 6)
         .lineWidth(1)
-        .stroke('#E5E7EB');
+        .stroke(colors.qrBorder);
     });
 
     renderDancingPlaceholder(
