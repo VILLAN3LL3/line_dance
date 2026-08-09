@@ -906,28 +906,25 @@ export async function exportDanceCoursePdf(req, res) {
     doc.fillColor('black');
     doc.y = headerY + headerHeight + 18;
 
-    // Session dates section
+    // Session dates section (5-column table)
     const weekdayAbbreviations = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-    const sessionDatesText =
-      sessions.length > 0
-        ? sessions
-            .map((s) => {
-              const sessionDate = new Date(s.session_date);
-              const weekday = weekdayAbbreviations[sessionDate.getDay()] ?? '';
-              return `${weekday}, ${sessionDate.toLocaleDateString('de-DE')}`;
-            })
-            .join(' | ')
-        : 'Keine Termine hinterlegt.';
+    const sessionEntries = sessions.map((s) => {
+      const sessionDate = new Date(s.session_date);
+      const weekday = weekdayAbbreviations[sessionDate.getDay()] ?? '';
+      return `${weekday}, ${sessionDate.toLocaleDateString('de-DE')}`;
+    });
     const sessionsTextWidth = contentWidth - 24;
     const sessionsTextY = doc.y + 12;
-    doc.fontSize(11);
-    const sessionsTextHeight = doc.heightOfString(sessionDatesText, {
-      width: sessionsTextWidth,
-      align: 'left',
-      lineGap: 0,
-    });
     const sessionsBoxY = doc.y;
     const sessionsBottomPadding = 8;
+    doc.fontSize(11);
+
+    const sessionColumns = 5;
+    const sessionRowHeight = 16;
+    const sessionColumnWidth = sessionsTextWidth / sessionColumns;
+    const sessionRowCount =
+      sessionEntries.length > 0 ? Math.ceil(sessionEntries.length / sessionColumns) : 1;
+    const sessionsTextHeight = sessionRowCount * sessionRowHeight;
     const sessionsBoxHeight =
       sessionsTextY - sessionsBoxY + sessionsTextHeight + sessionsBottomPadding;
 
@@ -935,14 +932,26 @@ export async function exportDanceCoursePdf(req, res) {
       .roundedRect(leftMargin, sessionsBoxY, contentWidth, sessionsBoxHeight, 8)
       .fillAndStroke(colors.surfaceBg, colors.surfaceBorder);
 
-    doc
-      .fillColor(colors.subtitle)
-      .fontSize(11)
-      .text(sessionDatesText, leftMargin + 12, sessionsTextY, {
+    doc.fillColor(colors.subtitle).fontSize(11);
+    if (sessionEntries.length > 0) {
+      sessionEntries.forEach((entry, index) => {
+        const columnIndex = index % sessionColumns;
+        const rowIndex = Math.floor(index / sessionColumns);
+        const cellX = leftMargin + 12 + columnIndex * sessionColumnWidth;
+        const cellY = sessionsTextY + rowIndex * sessionRowHeight;
+        doc.text(entry, cellX, cellY, {
+          width: sessionColumnWidth,
+          align: 'left',
+          lineBreak: false,
+        });
+      });
+    } else {
+      doc.text('Keine Termine hinterlegt.', leftMargin + 12, sessionsTextY, {
         width: sessionsTextWidth,
         align: 'left',
         lineGap: 0,
       });
+    }
 
     const trainerBoxY = sessionsBoxY + sessionsBoxHeight + 12;
     const trainerBoxHeight = 112;
