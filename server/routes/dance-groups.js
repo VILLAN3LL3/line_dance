@@ -136,7 +136,8 @@ function formatPhoneSegments(countryPrefix, areaCode, subscriberNumber) {
 }
 
 function renderDancingPlaceholder(doc, layout, colors) {
-  const { linksWithQr, columns, leftMargin, cardWidth, columnGap, gridStartY, rowHeight } = layout;
+  const { linksWithQr, columns, leftMargin, cardWidth, columnGap, gridStartY, rowHeight, cardHeight } =
+    layout;
 
   if (!dancingIconSvg || linksWithQr.length % columns === 0) {
     return;
@@ -147,7 +148,7 @@ function renderDancingPlaceholder(doc, layout, colors) {
   const emptyRowIndex = Math.floor(emptySlotIndex / columns);
   const emptySlotX = leftMargin + emptyColumnIndex * (cardWidth + columnGap);
   const emptySlotY = gridStartY + emptyRowIndex * rowHeight;
-  const dancingIconSize = 207.36;
+  const dancingIconSize = Math.min(207.36, cardWidth, cardHeight ?? 207.36);
   const dancingIconX = emptySlotX + (cardWidth - dancingIconSize);
   const dancingIconY = emptySlotY + (rowHeight - dancingIconSize) / 2;
 
@@ -1064,18 +1065,43 @@ export async function exportDanceCoursePdf(req, res) {
     const columns = 2;
     const columnGap = 16;
     const cardWidth = (contentWidth - columnGap) / columns;
-    const qrSize = 160;
     const labelHeight = 24;
-    const rowHeight = 232;
+    const cardPadding = 12;
+    const cardBottomPad = 18;
+    const rowGap = 18;
+    const maxQrSize = 160;
     const gridStartY = doc.y;
+
+    // Measure the footer disclaimer up front so the tile grid can reserve space for it
+    const disclaimerText =
+      'Datenschutzhinweis: Dieses Dokument enthält Links und QR-Codes zu externen Angeboten Dritter ' +
+      '(z. B. YouTube/Google, Spotify, Copperknob). Auf deren Inhalte und Datenverarbeitung habe ich ' +
+      'keinen Einfluss. Beim Aufrufen können personenbezogene Daten (insbesondere deine IP-Adresse) an die ' +
+      'jeweiligen Anbieter – auch in Drittländer wie die USA – übertragen werden. Es gelten ausschließlich ' +
+      'die Datenschutzbestimmungen der jeweiligen Anbieter. Die Nutzung ist freiwillig und erfolgt auf ' +
+      'eigene Verantwortung.';
+    doc.fontSize(8);
+    const disclaimerHeight = doc.heightOfString(disclaimerText, { width: contentWidth });
+    const disclaimerGap = 16;
+    const disclaimerY = doc.page.height - doc.page.margins.bottom - disclaimerHeight;
+    const gridBottomLimit = disclaimerY - disclaimerGap;
+
+    // Adaptively size the tiles so multiple rows always fit above the disclaimer
+    const rowCount = Math.ceil(linksWithQr.length / columns);
+    const availableGridHeight = gridBottomLimit - gridStartY;
+    const fittedCardHeight = (availableGridHeight - (rowCount - 1) * rowGap) / rowCount;
+    const qrSize = Math.max(
+      80,
+      Math.min(maxQrSize, fittedCardHeight - (labelHeight + cardPadding + cardBottomPad)),
+    );
+    const cardHeight = qrSize + labelHeight + cardPadding + cardBottomPad;
+    const rowHeight = cardHeight + rowGap;
 
     linksWithQr.forEach((entry, index) => {
       const columnIndex = index % columns;
       const rowIndex = Math.floor(index / columns);
       const blockX = leftMargin + columnIndex * (cardWidth + columnGap);
       const blockY = gridStartY + rowIndex * rowHeight;
-      const cardPadding = 12;
-      const cardHeight = 214;
       const cardX = blockX;
       const cardY = blockY;
       const qrX = cardX + (cardWidth - qrSize) / 2;
@@ -1111,20 +1137,11 @@ export async function exportDanceCoursePdf(req, res) {
         columnGap,
         gridStartY,
         rowHeight,
+        cardHeight,
       },
       colors,
     );
 
-    const disclaimerText =
-      'Datenschutzhinweis: Dieses Dokument enthält Links und QR-Codes zu externen Angeboten Dritter ' +
-      '(z. B. YouTube/Google, Spotify, Copperknob). Auf deren Inhalte und Datenverarbeitung habe ich ' +
-      'keinen Einfluss. Beim Aufrufen können personenbezogene Daten (insbesondere deine IP-Adresse) an die ' +
-      'jeweiligen Anbieter – auch in Drittländer wie die USA – übertragen werden. Es gelten ausschließlich ' +
-      'die Datenschutzbestimmungen der jeweiligen Anbieter. Die Nutzung ist freiwillig und erfolgt auf ' +
-      'eigene Verantwortung.';
-    doc.fontSize(8);
-    const disclaimerHeight = doc.heightOfString(disclaimerText, { width: contentWidth });
-    const disclaimerY = doc.page.height - doc.page.margins.bottom - disclaimerHeight;
     doc.fillColor(colors.muted).fontSize(8).text(disclaimerText, leftMargin, disclaimerY, {
       width: contentWidth,
       align: 'center',
