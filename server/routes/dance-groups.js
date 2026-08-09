@@ -136,8 +136,16 @@ function formatPhoneSegments(countryPrefix, areaCode, subscriberNumber) {
 }
 
 function renderDancingPlaceholder(doc, layout, colors) {
-  const { linksWithQr, columns, leftMargin, cardWidth, columnGap, gridStartY, rowHeight, cardHeight } =
-    layout;
+  const {
+    linksWithQr,
+    columns,
+    leftMargin,
+    cardWidth,
+    columnGap,
+    gridStartY,
+    rowHeight,
+    cardHeight,
+  } = layout;
 
   if (!dancingIconSvg || linksWithQr.length % columns === 0) {
     return;
