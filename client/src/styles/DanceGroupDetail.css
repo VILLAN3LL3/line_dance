@@ -393,6 +393,23 @@
   background-color: var(--color-surface);
 }
 
+@media (max-width: 1024px) {
+  .course-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .course-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .course-actions button {
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+}
+
 @media (max-width: 768px) {
   .section-header-row {
     align-items: flex-start;
