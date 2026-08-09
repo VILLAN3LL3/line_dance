@@ -306,6 +306,35 @@ describe('GET /api/dance-groups/:groupId/step-figure-suggestions', () => {
     expect(res.body.some((s) => s.step_figure === 'NewFigure')).toBe(true);
   });
 
+  it('treats child components of a known parent figure as already known', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Hierarchy Group' });
+
+    // Parent figure "Grapevine Combo" is composed of child figures "Vine" and "Cross"
+    const vine = await seedBaseFigure('Vine');
+    const cross = await seedBaseFigure('Cross');
+    const combo = await request(app)
+      .post('/api/step_figures')
+      .send({ name: 'Grapevine Combo', component_ids: [vine.id, cross.id] });
+
+    // The group knows only the parent combo (as a base figure)
+    await request(app)
+      .put(`/api/dance-groups/${group.body.id}/base-step-figures`)
+      .send({ step_figure_ids: [combo.body.id] });
+
+    // A choreo requiring the child "Vine" plus one unknown figure
+    await seedChoreo('Vine Plus Dance', 'BEGINNER', ['Vine', 'BrandNewMove']);
+
+    const res = await request(app).get(
+      `/api/dance-groups/${group.body.id}/step-figure-suggestions`,
+    );
+    expect(res.status).toBe(200);
+    // Child components of the known parent must not be suggested...
+    expect(res.body.every((s) => s.step_figure !== 'Vine')).toBe(true);
+    expect(res.body.every((s) => s.step_figure !== 'Cross')).toBe(true);
+    // ...and the genuinely-missing figure is still suggested.
+    expect(res.body.some((s) => s.step_figure === 'BrandNewMove')).toBe(true);
+  });
+
   it('returns 404 for non-existent group', async () => {
     const res = await request(app).get('/api/dance-groups/99999/step-figure-suggestions');
     expect(res.status).toBe(404);

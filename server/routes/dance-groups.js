@@ -1461,11 +1461,13 @@ export async function swapSessions(req, res) {
 
 /**
  * Builds the known_figures CTE fragment and parameter list for step figure suggestion queries.
- * Merges step figures from already-known choreographies with the group's base step figures.
+ * Merges step figures from already-known choreographies with the group's base step figures, then
+ * expands the set downward through the parent→child hierarchy: knowing a parent figure implies
+ * knowing all of its (recursive) child components.
  *
  * @param {number} groupId - Dance group ID (used to fetch base step figures)
  * @param {number[]} knownChoreoIds - Choreography IDs already known/danced by the group
- * @returns {Promise<{ knownFiguresCte: string, cteParams: number[], known_step_figures: string[] }>}
+ * @returns {Promise<{ knownFiguresCte: string, cteParams: string[], known_step_figures: string[] }>}
  */
 async function buildKnownStepFiguresCte(groupId, knownChoreoIds) {
   const baseStepFigureRows = await allQuery(
@@ -1475,61 +1477,55 @@ async function buildKnownStepFiguresCte(groupId, knownChoreoIds) {
   );
   const baseStepFigureIds = baseStepFigureRows.map((r) => r.step_figure_id);
 
-  const [choreoFigureRows, baseNameRows] = await Promise.all([
+  const choreoFigureRows =
     knownChoreoIds.length > 0
-      ? allQuery(
-          `SELECT DISTINCT sf.name AS step_figure
+      ? await allQuery(
+          `SELECT DISTINCT csf.step_figure_id AS id
            FROM choreography_step_figures csf
-           INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
            WHERE csf.choreography_id IN (${knownChoreoIds.map(() => '?').join(',')})`,
           knownChoreoIds,
         )
-      : Promise.resolve([]),
-    baseStepFigureIds.length > 0
-      ? allQuery(
-          `SELECT name FROM step_figures WHERE id IN (${baseStepFigureIds.map(() => '?').join(',')})`,
-          baseStepFigureIds,
-        )
-      : Promise.resolve([]),
-  ]);
+      : [];
+  const choreoFigureIds = choreoFigureRows.map((r) => r.id);
 
-  const choreoFigureNames = choreoFigureRows.map((r) => r.step_figure);
-  const baseFigureNames = baseNameRows.map((r) => r.name);
-  const choreoFigureSet = new Set(choreoFigureNames);
-  const known_step_figures = [
-    ...choreoFigureNames,
-    ...baseFigureNames.filter((n) => !choreoFigureSet.has(n)),
-  ];
+  // Directly-known step figure ids: figures from already-known choreographies + group base figures.
+  const seedIds = [...new Set([...choreoFigureIds, ...baseStepFigureIds])];
 
-  const learnedPart =
-    knownChoreoIds.length > 0
-      ? `SELECT DISTINCT LOWER(sf.name) AS name_lower
-         FROM choreography_step_figures csf
-         INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
-         WHERE csf.choreography_id IN (${knownChoreoIds.map(() => '?').join(',')})`
-      : null;
-
-  const basePart =
-    baseStepFigureIds.length > 0
-      ? `SELECT DISTINCT LOWER(name) AS name_lower
-         FROM step_figures
-         WHERE id IN (${baseStepFigureIds.map(() => '?').join(',')})`
-      : null;
-
-  let knownFiguresCte;
-  if (learnedPart && basePart) {
-    knownFiguresCte = `${learnedPart}\n       UNION\n       ${basePart}`;
-  } else if (learnedPart) {
-    knownFiguresCte = learnedPart;
-  } else if (basePart) {
-    knownFiguresCte = basePart;
-  } else {
-    knownFiguresCte = 'SELECT NULL AS name_lower WHERE 1=0';
+  if (seedIds.length === 0) {
+    return {
+      knownFiguresCte: 'SELECT NULL AS name_lower WHERE 1=0',
+      cteParams: [],
+      known_step_figures: [],
+    };
   }
+
+  // Walk the parent→child hierarchy so that any child component of a known parent figure is also
+  // treated as known.
+  const expandedRows = await allQuery(
+    `WITH RECURSIVE known_ids(id) AS (
+       SELECT id FROM step_figures WHERE id IN (${seedIds.map(() => '?').join(',')})
+       UNION
+       SELECT sfc.child_step_figure_id
+       FROM step_figure_components sfc
+       INNER JOIN known_ids ON known_ids.id = sfc.parent_step_figure_id
+     )
+     SELECT sf.name
+     FROM step_figures sf
+     INNER JOIN known_ids ON known_ids.id = sf.id
+     ORDER BY LOWER(sf.name) ASC`,
+    seedIds,
+  );
+
+  const known_step_figures = [...new Set(expandedRows.map((r) => r.name))];
+  const namesLower = [...new Set(expandedRows.map((r) => r.name.toLowerCase()))];
+
+  const knownFiguresCte = namesLower
+    .map(() => 'SELECT ? AS name_lower')
+    .join('\n       UNION\n       ');
 
   return {
     knownFiguresCte,
-    cteParams: [...knownChoreoIds, ...baseStepFigureIds],
+    cteParams: namesLower,
     known_step_figures,
   };
 }
