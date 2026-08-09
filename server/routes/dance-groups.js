@@ -1115,6 +1115,21 @@ export async function exportDanceCoursePdf(req, res) {
       colors,
     );
 
+    const disclaimerText =
+      'Datenschutzhinweis: Dieses Dokument enthält Links und QR-Codes zu externen Angeboten Dritter ' +
+      '(z. B. YouTube/Google, Spotify, Copperknob). Auf deren Inhalte und Datenverarbeitung habe ich ' +
+      'keinen Einfluss. Beim Aufrufen können personenbezogene Daten (insbesondere deine IP-Adresse) an die ' +
+      'jeweiligen Anbieter – auch in Drittländer wie die USA – übertragen werden. Es gelten ausschließlich ' +
+      'die Datenschutzbestimmungen der jeweiligen Anbieter. Die Nutzung ist freiwillig und erfolgt auf ' +
+      'eigene Verantwortung.';
+    doc.fontSize(8);
+    const disclaimerHeight = doc.heightOfString(disclaimerText, { width: contentWidth });
+    const disclaimerY = doc.page.height - doc.page.margins.bottom - disclaimerHeight;
+    doc.fillColor(colors.muted).fontSize(8).text(disclaimerText, leftMargin, disclaimerY, {
+      width: contentWidth,
+      align: 'center',
+    });
+
     doc.end();
   } catch (error) {
     captureError(error);
