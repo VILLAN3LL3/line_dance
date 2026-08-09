@@ -201,44 +201,50 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
               />{" "}
               Show planned (not yet danced)
             </label>
-            <table className="learned-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Level</th>
-                  <th>Times Danced</th>
-                  <th>First Learned</th>
-                  <th>Last Danced</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...learnedChoreographies]
-                  .filter((learned) => showAll || learned.times_danced > 0)
-                  .sort(
-                    (a, b) =>
-                      new Date(b.first_learned_date).getTime() -
-                      new Date(a.first_learned_date).getTime(),
-                  )
-                  .map((learned) => {
-                    const choreography = choreographies.find(
-                      (c) => c.id === learned.choreography_id,
-                    );
-                    return (
-                      <tr
-                        key={`${learned.dance_group_id}-${learned.choreography_id}`}
-                        onClick={() => navigate(`/choreographies/${learned.choreography_id}`)}
-                        className="clickable-row"
-                      >
-                        <td>{choreography?.name ?? `Unknown (ID: ${learned.choreography_id})`}</td>
-                        <td>{choreography ? <LevelBatch level={choreography.level} /> : "N/A"}</td>
-                        <td>{learned.times_danced}</td>
-                        <td>{new Date(learned.first_learned_date).toLocaleDateString()}</td>
-                        <td>{new Date(learned.last_danced_date).toLocaleDateString()}</td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
+            <div className="learned-table-wrap">
+              <table className="learned-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Level</th>
+                    <th>Times Danced</th>
+                    <th>First Learned</th>
+                    <th>Last Danced</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...learnedChoreographies]
+                    .filter((learned) => showAll || learned.times_danced > 0)
+                    .sort(
+                      (a, b) =>
+                        new Date(b.first_learned_date).getTime() -
+                        new Date(a.first_learned_date).getTime(),
+                    )
+                    .map((learned) => {
+                      const choreography = choreographies.find(
+                        (c) => c.id === learned.choreography_id,
+                      );
+                      return (
+                        <tr
+                          key={`${learned.dance_group_id}-${learned.choreography_id}`}
+                          onClick={() => navigate(`/choreographies/${learned.choreography_id}`)}
+                          className="clickable-row"
+                        >
+                          <td>
+                            {choreography?.name ?? `Unknown (ID: ${learned.choreography_id})`}
+                          </td>
+                          <td>
+                            {choreography ? <LevelBatch level={choreography.level} /> : "N/A"}
+                          </td>
+                          <td>{learned.times_danced}</td>
+                          <td>{new Date(learned.first_learned_date).toLocaleDateString()}</td>
+                          <td>{new Date(learned.last_danced_date).toLocaleDateString()}</td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </Section>

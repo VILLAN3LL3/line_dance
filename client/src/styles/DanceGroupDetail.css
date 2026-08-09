@@ -343,13 +343,19 @@
   cursor: pointer;
 }
 
+.learned-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
 .learned-table {
   width: 100%;
   border-collapse: collapse;
   background-color: var(--color-surface);
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: var(--shadow);
 }
 
 .learned-table thead {
@@ -458,11 +464,13 @@
 
   .learned-table {
     font-size: 12px;
+    min-width: 520px;
   }
 
   .learned-table th,
   .learned-table td {
     padding: 8px;
+    white-space: nowrap;
   }
 }
 
