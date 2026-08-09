@@ -1,12 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  Choreography,
-  LearnedChoreography,
-  StepFigureOption,
-  StepFigureSuggestion,
-} from "../../types";
+import { Choreography, LearnedChoreography, StepFigureOption, StepFigureSuggestion } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
 import { ActionButton, EmptyState, LevelBatch, Section, TagGroup } from "../shared/ui";
 
