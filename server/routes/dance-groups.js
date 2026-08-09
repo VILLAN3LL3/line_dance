@@ -911,7 +911,10 @@ export async function exportDanceCoursePdf(req, res) {
     const sessionEntries = sessions.map((s) => {
       const sessionDate = new Date(s.session_date);
       const weekday = weekdayAbbreviations[sessionDate.getDay()] ?? '';
-      return `${weekday}, ${sessionDate.toLocaleDateString('de-DE')}`;
+      const day = String(sessionDate.getDate()).padStart(2, '0');
+      const month = String(sessionDate.getMonth() + 1).padStart(2, '0');
+      const year = String(sessionDate.getFullYear());
+      return `${weekday}, ${day}.${month}.${year}`;
     });
     const sessionsTextWidth = contentWidth - 24;
     const sessionsTextY = doc.y + 12;
@@ -965,7 +968,7 @@ export async function exportDanceCoursePdf(req, res) {
 
     if (hasTrainer) {
       doc.fillColor(colors.subtitle).fontSize(11);
-      const nameText = `${course.trainer_name}`;
+      const nameText = `${course.trainer_name}`.toUpperCase();
       const phoneText = `${formatPhoneNumberDin(course.trainer_phone)}`;
       const emailText = `${course.trainer_email}`;
       const contactLineWidth = contentWidth - trainerQrSize - 34;
