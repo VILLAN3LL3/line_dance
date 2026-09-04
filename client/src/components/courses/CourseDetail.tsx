@@ -362,7 +362,7 @@ const CourseDetail: React.FC = () => {
       <div className="detail-header">
         <BackButton onClick={() => navigate(`/admin/groups/${parsedGroupId}`)}>Back</BackButton>
         <h2>
-          Course: {courseHeaderIdentifier}
+          {courseHeaderIdentifier}
           {courseHeaderSemester}
         </h2>
       </div>

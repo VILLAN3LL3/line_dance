@@ -25,7 +25,7 @@ test.describe("Course Management", () => {
       .slice(0, 10);
 
     await page.goto(`/admin/groups/${groupId}/courses/${courseId}`);
-    await expect(page.getByRole("heading", { name: /Course: E2E Course/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /E2E Course/ })).toBeVisible();
 
     await page.locator(".session-form input[type='date']").fill(futureSessionDate);
     await page.getByRole("button", { name: /Add Session/i }).click();

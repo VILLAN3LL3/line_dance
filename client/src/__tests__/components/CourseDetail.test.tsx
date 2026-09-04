@@ -144,7 +144,7 @@ describe("CourseDetail", () => {
   it("creates a new session from the session form", async () => {
     renderWithRoute();
 
-    await screen.findByText(/Course: 7/);
+    await screen.findByText(/7/);
 
     const dateInput = document.querySelector<HTMLInputElement>('.session-form input[type="date"]');
     expect(dateInput).not.toBeNull();
@@ -162,7 +162,7 @@ describe("CourseDetail", () => {
   it("selects a session and adds choreography to that session", async () => {
     renderWithRoute();
 
-    await screen.findByText(/Course: 7/);
+    await screen.findByText(/7/);
 
     fireEvent.click(screen.getAllByRole("button", { name: /manage/i })[0]);
 
@@ -182,7 +182,7 @@ describe("CourseDetail", () => {
   it("shows planned sessions by default and can include passed sessions", async () => {
     renderWithRoute();
 
-    await screen.findByText(/Course: 7/);
+    await screen.findByText(/7/);
 
     expect(screen.getByText("Planned")).toBeInTheDocument();
     expect(screen.queryByText("Passed")).not.toBeInTheDocument();
@@ -204,7 +204,7 @@ describe("CourseDetail", () => {
 
     renderWithRoute();
 
-    await screen.findByText(/Course: 7/);
+    await screen.findByText(/7/);
 
     fireEvent.click(screen.getAllByRole("button", { name: /manage/i })[0]);
 
@@ -222,7 +222,7 @@ describe("CourseDetail", () => {
 
   it("shows swap dropdown when Swap button is clicked and calls swapSessions on confirm", async () => {
     renderWithRoute();
-    await screen.findByText(/Course: 7/);
+    await screen.findByText(/7/);
 
     // Click Swap on the first visible (planned) session
     fireEvent.click(screen.getByRole("button", { name: /^Swap$/i }));
@@ -250,7 +250,7 @@ describe("CourseDetail", () => {
     });
 
     renderWithRoute();
-    await screen.findByText(/Course: 7/);
+    await screen.findByText(/7/);
 
     fireEvent.click(screen.getByRole("button", { name: /^Suggest$/i }));
 
@@ -272,7 +272,7 @@ describe("CourseDetail", () => {
     });
 
     renderWithRoute();
-    await screen.findByText(/Course: 7/);
+    await screen.findByText(/7/);
 
     fireEvent.click(screen.getByRole("button", { name: /^Suggest$/i }));
     await screen.findByRole("button", { name: /hide suggestions/i });
