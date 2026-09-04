@@ -1689,6 +1689,7 @@ export const openApiSpec = {
         properties: {
           id: { type: 'integer' },
           course_id: { type: 'integer', nullable: true },
+          name: { type: 'string', nullable: true },
           dance_group_id: { type: 'integer' },
           dance_group_name: { type: 'string', nullable: true },
           semester: { type: 'string', nullable: true },
@@ -1707,6 +1708,7 @@ export const openApiSpec = {
         type: 'object',
         properties: {
           course_id: { type: 'integer', nullable: true },
+          name: { type: 'string', nullable: true },
           dance_group_id: { type: 'integer' },
           semester: { type: 'string', nullable: true },
           start_date: { type: 'string', format: 'date' },
@@ -1721,6 +1723,7 @@ export const openApiSpec = {
         type: 'object',
         properties: {
           course_id: { type: 'integer', nullable: true },
+          name: { type: 'string', nullable: true },
           semester: { type: 'string', nullable: true },
           start_date: { type: 'string', format: 'date' },
           youtube_playlist_url: { type: 'string' },

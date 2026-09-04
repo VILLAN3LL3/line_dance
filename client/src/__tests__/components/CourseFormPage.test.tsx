@@ -45,6 +45,7 @@ describe("CourseFormPage", () => {
       {
         id: 9,
         course_id: 9,
+        name: "Existing Course",
         dance_group_id: 5,
         dance_group_name: "Group Five",
         semester: "WS 2025",
@@ -56,6 +57,7 @@ describe("CourseFormPage", () => {
     vi.mocked(createDanceCourse).mockResolvedValue({
       id: 10,
       course_id: null,
+      name: "New Course",
       dance_group_id: 5,
       dance_group_name: "Group Five",
       semester: "WS 2026",
@@ -64,6 +66,7 @@ describe("CourseFormPage", () => {
     vi.mocked(updateDanceCourse).mockResolvedValue({
       id: 9,
       course_id: 9,
+      name: "Existing Course",
       dance_group_id: 5,
       dance_group_name: "Group Five",
       semester: "SS 2026",
@@ -82,6 +85,9 @@ describe("CourseFormPage", () => {
 
     await screen.findByRole("heading", { level: 2, name: "Create Course" });
 
+    fireEvent.change(screen.getByLabelText("Course Name (optional)"), {
+      target: { value: "New Course" },
+    });
     fireEvent.change(screen.getByLabelText("Semester"), { target: { value: "WS 2026" } });
     fireEvent.click(screen.getByRole("button", { name: "Create Course" }));
 
@@ -90,6 +96,7 @@ describe("CourseFormPage", () => {
         expect.objectContaining({
           danceGroupId: 5,
           semester: "WS 2026",
+          name: "New Course",
         }),
       );
       expect(mockNavigate).toHaveBeenCalledWith("/admin/groups/5");
@@ -116,6 +123,7 @@ describe("CourseFormPage", () => {
     await waitFor(() => {
       expect(updateDanceCourse).toHaveBeenCalledWith(9, {
         semester: "SS 2026",
+        name: "Existing Course",
         startDate: "2025-01-01",
         youtubePlaylistUrl: undefined,
         copperknobListUrl: undefined,

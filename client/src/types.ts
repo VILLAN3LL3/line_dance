@@ -119,6 +119,7 @@ export interface Trainer {
 export interface DanceCourse {
   id: number;
   course_id?: number | null;
+  name?: string | null;
   dance_group_id: number;
   dance_group_name: string;
   semester?: string | null;

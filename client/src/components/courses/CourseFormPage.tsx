@@ -33,6 +33,7 @@ const CourseFormPage: React.FC = () => {
   const [existingCourse, setExistingCourse] = useState<DanceCourse | null>(null);
 
   const [courseIdInput, setCourseIdInput] = useState("");
+  const [courseName, setCourseName] = useState("");
   const [semester, setSemester] = useState("");
   const [startDate, setStartDate] = useState("");
   const [youtubePlaylistUrl, setYoutubePlaylistUrl] = useState("");
@@ -71,6 +72,7 @@ const CourseFormPage: React.FC = () => {
             ? ""
             : String(course.course_id),
         );
+        setCourseName(course.name ?? "");
         setSemester(course.semester ?? "");
         setStartDate(course.start_date ?? "");
         setYoutubePlaylistUrl(course.youtube_playlist_url ?? "");
@@ -96,34 +98,46 @@ const CourseFormPage: React.FC = () => {
     });
   }, [routeError, loadData]);
 
+  const saveCourse = async () => {
+    if (isEditMode && parsedCourseId !== null) {
+      await updateDanceCourse(parsedCourseId, {
+        semester: semester || undefined,
+        name: courseName.trim() || undefined,
+        startDate: startDate || undefined,
+        youtubePlaylistUrl: youtubePlaylistUrl || undefined,
+        copperknobListUrl: copperknobListUrl || undefined,
+        spotifyPlaylistUrl: spotifyPlaylistUrl || undefined,
+        trainerId: trainerId ? Number.parseInt(trainerId, 10) : undefined,
+        courseId: courseIdInput ? Number.parseInt(courseIdInput, 10) : undefined,
+      });
+      return;
+    }
+
+    const numericCourseId = courseIdInput ? Number.parseInt(courseIdInput, 10) : undefined;
+    await createDanceCourse({
+      danceGroupId: parsedGroupId,
+      semester,
+      name: courseName.trim() || undefined,
+      startDate: startDate || undefined,
+      courseId: numericCourseId,
+      youtubePlaylistUrl: youtubePlaylistUrl || undefined,
+      copperknobListUrl: copperknobListUrl || undefined,
+      spotifyPlaylistUrl: spotifyPlaylistUrl || undefined,
+      trainerId: trainerId ? Number.parseInt(trainerId, 10) : undefined,
+    });
+  };
+
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!courseIdInput.trim() && !courseName.trim()) {
+      setError("Course ID or name is required");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
-      if (isEditMode && parsedCourseId !== null) {
-        await updateDanceCourse(parsedCourseId, {
-          semester: semester || undefined,
-          startDate: startDate || undefined,
-          youtubePlaylistUrl: youtubePlaylistUrl || undefined,
-          copperknobListUrl: copperknobListUrl || undefined,
-          spotifyPlaylistUrl: spotifyPlaylistUrl || undefined,
-          trainerId: trainerId ? Number.parseInt(trainerId, 10) : undefined,
-          courseId: courseIdInput ? Number.parseInt(courseIdInput, 10) : undefined,
-        });
-      } else {
-        const numericCourseId = courseIdInput ? Number.parseInt(courseIdInput, 10) : undefined;
-        await createDanceCourse({
-          danceGroupId: parsedGroupId,
-          semester,
-          startDate: startDate || undefined,
-          courseId: numericCourseId,
-          youtubePlaylistUrl: youtubePlaylistUrl || undefined,
-          copperknobListUrl: copperknobListUrl || undefined,
-          spotifyPlaylistUrl: spotifyPlaylistUrl || undefined,
-          trainerId: trainerId ? Number.parseInt(trainerId, 10) : undefined,
-        });
-      }
+      await saveCourse();
 
       navigate(`/admin/groups/${parsedGroupId}`);
     } catch (err) {
@@ -163,6 +177,20 @@ const CourseFormPage: React.FC = () => {
             />
           </FormField>
         )}
+
+        <FormField
+          label="Course Name (optional)"
+          htmlFor="course-name"
+          className="course-form-field"
+        >
+          <input
+            id="course-name"
+            type="text"
+            value={courseName}
+            onChange={(e) => setCourseName(e.target.value)}
+            disabled={isLoading}
+          />
+        </FormField>
 
         <FormField label="Semester" htmlFor="course-semester" className="course-form-field">
           <input

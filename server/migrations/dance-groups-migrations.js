@@ -280,6 +280,12 @@ const migrations = [
       );
     },
   },
+  {
+    id: '011_add_course_name',
+    up: async () => {
+      await ensureColumnExists('dance_courses', 'name', 'TEXT');
+    },
+  },
 ];
 
 export async function runDanceGroupsMigrations() {

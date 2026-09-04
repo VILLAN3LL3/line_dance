@@ -322,6 +322,7 @@ export async function getDanceCourses(danceGroupId?: number): Promise<DanceCours
 export async function createDanceCourse(payload: {
   danceGroupId: number;
   semester?: string;
+  name?: string;
   startDate?: string;
   courseId?: number;
   youtubePlaylistUrl?: string;
@@ -331,6 +332,7 @@ export async function createDanceCourse(payload: {
 }): Promise<DanceCourse> {
   const response = await api.post("/dance-courses", {
     course_id: payload.courseId,
+    name: payload.name,
     dance_group_id: payload.danceGroupId,
     semester: payload.semester,
     start_date: payload.startDate,
@@ -346,6 +348,7 @@ export async function updateDanceCourse(
   id: number,
   payload: {
     semester?: string;
+    name?: string;
     startDate?: string;
     youtubePlaylistUrl?: string;
     copperknobListUrl?: string;
@@ -356,6 +359,7 @@ export async function updateDanceCourse(
 ): Promise<DanceCourse> {
   const response = await api.put(`/dance-courses/${id}`, {
     semester: payload.semester,
+    name: payload.name,
     course_id: payload.courseId,
     start_date: payload.startDate,
     youtube_playlist_url: payload.youtubePlaylistUrl,

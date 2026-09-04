@@ -42,7 +42,7 @@ describe('GET /api/dance-courses', () => {
     const group = await createGroup('My Dance Group');
     await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.id, semester: 'WS 2025' });
+      .send({ dance_group_id: group.id, semester: 'WS 2025', name: 'Autumn Course' });
 
     const res = await request(app).get('/api/dance-courses');
     expect(res.body[0].dance_group_name).toBe('My Dance Group');
@@ -54,6 +54,7 @@ describe('GET /api/dance-courses', () => {
     await request(app).post('/api/dance-courses').send({
       dance_group_id: group.id,
       semester: 'WS 2025',
+      name: 'Trainer Course',
       trainer_id: trainer.id,
     });
 
@@ -68,10 +69,10 @@ describe('GET /api/dance-courses', () => {
     const g2 = await createGroup('Group 2');
     await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: g1.id, semester: 'WS 2025' });
+      .send({ dance_group_id: g1.id, semester: 'WS 2025', name: 'Group 1 Course' });
     await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: g2.id, semester: 'WS 2025' });
+      .send({ dance_group_id: g2.id, semester: 'WS 2025', name: 'Group 2 Course' });
 
     const res = await request(app).get(`/api/dance-courses?dance_group_id=${g1.id}`);
     expect(res.body).toHaveLength(1);
@@ -82,13 +83,23 @@ describe('GET /api/dance-courses', () => {
     const group = await createGroup();
     await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.id, semester: 'No Date' });
+      .send({ dance_group_id: group.id, semester: 'No Date', name: 'No Date Course' });
     await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.id, semester: 'Late', start_date: '2025-09-01' });
+      .send({
+        dance_group_id: group.id,
+        semester: 'Late',
+        start_date: '2025-09-01',
+        name: 'Late Course',
+      });
     await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.id, semester: 'Early', start_date: '2024-01-01' });
+      .send({
+        dance_group_id: group.id,
+        semester: 'Early',
+        start_date: '2024-01-01',
+        name: 'Early Course',
+      });
 
     const res = await request(app).get(`/api/dance-courses?dance_group_id=${group.id}`);
     expect(res.body[0].semester).toBe('Early');
@@ -106,7 +117,7 @@ describe('POST /api/dance-courses', () => {
     const group = await createGroup();
     const res = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.id, semester: 'WS 2025' });
+      .send({ dance_group_id: group.id, semester: 'WS 2025', name: 'Required Fields Course' });
     expect(res.status).toBe(201);
     expect(res.body.semester).toBe('WS 2025');
     expect(res.body.dance_group_id).toBe(group.id);
@@ -119,6 +130,7 @@ describe('POST /api/dance-courses', () => {
     const res = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.id,
       semester: 'SS 2025',
+      name: 'Optional Fields Course',
       start_date: '2025-04-01',
       youtube_playlist_url: 'https://youtube.com/list',
       copperknob_list_url: 'https://copperknob.com/list',
@@ -146,6 +158,26 @@ describe('POST /api/dance-courses', () => {
     expect(res.body.course_id).toBe(42);
   });
 
+  it('creates a course with a name instead of a domain course id', async () => {
+    const group = await createGroup();
+    const res = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      name: 'Summer Intensive',
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.course_id).toBeNull();
+    expect(res.body.name).toBe('Summer Intensive');
+  });
+
+  it('returns 400 when both course id and name are missing', async () => {
+    const group = await createGroup();
+    const res = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.id, semester: 'Unnamed' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/course id or name is required/i);
+  });
+
   it('returns 400 when dance_group_id is missing', async () => {
     const res = await request(app).post('/api/dance-courses').send({ semester: 'WS 2025' });
     expect(res.status).toBe(400);
@@ -154,7 +186,9 @@ describe('POST /api/dance-courses', () => {
 
   it('allows a course without a semester', async () => {
     const group = await createGroup();
-    const res = await request(app).post('/api/dance-courses').send({ dance_group_id: group.id });
+    const res = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.id, name: 'No Semester Course' });
     expect(res.status).toBe(201);
     expect(res.body.semester).toBeNull();
   });
@@ -162,7 +196,7 @@ describe('POST /api/dance-courses', () => {
   it('returns 404 for a non-existent dance group', async () => {
     const res = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: 99999, semester: 'WS 2025' });
+      .send({ dance_group_id: 99999, semester: 'WS 2025', name: 'Missing Group Course' });
     expect(res.status).toBe(404);
     expect(res.body.error).toMatch(/dance group not found/i);
   });
@@ -172,6 +206,7 @@ describe('POST /api/dance-courses', () => {
     const res = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.id,
       semester: 'WS 2025',
+      name: 'Invalid Trainer Course',
       trainer_id: 99999,
     });
     expect(res.status).toBe(404);
@@ -183,6 +218,7 @@ describe('POST /api/dance-courses', () => {
     const res = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.id,
       semester: 'WS 2025',
+      name: 'Empty Trainer Course',
       trainer_id: '',
     });
     expect(res.status).toBe(201);
@@ -199,7 +235,7 @@ describe('PUT /api/dance-courses/:id', () => {
     const group = await createGroup();
     const created = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.id, semester: 'Original' });
+      .send({ dance_group_id: group.id, semester: 'Original', name: 'Original Course' });
 
     const res = await request(app)
       .put(`/api/dance-courses/${created.body.id}`)
@@ -214,7 +250,7 @@ describe('PUT /api/dance-courses/:id', () => {
     const trainer = await createTrainer();
     const created = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.id, semester: 'WS 2025' });
+      .send({ dance_group_id: group.id, semester: 'WS 2025', name: 'Trainer Assignment Course' });
 
     const res = await request(app)
       .put(`/api/dance-courses/${created.body.id}`)
@@ -230,6 +266,7 @@ describe('PUT /api/dance-courses/:id', () => {
     const created = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.id,
       semester: 'WS 2025',
+      name: 'Trainer Removal Course',
       trainer_id: trainer.id,
     });
 
@@ -246,6 +283,7 @@ describe('PUT /api/dance-courses/:id', () => {
     const created = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.id,
       semester: 'WS 2025',
+      name: 'Playlist Course',
       youtube_playlist_url: 'https://youtube.com',
     });
 
@@ -265,7 +303,7 @@ describe('PUT /api/dance-courses/:id', () => {
     const group = await createGroup();
     const created = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.id, semester: 'WS 2025' });
+      .send({ dance_group_id: group.id, semester: 'WS 2025', name: 'Missing Trainer Course' });
 
     const res = await request(app)
       .put(`/api/dance-courses/${created.body.id}`)
@@ -284,7 +322,7 @@ describe('DELETE /api/dance-courses/:id', () => {
     const group = await createGroup();
     const created = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.id, semester: 'WS 2025' });
+      .send({ dance_group_id: group.id, semester: 'WS 2025', name: 'Delete Course' });
 
     const res = await request(app).delete(`/api/dance-courses/${created.body.id}`);
     expect(res.status).toBe(200);
@@ -300,7 +338,7 @@ describe('DELETE /api/dance-courses/:id', () => {
     const group = await createGroup();
     const course = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.id, semester: 'WS 2025' });
+      .send({ dance_group_id: group.id, semester: 'WS 2025', name: 'Cascade Course' });
 
     await request(app)
       .post('/api/sessions')
@@ -322,7 +360,7 @@ describe('GET /api/dance-courses/:id/export-pdf', () => {
     const group = await createGroup('PDF Group');
     const course = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.id, semester: 'WS 2025' });
+      .send({ dance_group_id: group.id, semester: 'WS 2025', name: 'PDF Course' });
 
     const res = await request(app).get(`/api/dance-courses/${course.body.id}/export-pdf`);
 

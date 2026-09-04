@@ -609,7 +609,7 @@ export async function getDanceCourses(req, res) {
   try {
     const { dance_group_id } = req.query;
 
-    let query = `SELECT dc.id, dc.course_id, dc.dance_group_id, NULLIF(dc.semester, '') as semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
+    let query = `SELECT dc.id, dc.course_id, dc.name, dc.dance_group_id, NULLIF(dc.semester, '') as semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
                  t.name as trainer_name, t.phone as trainer_phone, t.email as trainer_email
                  FROM dance_courses dc
                  LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
@@ -635,6 +635,7 @@ export async function createDanceCourse(req, res) {
   try {
     const {
       course_id,
+      name,
       dance_group_id,
       semester,
       start_date,
@@ -644,8 +645,17 @@ export async function createDanceCourse(req, res) {
       trainer_id,
     } = req.body;
 
+    const normalizedCourseName = typeof name === 'string' ? name.trim() : '';
+    const normalizedCourseId =
+      course_id === null || course_id === undefined || course_id === ''
+        ? null
+        : Number.parseInt(String(course_id), 10);
+
     if (!dance_group_id) {
       return res.status(400).json({ error: 'Dance group ID is required' });
+    }
+    if (normalizedCourseId === null && !normalizedCourseName) {
+      return res.status(400).json({ error: 'Course ID or name is required' });
     }
 
     // Verify dance group exists
@@ -668,14 +678,11 @@ export async function createDanceCourse(req, res) {
 
     const normalizedTrainerId = trainer_id ? Number.parseInt(String(trainer_id), 10) : null;
 
-    const normalizedCourseId =
-      course_id === null || course_id === undefined || course_id === ''
-        ? null
-        : Number.parseInt(String(course_id), 10);
     const result = await runQuery(
-      `INSERT INTO dance_courses (course_id, dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO dance_courses (course_id, name, dance_group_id, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         normalizedCourseId,
+        normalizedCourseName || null,
         dance_group_id,
         semester || '',
         start_date || null,
@@ -688,7 +695,7 @@ export async function createDanceCourse(req, res) {
     );
 
     const course = await getQuery(
-      `SELECT dc.id, dc.course_id, dc.dance_group_id, NULLIF(dc.semester, '') as semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
+      `SELECT dc.id, dc.course_id, dc.name, dc.dance_group_id, NULLIF(dc.semester, '') as semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
        t.name as trainer_name, t.phone as trainer_phone, t.email as trainer_email
        FROM dance_courses dc
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
@@ -714,6 +721,7 @@ export async function updateDanceCourse(req, res) {
     const {
       semester,
       course_id,
+      name,
       start_date,
       youtube_playlist_url,
       copperknob_list_url,
@@ -721,7 +729,11 @@ export async function updateDanceCourse(req, res) {
       trainer_id,
     } = req.body;
 
-    const existing = await getQuery(`SELECT id FROM dance_courses WHERE id = ?`, [id], dbName);
+    const existing = await getQuery(
+      `SELECT id, course_id, name FROM dance_courses WHERE id = ?`,
+      [id],
+      dbName,
+    );
 
     if (!existing) {
       return res.status(404).json({ error: 'Dance course not found' });
@@ -740,11 +752,19 @@ export async function updateDanceCourse(req, res) {
       normalizedCourseId =
         course_id === null || course_id === '' ? null : Number.parseInt(String(course_id), 10);
     }
+    let normalizedCourseName = existing.name;
+    if (name !== undefined) {
+      normalizedCourseName = typeof name === 'string' ? name.trim() : '';
+    }
+    if (normalizedCourseId === null && !normalizedCourseName) {
+      return res.status(400).json({ error: 'Course ID or name is required' });
+    }
 
     await runQuery(
-      `UPDATE dance_courses SET course_id = ?, semester = ?, start_date = ?, youtube_playlist_url = ?, copperknob_list_url = ?, spotify_playlist_url = ?, trainer_id = ? WHERE id = ?`,
+      `UPDATE dance_courses SET course_id = ?, name = ?, semester = ?, start_date = ?, youtube_playlist_url = ?, copperknob_list_url = ?, spotify_playlist_url = ?, trainer_id = ? WHERE id = ?`,
       [
         normalizedCourseId,
+        normalizedCourseName || null,
         semester || '',
         start_date || null,
         youtube_playlist_url || null,
@@ -757,7 +777,7 @@ export async function updateDanceCourse(req, res) {
     );
 
     const updated = await getQuery(
-      `SELECT dc.id, dc.course_id, dc.dance_group_id, NULLIF(dc.semester, '') as semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
+      `SELECT dc.id, dc.course_id, dc.name, dc.dance_group_id, NULLIF(dc.semester, '') as semester, dc.start_date, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url, dc.trainer_id, dc.created_at, dg.name as dance_group_name,
        t.name as trainer_name, t.phone as trainer_phone, t.email as trainer_email
        FROM dance_courses dc
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
@@ -800,7 +820,11 @@ function getCoursePdfFileName(course) {
 }
 
 function getCoursePdfSubtitle(course) {
-  return [course.course_id !== null ? `Kurs #${course.course_id}` : null, course.semester]
+  return [
+    course.name,
+    course.course_id !== null ? `Kurs #${course.course_id}` : null,
+    course.semester,
+  ]
     .filter(Boolean)
     .join(' ');
 }
@@ -810,7 +834,7 @@ export async function exportDanceCoursePdf(req, res) {
     const { id } = req.params;
 
     const course = await getQuery(
-      `SELECT dc.id, dc.course_id, NULLIF(dc.semester, '') as semester, dg.name as dance_group_name, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url,
+      `SELECT dc.id, dc.course_id, dc.name, NULLIF(dc.semester, '') as semester, dg.name as dance_group_name, dc.youtube_playlist_url, dc.copperknob_list_url, dc.spotify_playlist_url,
       t.id as trainer_id, t.name as trainer_name, t.phone as trainer_phone, t.email as trainer_email
        FROM dance_courses dc
        LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id
