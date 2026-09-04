@@ -85,7 +85,7 @@ describe("CourseFormPage", () => {
 
     await screen.findByRole("heading", { level: 2, name: "Create Course" });
 
-    fireEvent.change(screen.getByLabelText("Course Name (optional)"), {
+    fireEvent.change(screen.getByLabelText("Course Name"), {
       target: { value: "New Course" },
     });
     fireEvent.change(screen.getByLabelText("Semester"), { target: { value: "WS 2026" } });
@@ -117,7 +117,7 @@ describe("CourseFormPage", () => {
 
     expect(await screen.findByDisplayValue("WS 2025")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Course ID (optional)"), { target: { value: "10" } });
+    fireEvent.change(screen.getByLabelText("Course ID"), { target: { value: "10" } });
     fireEvent.change(screen.getByLabelText("Semester"), { target: { value: "SS 2026" } });
     fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
 

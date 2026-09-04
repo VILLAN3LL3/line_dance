@@ -166,7 +166,7 @@ const CourseFormPage: React.FC = () => {
       {error && <ErrorMessage message={error} />}
 
       <form className="course-form-card" onSubmit={handleSubmit}>
-        <FormField label="Course ID (optional)" htmlFor="course-id" className="course-form-field">
+        <FormField label="Course ID" htmlFor="course-id" className="course-form-field">
           <input
             id="course-id"
             type="number"
@@ -176,11 +176,7 @@ const CourseFormPage: React.FC = () => {
           />
         </FormField>
 
-        <FormField
-          label="Course Name (optional)"
-          htmlFor="course-name"
-          className="course-form-field"
-        >
+        <FormField label="Course Name" htmlFor="course-name" className="course-form-field">
           <input
             id="course-name"
             type="text"
