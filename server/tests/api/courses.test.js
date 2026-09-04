@@ -84,22 +84,18 @@ describe('GET /api/dance-courses', () => {
     await request(app)
       .post('/api/dance-courses')
       .send({ dance_group_id: group.id, semester: 'No Date', name: 'No Date Course' });
-    await request(app)
-      .post('/api/dance-courses')
-      .send({
-        dance_group_id: group.id,
-        semester: 'Late',
-        start_date: '2025-09-01',
-        name: 'Late Course',
-      });
-    await request(app)
-      .post('/api/dance-courses')
-      .send({
-        dance_group_id: group.id,
-        semester: 'Early',
-        start_date: '2024-01-01',
-        name: 'Early Course',
-      });
+    await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'Late',
+      start_date: '2025-09-01',
+      name: 'Late Course',
+    });
+    await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'Early',
+      start_date: '2024-01-01',
+      name: 'Early Course',
+    });
 
     const res = await request(app).get(`/api/dance-courses?dance_group_id=${group.id}`);
     expect(res.body[0].semester).toBe('Early');
