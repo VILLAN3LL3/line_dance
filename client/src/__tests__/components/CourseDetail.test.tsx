@@ -62,6 +62,7 @@ describe("CourseDetail", () => {
     vi.mocked(getDanceCourses).mockResolvedValue([
       {
         id: 7,
+        course_id: 7,
         dance_group_id: 2,
         dance_group_name: "Group Two",
         semester: "WS 2025",

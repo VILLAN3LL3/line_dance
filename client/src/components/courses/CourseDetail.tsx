@@ -62,6 +62,8 @@ const CourseDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const selectedSessionId = selectedSession?.id ?? null;
   const berlinTodayIso = getBerlinTodayIso();
+  const courseHeaderIdentifier = course?.course_id ?? course?.name ?? "";
+  const courseHeaderSemester = course?.semester ? ` (${course.semester})` : "";
 
   const visibleSessions = sessions.filter((session) => {
     if (showPassedSessions) {
@@ -360,7 +362,8 @@ const CourseDetail: React.FC = () => {
       <div className="detail-header">
         <BackButton onClick={() => navigate(`/admin/groups/${parsedGroupId}`)}>Back</BackButton>
         <h2>
-          Course: {course?.id} ({course?.semester ?? "Unknown Semester"})
+          Course: {courseHeaderIdentifier}
+          {courseHeaderSemester}
         </h2>
       </div>
 
