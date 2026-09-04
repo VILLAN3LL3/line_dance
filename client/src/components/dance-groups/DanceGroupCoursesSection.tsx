@@ -2,9 +2,24 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { DanceCourse, Session } from "../../types";
-import { CourseStatus, getBerlinTodayIso, getCourseStatus, getCourseStatusLabel, normalizeDate } from "../../utils/courseStatus";
+import {
+  CourseStatus,
+  getBerlinTodayIso,
+  getCourseStatus,
+  getCourseStatusLabel,
+  normalizeDate,
+} from "../../utils/courseStatus";
 import { getYouTubePlaylistPageUrl } from "../../utils/youtube";
-import { ActionButton, ActionGroup, CheckboxFilter, EmptyState, ExternalLink, LoadingState, Section, StatusBadge } from "../shared/ui";
+import {
+  ActionButton,
+  ActionGroup,
+  CheckboxFilter,
+  EmptyState,
+  ExternalLink,
+  LoadingState,
+  Section,
+  StatusBadge,
+} from "../shared/ui";
 
 interface DanceGroupCoursesSectionProps {
   courses: DanceCourse[];
