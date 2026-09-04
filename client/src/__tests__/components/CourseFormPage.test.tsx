@@ -44,6 +44,7 @@ describe("CourseFormPage", () => {
     vi.mocked(getDanceCourses).mockResolvedValue([
       {
         id: 9,
+        course_id: 9,
         dance_group_id: 5,
         dance_group_name: "Group Five",
         semester: "WS 2025",
@@ -54,6 +55,7 @@ describe("CourseFormPage", () => {
     ]);
     vi.mocked(createDanceCourse).mockResolvedValue({
       id: 10,
+      course_id: null,
       dance_group_id: 5,
       dance_group_name: "Group Five",
       semester: "WS 2026",
@@ -61,6 +63,7 @@ describe("CourseFormPage", () => {
     });
     vi.mocked(updateDanceCourse).mockResolvedValue({
       id: 9,
+      course_id: 9,
       dance_group_id: 5,
       dance_group_name: "Group Five",
       semester: "SS 2026",
@@ -79,7 +82,7 @@ describe("CourseFormPage", () => {
 
     await screen.findByRole("heading", { level: 2, name: "Create Course" });
 
-    fireEvent.change(screen.getByLabelText("Semester *"), { target: { value: "WS 2026" } });
+    fireEvent.change(screen.getByLabelText("Semester"), { target: { value: "WS 2026" } });
     fireEvent.click(screen.getByRole("button", { name: "Create Course" }));
 
     await waitFor(() => {
@@ -107,19 +110,19 @@ describe("CourseFormPage", () => {
 
     expect(await screen.findByDisplayValue("WS 2025")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Semester *"), { target: { value: "SS 2026" } });
+    fireEvent.change(screen.getByLabelText("Semester"), { target: { value: "SS 2026" } });
     fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
 
     await waitFor(() => {
-      expect(updateDanceCourse).toHaveBeenCalledWith(
-        9,
-        "SS 2026",
-        "2025-01-01",
-        undefined,
-        undefined,
-        undefined,
-        2,
-      );
+      expect(updateDanceCourse).toHaveBeenCalledWith(9, {
+        semester: "SS 2026",
+        startDate: "2025-01-01",
+        youtubePlaylistUrl: undefined,
+        copperknobListUrl: undefined,
+        spotifyPlaylistUrl: undefined,
+        trainerId: 2,
+        courseId: 9,
+      });
       expect(mockNavigate).toHaveBeenCalledWith("/admin/groups/5");
     });
   });

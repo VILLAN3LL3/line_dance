@@ -321,16 +321,16 @@ export async function getDanceCourses(danceGroupId?: number): Promise<DanceCours
 
 export async function createDanceCourse(payload: {
   danceGroupId: number;
-  semester: string;
+  semester?: string;
   startDate?: string;
-  id?: number;
+  courseId?: number;
   youtubePlaylistUrl?: string;
   copperknobListUrl?: string;
   spotifyPlaylistUrl?: string;
   trainerId?: number;
 }): Promise<DanceCourse> {
   const response = await api.post("/dance-courses", {
-    id: payload.id,
+    course_id: payload.courseId,
     dance_group_id: payload.danceGroupId,
     semester: payload.semester,
     start_date: payload.startDate,
@@ -344,20 +344,24 @@ export async function createDanceCourse(payload: {
 
 export async function updateDanceCourse(
   id: number,
-  semester: string,
-  startDate?: string,
-  youtubePlaylistUrl?: string,
-  copperknobListUrl?: string,
-  spotifyPlaylistUrl?: string,
-  trainerId?: number,
+  payload: {
+    semester?: string;
+    startDate?: string;
+    youtubePlaylistUrl?: string;
+    copperknobListUrl?: string;
+    spotifyPlaylistUrl?: string;
+    trainerId?: number;
+    courseId?: number;
+  },
 ): Promise<DanceCourse> {
   const response = await api.put(`/dance-courses/${id}`, {
-    semester,
-    start_date: startDate,
-    youtube_playlist_url: youtubePlaylistUrl,
-    copperknob_list_url: copperknobListUrl,
-    spotify_playlist_url: spotifyPlaylistUrl,
-    trainer_id: trainerId ?? null,
+    semester: payload.semester,
+    course_id: payload.courseId,
+    start_date: payload.startDate,
+    youtube_playlist_url: payload.youtubePlaylistUrl,
+    copperknob_list_url: payload.copperknobListUrl,
+    spotify_playlist_url: payload.spotifyPlaylistUrl,
+    trainer_id: payload.trainerId ?? null,
   });
   return response.data;
 }

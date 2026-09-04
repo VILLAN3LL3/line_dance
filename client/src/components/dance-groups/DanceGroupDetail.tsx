@@ -133,11 +133,13 @@ const DanceGroupDetail: React.FC = () => {
     try {
       const pdfBlob = await exportDanceCoursePdf(course.id);
       const downloadUrl = URL.createObjectURL(pdfBlob);
-      const safeSemester = course.semester
+      const safeSemester = (course.semester ?? "Kurs")
         .split(/[^a-zA-Z0-9_-]+/)
         .filter(Boolean)
         .join("_");
-      const fileName = `Kurs-${course.id}-${safeSemester}.pdf`;
+      const courseFilePart =
+        course.course_id === null || course.course_id === undefined ? "" : `${course.course_id}-`;
+      const fileName = `Kurs-${courseFilePart}${safeSemester}.pdf`;
 
       const link = document.createElement("a");
       link.href = downloadUrl;

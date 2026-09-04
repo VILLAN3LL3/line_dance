@@ -118,9 +118,10 @@ export interface Trainer {
 
 export interface DanceCourse {
   id: number;
+  course_id?: number | null;
   dance_group_id: number;
   dance_group_name: string;
-  semester: string;
+  semester?: string | null;
   start_date?: string;
   youtube_playlist_url?: string;
   copperknob_list_url?: string;

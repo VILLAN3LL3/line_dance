@@ -260,6 +260,26 @@ const migrations = [
       }
     },
   },
+  {
+    id: '010_add_course_domain_id',
+    up: async () => {
+      await ensureColumnExists('dance_courses', 'course_id', 'INTEGER');
+      await runQuery(
+        `UPDATE dance_courses
+         SET course_id = id
+         WHERE course_id IS NULL`,
+        [],
+        dbName,
+      );
+      await runQuery(
+        `CREATE UNIQUE INDEX IF NOT EXISTS idx_dance_courses_course_id
+         ON dance_courses(course_id)
+         WHERE course_id IS NOT NULL`,
+        [],
+        dbName,
+      );
+    },
+  },
 ];
 
 export async function runDanceGroupsMigrations() {

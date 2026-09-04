@@ -134,15 +134,16 @@ describe('POST /api/dance-courses', () => {
     expect(res.body.trainer_name).toBe('Test Trainer');
   });
 
-  it('allows creating a course with a specific custom numeric id', async () => {
+  it('creates a technical id and stores an optional domain course id', async () => {
     const group = await createGroup();
     const res = await request(app).post('/api/dance-courses').send({
-      id: 42,
+      course_id: 42,
       dance_group_id: group.id,
       semester: 'Custom ID Semester',
     });
     expect(res.status).toBe(201);
-    expect(res.body.id).toBe(42);
+    expect(res.body.id).not.toBe(42);
+    expect(res.body.course_id).toBe(42);
   });
 
   it('returns 400 when dance_group_id is missing', async () => {
@@ -151,11 +152,11 @@ describe('POST /api/dance-courses', () => {
     expect(res.body.error).toMatch(/required/i);
   });
 
-  it('returns 400 when semester is missing', async () => {
+  it('allows a course without a semester', async () => {
     const group = await createGroup();
     const res = await request(app).post('/api/dance-courses').send({ dance_group_id: group.id });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/required/i);
+    expect(res.status).toBe(201);
+    expect(res.body.semester).toBeNull();
   });
 
   it('returns 404 for a non-existent dance group', async () => {

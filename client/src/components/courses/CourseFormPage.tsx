@@ -66,8 +66,12 @@ const CourseFormPage: React.FC = () => {
         }
 
         setExistingCourse(course);
-        setCourseIdInput(String(course.id));
-        setSemester(course.semester);
+        setCourseIdInput(
+          course.course_id === null || course.course_id === undefined
+            ? ""
+            : String(course.course_id),
+        );
+        setSemester(course.semester ?? "");
         setStartDate(course.start_date ?? "");
         setYoutubePlaylistUrl(course.youtube_playlist_url ?? "");
         setCopperknobListUrl(course.copperknob_list_url ?? "");
@@ -94,31 +98,26 @@ const CourseFormPage: React.FC = () => {
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!semester.trim()) {
-      setError("Semester is required");
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
     try {
       if (isEditMode && parsedCourseId !== null) {
-        await updateDanceCourse(
-          parsedCourseId,
-          semester,
-          startDate || undefined,
-          youtubePlaylistUrl || undefined,
-          copperknobListUrl || undefined,
-          spotifyPlaylistUrl || undefined,
-          trainerId ? Number.parseInt(trainerId, 10) : undefined,
-        );
+        await updateDanceCourse(parsedCourseId, {
+          semester: semester || undefined,
+          startDate: startDate || undefined,
+          youtubePlaylistUrl: youtubePlaylistUrl || undefined,
+          copperknobListUrl: copperknobListUrl || undefined,
+          spotifyPlaylistUrl: spotifyPlaylistUrl || undefined,
+          trainerId: trainerId ? Number.parseInt(trainerId, 10) : undefined,
+          courseId: courseIdInput ? Number.parseInt(courseIdInput, 10) : undefined,
+        });
       } else {
         const numericCourseId = courseIdInput ? Number.parseInt(courseIdInput, 10) : undefined;
         await createDanceCourse({
           danceGroupId: parsedGroupId,
           semester,
           startDate: startDate || undefined,
-          id: numericCourseId,
+          courseId: numericCourseId,
           youtubePlaylistUrl: youtubePlaylistUrl || undefined,
           copperknobListUrl: copperknobListUrl || undefined,
           spotifyPlaylistUrl: spotifyPlaylistUrl || undefined,
@@ -145,8 +144,8 @@ const CourseFormPage: React.FC = () => {
       </div>
 
       {group && <p className="course-form-subtitle">Group: {group.name}</p>}
-      {isEditMode && existingCourse && (
-        <p className="course-form-subtitle">Editing course #{existingCourse.id}</p>
+      {isEditMode && existingCourse?.course_id != null && (
+        <p className="course-form-subtitle">Editing course #{existingCourse.course_id}</p>
       )}
 
       {routeError && <ErrorMessage message={routeError} />}
@@ -165,7 +164,7 @@ const CourseFormPage: React.FC = () => {
           </FormField>
         )}
 
-        <FormField label="Semester *" htmlFor="course-semester" className="course-form-field">
+        <FormField label="Semester" htmlFor="course-semester" className="course-form-field">
           <input
             id="course-semester"
             type="text"
@@ -173,7 +172,6 @@ const CourseFormPage: React.FC = () => {
             value={semester}
             onChange={(e) => setSemester(e.target.value)}
             disabled={isLoading}
-            required
           />
         </FormField>
 

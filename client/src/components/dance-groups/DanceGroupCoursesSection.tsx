@@ -119,7 +119,10 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
             <div key={course.id} className="course-item">
               <div className="course-info">
                 <h4>
-                  {course.id} <span className="course-semester">({course.semester})</span>
+                  {course.course_id !== null && course.course_id !== undefined && (
+                    <span>{course.course_id} </span>
+                  )}
+                  {course.semester && <span className="course-semester">({course.semester})</span>}
                   <StatusBadge
                     status={courseStatus}
                     className="course-status-badge"
