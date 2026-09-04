@@ -20,6 +20,7 @@ async function createGroupAndCourse(groupName = 'Session Test Group') {
   const course = await request(app).post('/api/dance-courses').send({
     dance_group_id: group.body.id,
     semester: 'WS 2025',
+    name: 'Session Test Course',
   });
   return { group: group.body, course: course.body };
 }
@@ -354,6 +355,7 @@ describe('GET /api/learned-choreographies', () => {
     const course = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.body.id,
       semester: 'WS 2024',
+      name: 'Learned Course',
     });
     const session = await request(app).post('/api/sessions').send({
       dance_course_id: course.body.id,
@@ -380,6 +382,7 @@ describe('GET /api/learned-choreographies', () => {
     const course = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.body.id,
       semester: 'WS 2024',
+      name: 'Count Course',
     });
     const s1 = await request(app).post('/api/sessions').send({
       dance_course_id: course.body.id,
@@ -408,6 +411,7 @@ describe('GET /api/learned-choreographies', () => {
     const course = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.body.id,
       semester: 'WS 2026',
+      name: 'Future Course',
     });
     const futureSession = await request(app).post('/api/sessions').send({
       dance_course_id: course.body.id,
@@ -435,6 +439,7 @@ describe('GET /api/learned-choreographies', () => {
     const course = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.body.id,
       semester: 'WS 2026',
+      name: 'Mixed Timeline Course',
     });
     const pastSession = await request(app).post('/api/sessions').send({
       dance_course_id: course.body.id,
@@ -478,6 +483,7 @@ describe('GET /api/learned-choreographies', () => {
     const c1 = await request(app).post('/api/dance-courses').send({
       dance_group_id: g1.body.id,
       semester: 'WS 2024',
+      name: 'Filter Course 1',
     });
     const s1 = await request(app).post('/api/sessions').send({
       dance_course_id: c1.body.id,
@@ -492,6 +498,7 @@ describe('GET /api/learned-choreographies', () => {
     const c2 = await request(app).post('/api/dance-courses').send({
       dance_group_id: g2.body.id,
       semester: 'WS 2024',
+      name: 'Filter Course 2',
     });
     const s2 = await request(app).post('/api/sessions').send({
       dance_course_id: c2.body.id,
@@ -610,7 +617,7 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
     const group = await request(app).post('/api/dance-groups').send({ name: 'CrossCourse Group' });
     const course1 = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.body.id, semester: 'WS 2024' });
+      .send({ dance_group_id: group.body.id, semester: 'WS 2024', name: 'Cross Course 1' });
     const pastSession = await request(app)
       .post('/api/sessions')
       .send({ dance_course_id: course1.body.id, session_date: '2020-06-01' });
@@ -630,7 +637,7 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
 
     const course2 = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.body.id, semester: 'SS 2025' });
+      .send({ dance_group_id: group.body.id, semester: 'SS 2025', name: 'Cross Course 2' });
     const targetSession = await request(app)
       .post('/api/sessions')
       .send({ dance_course_id: course2.body.id, session_date: '2099-12-01' });
@@ -659,7 +666,7 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
     const group = await request(app).post('/api/dance-groups').send({ name: 'Prior Group' });
     const course = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.body.id, semester: 'WS 2025' });
+      .send({ dance_group_id: group.body.id, semester: 'WS 2025', name: 'Prior Course' });
 
     const priorSession = await request(app)
       .post('/api/sessions')
@@ -706,7 +713,7 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
       .send({ max_group_level_value: 30 });
     const course = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.body.id, semester: 'WS 2025' });
+      .send({ dance_group_id: group.body.id, semester: 'WS 2025', name: 'Max Level Course' });
     const session = await request(app)
       .post('/api/sessions')
       .send({ dance_course_id: course.body.id, session_date: '2099-12-01' });
@@ -725,7 +732,7 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
 
     const course = await request(app)
       .post('/api/dance-courses')
-      .send({ dance_group_id: group.body.id, semester: 'SS 2025' });
+      .send({ dance_group_id: group.body.id, semester: 'SS 2025', name: 'Filter Level Course' });
     const session = await request(app)
       .post('/api/sessions')
       .send({ dance_course_id: course.body.id, session_date: '2099-12-01' });

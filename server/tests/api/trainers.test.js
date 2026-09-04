@@ -187,6 +187,7 @@ describe('DELETE /api/trainers/:id', () => {
     const course = await request(app).post('/api/dance-courses').send({
       dance_group_id: group.body.id,
       semester: 'WS 2025',
+      name: 'Trainer Cascade Course',
       trainer_id: trainer.body.id,
     });
 
