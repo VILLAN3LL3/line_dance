@@ -1,8 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 import {
-  addSessionChoreographyViaApi, createChoreographyViaApi, createDanceCourseViaApi, createDanceGroupViaApi, createSessionViaApi,
-  updateGroupMaxLevelViaApi
+  addSessionChoreographyViaApi,
+  createChoreographyViaApi,
+  createDanceCourseViaApi,
+  createDanceGroupViaApi,
+  createSessionViaApi,
+  updateGroupMaxLevelViaApi,
 } from "../helpers/api";
 
 test.describe("Dance Group Detail", () => {
