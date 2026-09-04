@@ -25,12 +25,13 @@ test.describe("Dance Group Detail", () => {
     await page.getByRole("button", { name: /New Course/i }).click();
     await expect(page).toHaveURL(new RegExp(`/admin/groups/${groupId}/courses/new$`));
 
+    await page.getByLabel(/Course Name/i).fill(`E2E Course ${semester}`);
     await page.getByLabel(/Semester/i).fill(semester);
     await page.getByRole("button", { name: /Create Course/i }).click();
 
     await expect(page).toHaveURL(new RegExp(`/admin/groups/${groupId}$`));
     await page.getByRole("checkbox", { name: /Planned/i }).check();
-    await expect(page.getByText(semester)).toBeVisible();
+    await expect(page.locator(".course-semester", { hasText: semester })).toBeVisible();
   });
 
   test("search choreographies applies prefilled learned filters", async ({ page, request }) => {
@@ -80,15 +81,15 @@ test.describe("Dance Group Detail", () => {
 
     await page.goto(`/admin/groups/${groupId}`);
 
-    await expect(page.getByText(runningSemester)).toBeVisible();
-    await expect(page.getByText(plannedSemester)).toHaveCount(0);
-    await expect(page.getByText(passedSemester)).toHaveCount(0);
+    await expect(page.locator(".course-semester", { hasText: runningSemester })).toBeVisible();
+    await expect(page.locator(".course-semester", { hasText: plannedSemester })).toHaveCount(0);
+    await expect(page.locator(".course-semester", { hasText: passedSemester })).toHaveCount(0);
 
     await page.getByRole("checkbox", { name: /Planned/i }).check();
-    await expect(page.getByText(plannedSemester)).toBeVisible();
+    await expect(page.locator(".course-semester", { hasText: plannedSemester })).toBeVisible();
 
     await page.getByRole("checkbox", { name: /Passed/i }).check();
-    await expect(page.getByText(passedSemester)).toBeVisible();
+    await expect(page.locator(".course-semester", { hasText: passedSemester })).toBeVisible();
 
     page.once("dialog", async (dialog) => {
       await dialog.accept();

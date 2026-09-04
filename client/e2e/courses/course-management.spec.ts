@@ -123,7 +123,7 @@ test.describe("Course Management", () => {
 
     await page.goto(`/admin/groups/${groupId}/courses/${courseId}/edit`);
     await expect(page.getByRole("heading", { name: /Edit Course/i })).toBeVisible();
-    await expect(page.getByText(new RegExp(`Editing course #${courseId}`))).toBeVisible();
+    await expect(page.getByLabel(/Course Name/i)).toHaveValue("E2E Course WS2026");
     await expect(page.getByLabel(/Semester/i)).toHaveValue("WS2026");
     await page.getByRole("button", { name: /^Cancel$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/admin/groups/${groupId}$`));

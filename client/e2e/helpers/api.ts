@@ -59,6 +59,7 @@ export async function createDanceCourseViaApi(
   const response = await request.post(`${API_BASE}/dance-courses`, {
     data: {
       dance_group_id: danceGroupId,
+      name: `E2E Course ${semester}`,
       semester,
       start_date: startDate,
       trainer_id: trainerId ?? null,
