@@ -166,17 +166,15 @@ const CourseFormPage: React.FC = () => {
       {error && <ErrorMessage message={error} />}
 
       <form className="course-form-card" onSubmit={handleSubmit}>
-        {!isEditMode && (
-          <FormField label="Course ID (optional)" htmlFor="course-id" className="course-form-field">
-            <input
-              id="course-id"
-              type="number"
-              value={courseIdInput}
-              onChange={(e) => setCourseIdInput(e.target.value)}
-              disabled={isLoading}
-            />
-          </FormField>
-        )}
+        <FormField label="Course ID (optional)" htmlFor="course-id" className="course-form-field">
+          <input
+            id="course-id"
+            type="number"
+            value={courseIdInput}
+            onChange={(e) => setCourseIdInput(e.target.value)}
+            disabled={isLoading}
+          />
+        </FormField>
 
         <FormField
           label="Course Name (optional)"

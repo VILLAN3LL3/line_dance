@@ -117,6 +117,7 @@ describe("CourseFormPage", () => {
 
     expect(await screen.findByDisplayValue("WS 2025")).toBeInTheDocument();
 
+    fireEvent.change(screen.getByLabelText("Course ID (optional)"), { target: { value: "10" } });
     fireEvent.change(screen.getByLabelText("Semester"), { target: { value: "SS 2026" } });
     fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
 
@@ -129,7 +130,7 @@ describe("CourseFormPage", () => {
         copperknobListUrl: undefined,
         spotifyPlaylistUrl: undefined,
         trainerId: 2,
-        courseId: 9,
+        courseId: 10,
       });
       expect(mockNavigate).toHaveBeenCalledWith("/admin/groups/5");
     });
