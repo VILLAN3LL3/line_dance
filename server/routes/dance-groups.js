@@ -1087,14 +1087,22 @@ export async function exportDanceCoursePdf(req, res) {
     doc.y = trainerBoxY + trainerBoxHeight + 14;
 
     if (linksWithQr.length === 0) {
-      doc.roundedRect(leftMargin, doc.y, contentWidth, 56, 8).fillAndStroke('#FFF7ED', '#FED7AA');
+      const warningBoxY = doc.y;
+      const warningBoxHeight = 56;
+      const noLinksText = 'Keine Playlist-Links für diesen Kurs hinterlegt.';
+      doc.fontSize(12);
+      const noLinksTextHeight = doc.heightOfString(noLinksText, {
+        width: contentWidth - 24,
+      });
+      const noLinksTextY = warningBoxY + (warningBoxHeight - noLinksTextHeight) / 2;
+
       doc
-        .fillColor('#9A3412')
-        .fontSize(12)
-        .text('Keine Playlist-Links fuer diesen Kurs hinterlegt.', leftMargin, doc.y - 40, {
-          width: contentWidth,
-          align: 'center',
-        });
+        .roundedRect(leftMargin, warningBoxY, contentWidth, warningBoxHeight, 8)
+        .fillAndStroke('#FFF7ED', '#FED7AA');
+      doc.fillColor('#9A3412').text(noLinksText, leftMargin + 12, noLinksTextY, {
+        width: contentWidth - 24,
+        align: 'center',
+      });
       doc.end();
       return;
     }
