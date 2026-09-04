@@ -3,13 +3,7 @@ import "../../styles/CourseFormPage.css";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import {
-  createDanceCourse,
-  getDanceCourses,
-  getDanceGroup,
-  getTrainers,
-  updateDanceCourse,
-} from "../../api";
+import { createDanceCourse, getDanceCourses, getDanceGroup, getTrainers, updateDanceCourse } from "../../api";
 import { DanceCourse, DanceGroup, Trainer } from "../../types";
 import { ActionButton, ActionGroup, BackButton, ErrorMessage, FormField } from "../shared/ui";
 import { UrlInput } from "../shared/UrlInput";
