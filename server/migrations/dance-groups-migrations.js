@@ -286,6 +286,29 @@ const migrations = [
       await ensureColumnExists('dance_courses', 'name', 'TEXT');
     },
   },
+  {
+    id: '012_seed_missing_group_base_step_figures',
+    up: async () => {
+      const groups = await allQuery(`SELECT id FROM dance_groups`, [], dbName);
+      const defaultNames = ['Hip Bump', 'Hip Sway', 'Kick', 'Run'];
+
+      for (const group of groups) {
+        for (const name of defaultNames) {
+          const figure = await getQuery(
+            `SELECT id FROM step_figures WHERE LOWER(name) = LOWER(?)`,
+            [name],
+          );
+          if (figure) {
+            await runQuery(
+              `INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id) VALUES (?, ?)`,
+              [group.id, figure.id],
+              dbName,
+            );
+          }
+        }
+      }
+    },
+  },
 ];
 
 export async function runDanceGroupsMigrations() {

@@ -6,6 +6,7 @@ import SVGtoPDF from 'svg-to-pdfkit';
 import { hslToHex } from '../utils/colorUtils.js';
 
 const dbName = 'danceGroups';
+const defaultBaseStepFigureNames = ['Hip Bump', 'Hip Sway', 'Kick', 'Run'];
 
 function loadOptionalAssetBuffer(relativeAssetPath) {
   try {
@@ -50,6 +51,21 @@ function captureError(error) {
 
   const details = error instanceof Error ? error.stack || error.message : String(error);
   process.stderr.write(`[dance-groups] ${details}\n`);
+}
+
+async function seedDefaultBaseStepFigures(danceGroupId) {
+  for (const name of defaultBaseStepFigureNames) {
+    const figure = await getQuery(`SELECT id FROM step_figures WHERE LOWER(name) = LOWER(?)`, [
+      name,
+    ]);
+    if (figure) {
+      await runQuery(
+        `INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id) VALUES (?, ?)`,
+        [danceGroupId, figure.id],
+        dbName,
+      );
+    }
+  }
 }
 
 export function escapeVCardValue(value) {
@@ -245,6 +261,8 @@ export async function createDanceGroup(req, res) {
       [name.trim()],
       dbName,
     );
+
+    await seedDefaultBaseStepFigures(result.id);
 
     const group = await getQuery(
       `SELECT id, name, max_group_level_value, created_at FROM dance_groups WHERE id = ?`,
