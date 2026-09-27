@@ -289,7 +289,7 @@ const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(event) => event.stopPropagation()}
-            className="btn-youtube btn-small youtube-action"
+            className="btn-secondary btn-small youtube-action"
             aria-label={`Search for "${artist} - ${song}" on YouTube`}
             title={`Search on YouTube: ${artist} - ${song}`}
           >
@@ -300,7 +300,7 @@ const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(event) => event.stopPropagation()}
-            className="btn-spotify btn-small spotify-action"
+            className="btn-secondary btn-small spotify-action"
             aria-label={`Search for "${artist} - ${song}" on Spotify`}
             title={`Search on Spotify: ${artist} - ${song}`}
           >
