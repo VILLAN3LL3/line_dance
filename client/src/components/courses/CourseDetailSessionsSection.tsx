@@ -58,6 +58,8 @@ type CourseDetailSessionsSectionProps = {
   onChoreographyInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onAddChoreography: (event: React.SyntheticEvent<HTMLFormElement>) => void;
   onRemoveChoreography: (choreographyId: number) => void;
+  onEditChoreography: (choreographyId: number) => void;
+  onDeleteChoreography: (choreographyId: number) => void;
 };
 
 function getSuggestLabel(
@@ -114,6 +116,8 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
   onChoreographyInputChange,
   onAddChoreography,
   onRemoveChoreography,
+  onEditChoreography,
+  onDeleteChoreography,
 }) => {
   let sessionsContent: React.ReactNode;
   if (sessions.length === 0) {
@@ -275,6 +279,8 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                       onChoreographyInputChange={onChoreographyInputChange}
                       onAddChoreography={onAddChoreography}
                       onRemoveChoreography={onRemoveChoreography}
+                      onEditChoreography={onEditChoreography}
+                      onDeleteChoreography={onDeleteChoreography}
                     />
                   )}
                   {Object.prototype.hasOwnProperty.call(sessionSuggestions, session.id) && (

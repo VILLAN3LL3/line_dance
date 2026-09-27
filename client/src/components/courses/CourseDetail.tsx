@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   addChoreographyToSession,
   createSession,
+  deleteChoreography,
   deleteSession,
   fetchChoreographies,
   getDanceCourses,
@@ -357,6 +358,28 @@ const CourseDetail: React.FC = () => {
     }
   };
 
+  const handleEditChoreography = (choreographyId: number) => {
+    navigate(`/choreographies/${choreographyId}?edit=1`);
+  };
+
+  const handleDeleteChoreography = async (choreographyId: number) => {
+    if (!confirmAction("Are you sure you want to delete this choreography?")) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      await deleteChoreography(choreographyId);
+      await loadData();
+    } catch (err) {
+      setError("Failed to delete choreography");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="course-detail">
       <div className="detail-header">
@@ -414,6 +437,8 @@ const CourseDetail: React.FC = () => {
           onChoreographyInputChange={handleChoreographyInputChange}
           onAddChoreography={handleAddChoreography}
           onRemoveChoreography={handleRemoveChoreography}
+          onEditChoreography={handleEditChoreography}
+          onDeleteChoreography={handleDeleteChoreography}
         />
       </div>
     </div>

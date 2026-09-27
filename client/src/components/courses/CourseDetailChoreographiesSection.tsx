@@ -17,6 +17,8 @@ type CourseDetailChoreographiesSectionProps = {
   onChoreographyInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onAddChoreography: (event: React.SyntheticEvent<HTMLFormElement>) => void;
   onRemoveChoreography: (choreographyId: number) => void;
+  onEditChoreography: (choreographyId: number) => void;
+  onDeleteChoreography: (choreographyId: number) => void;
 };
 
 const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSectionProps> = ({
@@ -31,6 +33,8 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
   onChoreographyInputChange,
   onAddChoreography,
   onRemoveChoreography,
+  onEditChoreography,
+  onDeleteChoreography,
 }) => {
   const [overlayChoreographyId, setOverlayChoreographyId] = useState<number | null>(null);
 
@@ -157,7 +161,11 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
                 Close
               </ActionButton>
             </div>
-            <ChoreographyCard choreography={visibleOverlayChoreography} />
+            <ChoreographyCard
+              choreography={visibleOverlayChoreography}
+              onEdit={onEditChoreography}
+              onDelete={onDeleteChoreography}
+            />
           </div>
         </dialog>
       )}
