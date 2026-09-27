@@ -344,7 +344,7 @@ const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = ({
             event.stopPropagation();
             onDelete(choreography.id);
           }}
-          variant="delete"
+          variant="secondary"
           className="btn-small delete-action"
           aria-label="Delete choreography"
           title="Delete choreography"
