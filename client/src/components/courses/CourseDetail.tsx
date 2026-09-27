@@ -359,7 +359,7 @@ const CourseDetail: React.FC = () => {
   };
 
   const handleEditChoreography = (choreographyId: number) => {
-    navigate(`/choreographies/${choreographyId}?edit=1`);
+    globalThis.open(`/choreographies/${choreographyId}?edit=1`, "_blank", "noopener,noreferrer");
   };
 
   const handleDeleteChoreography = async (choreographyId: number) => {
