@@ -137,10 +137,35 @@ describe("ChoreographyCard", () => {
     );
 
     fireEvent.click(screen.getByRole("link", { name: "Edit" }));
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete choreography" }));
 
     expect(onEdit).toHaveBeenCalledWith(42);
     expect(onDelete).toHaveBeenCalledWith(42);
+  });
+
+  it("shows YouTube and Spotify footer links only when song and artist are filled out", () => {
+    const { rerender } = render(<ChoreographyCard choreography={makeChoreography()} />);
+
+    expect(screen.queryByRole("link", { name: /on YouTube/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /on Spotify/i })).not.toBeInTheDocument();
+
+    rerender(
+      <ChoreographyCard
+        choreography={makeChoreography({ song: "Faded", artist: "Alan Walker" })}
+      />,
+    );
+
+    const youtubeLink = screen.getByRole("link", { name: /on YouTube/i });
+    const spotifyLink = screen.getByRole("link", { name: /on Spotify/i });
+
+    expect(youtubeLink).toHaveAttribute(
+      "href",
+      "https://www.youtube.com/results?search_query=Alan+Walker+Faded",
+    );
+    expect(spotifyLink).toHaveAttribute(
+      "href",
+      "https://open.spotify.com/search/Alan+Walker+Faded",
+    );
   });
 
   it("copies formatted choreography text to clipboard when copy action is clicked", async () => {

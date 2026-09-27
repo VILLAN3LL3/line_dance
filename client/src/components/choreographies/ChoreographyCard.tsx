@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { deleteChoreographyRating, getCountryCodes, setChoreographyRating } from "../../api";
 import { Choreography } from "../../types";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
+import { buildSongSearchUrls } from "../../utils/songSearch";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
 import {
   ActionButton,
@@ -260,65 +261,100 @@ const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = ({
   onEdit,
   onDelete,
   onCopy,
-}) => (
-  <>
-    {choreography.step_sheet_link && (
-      <a
-        href={choreography.step_sheet_link}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(event) => event.stopPropagation()}
-        className="btn-secondary btn-small step-sheet-action"
-        aria-label="Open step sheet in a new tab"
-        title="Open step sheet in a new tab"
-      >
-        🦶
-      </a>
-    )}
+}) => {
+  const song = choreography.song?.trim();
+  const artist = choreography.artist?.trim();
+  const songSearchUrls = song && artist ? buildSongSearchUrls(song, artist) : null;
 
-    <button
-      type="button"
-      onClick={(event) => {
-        event.stopPropagation();
-        onCopy();
-      }}
-      className="btn-secondary btn-small copy-action"
-      aria-label="Copy choreography details"
-      title="Copy choreography details"
-    >
-      ⤵️
-    </button>
+  return (
+    <>
+      {choreography.step_sheet_link && (
+        <a
+          href={choreography.step_sheet_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => event.stopPropagation()}
+          className="btn-secondary btn-small step-sheet-action"
+          aria-label="Open step sheet in a new tab"
+          title="Open step sheet in a new tab"
+        >
+          🦶
+        </a>
+      )}
 
-    {onEdit && (
-      <a
-        href={`/choreographies/${choreography.id}?edit=1`}
+      {songSearchUrls && (
+        <>
+          <a
+            href={songSearchUrls.youtubeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(event) => event.stopPropagation()}
+            className="btn-youtube btn-small youtube-action"
+            aria-label={`Search for "${artist} - ${song}" on YouTube`}
+            title={`Search on YouTube: ${artist} - ${song}`}
+          >
+            ▶️
+          </a>
+          <a
+            href={songSearchUrls.spotifyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(event) => event.stopPropagation()}
+            className="btn-spotify btn-small spotify-action"
+            aria-label={`Search for "${artist} - ${song}" on Spotify`}
+            title={`Search on Spotify: ${artist} - ${song}`}
+          >
+            🎵
+          </a>
+        </>
+      )}
+
+      <button
+        type="button"
         onClick={(event) => {
           event.stopPropagation();
-          if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
-            event.preventDefault();
-            onEdit(choreography.id);
-          }
+          onCopy();
         }}
-        className="btn-edit btn-small"
+        className="btn-secondary btn-small copy-action"
+        aria-label="Copy choreography details"
+        title="Copy choreography details"
       >
-        Edit
-      </a>
-    )}
+        ⤵️
+      </button>
 
-    {onDelete && (
-      <ActionButton
-        onClick={(event) => {
-          event.stopPropagation();
-          onDelete(choreography.id);
-        }}
-        variant="delete"
-        className="btn-small"
-      >
-        Delete
-      </ActionButton>
-    )}
-  </>
-);
+      {onEdit && (
+        <a
+          href={`/choreographies/${choreography.id}?edit=1`}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
+              event.preventDefault();
+              onEdit(choreography.id);
+            }
+          }}
+          className="btn-edit btn-small"
+        >
+          Edit
+        </a>
+      )}
+
+      {onDelete && (
+        <ActionButton
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete(choreography.id);
+          }}
+          variant="delete"
+          className="btn-small delete-action"
+          aria-label="Delete choreography"
+          title="Delete choreography"
+        >
+          🗑️
+        </ActionButton>
+      )}
+    </>
+  );
+};
 
 export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   choreography,

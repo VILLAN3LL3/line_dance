@@ -1,5 +1,6 @@
 import React from "react";
 
+import { buildSongSearchUrls } from "../../utils/songSearch";
 import { ActionButton } from "../shared/ui";
 
 interface SongSearchButtonsProps {
@@ -18,15 +19,7 @@ export const SongSearchButtons: React.FC<SongSearchButtonsProps> = ({
     return null;
   }
 
-  const encodeSearchQuery = (text: string): string => {
-    return encodeURIComponent(text.trim()).replaceAll("%20", "+");
-  };
-
-  const youtubeQuery = `${encodeSearchQuery(artist)}+${encodeSearchQuery(song)}`;
-  const spotifyQuery = `${encodeSearchQuery(artist)}+${encodeSearchQuery(song)}`;
-
-  const youtubeUrl = `https://www.youtube.com/results?search_query=${youtubeQuery}`;
-  const spotifyUrl = `https://open.spotify.com/search/${spotifyQuery}`;
+  const { youtubeUrl, spotifyUrl } = buildSongSearchUrls(song, artist);
 
   const handleExternalLink = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
