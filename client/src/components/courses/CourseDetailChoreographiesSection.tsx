@@ -157,7 +157,7 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
                 Close
               </ActionButton>
             </div>
-            <ChoreographyCard choreography={visibleOverlayChoreography} videoEmbedMode="all" />
+            <ChoreographyCard choreography={visibleOverlayChoreography} />
           </div>
         </dialog>
       )}
