@@ -29,7 +29,7 @@ test.describe("Choreography Detail", () => {
       await dialog.accept();
     });
 
-    await page.getByRole("button", { name: /^Delete$/i }).click();
+    await page.getByRole("button", { name: /^Delete choreography$/i }).click();
     await expect(page).toHaveURL(/\/$/);
 
     await page.getByPlaceholder(/Search choreographies by name/i).fill(name);
