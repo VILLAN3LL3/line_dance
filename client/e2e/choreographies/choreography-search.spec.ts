@@ -50,7 +50,8 @@ test.describe("Choreography Search", () => {
 
       await toggle.focus();
       await page.keyboard.press("Enter");
-      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      const collapseToggle = card.getByRole("button", { name: "Show fewer choreographers" });
+      await expect(collapseToggle).toHaveAttribute("aria-expanded", "true");
       await expect(text).not.toHaveClass(/authors-text-faded/);
       const expandedHeight = await text.evaluate(
         (element) => element.getBoundingClientRect().height,
@@ -61,7 +62,8 @@ test.describe("Choreography Search", () => {
         path: test.info().outputPath(`authors-${viewport.width}-expanded.png`),
       });
 
-      await card.getByRole("button", { name: "Show fewer choreographers" }).click();
+      await collapseToggle.click();
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
       await expect(text).toHaveClass(/authors-text-collapsed/);
       await expect(page).toHaveURL(/\/$/);
     }
