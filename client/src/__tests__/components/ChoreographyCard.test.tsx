@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
@@ -38,6 +38,70 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
 }
 
 describe("ChoreographyCard", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe = vi.fn();
+        disconnect = vi.fn();
+      },
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("fades overflowing choreographers until clicked and supports collapsing again", () => {
+    const originalGetComputedStyle = globalThis.getComputedStyle;
+    vi.spyOn(globalThis, "getComputedStyle").mockImplementation((element) => {
+      const style = originalGetComputedStyle(element);
+      if (element.classList.contains("authors-text")) {
+        Object.defineProperty(style, "lineHeight", { value: "19.5px" });
+      }
+      return style;
+    });
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(60);
+    const onParentClick = vi.fn();
+    const authors = ["Alice", "Bob", "Charlie", "Danielle", "Eleanor"];
+    const { container } = render(
+      <div onClick={onParentClick}>
+        <ChoreographyCard choreography={makeChoreography({ authors })} />
+      </div>,
+    );
+
+    const text = container.querySelector(".authors-text");
+    expect(text).toHaveClass("authors-text-collapsed", "authors-text-faded");
+    const toggle = screen.getByRole("button", { name: "Show all choreographers" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(toggle);
+
+    expect(text).not.toHaveClass("authors-text-collapsed");
+    expect(text).not.toHaveClass("authors-text-faded");
+    expect(screen.getByText(authors.join(", "))).toBeInTheDocument();
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(onParentClick).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show fewer choreographers" }));
+    expect(text).toHaveClass("authors-text-collapsed", "authors-text-faded");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("does not fade or offer expansion for names fitting within two lines", () => {
+    const { container } = render(<ChoreographyCard choreography={makeChoreography()} />);
+
+    expect(container.querySelector(".authors-text")).not.toHaveClass("authors-text-faded");
+    expect(screen.queryByRole("button", { name: "Show all choreographers" })).toBeNull();
+    expect(screen.getByText("Alice, Bob")).toBeInTheDocument();
+  });
+
+  it("omits the choreographers section when no names are available", () => {
+    render(<ChoreographyCard choreography={makeChoreography({ authors: [] })} />);
+    expect(screen.queryByText("Choreographers:")).not.toBeInTheDocument();
+  });
+
   it("renders core choreography fields and links", () => {
     render(<ChoreographyCard choreography={makeChoreography()} />);
 

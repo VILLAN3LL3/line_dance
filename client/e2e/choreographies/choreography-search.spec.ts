@@ -3,6 +3,70 @@ import { APIRequestContext, expect, test } from "@playwright/test";
 import { API_BASE, createChoreographyViaApi } from "../helpers/api";
 
 test.describe("Choreography Search", () => {
+  test("limits choreographer names to two lines and expands on click", async ({
+    page,
+    request,
+  }) => {
+    const name = `Expandable Authors ${Date.now()}`;
+    const authors = Array.from({ length: 20 }, (_, index) => `Choreographer Number ${index + 1}`);
+    const response = await request.post(`${API_BASE}/choreographies`, {
+      data: {
+        name,
+        level: "BEGINNER",
+        authors,
+        tags: [],
+        step_figures: [],
+        count: 32,
+        wall_count: 4,
+      },
+    });
+    expect(response.ok()).toBeTruthy();
+
+    for (const viewport of [
+      { width: 1280, height: 900 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto("/");
+      const search = page.getByPlaceholder(/Search choreographies by name/i);
+      await search.fill(name);
+      await search.press("Enter");
+
+      const card = page.locator(".choreography-card", { hasText: name }).first();
+      const text = card.locator(".authors-text");
+      const toggle = card.getByRole("button", { name: "Show all choreographers" });
+      await expect(toggle).toBeVisible();
+      await expect(text).toHaveClass(/authors-text-faded/);
+      const collapsed = await text.evaluate((element) => ({
+        height: element.getBoundingClientRect().height,
+        lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
+        mask: getComputedStyle(element).maskImage,
+      }));
+      expect(collapsed.height).toBeCloseTo(collapsed.lineHeight * 2, 0);
+      expect(collapsed.mask).toContain("linear-gradient");
+      await card.screenshot({
+        path: test.info().outputPath(`authors-${viewport.width}-collapsed.png`),
+      });
+
+      await toggle.focus();
+      await page.keyboard.press("Enter");
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      await expect(text).not.toHaveClass(/authors-text-faded/);
+      const expandedHeight = await text.evaluate(
+        (element) => element.getBoundingClientRect().height,
+      );
+      expect(expandedHeight).toBeGreaterThan(collapsed.height);
+      await expect(text).toHaveText(authors.join(", "));
+      await card.screenshot({
+        path: test.info().outputPath(`authors-${viewport.width}-expanded.png`),
+      });
+
+      await card.getByRole("button", { name: "Show fewer choreographers" }).click();
+      await expect(text).toHaveClass(/authors-text-collapsed/);
+      await expect(page).toHaveURL(/\/$/);
+    }
+  });
+
   test("create, filter, and edit a choreography", async ({ page }) => {
     const name = `E2E Choreo ${Date.now()}`;
 

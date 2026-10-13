@@ -18,6 +18,7 @@ __All code was written by GitHub Copilot. Use with caution.__
 - Result count shown in the toolbar after every search
 - Save, rename, load, update, and delete filter presets
 - Switch between card and table views; filters and view mode persist in local storage
+- Choreographer names in cards are limited to two lines, with a fade-out on overflow; click to expand or collapse the full list
 - Create, edit, and delete choreographies with ratings (0–5)
 
 ### Choreographers
