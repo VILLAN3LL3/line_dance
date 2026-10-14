@@ -28,14 +28,20 @@ test.describe("Choreography Search", () => {
     ]) {
       await page.setViewportSize(viewport);
       await page.goto("/");
+      const closeMenuButton = page.getByRole("button", { name: "Close menu" });
+      if (await closeMenuButton.isVisible()) {
+        await closeMenuButton.click();
+      }
+
       const search = page.getByPlaceholder(/Search choreographies by name/i);
       await search.fill(name);
       await search.press("Enter");
 
       const card = page.locator(".choreography-card", { hasText: name }).first();
       const text = card.locator(".authors-text");
-      const toggle = card.getByRole("button", { name: "Show all choreographers" });
+      const toggle = card.locator("button.authors-toggle");
       await expect(toggle).toBeVisible();
+      await expect(toggle).toHaveAccessibleName("Show all choreographers");
       await expect(text).toHaveClass(/authors-text-faded/);
       const collapsed = await text.evaluate((element) => ({
         height: element.getBoundingClientRect().height,
@@ -48,10 +54,9 @@ test.describe("Choreography Search", () => {
         path: test.info().outputPath(`authors-${viewport.width}-collapsed.png`),
       });
 
-      await toggle.focus();
-      await page.keyboard.press("Enter");
-      const collapseToggle = card.getByRole("button", { name: "Show fewer choreographers" });
-      await expect(collapseToggle).toHaveAttribute("aria-expanded", "true");
+      await toggle.click();
+      await expect(toggle).toHaveAccessibleName("Show fewer choreographers");
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
       await expect(text).not.toHaveClass(/authors-text-faded/);
       const expandedHeight = await text.evaluate(
         (element) => element.getBoundingClientRect().height,
@@ -62,8 +67,10 @@ test.describe("Choreography Search", () => {
         path: test.info().outputPath(`authors-${viewport.width}-expanded.png`),
       });
 
-      await collapseToggle.click();
+      await toggle.focus();
+      await page.keyboard.press("Enter");
       await expect(toggle).toHaveAttribute("aria-expanded", "false");
+      await expect(toggle).toHaveAccessibleName("Show all choreographers");
       await expect(text).toHaveClass(/authors-text-collapsed/);
       await expect(page).toHaveURL(/\/$/);
     }
