@@ -191,6 +191,8 @@ pm2 reload line-dance      # zero-downtime reload
 ### Auto-Deploy On Commit
 
 The `post-commit` hook rebuilds `client/dist/` and restarts PM2 automatically after every `git commit`.
+It resolves PM2 from `PATH` or an existing nvm installation; set `PM2_BINARY` to an absolute executable path to override this lookup.
+Build or restart failures stop deployment without reporting success. The commit itself is already created when this hook runs.
 
 ### Uninstall
 
