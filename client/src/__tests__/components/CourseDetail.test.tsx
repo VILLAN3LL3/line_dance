@@ -13,6 +13,7 @@ import {
   getSessions,
   getSessionStepFigureSuggestions,
   removeChoreographyFromSession,
+  reorderSessionContents,
   swapSessions,
 } from "../../api";
 import CourseDetail from "../../components/courses/CourseDetail";
@@ -37,6 +38,7 @@ vi.mock("../../api", () => ({
   getSessionStepFigureSuggestions: vi.fn(),
   getSessions: vi.fn(),
   removeChoreographyFromSession: vi.fn(),
+  reorderSessionContents: vi.fn(),
   swapSessions: vi.fn(),
   updateSession: vi.fn(),
 }));
@@ -124,6 +126,7 @@ describe("CourseDetail", () => {
     vi.mocked(deleteSession).mockResolvedValue({ message: "ok" });
     vi.mocked(removeChoreographyFromSession).mockResolvedValue({ message: "ok" });
     vi.mocked(swapSessions).mockResolvedValue({ message: "Sessions swapped successfully" });
+    vi.mocked(reorderSessionContents).mockResolvedValue({ message: "ok" });
     vi.mocked(getSessionStepFigureSuggestions).mockResolvedValue({
       suggestions: [],
       known_step_figures: [],
@@ -140,6 +143,74 @@ describe("CourseDetail", () => {
       </MemoryRouter>,
     );
   }
+
+  it("disables dragging when only one session is visible", async () => {
+    renderWithRoute();
+    const handle = await screen.findByRole("button", { name: /Move contents of session/i });
+    expect(handle).toBeDisabled();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Show passed sessions" }));
+    expect(screen.getAllByRole("button", { name: /Move contents of session/i })).toHaveLength(2);
+    expect(handle).toBeEnabled();
+  });
+
+  it("cancels keyboard dragging without saving", async () => {
+    renderWithRoute();
+    await screen.findByRole("button", { name: /Move contents of session/i });
+    fireEvent.click(screen.getByRole("checkbox", { name: "Show passed sessions" }));
+    const handle = screen.getAllByRole("button", { name: /Move contents of session/i })[0];
+    handle.focus();
+    fireEvent.keyDown(handle, { code: "Space" });
+    await screen.findByText("Session contents");
+    fireEvent.keyDown(document, { code: "Escape" });
+    await waitFor(() => expect(screen.queryByText("Session contents")).not.toBeInTheDocument());
+    expect(reorderSessionContents).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])(
+    "saves keyboard reordering and handles save failure (%s)",
+    async (fails) => {
+      vi.mocked(getSessions).mockResolvedValue(
+        [12, 13, 14].map((id) => ({
+          id,
+          dance_course_id: 7,
+          session_date: `2099-01-${id}`,
+          dance_group_name: "Group Two",
+          semester: "WS 2025",
+          comment: `Content ${id}`,
+          created_at: "2024-01-01",
+        })),
+      );
+      const rectSpy = vi
+        .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: HTMLElement) {
+          const item = this.closest<HTMLElement>("[data-session-id]");
+          const index = Number(item?.dataset.sessionId ?? 12) - 12;
+          return new DOMRect(0, index * 100, 500, 80);
+        });
+      if (fails) vi.mocked(reorderSessionContents).mockRejectedValueOnce(new Error("Save failed"));
+      try {
+        renderWithRoute();
+        const handles = await screen.findAllByRole("button", { name: /Move contents of session/i });
+        const handle = handles[0];
+        handle.focus();
+        fireEvent.keyDown(handle, { code: "Space" });
+        await screen.findByText("Content 12", { selector: ".session-content-drag-preview span" });
+        fireEvent.keyDown(document, { code: "ArrowDown" });
+        fireEvent.keyDown(document, { code: "Space" });
+        await waitFor(() => expect(reorderSessionContents).toHaveBeenCalledWith([13, 12, 14]));
+        if (fails) {
+          expect(await screen.findByText("Save failed")).toBeInTheDocument();
+        } else {
+          await waitFor(() => expect(getSessions).toHaveBeenCalledTimes(2));
+        }
+        expect(
+          screen.getAllByRole("button", { name: /Move contents of session/i })[0],
+        ).toBeEnabled();
+      } finally {
+        rectSpy.mockRestore();
+      }
+    },
+  );
 
   it("creates a new session from the session form", async () => {
     renderWithRoute();

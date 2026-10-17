@@ -54,17 +54,16 @@ function captureError(error) {
 }
 
 async function seedDefaultBaseStepFigures(danceGroupId) {
-  for (const name of defaultBaseStepFigureNames) {
-    const figure = await getQuery(`SELECT id FROM step_figures WHERE LOWER(name) = LOWER(?)`, [
-      name,
-    ]);
-    if (figure) {
-      await runQuery(
-        `INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id) VALUES (?, ?)`,
-        [danceGroupId, figure.id],
-        dbName,
-      );
-    }
+  const figures = await allQuery(
+    `SELECT id FROM step_figures WHERE LOWER(name) IN (${defaultBaseStepFigureNames.map(() => '?').join(',')})`,
+    defaultBaseStepFigureNames.map((name) => name.toLowerCase()),
+  );
+  if (figures.length > 0) {
+    await runQuery(
+      `INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id) VALUES ${figures.map(() => '(?, ?)').join(',')}`,
+      figures.flatMap((figure) => [danceGroupId, figure.id]),
+      dbName,
+    );
   }
 }
 
@@ -463,10 +462,10 @@ export async function updateGroupBaseStepFigures(req, res) {
       [groupId],
       dbName,
     );
-    for (const id of step_figure_ids) {
+    if (step_figure_ids.length > 0) {
       await runQuery(
-        'INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id) VALUES (?, ?)',
-        [groupId, id],
+        `INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id) VALUES ${step_figure_ids.map(() => '(?, ?)').join(',')}`,
+        step_figure_ids.flatMap((id) => [groupId, id]),
         dbName,
       );
     }
@@ -1421,6 +1420,80 @@ export async function removeChoreographyFromSession(req, res) {
   }
 }
 
+export async function reorderSessionContents(req, res) {
+  const sessionIds = req.body?.session_ids;
+  if (
+    !Array.isArray(sessionIds) ||
+    sessionIds.length < 2 ||
+    sessionIds.some((sessionId) => !Number.isSafeInteger(sessionId) || sessionId <= 0) ||
+    new Set(sessionIds).size !== sessionIds.length
+  ) {
+    return res.status(400).json({ error: 'Provide at least two unique session IDs' });
+  }
+
+  try {
+    const placeholders = sessionIds.map(() => '?').join(',');
+    const sessions = await allQuery(
+      `SELECT id, dance_course_id, comment FROM sessions WHERE id IN (${placeholders}) ORDER BY session_date, id`,
+      sessionIds,
+      dbName,
+    );
+    if (sessions.length !== sessionIds.length) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    if (sessions.some((session) => session.dance_course_id !== sessions[0].dance_course_id)) {
+      return res.status(400).json({ error: 'Sessions must belong to the same course' });
+    }
+
+    await runQuery('BEGIN TRANSACTION', [], dbName);
+    try {
+      const choreographies = await allQuery(
+        `SELECT * FROM session_choreographies WHERE session_id IN (${placeholders})`,
+        sessionIds,
+        dbName,
+      );
+      await runQuery(
+        `DELETE FROM session_choreographies WHERE session_id IN (${placeholders})`,
+        sessionIds,
+        dbName,
+      );
+      const sources = new Map(sessions.map((session) => [session.id, session]));
+      const targets = new Map(sessionIds.map((sourceId, index) => [sourceId, sessions[index].id]));
+      await runQuery(
+        `UPDATE sessions SET comment = CASE id ${sessionIds.map(() => 'WHEN ? THEN ?').join(' ')} END WHERE id IN (${placeholders})`,
+        [
+          ...sessionIds.flatMap((sourceId) => [
+            targets.get(sourceId),
+            sources.get(sourceId).comment,
+          ]),
+          ...sessionIds,
+        ],
+        dbName,
+      );
+      if (choreographies.length > 0) {
+        await runQuery(
+          `INSERT INTO session_choreographies (id, session_id, choreography_id, created_at) VALUES ${choreographies.map(() => '(?, ?, ?, ?)').join(',')}`,
+          choreographies.flatMap((choreography) => [
+            choreography.id,
+            targets.get(choreography.session_id),
+            choreography.choreography_id,
+            choreography.created_at,
+          ]),
+          dbName,
+        );
+      }
+      await runQuery('COMMIT', [], dbName);
+    } catch (error) {
+      await runQuery('ROLLBACK', [], dbName);
+      throw error;
+    }
+    res.json({ message: 'Session contents reordered successfully' });
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to reorder session contents' });
+  }
+}
+
 export async function swapSessions(req, res) {
   try {
     const sessionIdA = Number.parseInt(req.params.sessionId, 10);
@@ -1473,17 +1546,14 @@ export async function swapSessions(req, res) {
         dbName,
       );
 
-      for (const c of choreosA) {
+      const swappedChoreographies = [
+        ...choreosA.map((choreography) => [sessionIdB, choreography.choreography_id]),
+        ...choreosB.map((choreography) => [sessionIdA, choreography.choreography_id]),
+      ];
+      if (swappedChoreographies.length > 0) {
         await runQuery(
-          'INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, ?)',
-          [sessionIdB, c.choreography_id],
-          dbName,
-        );
-      }
-      for (const c of choreosB) {
-        await runQuery(
-          'INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, ?)',
-          [sessionIdA, c.choreography_id],
+          `INSERT INTO session_choreographies (session_id, choreography_id) VALUES ${swappedChoreographies.map(() => '(?, ?)').join(',')}`,
+          swappedChoreographies.flat(),
           dbName,
         );
       }

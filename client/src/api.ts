@@ -446,6 +446,11 @@ export async function removeChoreographyFromSession(id: number): Promise<{ messa
   return response.data;
 }
 
+export async function reorderSessionContents(sessionIds: number[]): Promise<{ message: string }> {
+  const response = await api.post("/sessions/reorder-contents", { session_ids: sessionIds });
+  return response.data;
+}
+
 export async function swapSessions(
   sessionId: number,
   targetSessionId: number,

@@ -1297,6 +1297,44 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/sessions/reorder-contents': {
+      post: {
+        tags: ['Sessions'],
+        summary: 'Reorder session comments and choreography assignments without changing dates',
+        description:
+          'Maps contents from session_ids in the supplied order onto those same sessions ordered by date and ID. Excluded sessions are unchanged. All sessions must belong to the same course; changes are atomic.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['session_ids'],
+                properties: {
+                  session_ids: {
+                    type: 'array',
+                    minItems: 2,
+                    uniqueItems: true,
+                    items: { type: 'integer', minimum: 1 },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Contents reordered successfully',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/MessageResponse' } },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+          500: { description: 'Reordering failed; changes rolled back' },
+        },
+      },
+    },
     '/api/sessions/{sessionId}/swap/{targetSessionId}': {
       post: {
         tags: ['Sessions'],

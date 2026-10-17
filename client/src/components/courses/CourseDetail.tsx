@@ -14,6 +14,7 @@ import {
   getSessions,
   getSessionStepFigureSuggestions,
   removeChoreographyFromSession,
+  reorderSessionContents,
   swapSessions,
   updateSession,
 } from "../../api";
@@ -209,6 +210,24 @@ const CourseDetail: React.FC = () => {
       setError(err instanceof Error ? err.message : "Failed to load suggestions");
     } finally {
       setSuggestingForSessionId(null);
+    }
+  };
+
+  const handleReorderContents = async (sessionIds: number[]) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      await reorderSessionContents(sessionIds);
+      setSessionSuggestions({});
+      setSessionKnownFigures({});
+      setSelectedChoreographyId("");
+      setSelectedChoreographyQuery("");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reorder session contents");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -423,6 +442,7 @@ const CourseDetail: React.FC = () => {
           onSwapTargetChange={setSwapTargetSessionId}
           onConfirmSwap={handleConfirmSwap}
           onCancelSwap={handleCancelSwap}
+          onReorderContents={handleReorderContents}
           sessionSuggestions={sessionSuggestions}
           sessionKnownFigures={sessionKnownFigures}
           sessionMaxLevelValue={sessionMaxLevelValue}

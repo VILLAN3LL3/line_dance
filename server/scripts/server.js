@@ -62,6 +62,7 @@ import {
   updateGroupMaxLevel,
   getStepFigureSuggestions,
   swapSessions,
+  reorderSessionContents,
   getSessionStepFigureSuggestions,
   getGroupBaseStepFigures,
   updateGroupBaseStepFigures,
@@ -155,6 +156,7 @@ app.get('/api/dance-courses/:id/export-pdf', exportDanceCoursePdf);
 // Sessions Routes
 app.get('/api/sessions', getSessions);
 app.post('/api/sessions', createSession);
+app.post('/api/sessions/reorder-contents', reorderSessionContents);
 app.put('/api/sessions/:id', updateSession);
 app.delete('/api/sessions/:id', deleteSession);
 

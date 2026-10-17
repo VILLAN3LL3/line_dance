@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import app from '../setup/testApp.js';
+import { runQuery } from '../../scripts/db.js';
 
 beforeAll(async () => {
   await setupTestDb();
@@ -82,6 +83,147 @@ describe('GET /api/sessions', () => {
     expect(res.body[0].session_date).toBe('2025-01-01');
     expect(res.body[1].session_date).toBe('2025-02-01');
     expect(res.body[2].session_date).toBe('2025-03-01');
+  });
+});
+
+describe('POST /api/sessions/reorder-contents', () => {
+  it('moves descriptions and all dances while retaining dates, IDs and excluded sessions', async () => {
+    const { course } = await createGroupAndCourse();
+    const sessions = [];
+    for (const [index, comment] of ['Hidden', 'First', 'Second', null].entries()) {
+      const created = await request(app)
+        .post('/api/sessions')
+        .send({
+          dance_course_id: course.id,
+          session_date: `2025-01-${10 + index}`,
+          comment,
+        });
+      sessions.push(created.body);
+    }
+    for (const choreographyId of [41, 42]) {
+      await request(app).post('/api/session-choreographies').send({
+        session_id: sessions[1].id,
+        choreography_id: choreographyId,
+      });
+    }
+    const response = await request(app)
+      .post('/api/sessions/reorder-contents')
+      .send({
+        session_ids: [sessions[3].id, sessions[1].id, sessions[2].id],
+      });
+    expect(response.status).toBe(200);
+    const after = await request(app).get(`/api/sessions?dance_course_id=${course.id}`);
+    expect(after.body.map(({ id, session_date }) => ({ id, session_date }))).toEqual(
+      sessions.map(({ id, session_date }) => ({ id, session_date })),
+    );
+    expect(after.body.map((session) => session.comment)).toEqual([
+      'Hidden',
+      null,
+      'First',
+      'Second',
+    ]);
+    const dances = await request(app).get(
+      `/api/session-choreographies?session_id=${sessions[2].id}`,
+    );
+    expect(dances.body.map((dance) => dance.choreography_id).sort()).toEqual([41, 42]);
+    const emptied = await request(app).get(
+      `/api/session-choreographies?session_id=${sessions[1].id}`,
+    );
+    expect(emptied.body).toEqual([]);
+    const restored = await request(app)
+      .post('/api/sessions/reorder-contents')
+      .send({
+        session_ids: [sessions[2].id, sessions[3].id, sessions[1].id],
+      });
+    expect(restored.status).toBe(200);
+    const original = await request(app).get(`/api/sessions?dance_course_id=${course.id}`);
+    expect(original.body.map((session) => session.comment)).toEqual([
+      'Hidden',
+      'First',
+      'Second',
+      null,
+    ]);
+  });
+
+  it('rolls back both descriptions and dance assignments if a write fails', async () => {
+    const { course } = await createGroupAndCourse();
+    const sessions = [];
+    for (const [index, comment] of ['First', 'Second'].entries()) {
+      const response = await request(app)
+        .post('/api/sessions')
+        .send({
+          dance_course_id: course.id,
+          session_date: `2025-01-${10 + index}`,
+          comment,
+        });
+      sessions.push(response.body);
+    }
+    const assigned = await request(app).post('/api/session-choreographies').send({
+      session_id: sessions[0].id,
+      choreography_id: 42,
+    });
+    await runQuery(
+      "CREATE TEMP TRIGGER reject_reorder BEFORE UPDATE ON sessions WHEN NEW.comment = 'First' BEGIN SELECT RAISE(ABORT, 'Forced reorder failure'); END",
+      [],
+      'danceGroups',
+    );
+    try {
+      const response = await request(app)
+        .post('/api/sessions/reorder-contents')
+        .send({
+          session_ids: sessions.map((session) => session.id).reverse(),
+        });
+      expect(response.status).toBe(500);
+      const after = await request(app).get(`/api/sessions?dance_course_id=${course.id}`);
+      expect(after.body.map((session) => session.comment)).toEqual(['First', 'Second']);
+      const dances = await request(app).get(
+        `/api/session-choreographies?session_id=${sessions[0].id}`,
+      );
+      expect(dances.body).toEqual([assigned.body]);
+    } finally {
+      await runQuery('DROP TRIGGER reject_reorder', [], 'danceGroups');
+    }
+  });
+
+  it('rejects a missing request body', async () => {
+    const response = await request(app).post('/api/sessions/reorder-contents');
+    expect(response.status).toBe(400);
+  });
+
+  it.each([undefined, [], [1], [1, 1], [0, 1], ['1', 2], [1.5, 2]])(
+    'rejects invalid session IDs: %j',
+    async (sessionIds) => {
+      const response = await request(app)
+        .post('/api/sessions/reorder-contents')
+        .send({ session_ids: sessionIds });
+      expect(response.status).toBe(400);
+    },
+  );
+
+  it('rejects missing sessions', async () => {
+    const response = await request(app)
+      .post('/api/sessions/reorder-contents')
+      .send({ session_ids: [99998, 99999] });
+    expect(response.status).toBe(404);
+  });
+
+  it('rejects sessions from different courses without changing their contents', async () => {
+    const ids = [];
+    for (const name of ['One', 'Two']) {
+      const { course } = await createGroupAndCourse(name);
+      const session = await request(app).post('/api/sessions').send({
+        dance_course_id: course.id,
+        session_date: '2025-01-01',
+        comment: name,
+      });
+      ids.push(session.body.id);
+    }
+    const response = await request(app)
+      .post('/api/sessions/reorder-contents')
+      .send({ session_ids: ids.reverse() });
+    expect(response.status).toBe(400);
+    const sessions = await request(app).get('/api/sessions');
+    expect(sessions.body.map((session) => session.comment).sort()).toEqual(['One', 'Two']);
   });
 });
 

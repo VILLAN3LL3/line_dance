@@ -47,6 +47,8 @@ __All code was written by GitHub Copilot. Use with caution.__
 ### Sessions & Course Planning
 
 - Create and delete sessions; attach and remove choreographies
+- Reorder session contents using drag handles (mouse, touch, or keyboard: Space, arrow keys, Space; Escape cancels). Descriptions and assigned dances move together, while dates and session IDs stay fixed. Hidden past sessions are not affected; the existing two-session swap remains available.
+- `POST /api/sessions/reorder-contents` atomically maps contents from the supplied `session_ids` order onto the same sessions in chronological order (ID breaks date ties). Requires at least two distinct sessions from one course; no database migration is needed.
 - Learned choreographies table: defaults to showing only choreographies danced at least once, with a toggle to show all
 
 ---

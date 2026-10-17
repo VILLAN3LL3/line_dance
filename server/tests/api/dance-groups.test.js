@@ -346,6 +346,25 @@ describe('GET /api/dance-groups/:groupId/step-figure-suggestions', () => {
 // ---------------------------------------------------------------------------
 
 describe('GET /api/dance-groups/:groupId/base-step-figures', () => {
+  it('seeds existing default figures regardless of name casing', async () => {
+    const kick = await seedBaseFigure('kIcK');
+    const run = await seedBaseFigure('RUN');
+    await seedBaseFigure('Mambo');
+
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
+    expect(group.status).toBe(201);
+
+    const res = await request(app).get(`/api/dance-groups/${group.body.id}/base-step-figures`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+    expect(res.body).toEqual(
+      expect.arrayContaining([
+        { id: kick.id, name: kick.name },
+        { id: run.id, name: run.name },
+      ]),
+    );
+  });
+
   it('returns empty array for a group with no base step figures', async () => {
     const group = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
     const res = await request(app).get(`/api/dance-groups/${group.body.id}/base-step-figures`);
@@ -365,6 +384,18 @@ async function seedBaseFigure(name) {
 }
 
 describe('PUT /api/dance-groups/:groupId/base-step-figures', () => {
+  it('ignores duplicate figure IDs when setting base figures', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
+    const figure = await seedBaseFigure('Mambo');
+
+    const res = await request(app)
+      .put(`/api/dance-groups/${group.body.id}/base-step-figures`)
+      .send({ step_figure_ids: [figure.id, figure.id] });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([{ id: figure.id, name: figure.name }]);
+  });
+
   it('sets base step figures and returns them as {id, name} objects', async () => {
     const group = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
     const figA = await seedBaseFigure('Grapevine');

@@ -11,6 +11,7 @@ import {
   StatusBadge,
 } from "../shared/ui";
 import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
+import { SessionContentsDragItem, SessionContentsDragList } from "./SessionContentsDrag";
 
 import type { Choreography, Session, SessionChoreography, StepFigureSuggestion } from "../../types";
 
@@ -43,6 +44,7 @@ type CourseDetailSessionsSectionProps = {
   onSwapTargetChange: (value: string) => void;
   onConfirmSwap: (sessionId: number) => void;
   onCancelSwap: () => void;
+  onReorderContents: (sessionIds: number[]) => void;
   sessionSuggestions: Record<number, StepFigureSuggestion[]>;
   sessionKnownFigures: Record<number, string[]>;
   sessionMaxLevelValue: number | null;
@@ -102,6 +104,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
   onSwapTargetChange,
   onConfirmSwap,
   onCancelSwap,
+  onReorderContents,
   sessionSuggestions,
   sessionKnownFigures,
   sessionMaxLevelValue,
@@ -126,15 +129,23 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
     sessionsContent = <EmptyState>No planned sessions</EmptyState>;
   } else {
     sessionsContent = (
-      <div className="sessions-list">
+      <SessionContentsDragList sessions={visibleSessions} onReorder={onReorderContents}>
         {visibleSessions.map((session) => {
           const sessionBadgeStatus = getSessionBadgeStatus(session.session_date, berlinTodayIso);
 
           const isEditing = editingSessionId === session.id;
 
           return (
-            <div
+            <SessionContentsDragItem
               key={session.id}
+              session={session}
+              disabled={
+                isLoading ||
+                visibleSessions.length < 2 ||
+                editingSessionId !== null ||
+                swappingSessionId !== null ||
+                suggestingForSessionId !== null
+              }
               className={`session-item ${selectedSessionId === session.id ? "active" : ""}`}
             >
               {isEditing ? (
@@ -330,10 +341,10 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                   )}
                 </>
               )}
-            </div>
+            </SessionContentsDragItem>
           );
         })}
-      </div>
+      </SessionContentsDragList>
     );
   }
 

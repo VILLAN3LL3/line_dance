@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  API_BASE,
+  addSessionChoreographyViaApi,
   createChoreographyViaApi,
   createDanceCourseViaApi,
   createDanceGroupViaApi,
@@ -8,6 +10,141 @@ import {
 } from "../helpers/api";
 
 test.describe("Course Management", () => {
+  for (const input of ["mouse", "keyboard", "touch"] as const) {
+    test.describe(`session contents reordering with ${input}`, () => {
+      test.use({
+        viewport: input === "mouse" ? { width: 1280, height: 900 } : { width: 390, height: 1100 },
+        hasTouch: input === "touch",
+      });
+
+      test("preserves dates and hidden sessions and persists descriptions and dances", async ({
+        page,
+        request,
+      }, testInfo) => {
+        const groupId = await createDanceGroupViaApi(request, `Reorder ${input} ${Date.now()}`);
+        const courseId = await createDanceCourseViaApi(request, groupId, "WS2099", "2099-01-01");
+        const danceName = `Reorder Dance ${input} ${Date.now()}`;
+        const danceId = await createChoreographyViaApi(request, danceName);
+        const slots: { id: number; session_date: string }[] = [];
+        for (const [index, comment] of ["Hidden", "First", "Second", "Third"].entries()) {
+          const response = await request.post(`${API_BASE}/sessions`, {
+            data: {
+              dance_course_id: courseId,
+              session_date: index === 0 ? "2000-01-01" : `2099-01-0${index}`,
+              comment,
+            },
+          });
+          expect(response.ok()).toBeTruthy();
+          slots.push(await response.json());
+        }
+        await addSessionChoreographyViaApi(request, slots[1].id, danceId);
+        await page.goto(`/admin/groups/${groupId}/courses/${courseId}`);
+        const items = page.locator(".session-item");
+        await expect(items).toHaveCount(3);
+        const closeMenu = page.getByRole("button", { name: "Close menu" });
+        if (await closeMenu.isVisible()) await closeMenu.click();
+        await expect(closeMenu).not.toBeVisible();
+        const datesBefore = await items.locator("h4").allTextContents();
+        const source = items.nth(2).getByRole("button", { name: /Move contents/ });
+        const target = items.nth(0).getByRole("button", { name: /Move contents/ });
+        await source.scrollIntoViewIfNeeded();
+
+        const saved = page.waitForResponse(
+          (response) =>
+            response.url().endsWith("/sessions/reorder-contents") &&
+            response.request().method() === "POST",
+        );
+        if (input === "keyboard") {
+          await source.focus();
+          await page.keyboard.press("Space");
+          await expect(source).toHaveAttribute("aria-pressed", "true");
+          await expect(page.locator(".session-content-drag-preview")).toBeVisible();
+          await page.evaluate(
+            () =>
+              new Promise<void>((resolve) =>
+                requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+              ),
+          );
+          await page.keyboard.press("ArrowUp");
+          await expect(items.nth(1)).toHaveClass(/session-drop-target/);
+          await page.keyboard.press("ArrowUp");
+          await expect(items.nth(0)).toHaveClass(/session-drop-target/);
+          await page.keyboard.press("Space");
+        } else if (input === "mouse") {
+          const from = await source.boundingBox();
+          const to = await target.boundingBox();
+          if (!from || !to) throw new Error("Missing drag handle geometry");
+          await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+          await page.mouse.down();
+          await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 15 });
+          await page.mouse.up();
+        } else {
+          const from = await source.boundingBox();
+          const to = await target.boundingBox();
+          if (!from || !to) throw new Error("Missing touch handle geometry");
+          const cdp = await page.context().newCDPSession(page);
+          const x = from.x + from.width / 2;
+          const startY = from.y + from.height / 2;
+          const endY = to.y + to.height / 2;
+          await expect
+            .poll(() =>
+              page.evaluate(
+                ({ x, y }) =>
+                  Boolean(document.elementFromPoint(x, y)?.closest(".session-drag-handle")),
+                { x, y: startY },
+              ),
+            )
+            .toBeTruthy();
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchStart",
+            touchPoints: [{ x, y: startY }],
+          });
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchMove",
+            touchPoints: [{ x, y: startY - 12 }],
+          });
+          await expect(page.locator(".session-content-drag-preview")).toBeVisible();
+          for (let step = 1; step <= 15; step += 1) {
+            await cdp.send("Input.dispatchTouchEvent", {
+              type: "touchMove",
+              touchPoints: [{ x, y: startY + ((endY - startY) * step) / 15 }],
+            });
+          }
+          await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+          await cdp.detach();
+        }
+        expect((await saved).ok()).toBeTruthy();
+        await expect(items.nth(0).locator(".session-comment")).toHaveText("Third");
+        await expect(items.nth(1).locator(".session-comment")).toHaveText("First");
+        await expect(items.nth(2).locator(".session-comment")).toHaveText("Second");
+        expect(await items.locator("h4").allTextContents()).toEqual(datesBefore);
+        await page.reload();
+        await expect(items.nth(1).locator(".session-comment")).toHaveText("First");
+        if (await closeMenu.isVisible()) await closeMenu.click();
+        await items.nth(1).getByRole("button", { name: "Manage", exact: true }).click();
+        await expect(
+          items.nth(1).getByRole("button", { name: `Open choreography card for ${danceName}` }),
+        ).toBeVisible();
+        const response = await request.get(`${API_BASE}/sessions?dance_course_id=${courseId}`);
+        const sessions = await response.json();
+        expect(
+          sessions.map((session: { id: number; session_date: string }) => ({
+            id: session.id,
+            session_date: session.session_date,
+          })),
+        ).toEqual(slots.map(({ id, session_date }) => ({ id, session_date })));
+        expect(sessions[0].comment).toBe("Hidden");
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+        ).toBeTruthy();
+        await page.screenshot({
+          path: testInfo.outputPath(`reorder-${input}.png`),
+          fullPage: true,
+        });
+      });
+    });
+  }
+
   test("course detail supports session and choreography lifecycle", async ({ page, request }) => {
     const choreoName = `E2E Session Choreo ${Date.now()}`;
     const groupName = `E2E Session Group ${Date.now()}`;
