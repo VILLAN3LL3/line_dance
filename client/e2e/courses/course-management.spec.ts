@@ -36,12 +36,12 @@ test.describe("Course Management", () => {
       await items.nth(0).getByRole("button", { name: "Manage", exact: true }).click();
       await page.getByPlaceholder("Search choreography by name...").fill(`${danceName} (BEGINNER)`);
       await page.getByRole("button", { name: "+ Add to Session", exact: true }).click();
-      await expect(items.nth(0).getByLabel("Neu erlernt", { exact: true })).toHaveText("Neu");
+      await expect(items.nth(0).getByLabel("Newly learned", { exact: true })).toHaveText("New");
       for (const index of [1, 2]) {
         await items.nth(index).getByRole("button", { name: "Manage", exact: true }).click();
         await expect(
-          items.nth(index).getByLabel(`${index}. Wiederholung`, { exact: true }),
-        ).toHaveText(`${index}. Wdh.`);
+          items.nth(index).getByLabel(`Repetition ${index}`, { exact: true }),
+        ).toHaveText(`Repeat ${index}`);
       }
       await items.nth(0).getByRole("button", { name: "Swap", exact: true }).click();
       await items.nth(0).getByRole("combobox").selectOption(String(sessionIds[1]));
@@ -49,9 +49,7 @@ test.describe("Course Management", () => {
       await items.nth(0).getByRole("button", { name: "Confirm Swap", exact: true }).click();
       await expect(items.nth(0).getByRole("combobox")).toHaveCount(0);
       await items.nth(3).getByRole("button", { name: "Manage", exact: true }).click();
-      await expect(items.nth(3).getByLabel("2. Wiederholung", { exact: true })).toHaveText(
-        "2. Wdh.",
-      );
+      await expect(items.nth(3).getByLabel("Repetition 2", { exact: true })).toHaveText("Repeat 2");
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       ).toBeTruthy();
@@ -60,7 +58,7 @@ test.describe("Course Management", () => {
         fullPage: true,
       });
       await items.nth(1).getByRole("button", { name: "Manage", exact: true }).click();
-      await expect(items.nth(1).getByLabel("Neu erlernt", { exact: true })).toBeVisible();
+      await expect(items.nth(1).getByLabel("Newly learned", { exact: true })).toBeVisible();
       page.once("dialog", (dialog) => dialog.accept());
       await items.nth(1).getByRole("button", { name: "Remove", exact: true }).click();
       await expect(items.nth(1).locator(".choreography-item")).toHaveCount(0);

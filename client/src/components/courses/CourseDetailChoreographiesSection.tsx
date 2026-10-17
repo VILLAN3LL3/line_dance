@@ -139,13 +139,13 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
                   className="session-dance-status"
                   aria-label={
                     sessionChoreography.is_new
-                      ? "Neu erlernt"
-                      : `${sessionChoreography.repetition_number}. Wiederholung`
+                      ? "Newly learned"
+                      : `Repetition ${sessionChoreography.repetition_number}`
                   }
                 >
                   {sessionChoreography.is_new
-                    ? "Neu"
-                    : `${sessionChoreography.repetition_number}. Wdh.`}
+                    ? "New"
+                    : `Repeat ${sessionChoreography.repetition_number}`}
                 </span>
                 <ActionButton
                   onClick={() => onRemoveChoreography(sessionChoreography.choreography_id)}

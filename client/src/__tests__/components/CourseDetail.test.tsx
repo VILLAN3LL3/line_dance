@@ -149,10 +149,10 @@ describe("CourseDetail", () => {
   }
 
   it.each([
-    { isNew: true, number: 0, label: "Neu", accessibleLabel: "Neu erlernt" },
-    { isNew: false, number: 1, label: "1. Wdh.", accessibleLabel: "1. Wiederholung" },
-    { isNew: false, number: 2, label: "2. Wdh.", accessibleLabel: "2. Wiederholung" },
-    { isNew: false, number: 12, label: "12. Wdh.", accessibleLabel: "12. Wiederholung" },
+    { isNew: true, number: 0, label: "New", accessibleLabel: "Newly learned" },
+    { isNew: false, number: 1, label: "Repeat 1", accessibleLabel: "Repetition 1" },
+    { isNew: false, number: 2, label: "Repeat 2", accessibleLabel: "Repetition 2" },
+    { isNew: false, number: 12, label: "Repeat 12", accessibleLabel: "Repetition 12" },
   ])("shows $label for a session dance", async ({ isNew, number, label, accessibleLabel }) => {
     vi.mocked(getSessionChoreographies).mockResolvedValue([
       {
