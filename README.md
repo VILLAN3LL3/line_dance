@@ -61,7 +61,7 @@ __All code was written by GitHub Copilot. Use with caution.__
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 24 LTS recommended for development and tests
 
 ### Install & Run
 
@@ -101,8 +101,8 @@ Raw OpenAPI spec: `http://localhost:3001/api/openapi.json`
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start with nodemon |
-| `npm start` | Start without nodemon |
+| `npm run dev` | Start with Node's built-in watcher; restarts when imported server files change |
+| `npm start` | Start without file watching |
 | `npm run migrate` | Run database migrations |
 | `npm test` | Run tests |
 | `npm run test:watch` | Tests in watch mode |
