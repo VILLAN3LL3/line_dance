@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import app from '../setup/testApp.js';
@@ -269,6 +269,170 @@ describe('automatic session repetitions', () => {
     });
     await request(app).delete(`/api/session-choreographies/${rows[0][0].id}`).expect(200);
     expect((await assignments(slots))[2]).toHaveLength(1);
+  });
+});
+
+describe('planned legacy repetition backfill', () => {
+  async function createDatedSlots(dates, groupName = 'Planned Legacy Group') {
+    const { course } = await createGroupAndCourse(groupName);
+    return Promise.all(
+      dates.map(async (date) => {
+        const response = await request(app)
+          .post('/api/sessions')
+          .send({ dance_course_id: course.id, session_date: date });
+        expect(response.status).toBe(201);
+        return response.body;
+      }),
+    );
+  }
+
+  async function migratePlannedRepetitions() {
+    await runQuery(
+      "DELETE FROM schema_migrations WHERE id = '014_backfill_planned_session_repetitions'",
+      [],
+      'danceGroups',
+    );
+    await runDanceGroupsMigrations();
+  }
+
+  async function getAssignments(slot) {
+    const response = await request(app).get(`/api/session-choreographies?session_id=${slot.id}`);
+    expect(response.status).toBe(200);
+    return response.body;
+  }
+
+  it('fills planned repetitions from 19 October on 2 and 9 November and preserves existing entries', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-17T12:00:00Z'));
+    try {
+      const slots = await createDatedSlots([
+        '2026-10-19',
+        '2026-11-02',
+        '2026-11-09',
+        '2026-11-16',
+      ]);
+      const source = await runQuery(
+        'INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, 898)',
+        [slots[0].id],
+        'danceGroups',
+      );
+      await runQuery(
+        'INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, 69)',
+        [slots[0].id],
+        'danceGroups',
+      );
+      const existing = await runQuery(
+        'INSERT INTO session_choreographies (session_id, choreography_id, is_new) VALUES (?, 69, 0)',
+        [slots[1].id],
+        'danceGroups',
+      );
+      await migratePlannedRepetitions();
+      await runDanceGroupsMigrations();
+      const first = await getAssignments(slots[1]);
+      const second = await getAssignments(slots[2]);
+      expect(first).toHaveLength(2);
+      expect(second).toHaveLength(2);
+      expect(first).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: existing.id, choreography_id: 69, repeat_source_id: null }),
+          expect.objectContaining({
+            choreography_id: 898,
+            repetition_number: 1,
+            repeat_source_id: source.id,
+          }),
+        ]),
+      );
+      expect(second).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            choreography_id: 898,
+            repetition_number: 2,
+            repeat_source_id: source.id,
+          }),
+        ]),
+      );
+      expect(await getAssignments(slots[3])).toEqual([]);
+      expect(await getAssignments(slots[0])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: source.id, auto_repeat: true })]),
+      );
+      await request(app).delete(`/api/session-choreographies/${source.id}`).expect(200);
+      expect((await getAssignments(slots[1])).map((row) => row.choreography_id)).toEqual([69]);
+      expect((await getAssignments(slots[2])).map((row) => row.choreography_id)).toEqual([69]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('uses Berlin today, leaves past targets unchanged and does not skip beyond two course slots', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-16T22:30:00Z'));
+    try {
+      const slots = await createDatedSlots([
+        '2026-10-15',
+        '2026-10-16',
+        '2026-10-17',
+        '2026-10-19',
+      ]);
+      const other = await createDatedSlots(['2026-10-17'], 'Other Planned Group');
+      const source = await runQuery(
+        'INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, 42)',
+        [slots[0].id],
+        'danceGroups',
+      );
+      await migratePlannedRepetitions();
+      expect(await getAssignments(slots[1])).toEqual([]);
+      expect(await getAssignments(slots[2])).toEqual([
+        expect.objectContaining({
+          repeat_source_id: source.id,
+          is_new: false,
+          repetition_number: 1,
+        }),
+      ]);
+      expect(await getAssignments(slots[3])).toEqual([]);
+      expect(await getAssignments(other[0])).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not regenerate deliberately removed repetitions for already managed sources', async () => {
+    const slots = await createDatedSlots(['2099-01-01', '2099-01-08', '2099-01-15']);
+    await runQuery(
+      'INSERT INTO session_choreographies (session_id, choreography_id, auto_repeat) VALUES (?, 42, 1)',
+      [slots[0].id],
+      'danceGroups',
+    );
+    await migratePlannedRepetitions();
+    expect(await getAssignments(slots[1])).toEqual([]);
+    expect(await getAssignments(slots[2])).toEqual([]);
+  });
+
+  it('rolls back inserted repeats when enabling their legacy source fails, then retries safely', async () => {
+    const slots = await createDatedSlots(['2099-01-01', '2099-01-08', '2099-01-15']);
+    await runQuery(
+      'INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, 42)',
+      [slots[0].id],
+      'danceGroups',
+    );
+    await runQuery(
+      `CREATE TEMP TRIGGER fail_planned_backfill BEFORE UPDATE ON session_choreographies
+       WHEN OLD.auto_repeat = 0 AND NEW.auto_repeat = 1
+       BEGIN SELECT RAISE(ABORT, 'test backfill failure'); END`,
+      [],
+      'danceGroups',
+    );
+    try {
+      await expect(migratePlannedRepetitions()).rejects.toThrow('test backfill failure');
+      expect((await getAssignments(slots[0]))[0].auto_repeat).toBe(false);
+      expect(await getAssignments(slots[1])).toEqual([]);
+      expect(await getAssignments(slots[2])).toEqual([]);
+    } finally {
+      await runQuery('DROP TRIGGER fail_planned_backfill', [], 'danceGroups');
+    }
+    await runDanceGroupsMigrations();
+    expect((await getAssignments(slots[0]))[0].auto_repeat).toBe(true);
+    expect(await getAssignments(slots[1])).toHaveLength(1);
+    expect(await getAssignments(slots[2])).toHaveLength(1);
   });
 });
 

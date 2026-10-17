@@ -52,6 +52,7 @@ __All code was written by GitHub Copilot. Use with caution.__
 - Reorder session contents using drag handles (mouse, touch, or keyboard: Space, arrow keys, Space; Escape cancels). Descriptions and independently planned dances move together, while dates and session IDs stay fixed. Both drag-and-drop and the two-session swap atomically rebuild automatic repetitions at the next two course dates after each original assignment. This can update repetitions outside the visible selection.
 - `POST /api/sessions/reorder-contents` maps contents from the supplied `session_ids` order onto the same sessions in chronological order (ID breaks date ties). Requires at least two distinct sessions from one course.
 - Migration `013_add_session_choreography_repetitions` adds status and origin tracking. Existing assignments are classified by their first occurrence per course but are not retroactively linked or automatically expanded.
+- Corrective migration `014_backfill_planned_session_repetitions` fills missing repetitions from legacy new-dance assignments in their next two course slots when those target dates are today or later in Europe/Berlin. Existing assignments and past session contents stay intact. Eligible legacy sources are enabled for subsequent automatic redistribution; already-managed sources are left unchanged so manually removed repetitions are not restored.
 - Learned choreographies table: defaults to showing only choreographies danced at least once, with a toggle to show all
 
 ---

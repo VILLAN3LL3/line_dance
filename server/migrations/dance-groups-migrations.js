@@ -297,26 +297,27 @@ const migrations = [
   },
 ];
 
-migrations.push({
-  id: '013_add_session_choreography_repetitions',
-  up: async () => {
-    await runQuery(
-      'ALTER TABLE session_choreographies ADD COLUMN is_new INTEGER NOT NULL DEFAULT 1',
-      [],
-      dbName,
-    );
-    await runQuery(
-      'ALTER TABLE session_choreographies ADD COLUMN repeat_source_id INTEGER',
-      [],
-      dbName,
-    );
-    await runQuery(
-      'ALTER TABLE session_choreographies ADD COLUMN auto_repeat INTEGER NOT NULL DEFAULT 0',
-      [],
-      dbName,
-    );
-    await runQuery(
-      `UPDATE session_choreographies AS current SET is_new = 0
+migrations.push(
+  {
+    id: '013_add_session_choreography_repetitions',
+    up: async () => {
+      await runQuery(
+        'ALTER TABLE session_choreographies ADD COLUMN is_new INTEGER NOT NULL DEFAULT 1',
+        [],
+        dbName,
+      );
+      await runQuery(
+        'ALTER TABLE session_choreographies ADD COLUMN repeat_source_id INTEGER',
+        [],
+        dbName,
+      );
+      await runQuery(
+        'ALTER TABLE session_choreographies ADD COLUMN auto_repeat INTEGER NOT NULL DEFAULT 0',
+        [],
+        dbName,
+      );
+      await runQuery(
+        `UPDATE session_choreographies AS current SET is_new = 0
        WHERE EXISTS (
          SELECT 1 FROM session_choreographies earlier
          JOIN sessions earlier_session ON earlier_session.id = earlier.session_id
@@ -327,16 +328,58 @@ migrations.push({
              OR (earlier_session.session_date = current_session.session_date
                AND earlier_session.id < current_session.id))
        )`,
-      [],
-      dbName,
-    );
-    await runQuery(
-      'CREATE INDEX session_choreographies_repeat_source ON session_choreographies (repeat_source_id)',
-      [],
-      dbName,
-    );
+        [],
+        dbName,
+      );
+      await runQuery(
+        'CREATE INDEX session_choreographies_repeat_source ON session_choreographies (repeat_source_id)',
+        [],
+        dbName,
+      );
+    },
   },
-});
+  {
+    id: '014_backfill_planned_session_repetitions',
+    up: async () => {
+      const today = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Berlin',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date());
+      const plannedRepetitions = `WITH ordered_sessions AS (
+      SELECT id, dance_course_id, session_date,
+             ROW_NUMBER() OVER (PARTITION BY dance_course_id ORDER BY session_date, id) AS position
+      FROM sessions
+    ), planned_repetitions AS (
+      SELECT source.id AS source_id, source.choreography_id, target.id AS target_id,
+             origin.position AS source_position
+      FROM session_choreographies source
+      JOIN ordered_sessions origin ON origin.id = source.session_id
+      JOIN ordered_sessions target ON target.dance_course_id = origin.dance_course_id
+        AND target.position BETWEEN origin.position + 1 AND origin.position + 2
+      WHERE source.is_new = 1 AND source.repeat_source_id IS NULL AND source.auto_repeat = 0
+        AND substr(target.session_date, 1, 10) >= ?
+    )`;
+      await runQuery(
+        `${plannedRepetitions}
+       INSERT OR IGNORE INTO session_choreographies
+         (session_id, choreography_id, is_new, repeat_source_id, auto_repeat)
+       SELECT target_id, choreography_id, 0, source_id, 0 FROM planned_repetitions
+       ORDER BY source_position DESC, source_id`,
+        [today],
+        dbName,
+      );
+      await runQuery(
+        `${plannedRepetitions}
+       UPDATE session_choreographies SET auto_repeat = 1
+       WHERE id IN (SELECT source_id FROM planned_repetitions)`,
+        [today],
+        dbName,
+      );
+    },
+  },
+);
 
 async function applyMigration(migration) {
   const alreadyApplied = await hasMigration(migration.id);
