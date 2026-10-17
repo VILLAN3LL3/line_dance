@@ -149,6 +149,10 @@ export interface SessionChoreography {
   session_id: number;
   choreography_id: number;
   created_at: string;
+  is_new: boolean;
+  repetition_number: number;
+  repeat_source_id: number | null;
+  auto_repeat: boolean;
 }
 
 export interface LearnedChoreography {

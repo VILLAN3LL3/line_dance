@@ -2,6 +2,10 @@ import { allQuery, getQuery, runQuery } from '../scripts/db.js';
 
 const dbName = 'choreography';
 
+async function runSequential(items, action) {
+  await items.reduce((previous, item) => previous.then(() => action(item)), Promise.resolve());
+}
+
 async function ensureMigrationTable() {
   await runQuery(
     `CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -144,7 +148,7 @@ const migrations = [
         ['HIGH ADVANCED', 160],
       ];
 
-      for (const [name, value] of defaultLevels) {
+      await runSequential(defaultLevels, async ([name, value]) => {
         const existing = await getQuery(
           `SELECT id FROM levels WHERE UPPER(name) = UPPER(?) LIMIT 1`,
           [name],
@@ -152,7 +156,7 @@ const migrations = [
         );
 
         if (existing) {
-          continue;
+          return;
         }
 
         if (valueColumn) {
@@ -164,7 +168,7 @@ const migrations = [
         } else {
           await runQuery(`INSERT OR IGNORE INTO levels (name) VALUES (?)`, [name], dbName);
         }
-      }
+      });
     },
   },
   {
@@ -237,13 +241,13 @@ const migrations = [
         ['Experienced', 40],
       ];
 
-      for (const [name, value] of defaults) {
+      await runSequential(defaults, async ([name, value]) => {
         await runQuery(
           `UPDATE levels SET value = ? WHERE name = ? AND value IS NULL`,
           [value, name],
           dbName,
         );
-      }
+      });
 
       const maxValueRow = await getQuery(
         `SELECT COALESCE(MAX(value), 0) AS max_value FROM levels WHERE value IS NOT NULL`,
@@ -258,10 +262,10 @@ const migrations = [
         dbName,
       );
 
-      for (const level of levelsWithoutValue) {
+      await runSequential(levelsWithoutValue, async (level) => {
         await runQuery(`UPDATE levels SET value = ? WHERE id = ?`, [nextValue, level.id], dbName);
         nextValue += 10;
-      }
+      });
     },
   },
   {
@@ -297,7 +301,7 @@ const migrations = [
         ['HIGH ADVANCED', 160],
       ];
 
-      for (const [name, value] of canonicalLevels) {
+      await runSequential(canonicalLevels, async ([name, value]) => {
         const existing = await getQuery(
           `SELECT id FROM levels WHERE UPPER(name) = UPPER(?) ORDER BY id ASC LIMIT 1`,
           [name],
@@ -313,7 +317,7 @@ const migrations = [
         } else {
           await runQuery(`INSERT INTO levels (name, value) VALUES (?, ?)`, [name, value], dbName);
         }
-      }
+      });
     },
   },
   {
@@ -654,13 +658,13 @@ const migrations = [
         ['ZW', 'ZWE', 'Zimbabwe'],
       ];
 
-      for (const [iso2, iso3, name] of countriesData) {
+      await runSequential(countriesData, async ([iso2, iso3, name]) => {
         await runQuery(
           `INSERT OR IGNORE INTO countries (iso_2_code, iso_3_code, name) VALUES (?, ?, ?)`,
           [iso2, iso3, name],
           dbName,
         );
-      }
+      });
     },
   },
   {
@@ -689,14 +693,14 @@ const migrations = [
         ['BUL', 'BG'], // Bulgaria (official ISO 2-char: BG)
       ];
 
-      for (const [alias, iso2] of aliases) {
+      await runSequential(aliases, async ([alias, iso2]) => {
         await runQuery(
           `INSERT OR IGNORE INTO country_code_aliases (alias, country_id)
            SELECT ?, id FROM countries WHERE iso_2_code = ?`,
           [alias, iso2],
           dbName,
         );
-      }
+      });
     },
   },
   {
@@ -709,14 +713,14 @@ const migrations = [
         ['BUL', 'BG'], // Bulgaria (official ISO 2-char: BG)
       ];
 
-      for (const [alias, iso2] of aliases) {
+      await runSequential(aliases, async ([alias, iso2]) => {
         await runQuery(
           `INSERT OR IGNORE INTO country_code_aliases (alias, country_id)
            SELECT ?, id FROM countries WHERE iso_2_code = ?`,
           [alias, iso2],
           dbName,
         );
-      }
+      });
     },
   },
 ];
@@ -724,10 +728,10 @@ const migrations = [
 export async function runChoreographyMigrations() {
   await ensureMigrationTable();
 
-  for (const migration of migrations) {
+  await runSequential(migrations, async (migration) => {
     const alreadyApplied = await hasMigration(migration.id);
     if (alreadyApplied) {
-      continue;
+      return;
     }
 
     await runQuery('BEGIN IMMEDIATE TRANSACTION', [], dbName);
@@ -742,5 +746,5 @@ export async function runChoreographyMigrations() {
       });
       throw error;
     }
-  }
+  });
 }

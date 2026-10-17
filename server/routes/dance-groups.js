@@ -1341,6 +1341,39 @@ export async function deleteSession(req, res) {
 
 // Session Choreographies endpoints
 
+async function clearAutomaticRepetitions(courseId) {
+  await runQuery(
+    `DELETE FROM session_choreographies WHERE repeat_source_id IS NOT NULL
+     AND session_id IN (SELECT id FROM sessions WHERE dance_course_id = ?)`,
+    [courseId],
+    dbName,
+  );
+}
+
+async function distributeRepetitions(courseId, sourceId = null) {
+  await runQuery(
+    `WITH ordered_sessions AS (
+       SELECT id, ROW_NUMBER() OVER (ORDER BY session_date, id) AS position
+       FROM sessions WHERE dance_course_id = ?
+     )
+     INSERT OR IGNORE INTO session_choreographies
+       (session_id, choreography_id, is_new, repeat_source_id, auto_repeat)
+     SELECT target.id, source.choreography_id, 0, source.id, 0
+     FROM session_choreographies source
+     JOIN ordered_sessions origin ON origin.id = source.session_id
+     JOIN ordered_sessions target ON target.position BETWEEN origin.position + 1 AND origin.position + 2
+     WHERE source.auto_repeat = 1 AND source.repeat_source_id IS NULL
+       AND (? IS NULL OR source.id = ?)
+     ORDER BY origin.position DESC, source.id`,
+    [courseId, sourceId, sourceId],
+    dbName,
+  );
+}
+
+function serializeSessionChoreography(row) {
+  return { ...row, is_new: Boolean(row.is_new), auto_repeat: Boolean(row.auto_repeat) };
+}
+
 export async function getSessionChoreographies(req, res) {
   try {
     const { session_id } = req.query;
@@ -1350,15 +1383,24 @@ export async function getSessionChoreographies(req, res) {
     }
 
     const rows = await allQuery(
-      `SELECT sc.id, sc.session_id, sc.choreography_id, sc.created_at
+      `SELECT sc.*, CASE WHEN sc.is_new = 1 THEN 0 ELSE 1 + (
+         SELECT COUNT(*) FROM session_choreographies previous
+         JOIN sessions previous_session ON previous_session.id = previous.session_id
+         WHERE previous.choreography_id = sc.choreography_id AND previous.is_new = 0
+           AND previous_session.dance_course_id = current_session.dance_course_id
+           AND (previous_session.session_date < current_session.session_date
+             OR (previous_session.session_date = current_session.session_date
+               AND previous_session.id < current_session.id))
+       ) END AS repetition_number
        FROM session_choreographies sc
+       JOIN sessions current_session ON current_session.id = sc.session_id
        WHERE sc.session_id = ?
        ORDER BY sc.created_at DESC`,
       [session_id],
       dbName,
     );
 
-    res.json(rows);
+    res.json(rows.map(serializeSessionChoreography));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch session choreographies' });
@@ -1374,27 +1416,36 @@ export async function addChoreographyToSession(req, res) {
     }
 
     // Verify session exists
-    const session = await getQuery(`SELECT id FROM sessions WHERE id = ?`, [session_id], dbName);
+    const session = await getQuery(
+      `SELECT id, dance_course_id FROM sessions WHERE id = ?`,
+      [session_id],
+      dbName,
+    );
 
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
 
-    const result = await runQuery(
-      `INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, ?)`,
-      [session_id, choreography_id],
-      dbName,
-    );
-
-    const choreography = await getQuery(
-      `SELECT id, session_id, choreography_id, created_at
-       FROM session_choreographies
-       WHERE id = ?`,
-      [result.id],
-      dbName,
-    );
-
-    res.status(201).json(choreography);
+    await runQuery('BEGIN TRANSACTION', [], dbName);
+    try {
+      const result = await runQuery(
+        `INSERT INTO session_choreographies (session_id, choreography_id, is_new, auto_repeat)
+         VALUES (?, ?, 1, 1)`,
+        [session_id, choreography_id],
+        dbName,
+      );
+      await distributeRepetitions(session.dance_course_id, result.id);
+      const choreography = await getQuery(
+        'SELECT *, 0 AS repetition_number FROM session_choreographies WHERE id = ?',
+        [result.id],
+        dbName,
+      );
+      await runQuery('COMMIT', [], dbName);
+      res.status(201).json(serializeSessionChoreography(choreography));
+    } catch (error) {
+      await runQuery('ROLLBACK', [], dbName);
+      throw error;
+    }
   } catch (error) {
     captureError(error);
     if (error.message?.includes('UNIQUE constraint failed')) {
@@ -1407,7 +1458,11 @@ export async function addChoreographyToSession(req, res) {
 export async function removeChoreographyFromSession(req, res) {
   try {
     const { id } = req.params;
-    const result = await runQuery(`DELETE FROM session_choreographies WHERE id = ?`, [id], dbName);
+    const result = await runQuery(
+      `DELETE FROM session_choreographies WHERE id = ? OR repeat_source_id = ?`,
+      [id, id],
+      dbName,
+    );
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Session choreography not found' });
@@ -1447,6 +1502,7 @@ export async function reorderSessionContents(req, res) {
 
     await runQuery('BEGIN TRANSACTION', [], dbName);
     try {
+      await clearAutomaticRepetitions(sessions[0].dance_course_id);
       const choreographies = await allQuery(
         `SELECT * FROM session_choreographies WHERE session_id IN (${placeholders})`,
         sessionIds,
@@ -1472,16 +1528,20 @@ export async function reorderSessionContents(req, res) {
       );
       if (choreographies.length > 0) {
         await runQuery(
-          `INSERT INTO session_choreographies (id, session_id, choreography_id, created_at) VALUES ${choreographies.map(() => '(?, ?, ?, ?)').join(',')}`,
+          `INSERT INTO session_choreographies (id, session_id, choreography_id, created_at, is_new, repeat_source_id, auto_repeat) VALUES ${choreographies.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(',')}`,
           choreographies.flatMap((choreography) => [
             choreography.id,
             targets.get(choreography.session_id),
             choreography.choreography_id,
             choreography.created_at,
+            choreography.is_new,
+            choreography.repeat_source_id,
+            choreography.auto_repeat,
           ]),
           dbName,
         );
       }
+      await distributeRepetitions(sessions[0].dance_course_id);
       await runQuery('COMMIT', [], dbName);
     } catch (error) {
       await runQuery('ROLLBACK', [], dbName);
@@ -1522,19 +1582,14 @@ export async function swapSessions(req, res) {
       return res.status(400).json({ error: 'Sessions must belong to the same course' });
     }
 
-    const choreosA = await allQuery(
-      'SELECT choreography_id FROM session_choreographies WHERE session_id = ?',
-      [sessionIdA],
-      dbName,
-    );
-    const choreosB = await allQuery(
-      'SELECT choreography_id FROM session_choreographies WHERE session_id = ?',
-      [sessionIdB],
-      dbName,
-    );
-
     await runQuery('BEGIN TRANSACTION', [], dbName);
     try {
+      await clearAutomaticRepetitions(sessionA.dance_course_id);
+      const choreographies = await allQuery(
+        'SELECT * FROM session_choreographies WHERE session_id IN (?, ?)',
+        [sessionIdA, sessionIdB],
+        dbName,
+      );
       await runQuery(
         'DELETE FROM session_choreographies WHERE session_id = ?',
         [sessionIdA],
@@ -1546,14 +1601,18 @@ export async function swapSessions(req, res) {
         dbName,
       );
 
-      const swappedChoreographies = [
-        ...choreosA.map((choreography) => [sessionIdB, choreography.choreography_id]),
-        ...choreosB.map((choreography) => [sessionIdA, choreography.choreography_id]),
-      ];
-      if (swappedChoreographies.length > 0) {
+      if (choreographies.length > 0) {
         await runQuery(
-          `INSERT INTO session_choreographies (session_id, choreography_id) VALUES ${swappedChoreographies.map(() => '(?, ?)').join(',')}`,
-          swappedChoreographies.flat(),
+          `INSERT INTO session_choreographies (id, session_id, choreography_id, created_at, is_new, repeat_source_id, auto_repeat) VALUES ${choreographies.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(',')}`,
+          choreographies.flatMap((choreography) => [
+            choreography.id,
+            choreography.session_id === sessionIdA ? sessionIdB : sessionIdA,
+            choreography.choreography_id,
+            choreography.created_at,
+            choreography.is_new,
+            choreography.repeat_source_id,
+            choreography.auto_repeat,
+          ]),
           dbName,
         );
       }
@@ -1569,6 +1628,7 @@ export async function swapSessions(req, res) {
         dbName,
       );
 
+      await distributeRepetitions(sessionA.dance_course_id);
       await runQuery('COMMIT', [], dbName);
     } catch (err) {
       await runQuery('ROLLBACK', [], dbName);

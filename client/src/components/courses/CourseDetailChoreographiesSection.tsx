@@ -135,6 +135,18 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
                     <LevelBatch level="UNKNOWN" />
                   </div>
                 )}
+                <span
+                  className="session-dance-status"
+                  aria-label={
+                    sessionChoreography.is_new
+                      ? "Neu erlernt"
+                      : `${sessionChoreography.repetition_number}. Wiederholung`
+                  }
+                >
+                  {sessionChoreography.is_new
+                    ? "Neu"
+                    : `${sessionChoreography.repetition_number}. Wdh.`}
+                </span>
                 <ActionButton
                   onClick={() => onRemoveChoreography(sessionChoreography.choreography_id)}
                   variant="delete"

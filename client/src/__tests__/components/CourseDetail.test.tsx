@@ -122,6 +122,10 @@ describe("CourseDetail", () => {
       session_id: 11,
       choreography_id: 101,
       created_at: "2024-01-01",
+      is_new: true,
+      repetition_number: 0,
+      repeat_source_id: null,
+      auto_repeat: true,
     });
     vi.mocked(deleteSession).mockResolvedValue({ message: "ok" });
     vi.mocked(removeChoreographyFromSession).mockResolvedValue({ message: "ok" });
@@ -143,6 +147,29 @@ describe("CourseDetail", () => {
       </MemoryRouter>,
     );
   }
+
+  it.each([
+    { isNew: true, number: 0, label: "Neu", accessibleLabel: "Neu erlernt" },
+    { isNew: false, number: 1, label: "1. Wdh.", accessibleLabel: "1. Wiederholung" },
+    { isNew: false, number: 2, label: "2. Wdh.", accessibleLabel: "2. Wiederholung" },
+    { isNew: false, number: 12, label: "12. Wdh.", accessibleLabel: "12. Wiederholung" },
+  ])("shows $label for a session dance", async ({ isNew, number, label, accessibleLabel }) => {
+    vi.mocked(getSessionChoreographies).mockResolvedValue([
+      {
+        id: 1,
+        session_id: 12,
+        choreography_id: 101,
+        created_at: "2024-01-01",
+        is_new: isNew,
+        repetition_number: number,
+        repeat_source_id: isNew ? null : 9,
+        auto_repeat: isNew,
+      },
+    ]);
+    renderWithRoute();
+    fireEvent.click(await screen.findByRole("button", { name: "Manage" }));
+    expect(await screen.findByLabelText(accessibleLabel)).toHaveTextContent(label);
+  });
 
   it("disables dragging when only one session is visible", async () => {
     renderWithRoute();
@@ -270,6 +297,10 @@ describe("CourseDetail", () => {
         session_id: 12,
         choreography_id: 101,
         created_at: "2024-01-01",
+        is_new: true,
+        repetition_number: 0,
+        repeat_source_id: null,
+        auto_repeat: true,
       },
     ]);
 

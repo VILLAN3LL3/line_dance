@@ -1252,6 +1252,8 @@ export const openApiSpec = {
       post: {
         tags: ['Session Choreographies'],
         summary: 'Add choreography to session',
+        description:
+          'Adds a new-dance assignment and automatic repetitions in the next two existing sessions of the same course, ordered by date and ID. Existing assignments are preserved without duplicates. All inserts are atomic.',
         requestBody: {
           required: true,
           content: {
@@ -1283,6 +1285,8 @@ export const openApiSpec = {
       delete: {
         tags: ['Session Choreographies'],
         summary: 'Remove choreography from session',
+        description:
+          'Removing a source also removes its linked automatic repetitions. Removing a repetition alone leaves the source and other assignments unchanged.',
         parameters: [{ $ref: '#/components/parameters/IdPath' }],
         responses: {
           200: {
@@ -1302,7 +1306,7 @@ export const openApiSpec = {
         tags: ['Sessions'],
         summary: 'Reorder session comments and choreography assignments without changing dates',
         description:
-          'Maps contents from session_ids in the supplied order onto those same sessions ordered by date and ID. Excluded sessions are unchanged. All sessions must belong to the same course; changes are atomic.',
+          'Maps independently planned contents from session_ids onto those same sessions ordered by date and ID. Dates and IDs stay fixed. Automatic repetitions are rebuilt across the course for the next two sessions after each source, including excluded sessions when needed. All sessions must belong to the same course; changes are atomic.',
         requestBody: {
           required: true,
           content: {
@@ -1339,6 +1343,8 @@ export const openApiSpec = {
       post: {
         tags: ['Sessions'],
         summary: 'Swap choreographies and comments between two sessions in the same course',
+        description:
+          'Preserves independent assignment metadata and atomically redistributes automatic repetitions to the next two course sessions after each original assignment. Dates and session IDs are unchanged.',
         parameters: [
           {
             name: 'sessionId',
@@ -1789,6 +1795,15 @@ export const openApiSpec = {
           session_id: { type: 'integer' },
           choreography_id: { type: 'integer' },
           created_at: { type: 'string' },
+          is_new: { type: 'boolean', description: 'Newly learned rather than repeated' },
+          repetition_number: {
+            type: 'integer',
+            minimum: 0,
+            description:
+              'Zero for new dances; chronological repetition number within the course otherwise',
+          },
+          repeat_source_id: { type: 'integer', nullable: true },
+          auto_repeat: { type: 'boolean', description: 'Source generates automatic repetitions' },
         },
       },
       LearnedChoreography: {

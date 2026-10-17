@@ -50,9 +50,10 @@ export async function clearAllTables() {
     'trainers',
     'dance_groups',
   ];
-  for (const table of tables) {
-    await run(testDb, `DELETE FROM ${table}`);
-  }
+  await tables.reduce(
+    (previous, table) => previous.then(() => run(testDb, `DELETE FROM ${table}`)),
+    Promise.resolve(),
+  );
   // Clear choreography tables — ordering respects FK constraints.
   // DELETE FROM choreographies cascades to choreography_authors and choreography_step_figures.
   await run(testDb, 'DELETE FROM choreographies');

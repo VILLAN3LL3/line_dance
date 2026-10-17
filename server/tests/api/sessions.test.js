@@ -3,6 +3,7 @@ import request from 'supertest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import app from '../setup/testApp.js';
 import { runQuery } from '../../scripts/db.js';
+import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.js';
 
 beforeAll(async () => {
   await setupTestDb();
@@ -29,6 +30,247 @@ async function createGroupAndCourse(groupName = 'Session Test Group') {
 // ---------------------------------------------------------------------------
 // Sessions CRUD
 // ---------------------------------------------------------------------------
+
+describe('automatic session repetitions', () => {
+  async function createSlots() {
+    const { course } = await createGroupAndCourse();
+    const responses = await Promise.all(
+      ['2025-01-01', '2025-01-08', '2025-01-15', '2025-01-22'].map((date) =>
+        request(app).post('/api/sessions').send({ dance_course_id: course.id, session_date: date }),
+      ),
+    );
+    return responses.map((response) => response.body);
+  }
+
+  async function addDance(sessionId, danceId = 42) {
+    const response = await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: sessionId, choreography_id: danceId });
+    expect(response.status).toBe(201);
+    return response.body;
+  }
+
+  async function assignments(slots) {
+    return Promise.all(
+      slots.map(async (slot) => {
+        const response = await request(app).get(
+          `/api/session-choreographies?session_id=${slot.id}`,
+        );
+        expect(response.status).toBe(200);
+        return response.body;
+      }),
+    );
+  }
+
+  it('adds exactly two numbered repetitions without affecting other courses', async () => {
+    const slots = await createSlots();
+    const { course } = await createGroupAndCourse('Other Course');
+    const other = await request(app).post('/api/sessions').send({
+      dance_course_id: course.id,
+      session_date: '2025-01-03',
+    });
+    const source = await addDance(slots[0].id);
+    const rows = await assignments([...slots, other.body]);
+
+    expect(rows.map((items) => items.length)).toEqual([1, 1, 1, 0, 0]);
+    expect(rows[0][0]).toMatchObject({
+      is_new: true,
+      repetition_number: 0,
+      repeat_source_id: null,
+    });
+    expect(rows[1][0]).toMatchObject({
+      is_new: false,
+      repetition_number: 1,
+      repeat_source_id: source.id,
+    });
+    expect(rows[2][0]).toMatchObject({
+      is_new: false,
+      repetition_number: 2,
+      repeat_source_id: source.id,
+    });
+  });
+
+  it.each([2, 3])('handles fewer than two following sessions from slot %i', async (index) => {
+    const slots = await createSlots();
+    await addDance(slots[index].id);
+    const rows = await assignments(slots);
+    expect(rows.map((items) => items.length)).toEqual(index === 2 ? [0, 0, 1, 1] : [0, 0, 0, 1]);
+  });
+
+  it('removes only repetitions linked to the removed source', async () => {
+    const slots = await createSlots();
+    await runQuery(
+      'INSERT INTO session_choreographies (session_id, choreography_id, is_new) VALUES (?, 42, 0)',
+      [slots[1].id],
+      'danceGroups',
+    );
+    const source = await addDance(slots[0].id);
+    expect((await assignments(slots)).map((items) => items.length)).toEqual([1, 1, 1, 0]);
+    const response = await request(app).delete(`/api/session-choreographies/${source.id}`);
+    expect(response.status).toBe(200);
+    const rows = await assignments(slots);
+    expect(rows.map((items) => items.length)).toEqual([0, 1, 0, 0]);
+    expect(rows[1][0]).toMatchObject({ is_new: false, repeat_source_id: null });
+  });
+
+  it('can remove an individual repetition without removing its source or sibling', async () => {
+    const slots = await createSlots();
+    const source = await addDance(slots[0].id);
+    const before = await assignments(slots);
+    await request(app).delete(`/api/session-choreographies/${before[1][0].id}`).expect(200);
+    const rows = await assignments(slots);
+    expect(rows.map((items) => items.length)).toEqual([1, 0, 1, 0]);
+    expect(rows[0][0].id).toBe(source.id);
+    expect(rows[2][0].repetition_number).toBe(1);
+  });
+
+  it.each(['swap', 'reorder'])(
+    'redistributes repetitions after %s and preserves source identity',
+    async (operation) => {
+      const slots = await createSlots();
+      const source = await addDance(slots[0].id);
+      const response =
+        operation === 'swap'
+          ? await request(app).post(`/api/sessions/${slots[0].id}/swap/${slots[1].id}`)
+          : await request(app)
+              .post('/api/sessions/reorder-contents')
+              .send({
+                session_ids: [slots[1].id, slots[0].id, slots[2].id, slots[3].id],
+              });
+      expect(response.status).toBe(200);
+      const rows = await assignments(slots);
+      expect(rows.map((items) => items.length)).toEqual([0, 1, 1, 1]);
+      expect(rows[1][0]).toMatchObject({ id: source.id, is_new: true });
+      expect(rows[2][0]).toMatchObject({ repetition_number: 1, repeat_source_id: source.id });
+      expect(rows[3][0]).toMatchObject({ repetition_number: 2, repeat_source_id: source.id });
+      await request(app).delete(`/api/session-choreographies/${source.id}`).expect(200);
+      expect((await assignments(slots)).flat()).toEqual([]);
+    },
+  );
+
+  it.each(['swap', 'reorder'])(
+    'removes obsolete repeats when %s moves the source to the course end',
+    async (operation) => {
+      const slots = await createSlots();
+      const source = await addDance(slots[0].id);
+      const response =
+        operation === 'swap'
+          ? await request(app).post(`/api/sessions/${slots[0].id}/swap/${slots[3].id}`)
+          : await request(app)
+              .post('/api/sessions/reorder-contents')
+              .send({
+                session_ids: [slots[1].id, slots[2].id, slots[3].id, slots[0].id],
+              });
+      expect(response.status).toBe(200);
+      expect((await assignments(slots)).map((items) => items.length)).toEqual([0, 0, 0, 1]);
+      await request(app).post(`/api/sessions/${slots[3].id}/swap/${slots[0].id}`).expect(200);
+      const restored = await assignments(slots);
+      expect(restored.map((items) => items.length)).toEqual([1, 1, 1, 0]);
+      expect(restored[0][0].id).toBe(source.id);
+    },
+  );
+
+  it('rolls back the source and repetitions together if a repetition cannot be saved', async () => {
+    const slots = await createSlots();
+    await runQuery(
+      `CREATE TEMP TRIGGER fail_repetition BEFORE INSERT ON session_choreographies
+       WHEN NEW.repeat_source_id IS NOT NULL BEGIN SELECT RAISE(ABORT, 'test failure'); END`,
+      [],
+      'danceGroups',
+    );
+    try {
+      await request(app)
+        .post('/api/session-choreographies')
+        .send({ session_id: slots[0].id, choreography_id: 42 })
+        .expect(500);
+      expect((await assignments(slots)).flat()).toEqual([]);
+    } finally {
+      await runQuery('DROP TRIGGER fail_repetition', [], 'danceGroups');
+    }
+  });
+
+  it.each(['swap', 'reorder'])(
+    'rolls back %s together with its repetition redistribution',
+    async (operation) => {
+      const slots = await createSlots();
+      await addDance(slots[0].id);
+      const before = await assignments(slots);
+      await runQuery(
+        `CREATE TEMP TRIGGER fail_redistribution BEFORE INSERT ON session_choreographies
+       WHEN NEW.repeat_source_id IS NOT NULL BEGIN SELECT RAISE(ABORT, 'test failure'); END`,
+        [],
+        'danceGroups',
+      );
+      try {
+        const response =
+          operation === 'swap'
+            ? await request(app).post(`/api/sessions/${slots[0].id}/swap/${slots[1].id}`)
+            : await request(app)
+                .post('/api/sessions/reorder-contents')
+                .send({
+                  session_ids: [slots[1].id, slots[0].id, slots[2].id, slots[3].id],
+                });
+        expect(response.status).toBe(500);
+        expect(await assignments(slots)).toEqual(before);
+      } finally {
+        await runQuery('DROP TRIGGER fail_redistribution', [], 'danceGroups');
+      }
+    },
+  );
+
+  it('preserves independent repetitions and numbers them beyond the automatic pair', async () => {
+    const slots = await createSlots();
+    await runQuery(
+      'INSERT INTO session_choreographies (session_id, choreography_id, is_new) VALUES (?, 42, 0)',
+      [slots[3].id],
+      'danceGroups',
+    );
+    const source = await addDance(slots[0].id);
+    expect((await assignments(slots))[3][0]).toMatchObject({
+      repetition_number: 3,
+      repeat_source_id: null,
+    });
+    await request(app).post(`/api/sessions/${slots[0].id}/swap/${slots[1].id}`).expect(200);
+    const rows = await assignments(slots);
+    expect(rows.map((items) => items.length)).toEqual([0, 1, 1, 1]);
+    expect(rows[3][0]).toMatchObject({ repetition_number: 2, repeat_source_id: null });
+    await request(app).delete(`/api/session-choreographies/${source.id}`).expect(200);
+    expect((await assignments(slots)).map((items) => items.length)).toEqual([0, 0, 0, 1]);
+  });
+
+  it('classifies legacy assignments without linking or generating automatic repetitions', async () => {
+    const slots = await createSlots();
+    await runQuery('DROP INDEX session_choreographies_repeat_source', [], 'danceGroups');
+    await runQuery('ALTER TABLE session_choreographies DROP COLUMN is_new', [], 'danceGroups');
+    await runQuery(
+      'ALTER TABLE session_choreographies DROP COLUMN repeat_source_id',
+      [],
+      'danceGroups',
+    );
+    await runQuery('ALTER TABLE session_choreographies DROP COLUMN auto_repeat', [], 'danceGroups');
+    await runQuery(
+      "DELETE FROM schema_migrations WHERE id = '013_add_session_choreography_repetitions'",
+      [],
+      'danceGroups',
+    );
+    await runQuery(
+      'INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, 42), (?, 42)',
+      [slots[0].id, slots[2].id],
+      'danceGroups',
+    );
+    await runDanceGroupsMigrations();
+    const rows = await assignments(slots);
+    expect(rows.map((items) => items.length)).toEqual([1, 0, 1, 0]);
+    expect(rows[0][0]).toMatchObject({ is_new: true, auto_repeat: false, repeat_source_id: null });
+    expect(rows[2][0]).toMatchObject({
+      is_new: false,
+      repetition_number: 1,
+      repeat_source_id: null,
+    });
+    await request(app).delete(`/api/session-choreographies/${rows[0][0].id}`).expect(200);
+    expect((await assignments(slots))[2]).toHaveLength(1);
+  });
+});
 
 describe('GET /api/sessions', () => {
   it('returns empty array when no sessions exist', async () => {

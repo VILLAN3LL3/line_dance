@@ -2,7 +2,7 @@ import { APIRequestContext, expect } from "@playwright/test";
 
 export const API_BASE = "http://127.0.0.1:3101/api";
 
-async function expectOk(response: Awaited<ReturnType<APIRequestContext["post"]>>) {
+function expectOk(response: Awaited<ReturnType<APIRequestContext["post"]>>) {
   expect(response.ok()).toBeTruthy();
 }
 
@@ -19,7 +19,7 @@ export async function createChoreographyViaApi(request: APIRequestContext, name:
     },
   });
 
-  await expectOk(response);
+  expectOk(response);
   const body = await response.json();
   return body.id as number;
 }
@@ -29,7 +29,7 @@ export async function createDanceGroupViaApi(request: APIRequestContext, name: s
     data: { name },
   });
 
-  await expectOk(response);
+  expectOk(response);
   const body = await response.json();
   return body.id as number;
 }
@@ -44,7 +44,7 @@ export async function createTrainerViaApi(
     data: { name, email, phone },
   });
 
-  await expectOk(response);
+  expectOk(response);
   const body = await response.json();
   return body.id as number;
 }
@@ -66,7 +66,7 @@ export async function createDanceCourseViaApi(
     },
   });
 
-  await expectOk(response);
+  expectOk(response);
   const body = await response.json();
   return body.id as number;
 }
@@ -83,7 +83,7 @@ export async function createSessionViaApi(
     },
   });
 
-  await expectOk(response);
+  expectOk(response);
   const body = await response.json();
   return body.id as number;
 }
@@ -100,7 +100,7 @@ export async function addSessionChoreographyViaApi(
     },
   });
 
-  await expectOk(response);
+  expectOk(response);
 }
 
 export async function updateGroupMaxLevelViaApi(
@@ -112,5 +112,5 @@ export async function updateGroupMaxLevelViaApi(
     data: { max_group_level_value: maxGroupLevelValue },
   });
 
-  await expectOk(response);
+  expectOk(response);
 }

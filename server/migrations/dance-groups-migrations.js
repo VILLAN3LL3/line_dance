@@ -50,6 +50,25 @@ async function ensureColumnExists(tableName, columnName, columnDefinition) {
   }
 }
 
+async function seedDefaultBaseStepFigures() {
+  const figures = await allQuery('SELECT id FROM step_figures WHERE LOWER(name) IN (?, ?, ?, ?)', [
+    'hip bump',
+    'hip sway',
+    'kick',
+    'run',
+  ]);
+  if (figures.length === 0) {
+    return;
+  }
+  await runQuery(
+    `INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id)
+     SELECT dance_groups.id, defaults.id FROM dance_groups
+     CROSS JOIN (${figures.map(() => 'SELECT ? AS id').join(' UNION ALL ')}) AS defaults`,
+    figures.map((figure) => figure.id),
+    dbName,
+  );
+}
+
 const migrations = [
   {
     id: '001_create_dance_groups_core_schema',
@@ -203,12 +222,13 @@ const migrations = [
         }
       }
 
-      for (const [danceGroupId, maxValue] of maxValueByGroup.entries()) {
+      if (maxValueByGroup.size > 0) {
+        const values = [...maxValueByGroup.entries()];
         await runQuery(
           `UPDATE dance_groups
-           SET max_group_level_value = ?
-           WHERE id = ? AND max_group_level_value IS NULL`,
-          [maxValue, danceGroupId],
+           SET max_group_level_value = CASE id ${values.map(() => 'WHEN ? THEN ?').join(' ')} END
+           WHERE id IN (${values.map(() => '?').join(',')}) AND max_group_level_value IS NULL`,
+          [...values.flat(), ...maxValueByGroup.keys()],
           dbName,
         );
       }
@@ -240,24 +260,7 @@ const migrations = [
         dbName,
       );
 
-      // Seed defaults for all existing groups
-      const groups = await allQuery(`SELECT id FROM dance_groups`, [], dbName);
-      const defaultNames = ['Hip Bump', 'Hip Sway', 'Kick', 'Run'];
-      for (const group of groups) {
-        for (const name of defaultNames) {
-          const figure = await getQuery(
-            `SELECT id FROM step_figures WHERE LOWER(name) = LOWER(?)`,
-            [name],
-          );
-          if (figure) {
-            await runQuery(
-              `INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id) VALUES (?, ?)`,
-              [group.id, figure.id],
-              dbName,
-            );
-          }
-        }
-      }
+      await seedDefaultBaseStepFigures();
     },
   },
   {
@@ -289,48 +292,76 @@ const migrations = [
   {
     id: '012_seed_missing_group_base_step_figures',
     up: async () => {
-      const groups = await allQuery(`SELECT id FROM dance_groups`, [], dbName);
-      const defaultNames = ['Hip Bump', 'Hip Sway', 'Kick', 'Run'];
-
-      for (const group of groups) {
-        for (const name of defaultNames) {
-          const figure = await getQuery(
-            `SELECT id FROM step_figures WHERE LOWER(name) = LOWER(?)`,
-            [name],
-          );
-          if (figure) {
-            await runQuery(
-              `INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id) VALUES (?, ?)`,
-              [group.id, figure.id],
-              dbName,
-            );
-          }
-        }
-      }
+      await seedDefaultBaseStepFigures();
     },
   },
 ];
 
+migrations.push({
+  id: '013_add_session_choreography_repetitions',
+  up: async () => {
+    await runQuery(
+      'ALTER TABLE session_choreographies ADD COLUMN is_new INTEGER NOT NULL DEFAULT 1',
+      [],
+      dbName,
+    );
+    await runQuery(
+      'ALTER TABLE session_choreographies ADD COLUMN repeat_source_id INTEGER',
+      [],
+      dbName,
+    );
+    await runQuery(
+      'ALTER TABLE session_choreographies ADD COLUMN auto_repeat INTEGER NOT NULL DEFAULT 0',
+      [],
+      dbName,
+    );
+    await runQuery(
+      `UPDATE session_choreographies AS current SET is_new = 0
+       WHERE EXISTS (
+         SELECT 1 FROM session_choreographies earlier
+         JOIN sessions earlier_session ON earlier_session.id = earlier.session_id
+         JOIN sessions current_session ON current_session.id = current.session_id
+         WHERE earlier.choreography_id = current.choreography_id
+           AND earlier_session.dance_course_id = current_session.dance_course_id
+           AND (earlier_session.session_date < current_session.session_date
+             OR (earlier_session.session_date = current_session.session_date
+               AND earlier_session.id < current_session.id))
+       )`,
+      [],
+      dbName,
+    );
+    await runQuery(
+      'CREATE INDEX session_choreographies_repeat_source ON session_choreographies (repeat_source_id)',
+      [],
+      dbName,
+    );
+  },
+});
+
+async function applyMigration(migration) {
+  const alreadyApplied = await hasMigration(migration.id);
+  if (alreadyApplied) {
+    return;
+  }
+
+  await runQuery('BEGIN IMMEDIATE TRANSACTION', [], dbName);
+  try {
+    await migration.up();
+    await runQuery(`INSERT INTO schema_migrations (id) VALUES (?)`, [migration.id], dbName);
+    await runQuery('COMMIT', [], dbName);
+    console.log(`Applied migration: ${migration.id}`);
+  } catch (error) {
+    await runQuery('ROLLBACK', [], dbName).catch(() => {
+      // Best effort rollback if transaction state already changed by SQLite.
+    });
+    throw error;
+  }
+}
+
 export async function runDanceGroupsMigrations() {
   await ensureMigrationTable();
-
-  for (const migration of migrations) {
-    const alreadyApplied = await hasMigration(migration.id);
-    if (alreadyApplied) {
-      continue;
-    }
-
-    await runQuery('BEGIN IMMEDIATE TRANSACTION', [], dbName);
-    try {
-      await migration.up();
-      await runQuery(`INSERT INTO schema_migrations (id) VALUES (?)`, [migration.id], dbName);
-      await runQuery('COMMIT', [], dbName);
-      console.log(`Applied migration: ${migration.id}`);
-    } catch (error) {
-      await runQuery('ROLLBACK', [], dbName).catch(() => {
-        // Best effort rollback if transaction state already changed by SQLite.
-      });
-      throw error;
-    }
-  }
+  await migrations.reduce(
+    (previous, migration) => previous.then(() => applyMigration(migration)),
+    Promise.resolve(),
+  );
 }

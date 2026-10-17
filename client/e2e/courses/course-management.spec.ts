@@ -10,6 +10,69 @@ import {
 } from "../helpers/api";
 
 test.describe("Course Management", () => {
+  for (const width of [1280, 390]) {
+    test(`automatic numbered repetitions at width ${width}`, async ({
+      page,
+      request,
+    }, testInfo) => {
+      await page.setViewportSize({ width, height: 1100 });
+      const groupId = await createDanceGroupViaApi(request, `Repetitions ${width} ${Date.now()}`);
+      const courseId = await createDanceCourseViaApi(request, groupId, "WS2099", "2099-01-01");
+      const danceName = `Repetition Dance ${Date.now()}`;
+      await createChoreographyViaApi(request, danceName);
+      const sessionIds: number[] = [];
+      for (const date of ["2099-01-01", "2099-01-08", "2099-01-15", "2099-01-22"]) {
+        const response = await request.post(`${API_BASE}/sessions`, {
+          data: { dance_course_id: courseId, session_date: date },
+        });
+        expect(response.ok()).toBeTruthy();
+        sessionIds.push((await response.json()).id);
+      }
+      await page.goto(`/admin/groups/${groupId}/courses/${courseId}`);
+      const closeMenu = page.getByRole("button", { name: "Close menu" });
+      if (await closeMenu.isVisible()) await closeMenu.click();
+      const items = page.locator(".session-item");
+      await expect(items).toHaveCount(4);
+      await items.nth(0).getByRole("button", { name: "Manage", exact: true }).click();
+      await page.getByPlaceholder("Search choreography by name...").fill(`${danceName} (BEGINNER)`);
+      await page.getByRole("button", { name: "+ Add to Session", exact: true }).click();
+      await expect(items.nth(0).getByLabel("Neu erlernt", { exact: true })).toHaveText("Neu");
+      for (const index of [1, 2]) {
+        await items.nth(index).getByRole("button", { name: "Manage", exact: true }).click();
+        await expect(
+          items.nth(index).getByLabel(`${index}. Wiederholung`, { exact: true }),
+        ).toHaveText(`${index}. Wdh.`);
+      }
+      await items.nth(0).getByRole("button", { name: "Swap", exact: true }).click();
+      await items.nth(0).getByRole("combobox").selectOption(String(sessionIds[1]));
+      page.once("dialog", (dialog) => dialog.accept());
+      await items.nth(0).getByRole("button", { name: "Confirm Swap", exact: true }).click();
+      await expect(items.nth(0).getByRole("combobox")).toHaveCount(0);
+      await items.nth(3).getByRole("button", { name: "Manage", exact: true }).click();
+      await expect(items.nth(3).getByLabel("2. Wiederholung", { exact: true })).toHaveText(
+        "2. Wdh.",
+      );
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBeTruthy();
+      await page.screenshot({
+        path: testInfo.outputPath(`repetitions-${width}.png`),
+        fullPage: true,
+      });
+      await items.nth(1).getByRole("button", { name: "Manage", exact: true }).click();
+      await expect(items.nth(1).getByLabel("Neu erlernt", { exact: true })).toBeVisible();
+      page.once("dialog", (dialog) => dialog.accept());
+      await items.nth(1).getByRole("button", { name: "Remove", exact: true }).click();
+      await expect(items.nth(1).locator(".choreography-item")).toHaveCount(0);
+      for (const index of [2, 3]) {
+        await items.nth(index).getByRole("button", { name: "Manage", exact: true }).click();
+        await expect(
+          items.nth(index).getByText("No choreographies in this session yet"),
+        ).toBeVisible();
+      }
+    });
+  }
+
   for (const input of ["mouse", "keyboard", "touch"] as const) {
     test.describe(`session contents reordering with ${input}`, () => {
       test.use({

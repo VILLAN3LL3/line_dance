@@ -2,6 +2,8 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import app from '../setup/testApp.js';
+import { allQuery, runQuery } from '../../scripts/db.js';
+import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.js';
 
 beforeAll(async () => {
   await setupTestDb();
@@ -14,6 +16,76 @@ beforeEach(async () => {
 // ---------------------------------------------------------------------------
 // Dance Groups CRUD
 // ---------------------------------------------------------------------------
+
+describe('dance group migration regressions', () => {
+  it('backfills each group maximum without overwriting existing values', async () => {
+    await runQuery(
+      `INSERT INTO dance_groups (name, max_group_level_value)
+       VALUES ('First', NULL), ('Second', NULL), ('Existing', 123), ('Unknown', NULL)`,
+      [],
+      'danceGroups',
+    );
+    const groups = await allQuery('SELECT id FROM dance_groups ORDER BY id', [], 'danceGroups');
+    await runQuery(
+      'CREATE TABLE group_levels (dance_group_id INTEGER, level TEXT)',
+      [],
+      'danceGroups',
+    );
+    try {
+      await runQuery(
+        `INSERT INTO group_levels (dance_group_id, level)
+         VALUES (?, 'BEGINNER'), (?, ' improver '), (?, 'BEGINNER'), (?, 'ADVANCED'), (?, 'not a level')`,
+        [groups[0].id, groups[0].id, groups[1].id, groups[2].id, groups[3].id],
+        'danceGroups',
+      );
+      await runQuery(
+        "DELETE FROM schema_migrations WHERE id = '006_add_group_max_level_value_and_backfill'",
+        [],
+        'danceGroups',
+      );
+      await runDanceGroupsMigrations();
+      const rows = await allQuery(
+        'SELECT max_group_level_value FROM dance_groups ORDER BY id',
+        [],
+        'danceGroups',
+      );
+      expect(rows.map((row) => row.max_group_level_value)).toEqual([70, 30, 123, null]);
+    } finally {
+      await runQuery('DROP TABLE group_levels', [], 'danceGroups');
+    }
+  });
+
+  it('seeds all existing groups case-insensitively without duplicates on re-run', async () => {
+    await runQuery(
+      "INSERT INTO dance_groups (name) VALUES ('First'), ('Second')",
+      [],
+      'danceGroups',
+    );
+    await runQuery("INSERT INTO step_figures (name) VALUES ('kIcK'), ('RUN'), ('Mambo')");
+    await runQuery(
+      "DELETE FROM schema_migrations WHERE id IN ('009_add_group_base_step_figures', '012_seed_missing_group_base_step_figures')",
+      [],
+      'danceGroups',
+    );
+    await runDanceGroupsMigrations();
+    await runDanceGroupsMigrations();
+    const rows = await allQuery(
+      `SELECT groups.name AS group_name, figures.name AS figure_name
+       FROM group_base_step_figures assignments
+       JOIN dance_groups groups ON groups.id = assignments.dance_group_id
+       JOIN step_figures figures ON figures.id = assignments.step_figure_id
+       ORDER BY groups.name, figures.name`,
+      [],
+      'danceGroups',
+    );
+    expect(rows).toEqual([
+      { group_name: 'First', figure_name: 'RUN' },
+      { group_name: 'First', figure_name: 'kIcK' },
+      { group_name: 'Second', figure_name: 'RUN' },
+      { group_name: 'Second', figure_name: 'kIcK' },
+    ]);
+  });
+});
 
 describe('GET /api/dance-groups', () => {
   it('returns empty array when no groups exist', async () => {
