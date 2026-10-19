@@ -2,11 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupChoreographyTestDb, clearChoreographyTables } from '../setup/testChoreographyDb.js';
 import app from '../setup/testChoreographyApp.js';
-import {
-  allQuery,
-  getDatabase,
-  DATABASE_RESTARTING_ERROR_CODE,
-} from '../../scripts/db.js';
+import { allQuery, getDatabase, DATABASE_RESTARTING_ERROR_CODE } from '../../scripts/db.js';
 
 beforeAll(async () => {
   await setupChoreographyTestDb();

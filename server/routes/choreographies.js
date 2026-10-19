@@ -1,9 +1,4 @@
-import {
-  DATABASE_RESTARTING_ERROR_CODE,
-  runQuery,
-  getQuery,
-  allQuery,
-} from '../scripts/db.js';
+import { DATABASE_RESTARTING_ERROR_CODE, runQuery, getQuery, allQuery } from '../scripts/db.js';
 
 let savedFiltersTableReady = false;
 
@@ -614,14 +609,11 @@ export async function updateChoreography(req, res) {
     res.json({ id: choreography_id, message: 'Choreography updated successfully' });
   } catch (error) {
     if (error?.code === DATABASE_RESTARTING_ERROR_CODE) {
-      return res
-        .set('Retry-After', '3')
-        .status(503)
-        .json({
-          error:
-            'The server is reconnecting to its database. Your changes may not have been saved. Wait a few seconds and try again.',
-          code: DATABASE_RESTARTING_ERROR_CODE,
-        });
+      return res.set('Retry-After', '3').status(503).json({
+        error:
+          'The server is reconnecting to its database. Your changes may not have been saved. Wait a few seconds and try again.',
+        code: DATABASE_RESTARTING_ERROR_CODE,
+      });
     }
     captureError(error);
     res.status(500).json({ error: 'Failed to update choreography' });
