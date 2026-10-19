@@ -12,7 +12,9 @@ import {
   getTags,
   updateChoreography,
 } from "../../api";
+import { GlobalApiErrorNotice } from "../../components/shared/GlobalApiErrorNotice";
 import ChoreographyDetail from "../../components/choreographies/ChoreographyDetail";
+import { reportGlobalApiError } from "../../utils/apiErrors";
 
 const mockNavigate = vi.fn();
 
@@ -68,6 +70,7 @@ describe("ChoreographyDetail", () => {
   function renderDetail(path = "/choreographies/1") {
     render(
       <MemoryRouter initialEntries={[path]}>
+        <GlobalApiErrorNotice />
         <Routes>
           <Route path="/choreographies/:id" element={<ChoreographyDetail />} />
         </Routes>
@@ -138,6 +141,29 @@ describe("ChoreographyDetail", () => {
         expect.objectContaining({ name: "Neon Waltz" }),
       );
     });
+  });
+
+  it("shows a retry hint when the server is restarting its database", async () => {
+    const error = {
+      isAxiosError: true,
+      response: {
+        status: 503,
+        data: { code: "DATABASE_RESTARTING" },
+      },
+    };
+    vi.mocked(updateChoreography).mockImplementation(async () => {
+      reportGlobalApiError(error);
+      throw error;
+    });
+
+    renderDetail("/choreographies/1?edit=1");
+    const saveButton = await screen.findByRole("button", { name: "Save Choreography" });
+    await screen.findByRole("option", { name: "Intermediate" });
+    fireEvent.submit(saveButton.closest("form")!);
+
+    expect(
+      await screen.findByText(/Your changes may not have been saved.*try again/i),
+    ).toBeInTheDocument();
   });
 
   it("dismisses duplicate warning when Cancel is clicked without saving", async () => {

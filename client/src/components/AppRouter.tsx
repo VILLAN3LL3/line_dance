@@ -14,6 +14,7 @@ import DanceGroupDetail from "./dance-groups/DanceGroupDetail";
 import { DanceGroupsAdmin } from "./dance-groups/DanceGroupsAdmin";
 import { ExternalLink } from "./shared/ui";
 import TrainersAdmin from "./trainers/TrainersAdmin";
+import { GlobalApiErrorNotice } from "./shared/GlobalApiErrorNotice";
 
 export const AppRouter: React.FC = () => {
   const location = useLocation();
@@ -143,6 +144,7 @@ export const AppRouter: React.FC = () => {
       </aside>
 
       <main className="router-content">
+        <GlobalApiErrorNotice />
         <Routes>
           <Route path="/" element={<ChoreographySearch />} />
           <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />

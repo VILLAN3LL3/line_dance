@@ -1,4 +1,9 @@
-import { runQuery, getQuery, allQuery } from '../scripts/db.js';
+import {
+  DATABASE_RESTARTING_ERROR_CODE,
+  runQuery,
+  getQuery,
+  allQuery,
+} from '../scripts/db.js';
 import { readFileSync } from 'node:fs';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
@@ -45,6 +50,10 @@ function courseIdToColors(courseId) {
 }
 
 function captureError(error) {
+  if (error?.code === DATABASE_RESTARTING_ERROR_CODE) {
+    throw error;
+  }
+
   if (process.env.NODE_ENV === 'test') {
     return;
   }

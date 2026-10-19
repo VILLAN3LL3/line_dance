@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { deleteChoreography, searchChoreographies, updateChoreography } from "../../api";
+import { getChoreographyUpdateErrorMessage } from "../../utils/apiErrors";
 import { Choreography, ChoreographyFormData, SearchFilters } from "../../types";
 import { confirmAction, ErrorMessage } from "../shared/ui";
 import { AppDetailView } from "./AppDetailView";
@@ -98,7 +99,7 @@ export const App: React.FC = () => {
 
     lastInitialLoadSignatureRef.current = loadSignature;
     setCurrentFilters(initialFilters);
-    loadChoreographies(initialFilters, true);
+    void loadChoreographies(initialFilters, true);
 
     // Clear location state / URL params after using them
     if (routeInitialFilters) {
@@ -128,7 +129,7 @@ export const App: React.FC = () => {
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/choreographies/${id}`, { state: { editMode: true } });
+    void navigate(`/choreographies/${id}`, { state: { editMode: true } });
   };
 
   const handleUpdate = async (formData: ChoreographyFormData) => {
@@ -138,7 +139,7 @@ export const App: React.FC = () => {
       await updateChoreography(selectedChoreography.id, formData);
       await returnToList();
     } catch (err) {
-      setError("Failed to update choreography");
+      setError(getChoreographyUpdateErrorMessage(err));
       console.error(err);
     } finally {
       setIsLoading(false);

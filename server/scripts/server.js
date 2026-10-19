@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import swaggerUi from 'swagger-ui-express';
 import { getDatabase, closeDatabase } from './db.js';
+import { apiErrorHandler } from '../utils/apiErrorHandler.js';
 import { runMigrations } from '../migrations/index.js';
 import { openApiSpec } from './openapi.js';
 import {
@@ -179,6 +180,8 @@ app.get('/api/health', (req, res) => {
 
 // URL reachability check (server-side proxy, avoids CORS)
 app.get('/api/url-check', checkUrl);
+
+app.use(apiErrorHandler);
 
 // Serve built client static files
 if (existsSync(clientDistPath)) {

@@ -35,8 +35,65 @@ const databases = {
   tags: resolveDatabasePath(process.env.TAGS_DB_PATH, 'personal_data.db'),
 };
 
+export const DATABASE_RESTARTING_ERROR_CODE = 'DATABASE_RESTARTING';
+
 let dbConnections = {};
 let dbReadyPromises = {};
+const openedDatabaseFiles = new Map();
+let restartScheduled = false;
+let restartExitScheduled = false;
+
+function getFileIdentity(filePath) {
+  if (filePath === ':memory:') return null;
+
+  try {
+    const { dev, ino } = fs.statSync(filePath);
+    return `${dev}:${ino}`;
+  } catch {
+    return null;
+  }
+}
+
+function rememberDatabaseFile(name, filePath) {
+  const identity = getFileIdentity(filePath);
+  if (!identity) return;
+
+  const files = openedDatabaseFiles.get(name) || new Map();
+  files.set(filePath, identity);
+  openedDatabaseFiles.set(name, files);
+}
+
+function restartIfDatabaseWasReplaced(error, name) {
+  const isReadonlyError =
+    error?.code === 'SQLITE_READONLY' || error?.code?.startsWith('SQLITE_READONLY_');
+  if (!isReadonlyError) return;
+
+  const openFiles = openedDatabaseFiles.get(name);
+  if (!openFiles) return;
+
+  const replacedPaths = [...openFiles].filter(([filePath, originalIdentity]) => {
+    const currentIdentity = getFileIdentity(filePath);
+    return currentIdentity && currentIdentity !== originalIdentity;
+  });
+  if (replacedPaths.length === 0) return;
+
+  error.code = DATABASE_RESTARTING_ERROR_CODE;
+  if (restartScheduled) return;
+
+  restartScheduled = true;
+  if (!process.env.PM2_HOME) return;
+
+  process.stderr.write(
+    `[db] SQLite file replaced while open (${replacedPaths.map(([filePath]) => path.basename(filePath)).join(', ')}); restarting for PM2 recovery\n`,
+  );
+}
+
+export function restartAfterDatabaseResponse() {
+  if (!process.env.PM2_HOME || !restartScheduled || restartExitScheduled) return;
+
+  restartExitScheduled = true;
+  setImmediate(() => process.exit(1));
+}
 
 export function getDatabase(name = 'choreography') {
   if (!dbConnections[name]) {
@@ -52,6 +109,8 @@ export function getDatabase(name = 'choreography') {
     dbConnections[name] = new sqlite3.Database(dbPath, (err) => {
       if (err) {
         // Skip logging in production
+      } else {
+        rememberDatabaseFile(name, dbPath);
       }
     });
     dbConnections[name].configure('busyTimeout', 5000);
@@ -73,6 +132,7 @@ export function getDatabase(name = 'choreography') {
             reject(err);
             return;
           }
+          rememberDatabaseFile(name, tagsDbPath);
           resolve();
         });
       });
@@ -91,8 +151,10 @@ export function runQuery(query, params = [], dbName = 'choreography') {
     (db) =>
       new Promise((resolve, reject) => {
         db.run(query, params, function (err) {
-          if (err) reject(err);
-          else resolve({ id: this.lastID, changes: this.changes });
+          if (err) {
+            restartIfDatabaseWasReplaced(err, dbName);
+            reject(err);
+          } else resolve({ id: this.lastID, changes: this.changes });
         });
       }),
   );
@@ -103,8 +165,10 @@ export function getQuery(query, params = [], dbName = 'choreography') {
     (db) =>
       new Promise((resolve, reject) => {
         db.get(query, params, (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
+          if (err) {
+            restartIfDatabaseWasReplaced(err, dbName);
+            reject(err);
+          } else resolve(row);
         });
       }),
   );
@@ -115,8 +179,10 @@ export function allQuery(query, params = [], dbName = 'choreography') {
     (db) =>
       new Promise((resolve, reject) => {
         db.all(query, params, (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows || []);
+          if (err) {
+            restartIfDatabaseWasReplaced(err, dbName);
+            reject(err);
+          } else resolve(rows || []);
         });
       }),
   );
@@ -125,6 +191,7 @@ export function allQuery(query, params = [], dbName = 'choreography') {
 export function setDatabaseConnection(name, db) {
   dbConnections[name] = db;
   dbReadyPromises[name] = Promise.resolve();
+  openedDatabaseFiles.delete(name);
 }
 
 export function closeDatabase() {
@@ -150,6 +217,9 @@ export function closeDatabase() {
             if (closedCount === dbNames.length) {
               dbConnections = {};
               dbReadyPromises = {};
+              openedDatabaseFiles.clear();
+              restartScheduled = false;
+              restartExitScheduled = false;
               resolve();
             }
           }

@@ -1,8 +1,17 @@
-import { runQuery, getQuery, allQuery } from '../scripts/db.js';
+import {
+  DATABASE_RESTARTING_ERROR_CODE,
+  runQuery,
+  getQuery,
+  allQuery,
+} from '../scripts/db.js';
 
 let savedFiltersTableReady = false;
 
 function captureError(error) {
+  if (error?.code === DATABASE_RESTARTING_ERROR_CODE) {
+    throw error;
+  }
+
   if (process.env.NODE_ENV === 'test') {
     return;
   }
@@ -604,6 +613,16 @@ export async function updateChoreography(req, res) {
     await cleanupOrphanedRecords();
     res.json({ id: choreography_id, message: 'Choreography updated successfully' });
   } catch (error) {
+    if (error?.code === DATABASE_RESTARTING_ERROR_CODE) {
+      return res
+        .set('Retry-After', '3')
+        .status(503)
+        .json({
+          error:
+            'The server is reconnecting to its database. Your changes may not have been saved. Wait a few seconds and try again.',
+          code: DATABASE_RESTARTING_ERROR_CODE,
+        });
+    }
     captureError(error);
     res.status(500).json({ error: 'Failed to update choreography' });
   }
@@ -1207,17 +1226,21 @@ async function insertRelationship(
   creationTable,
 ) {
   if (!items || !Array.isArray(items)) return;
-  for (const item of items) {
-    let itemId = await getItemId(item);
-    if (!itemId) {
-      const result = await runQuery(`INSERT INTO ${creationTable} (name) VALUES (?)`, [item]);
-      itemId = result.id;
-    }
-    await runQuery(
-      `INSERT INTO ${relationshipTable} (choreography_id, ${relationshipIdCol}) VALUES (?, ?)`,
-      [choreography_id, itemId],
-    );
-  }
+  await items.reduce(
+    (pendingInserts, item) =>
+      pendingInserts.then(async () => {
+        let itemId = await getItemId(item);
+        if (!itemId) {
+          const result = await runQuery(`INSERT INTO ${creationTable} (name) VALUES (?)`, [item]);
+          itemId = result.id;
+        }
+        await runQuery(
+          `INSERT INTO ${relationshipTable} (choreography_id, ${relationshipIdCol}) VALUES (?, ?)`,
+          [choreography_id, itemId],
+        );
+      }),
+    Promise.resolve(),
+  );
 }
 
 async function deleteAndReinsertRelationships(
@@ -1382,28 +1405,32 @@ async function validateComponentIds(parentStepFigureId, componentIds) {
     throw new Error('One or more component step figures do not exist');
   }
 
-  for (const componentId of componentIds) {
-    const cycleRow = await getQuery(
-      `WITH RECURSIVE descendants(id) AS (
-         SELECT child_step_figure_id
-         FROM step_figure_components
-         WHERE parent_step_figure_id = ?
-         UNION
-         SELECT sfc.child_step_figure_id
-         FROM step_figure_components sfc
-         INNER JOIN descendants ON descendants.id = sfc.parent_step_figure_id
-       )
-       SELECT 1 AS has_cycle
-       FROM descendants
-       WHERE id = ?
-       LIMIT 1`,
-      [componentId, parentStepFigureId],
-    );
+  await componentIds.reduce(
+    (pendingValidation, componentId) =>
+      pendingValidation.then(async () => {
+        const cycleRow = await getQuery(
+          `WITH RECURSIVE descendants(id) AS (
+             SELECT child_step_figure_id
+             FROM step_figure_components
+             WHERE parent_step_figure_id = ?
+             UNION
+             SELECT sfc.child_step_figure_id
+             FROM step_figure_components sfc
+             INNER JOIN descendants ON descendants.id = sfc.parent_step_figure_id
+           )
+           SELECT 1 AS has_cycle
+           FROM descendants
+           WHERE id = ?
+           LIMIT 1`,
+          [componentId, parentStepFigureId],
+        );
 
-    if (cycleRow) {
-      throw new Error('Step figure hierarchy cannot contain cycles');
-    }
-  }
+        if (cycleRow) {
+          throw new Error('Step figure hierarchy cannot contain cycles');
+        }
+      }),
+    Promise.resolve(),
+  );
 }
 
 async function syncStepFigureComponents(parentStepFigureId, componentIds) {
@@ -1411,16 +1438,20 @@ async function syncStepFigureComponents(parentStepFigureId, componentIds) {
     parentStepFigureId,
   ]);
 
-  for (const [index, componentId] of componentIds.entries()) {
-    await runQuery(
-      `INSERT INTO step_figure_components (
-         parent_step_figure_id,
-         child_step_figure_id,
-         sort_order
-       ) VALUES (?, ?, ?)`,
-      [parentStepFigureId, componentId, index],
-    );
-  }
+  await componentIds.reduce(
+    (pendingInserts, componentId, index) =>
+      pendingInserts.then(() =>
+        runQuery(
+          `INSERT INTO step_figure_components (
+             parent_step_figure_id,
+             child_step_figure_id,
+             sort_order
+           ) VALUES (?, ?, ?)`,
+          [parentStepFigureId, componentId, index],
+        ),
+      ),
+    Promise.resolve(),
+  );
 }
 
 async function runStepFigureMutation(callback) {

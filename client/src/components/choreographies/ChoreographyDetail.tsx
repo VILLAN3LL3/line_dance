@@ -9,6 +9,7 @@ import {
   fetchChoreography,
   updateChoreography,
 } from "../../api";
+import { getChoreographyUpdateErrorMessage } from "../../utils/apiErrors";
 import { Choreography, ChoreographyFormData, DuplicateChoreography } from "../../types";
 import { BackButton, confirmAction, EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
 import { ChoreographyCard } from "./ChoreographyCard";
@@ -77,7 +78,7 @@ const ChoreographyDetail: React.FC = () => {
     setError(null);
     try {
       await deleteChoreography(choreographyId);
-      navigate("/");
+      await navigate("/");
     } catch (err) {
       setError("Failed to delete choreography");
       console.error(err);
@@ -94,7 +95,7 @@ const ChoreographyDetail: React.FC = () => {
       await loadChoreography();
       setView("view");
     } catch (err) {
-      setError("Failed to update choreography");
+      setError(getChoreographyUpdateErrorMessage(err));
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -120,7 +121,7 @@ const ChoreographyDetail: React.FC = () => {
       }
       await doUpdate(data);
     } catch (err) {
-      setError("Failed to update choreography");
+      setError(getChoreographyUpdateErrorMessage(err));
       console.error(err);
       setIsLoading(false);
     }

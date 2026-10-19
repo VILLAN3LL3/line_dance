@@ -2,7 +2,11 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupChoreographyTestDb, clearChoreographyTables } from '../setup/testChoreographyDb.js';
 import app from '../setup/testChoreographyApp.js';
-import { allQuery } from '../../scripts/db.js';
+import {
+  allQuery,
+  getDatabase,
+  DATABASE_RESTARTING_ERROR_CODE,
+} from '../../scripts/db.js';
 
 beforeAll(async () => {
   await setupChoreographyTestDb();
@@ -274,6 +278,33 @@ describe('PUT /api/choreographies/:id', () => {
       .send({ name: 'Ghost', level: 'Beginner' });
 
     expect(res.status).toBe(404);
+  });
+
+  it('returns 503 with a retry hint while the database is restarting', async () => {
+    const created = await createChoreo({ name: 'Retry Me', level: 'Beginner' });
+    const database = getDatabase();
+    const originalRun = database.run;
+    database.run = (...args) => {
+      args.at(-1)(
+        Object.assign(new Error('Database is restarting'), {
+          code: DATABASE_RESTARTING_ERROR_CODE,
+        }),
+      );
+      return database;
+    };
+
+    try {
+      const res = await request(app)
+        .put(`/api/choreographies/${created.id}`)
+        .send({ name: 'Updated Dance', level: 'Beginner' });
+
+      expect(res.status).toBe(503);
+      expect(res.headers['retry-after']).toBe('3');
+      expect(res.body.code).toBe(DATABASE_RESTARTING_ERROR_CODE);
+      expect(res.body.error).toMatch(/may not have been saved/i);
+    } finally {
+      database.run = originalRun;
+    }
   });
 });
 

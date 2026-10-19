@@ -1,4 +1,5 @@
 import axios from "axios";
+import { reportGlobalApiError } from "./utils/apiErrors";
 
 import {
   Choreography,
@@ -26,6 +27,14 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 const api = axios.create({
   baseURL: API_URL,
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error: unknown) => {
+    reportGlobalApiError(error);
+    return Promise.reject(error);
+  },
+);
 
 const inFlightChoreographySearches = new Map<string, Promise<PaginatedResponse<Choreography>>>();
 

@@ -4,6 +4,7 @@
  * Does NOT start a real server – consumed by supertest directly.
  */
 import express from 'express';
+import { apiErrorHandler } from '../../utils/apiErrorHandler.js';
 import {
   createChoreography,
   getChoreographies,
@@ -67,5 +68,7 @@ app.get('/api/saved-filters', getSavedFilterConfigurations);
 app.post('/api/saved-filters', saveFilterConfiguration);
 app.patch('/api/saved-filters/:id', updateSavedFilterConfiguration);
 app.delete('/api/saved-filters/:id', deleteSavedFilterConfiguration);
+
+app.use(apiErrorHandler);
 
 export default app;

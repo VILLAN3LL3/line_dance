@@ -3,7 +3,8 @@ export const openApiSpec = {
   info: {
     title: 'Line Dance API',
     version: '1.0.0',
-    description: 'API for choreography search and dance group administration',
+    description:
+      'API for choreography search and dance group administration. Any database-backed endpoint may return 503 DATABASE_RESTARTING with a Retry-After header if its database file is replaced while open.',
   },
   servers: [
     {
@@ -317,6 +318,27 @@ export const openApiSpec = {
             },
           },
           404: { $ref: '#/components/responses/NotFound' },
+          503: {
+            description: 'The server is restarting after its database file was replaced',
+            headers: {
+              'Retry-After': {
+                description: 'Seconds to wait before retrying the request',
+                schema: { type: 'integer', example: 3 },
+              },
+            },
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    error: { type: 'string' },
+                    code: { type: 'string', enum: ['DATABASE_RESTARTING'] },
+                  },
+                  required: ['error', 'code'],
+                },
+              },
+            },
+          },
         },
       },
       put: {

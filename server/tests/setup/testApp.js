@@ -4,6 +4,7 @@
  * Does NOT start a real server – consumed by supertest directly.
  */
 import express from 'express';
+import { apiErrorHandler } from '../../utils/apiErrorHandler.js';
 import {
   getDanceGroups,
   createDanceGroup,
@@ -112,5 +113,7 @@ app.get('/api/openapi.json', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+
+app.use(apiErrorHandler);
 
 export default app;
