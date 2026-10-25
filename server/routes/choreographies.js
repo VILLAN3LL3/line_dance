@@ -608,13 +608,6 @@ export async function updateChoreography(req, res) {
     await cleanupOrphanedRecords();
     res.json({ id: choreography_id, message: 'Choreography updated successfully' });
   } catch (error) {
-    if (error?.code === DATABASE_RESTARTING_ERROR_CODE) {
-      return res.set('Retry-After', '3').status(503).json({
-        error:
-          'The server is reconnecting to its database. Your changes may not have been saved. Wait a few seconds and try again.',
-        code: DATABASE_RESTARTING_ERROR_CODE,
-      });
-    }
     captureError(error);
     res.status(500).json({ error: 'Failed to update choreography' });
   }
