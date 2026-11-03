@@ -123,6 +123,52 @@ describe("ChoreographyCreatePage", () => {
     expect(screen.queryByText(/Possible duplicate found/)).not.toBeInTheDocument();
   });
 
+  it("provides six accessible tabs with arrow-key navigation", async () => {
+    render(
+      <MemoryRouter initialEntries={["/choreographies/new"]}>
+        <Routes>
+          <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("option", { name: "Beginner" });
+    const basicTab = screen.getByRole("tab", { name: "Basic Information" });
+    expect(screen.getAllByRole("tab")).toHaveLength(6);
+    expect(basicTab).toHaveAttribute("aria-selected", "true");
+
+    fireEvent.keyDown(basicTab, { key: "ArrowRight" });
+
+    const choreographersTab = screen.getByRole("tab", { name: "Choreographers" });
+    expect(choreographersTab).toHaveAttribute("aria-selected", "true");
+    expect(choreographersTab).toHaveFocus();
+  });
+
+  it("marks invalid tabs without changing the selected tab on submit", async () => {
+    render(
+      <MemoryRouter initialEntries={["/choreographies/new"]}>
+        <Routes>
+          <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("option", { name: "Beginner" });
+    fireEvent.click(screen.getByRole("tab", { name: "Additional Information" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Info Field" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Hash Tags" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+
+    expect(screen.getByRole("tab", { name: "Hash Tags" })).toHaveAttribute("aria-selected", "true");
+    expect(
+      screen.getByRole("tab", { name: "Basic Information, validation errors" }),
+    ).toHaveTextContent("⚠️");
+    expect(
+      screen.getByRole("tab", { name: "Additional Information, validation errors" }),
+    ).toHaveTextContent("⚠️");
+    expect(createChoreography).not.toHaveBeenCalled();
+  });
+
   it("submits multiple-choice choreography information fields", async () => {
     vi.mocked(checkChoreographyDuplicates).mockResolvedValue([]);
     render(
@@ -138,6 +184,7 @@ describe("ChoreographyCreatePage", () => {
       target: { value: "River Dance" },
     });
     fireEvent.change(screen.getByLabelText("Level *"), { target: { value: "Beginner" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Additional Information" }));
     fireEvent.click(screen.getByRole("button", { name: "Add Info Field" }));
     fireEvent.change(screen.getByLabelText("Category 1"), { target: { value: "Mood" } });
     fireEvent.change(screen.getByLabelText("Description 1"), {
@@ -152,6 +199,9 @@ describe("ChoreographyCreatePage", () => {
     const removeButton = screen.getByRole("button", { name: "Remove information 1" });
     expect(removeButton).toHaveTextContent("🗑️");
     expect(categoryInput.parentElement).toContainElement(removeButton);
+    fireEvent.click(screen.getByRole("tab", { name: "Basic Information" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Additional Information" }));
+    expect(screen.getByLabelText("Description 1")).toHaveValue("Keep the movement light");
     fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
 
     await waitFor(() => {

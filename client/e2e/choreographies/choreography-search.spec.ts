@@ -90,12 +90,15 @@ test.describe("Choreography Search", () => {
     await page.getByPlaceholder("e.g., 64").fill("32");
     await page.getByPlaceholder("e.g., 4").fill("4");
 
+    await page.getByRole("tab", { name: "Choreographers" }).click();
     await page.getByPlaceholder("Choreographer name").fill("E2E Author");
     await page.getByRole("button", { name: /Add Choreographer/i }).click();
 
+    await page.getByRole("tab", { name: "Step Figures" }).click();
     await page.getByPlaceholder(/Step figure name/i).fill("Vine");
     await page.getByRole("button", { name: /Add Figure/i }).click();
 
+    await page.getByRole("tab", { name: "Hash Tags" }).click();
     await page.getByPlaceholder(/Tag \(e\.g\., Country, Western, Urban\)/i).fill("E2E");
     await page.getByRole("button", { name: /Add Tag/i }).click();
 

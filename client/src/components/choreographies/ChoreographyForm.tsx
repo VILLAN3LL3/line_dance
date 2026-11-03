@@ -15,6 +15,28 @@ import { ChoreographyFormBasicSection } from "./ChoreographyFormBasicSection";
 import { ChoreographyFormLinksSection } from "./ChoreographyFormLinksSection";
 import { ChoreographyFormListSection } from "./ChoreographyFormListSection";
 
+const FORM_TABS = [
+  { id: "basic-information", label: "Basic Information" },
+  { id: "choreographers", label: "Choreographers" },
+  { id: "links", label: "Links" },
+  { id: "step-figures", label: "Step Figures" },
+  { id: "additional-information", label: "Additional Information" },
+  { id: "hash-tags", label: "Hash Tags" },
+] as const;
+
+type FormTabId = (typeof FORM_TABS)[number]["id"];
+
+function hasInvalidUrl(value?: string): boolean {
+  if (!value?.trim()) return false;
+
+  try {
+    new URL(value.trim());
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 interface ChoreographyFormProps {
   initialData?: ChoreographyFormData;
   onSubmit: (data: ChoreographyFormData) => Promise<void>;
@@ -46,6 +68,8 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           choreography_information: [],
         },
   );
+  const [activeTab, setActiveTab] = useState<FormTabId>("basic-information");
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   const [currentAuthor, setCurrentAuthor] = useState("");
   const [currentTag, setCurrentTag] = useState("");
@@ -55,6 +79,20 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const [tagsFromDb, setTagsFromDb] = useState<string[]>([]);
   const [figuresFromDb, setFiguresFromDb] = useState<string[]>([]);
   const [informationCategories, setInformationCategories] = useState<string[]>([]);
+
+  const tabValidationErrors: Record<FormTabId, boolean> = {
+    "basic-information": !formData.name.trim() || !formData.level.trim(),
+    choreographers: false,
+    links: [formData.step_sheet_link, formData.demo_video_url, formData.tutorial_video_url].some(
+      hasInvalidUrl,
+    ),
+    "step-figures": false,
+    "additional-information": (formData.choreography_information || []).some(
+      (item) => !item.category.trim() || !item.description.trim(),
+    ),
+    "hash-tags": false,
+  };
+
   useEffect(() => {
     let isActive = true;
 
@@ -292,6 +330,9 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setHasAttemptedSubmit(true);
+    if (Object.values(tabValidationErrors).some(Boolean)) return;
+
     try {
       await onSubmit({
         ...formData,
@@ -304,138 +345,221 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     }
   };
 
+  const handleTabKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+  ) => {
+    let nextIndex: number;
+    if (event.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % FORM_TABS.length;
+    } else if (event.key === "ArrowLeft") {
+      nextIndex = (currentIndex - 1 + FORM_TABS.length) % FORM_TABS.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = FORM_TABS.length - 1;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    const nextTab = FORM_TABS[nextIndex];
+    setActiveTab(nextTab.id);
+    event.currentTarget.parentElement
+      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+      .item(nextIndex)
+      .focus();
+  };
+
   return (
-    <form className="choreography-form" onSubmit={handleSubmit}>
-      <div className="form-section">
-        <h3>Basic Information</h3>
-
-        <ChoreographyFormBasicSection
-          name={formData.name}
-          level={formData.level}
-          count={formData.count}
-          wall_count={formData.wall_count}
-          creation_year={formData.creation_year}
-          song={formData.song}
-          artist={formData.artist}
-          levels={levels}
-          onChange={handleChange}
-        />
-
-        <ChoreographyFormListSection
-          title="Choreographers"
-          listId="authors-list"
-          inputValue={currentAuthor}
-          options={authorsFromDb}
-          selectedValues={formData.authors}
-          placeholder="Choreographer name"
-          addButtonLabel="Add Choreographer"
-          onInputChange={handleAuthorChange}
-          onInputBlur={handleAuthorBlur}
-          onAdd={() => addAuthor()}
-          onRemove={removeAuthor}
-        />
-
-        <ChoreographyFormLinksSection
-          step_sheet_link={formData.step_sheet_link}
-          demo_video_url={formData.demo_video_url}
-          tutorial_video_url={formData.tutorial_video_url}
-          onChange={handleChange}
-        />
-
-        <ChoreographyFormListSection
-          title="Step Figures"
-          listId="figures-list"
-          inputValue={currentFigure}
-          options={figuresFromDb}
-          selectedValues={formData.step_figures}
-          placeholder="Step figure name (e.g., Vine, Shuffle, Grapevine)"
-          addButtonLabel="Add Figure"
-          onInputChange={handleFigureChange}
-          onInputBlur={handleFigureBlur}
-          onAdd={() => addFigure()}
-          onRemove={removeFigure}
-        />
-
-        <div className="form-section choreography-information-form-section">
-          <h3>Choreography Information</h3>
-          {(formData.choreography_information || []).map((item, index) => (
-            <div className="choreography-information-entry" key={item.id}>
-              <div className="choreography-information-category-column">
-                <FormField
-                  label={`Category ${index + 1}`}
-                  htmlFor={`choreography-information-category-${index}`}
-                  className="form-group choreography-information-category"
-                >
-                  <div className="choreography-information-category-control">
-                    <input
-                      id={`choreography-information-category-${index}`}
-                      list="choreography-information-categories"
-                      value={item.category}
-                      onChange={(event) =>
-                        updateChoreographyInformation(index, "category", event.target.value)
-                      }
-                      placeholder="Choose or enter a category"
-                    />
-                    <ActionButton
-                      type="button"
-                      variant="secondary"
-                      className="btn-small choreography-information-remove"
-                      aria-label={`Remove information ${index + 1}`}
-                      title={`Remove information ${index + 1}`}
-                      onClick={() => removeChoreographyInformation(index)}
-                    >
-                      🗑️
-                    </ActionButton>
-                  </div>
-                </FormField>
-              </div>
-              <div className="choreography-information-description">
-                <div className="choreography-information-description-heading">
-                  <label htmlFor={`choreography-information-description-${index}`}>
-                    Description {index + 1}
-                  </label>
-                </div>
-                <textarea
-                  id={`choreography-information-description-${index}`}
-                  value={item.description}
-                  onChange={(event) =>
-                    updateChoreographyInformation(index, "description", event.target.value)
-                  }
-                  placeholder="Describe this choreography detail"
-                />
-              </div>
-            </div>
-          ))}
-          <datalist id="choreography-information-categories">
-            {informationCategories.map((category) => (
-              <option key={category} value={category} />
-            ))}
-          </datalist>
-          <ActionButton
-            type="button"
-            variant="secondary"
-            className="btn-small"
-            onClick={addChoreographyInformation}
-          >
-            Add Info Field
-          </ActionButton>
-        </div>
+    <form
+      className="choreography-form"
+      onSubmit={handleSubmit}
+      onInvalidCapture={() => setHasAttemptedSubmit(true)}
+    >
+      <div
+        className="choreography-form-tabs"
+        role="tablist"
+        aria-label="Choreography form sections"
+      >
+        {FORM_TABS.map((tab, index) =>
+          (() => {
+            const hasError = hasAttemptedSubmit && tabValidationErrors[tab.id];
+            return (
+              <button
+                key={tab.id}
+                id={`choreography-form-tab-${tab.id}`}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                aria-controls="choreography-form-panel"
+                aria-label={hasError ? `${tab.label}, validation errors` : undefined}
+                title={hasError ? `${tab.label} contains validation errors` : undefined}
+                tabIndex={activeTab === tab.id ? 0 : -1}
+                className={
+                  activeTab === tab.id ? "choreography-form-tab is-active" : "choreography-form-tab"
+                }
+                onClick={() => setActiveTab(tab.id)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
+              >
+                {tab.label}
+                {hasError && <span aria-hidden="true">⚠️</span>}
+              </button>
+            );
+          })(),
+        )}
       </div>
 
-      <div className="form-section">
-        <ChoreographyFormListSection
-          title="Tags"
-          listId="tags-list"
-          inputValue={currentTag}
-          options={tagsFromDb}
-          selectedValues={formData.tags}
-          placeholder="Tag (e.g., Country, Western, Urban)"
-          addButtonLabel="Add Tag"
-          onInputChange={handleTagChange}
-          onInputBlur={handleTagBlur}
-          onAdd={() => addTag()}
-          onRemove={removeTag}
-        />
+      <div
+        id="choreography-form-panel"
+        className="choreography-form-tab-panel"
+        role="tabpanel"
+        aria-labelledby={`choreography-form-tab-${activeTab}`}
+        tabIndex={0}
+      >
+        {activeTab === "basic-information" && (
+          <div className="form-section">
+            <h3>Basic Information</h3>
+            <ChoreographyFormBasicSection
+              name={formData.name}
+              level={formData.level}
+              count={formData.count}
+              wall_count={formData.wall_count}
+              creation_year={formData.creation_year}
+              song={formData.song}
+              artist={formData.artist}
+              levels={levels}
+              onChange={handleChange}
+            />
+          </div>
+        )}
+
+        {activeTab === "choreographers" && (
+          <ChoreographyFormListSection
+            title="Choreographers"
+            listId="authors-list"
+            inputValue={currentAuthor}
+            options={authorsFromDb}
+            selectedValues={formData.authors}
+            placeholder="Choreographer name"
+            addButtonLabel="Add Choreographer"
+            onInputChange={handleAuthorChange}
+            onInputBlur={handleAuthorBlur}
+            onAdd={() => addAuthor()}
+            onRemove={removeAuthor}
+          />
+        )}
+
+        {activeTab === "links" && (
+          <div className="form-section">
+            <h3>Links</h3>
+            <ChoreographyFormLinksSection
+              step_sheet_link={formData.step_sheet_link}
+              demo_video_url={formData.demo_video_url}
+              tutorial_video_url={formData.tutorial_video_url}
+              onChange={handleChange}
+            />
+          </div>
+        )}
+
+        {activeTab === "step-figures" && (
+          <ChoreographyFormListSection
+            title="Step Figures"
+            listId="figures-list"
+            inputValue={currentFigure}
+            options={figuresFromDb}
+            selectedValues={formData.step_figures}
+            placeholder="Step figure name (e.g., Vine, Shuffle, Grapevine)"
+            addButtonLabel="Add Figure"
+            onInputChange={handleFigureChange}
+            onInputBlur={handleFigureBlur}
+            onAdd={() => addFigure()}
+            onRemove={removeFigure}
+          />
+        )}
+
+        {activeTab === "additional-information" && (
+          <div className="form-section choreography-information-form-section">
+            <h3>Additional Information</h3>
+            {(formData.choreography_information || []).map((item, index) => (
+              <div className="choreography-information-entry" key={item.id}>
+                <div className="choreography-information-category-column">
+                  <FormField
+                    label={`Category ${index + 1}`}
+                    htmlFor={`choreography-information-category-${index}`}
+                    className="form-group choreography-information-category"
+                  >
+                    <div className="choreography-information-category-control">
+                      <input
+                        id={`choreography-information-category-${index}`}
+                        list="choreography-information-categories"
+                        value={item.category}
+                        onChange={(event) =>
+                          updateChoreographyInformation(index, "category", event.target.value)
+                        }
+                        placeholder="Choose or enter a category"
+                      />
+                      <ActionButton
+                        type="button"
+                        variant="secondary"
+                        className="btn-small choreography-information-remove"
+                        aria-label={`Remove information ${index + 1}`}
+                        title={`Remove information ${index + 1}`}
+                        onClick={() => removeChoreographyInformation(index)}
+                      >
+                        🗑️
+                      </ActionButton>
+                    </div>
+                  </FormField>
+                </div>
+                <div className="choreography-information-description">
+                  <div className="choreography-information-description-heading">
+                    <label htmlFor={`choreography-information-description-${index}`}>
+                      Description {index + 1}
+                    </label>
+                  </div>
+                  <textarea
+                    id={`choreography-information-description-${index}`}
+                    value={item.description}
+                    onChange={(event) =>
+                      updateChoreographyInformation(index, "description", event.target.value)
+                    }
+                    placeholder="Describe this choreography detail"
+                  />
+                </div>
+              </div>
+            ))}
+            <datalist id="choreography-information-categories">
+              {informationCategories.map((category) => (
+                <option key={category} value={category} />
+              ))}
+            </datalist>
+            <ActionButton
+              type="button"
+              variant="secondary"
+              className="btn-small"
+              onClick={addChoreographyInformation}
+            >
+              Add Info Field
+            </ActionButton>
+          </div>
+        )}
+
+        {activeTab === "hash-tags" && (
+          <ChoreographyFormListSection
+            title="Hash Tags"
+            listId="tags-list"
+            inputValue={currentTag}
+            options={tagsFromDb}
+            selectedValues={formData.tags}
+            placeholder="Tag (e.g., Country, Western, Urban)"
+            addButtonLabel="Add Tag"
+            onInputChange={handleTagChange}
+            onInputBlur={handleTagBlur}
+            onAdd={() => addTag()}
+            onRemove={removeTag}
+          />
+        )}
       </div>
 
       <ActionGroup className="form-actions">

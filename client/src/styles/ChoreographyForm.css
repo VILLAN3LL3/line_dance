@@ -21,6 +21,67 @@
   letter-spacing: 0.5px;
 }
 
+.choreography-form-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+button.choreography-form-tab {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+button.choreography-form-tab:hover:not(:disabled) {
+  background: var(--color-surface-soft);
+  color: var(--color-primary);
+  transform: none;
+  box-shadow: none;
+}
+
+button.choreography-form-tab.is-active {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+button.choreography-form-tab:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.choreography-form-tab-warning {
+  flex: 0 0 auto;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.choreography-form-tab-panel {
+  min-width: 0;
+}
+
+.choreography-form-tab-panel:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
 .form-group {
   margin-bottom: 16px;
   display: flex;
