@@ -3,7 +3,12 @@ import "../../styles/ChoreographyDetail.css";
 import React, { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { checkChoreographyDuplicates, deleteChoreography, fetchChoreography, updateChoreography } from "../../api";
+import {
+  checkChoreographyDuplicates,
+  deleteChoreography,
+  fetchChoreography,
+  updateChoreography,
+} from "../../api";
 import { Choreography, ChoreographyFormData, DuplicateChoreography } from "../../types";
 import { getChoreographyUpdateErrorMessage } from "../../utils/apiErrors";
 import { AppFormView } from "../app/AppFormView";

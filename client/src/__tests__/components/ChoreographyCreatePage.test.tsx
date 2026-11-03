@@ -4,7 +4,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import {
-  checkChoreographyDuplicates, createChoreography, getAuthors, getChoreographyInfoCategories, getLevels, getStepFigures, getTags
+  checkChoreographyDuplicates,
+  createChoreography,
+  getAuthors,
+  getChoreographyInfoCategories,
+  getLevels,
+  getStepFigures,
+  getTags,
 } from "../../api";
 import ChoreographyCreatePage from "../../components/choreographies/ChoreographyCreatePage";
 
