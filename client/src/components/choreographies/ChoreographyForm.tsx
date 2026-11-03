@@ -1,7 +1,6 @@
 import "../../styles/ChoreographyForm.css";
 
 import React, { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
 
 import {
   getAuthors,
@@ -361,36 +360,38 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           <h3>Choreography Information</h3>
           {(formData.choreography_information || []).map((item, index) => (
             <div className="choreography-information-entry" key={item.id}>
-              <FormField
-                label={`Category ${index + 1}`}
-                htmlFor={`choreography-information-category-${index}`}
-                className="form-group choreography-information-category"
-              >
-                <input
-                  id={`choreography-information-category-${index}`}
-                  list="choreography-information-categories"
-                  value={item.category}
-                  onChange={(event) =>
-                    updateChoreographyInformation(index, "category", event.target.value)
-                  }
-                  placeholder="Choose or enter a category"
-                />
-              </FormField>
+              <div className="choreography-information-category-column">
+                <FormField
+                  label={`Category ${index + 1}`}
+                  htmlFor={`choreography-information-category-${index}`}
+                  className="form-group choreography-information-category"
+                >
+                  <input
+                    id={`choreography-information-category-${index}`}
+                    list="choreography-information-categories"
+                    value={item.category}
+                    onChange={(event) =>
+                      updateChoreographyInformation(index, "category", event.target.value)
+                    }
+                    placeholder="Choose or enter a category"
+                  />
+                </FormField>
+                <ActionButton
+                  type="button"
+                  variant="secondary"
+                  className="btn-small choreography-information-remove"
+                  aria-label={`Remove information ${index + 1}`}
+                  title={`Remove information ${index + 1}`}
+                  onClick={() => removeChoreographyInformation(index)}
+                >
+                  🗑️
+                </ActionButton>
+              </div>
               <div className="choreography-information-description">
                 <div className="choreography-information-description-heading">
                   <label htmlFor={`choreography-information-description-${index}`}>
                     Description {index + 1}
                   </label>
-                  <ActionButton
-                    type="button"
-                    variant="delete"
-                    className="btn-small choreography-information-remove"
-                    aria-label={`Remove information ${index + 1}`}
-                    title={`Remove information ${index + 1}`}
-                    onClick={() => removeChoreographyInformation(index)}
-                  >
-                    <Trash2 size={16} aria-hidden="true" />
-                  </ActionButton>
                 </div>
                 <textarea
                   id={`choreography-information-description-${index}`}

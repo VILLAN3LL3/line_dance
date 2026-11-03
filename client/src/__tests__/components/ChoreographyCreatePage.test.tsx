@@ -148,6 +148,7 @@ describe("ChoreographyCreatePage", () => {
     fireEvent.change(screen.getByLabelText("Description 2"), {
       target: { value: "Restart after wall 3" },
     });
+    expect(screen.getByRole("button", { name: "Remove information 1" })).toHaveTextContent("🗑️");
     fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
 
     await waitFor(() => {
