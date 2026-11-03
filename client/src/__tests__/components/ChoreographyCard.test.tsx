@@ -28,8 +28,10 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
     authors: ["Alice", "Bob"],
     tags: ["smooth", "classic"],
     step_figures: ["Weave", "Rock Step"],
-    restart_information: "Has restart",
-    tag_information: "Has tag",
+    choreography_information: [
+      { id: 1, category: "Restart", description: "Has restart" },
+      { id: 2, category: "Tag", description: "Has tag" },
+    ],
     rating: null,
     created_at: "2024-01-01T00:00:00.000Z",
     updated_at: "2024-01-02T00:00:00.000Z",
@@ -110,8 +112,8 @@ describe("ChoreographyCard", () => {
     expect(screen.getByText(/Count\/Wall:/)).toBeInTheDocument();
     expect(screen.getByText(/Choreographers:/)).toBeInTheDocument();
     expect(screen.getByText(/Tags:/)).toBeInTheDocument();
-    expect(screen.getByText("Restart 🔁")).toBeInTheDocument();
-    expect(screen.getByText("Tag 🌉")).toBeInTheDocument();
+    expect(screen.getByText("Restart")).toBeInTheDocument();
+    expect(screen.getByText("Tag")).toBeInTheDocument();
     expect(screen.queryByText("Restart Information")).not.toBeInTheDocument();
     expect(screen.queryByText("Tag Information")).not.toBeInTheDocument();
 
@@ -134,17 +136,48 @@ describe("ChoreographyCard", () => {
       <ChoreographyCard
         choreography={makeChoreography({
           step_figures: [],
-          restart_information: "Restart after wall 2",
-          tag_information: "Tag after chorus",
+          choreography_information: [
+            { id: 3, category: "Restart", description: "Restart after wall 2" },
+            { id: 4, category: "Tag", description: "Tag after chorus" },
+            { id: 7, category: "Ending", description: "Finish facing forward" },
+            { id: 8, category: "Intro", description: "Start after the first eight" },
+            { id: 9, category: "Sequence", description: "Repeat the second wall" },
+            { id: 10, category: "Styling", description: "Add arm styling" },
+            { id: 11, category: "Freestyle", description: "Keep it relaxed" },
+          ],
         })}
       />,
     );
 
-    expect(screen.getByText("Restart 🔁")).toBeInTheDocument();
-    expect(screen.getByText("Tag 🌉")).toBeInTheDocument();
+    expect(screen.getByText("Restart")).toBeInTheDocument();
+    expect(screen.getByText("Tag")).toBeInTheDocument();
+    expect(screen.getByText("Ending")).toBeInTheDocument();
+    expect(screen.getByText("Intro")).toBeInTheDocument();
+    expect(screen.getByText("Sequence")).toBeInTheDocument();
+    expect(screen.getByText("Styling")).toBeInTheDocument();
+    expect(screen.getByText("Freestyle")).toBeInTheDocument();
     expect(screen.queryByText("No step figures")).not.toBeInTheDocument();
     expect(screen.queryByText("Restart Information")).not.toBeInTheDocument();
     expect(screen.queryByText("Tag Information")).not.toBeInTheDocument();
+  });
+
+  it("shows every information category and description on the detail card", () => {
+    render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          choreography_information: [
+            { id: 5, category: "Ending", description: "Hold the final pose" },
+            { id: 6, category: "Custom", description: "Face the front wall" },
+          ],
+        })}
+        videoEmbedMode="all"
+      />,
+    );
+
+    expect(screen.getByText("Ending")).toBeInTheDocument();
+    expect(screen.getByText("Hold the final pose")).toBeInTheDocument();
+    expect(screen.getByText("Custom")).toBeInTheDocument();
+    expect(screen.getByText("Face the front wall")).toBeInTheDocument();
   });
 
   it("embeds only one YouTube video in default single mode (demo has priority)", () => {

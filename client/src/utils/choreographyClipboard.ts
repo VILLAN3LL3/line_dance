@@ -9,11 +9,15 @@ export function formatAuthorForClipboard(
   author: string,
   countryCodes: Record<string, string>,
 ): string {
-  const match = /^(.+?)\s*\(([A-Z]{2,3})\)$/.exec(author);
-  if (match) {
-    const countryName = countryCodes[match[2]];
+  const countryCodeStart = author.lastIndexOf(" (");
+  if (countryCodeStart >= 0 && author.endsWith(")")) {
+    const countryCode = author.slice(countryCodeStart + 2, -1);
+    const authorName = author.slice(0, countryCodeStart).trim();
+    if (!/^[A-Z]{2,3}$/.test(countryCode) || !authorName) return author;
+
+    const countryName = countryCodes[countryCode];
     if (countryName) {
-      return `${match[1].trim()} (${countryName})`;
+      return `${authorName} (${countryName})`;
     }
   }
   return author;
@@ -90,13 +94,15 @@ export function buildChoreographyClipboardText(
     ...(choreography.step_figures.length > 0
       ? ["", "Step Figures:", ...choreography.step_figures.map((figure) => `• ${figure}`)]
       : []),
-    ...(choreography.restart_information || choreography.tag_information
-      ? ["", "Sequence Notes:"]
+    ...(choreography.choreography_information?.length
+      ? [
+          "",
+          "Choreography Information:",
+          ...choreography.choreography_information.map(
+            (information) => `• ${information.category}: ${information.description}`,
+          ),
+        ]
       : []),
-    ...(choreography.restart_information
-      ? [`• Restart Information: ${choreography.restart_information}`]
-      : []),
-    ...(choreography.tag_information ? [`• Tag Information: ${choreography.tag_information}`] : []),
     ...(choreography.tags.length > 0
       ? ["", "Tags:", ...choreography.tags.map((tag) => `• ${tag}`)]
       : []),

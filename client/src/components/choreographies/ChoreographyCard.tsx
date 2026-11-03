@@ -1,9 +1,19 @@
 import "../../styles/ChoreographyCard.css";
 
 import React, { useLayoutEffect, useRef, useState } from "react";
+import {
+  Flag,
+  Info,
+  ListOrdered,
+  Play,
+  Repeat2,
+  Sparkles,
+  Tag as TagIcon,
+  type LucideIcon,
+} from "lucide-react";
 
 import { deleteChoreographyRating, getCountryCodes, setChoreographyRating } from "../../api";
-import { Choreography } from "../../types";
+import { Choreography, ChoreographyInformation } from "../../types";
 import { buildChoreographyClipboardText } from "../../utils/choreographyClipboard";
 import { buildSongSearchUrls } from "../../utils/songSearch";
 import { getYouTubeVideoEmbedUrl } from "../../utils/youtube";
@@ -26,14 +36,6 @@ interface ChoreographyCardProps {
   videoEmbedMode?: "single" | "all";
 }
 
-interface InfoSectionProps {
-  title: string;
-  value?: string;
-  isDetailMode: boolean;
-  isExpanded: boolean;
-  onToggle: () => void;
-}
-
 interface ChoreographyCardContentProps {
   choreography: Choreography;
   isDetailMode: boolean;
@@ -41,10 +43,6 @@ interface ChoreographyCardContentProps {
   demoEmbedUrl: string | null;
   tutorialEmbedUrl: string | null;
   onLinkClick: (event: React.MouseEvent<HTMLAnchorElement>) => void;
-  isRestartExpanded: boolean;
-  isTagExpanded: boolean;
-  onRestartToggle: () => void;
-  onTagToggle: () => void;
 }
 
 interface ChoreographyCardActionsProps {
@@ -70,36 +68,20 @@ function getCountWallSummary(choreography: Choreography): { label: string; value
   return null;
 }
 
-const InfoSection: React.FC<InfoSectionProps> = ({
-  title,
-  value,
-  isDetailMode,
-  isExpanded,
-  onToggle,
-}) => {
-  if (!value && !isDetailMode) {
-    return null;
-  }
+const InfoSection: React.FC<{ information: ChoreographyInformation }> = ({ information }) => (
+  <div className="info-section">
+    <strong>{information.category}</strong>
+    <span className="info-section-text">{information.description}</span>
+  </div>
+);
 
-  return (
-    <div className="info-section">
-      <strong>{title}</strong>
-      <span
-        className={
-          value && !isExpanded
-            ? "info-section-text info-section-text-collapsed"
-            : "info-section-text"
-        }
-      >
-        {value || "None"}
-      </span>
-      {value && (
-        <button type="button" className="info-section-toggle" onClick={onToggle}>
-          {isExpanded ? "Show less" : "Show more"}
-        </button>
-      )}
-    </div>
-  );
+const INFORMATION_CATEGORY_ICONS: Record<string, LucideIcon> = {
+  restart: Repeat2,
+  tag: TagIcon,
+  ending: Flag,
+  intro: Play,
+  sequence: ListOrdered,
+  styling: Sparkles,
 };
 
 const ChoreographerNames: React.FC<{ authors: string[] }> = ({ authors }) => {
@@ -172,19 +154,16 @@ const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = ({
   demoEmbedUrl,
   tutorialEmbedUrl,
   onLinkClick,
-  isRestartExpanded,
-  isTagExpanded,
-  onRestartToggle,
-  onTagToggle,
 }) => {
   const primaryEmbedUrl = demoEmbedUrl || tutorialEmbedUrl;
   const primaryEmbedLabel = demoEmbedUrl ? "Demo Video:" : "Tutorial Video:";
   const primaryEmbedTitle = demoEmbedUrl
     ? `Demo video for ${choreography.name}`
     : `Tutorial video for ${choreography.name}`;
-  const hasRestartInformation = Boolean(choreography.restart_information?.trim());
-  const hasTagInformation = Boolean(choreography.tag_information?.trim());
-  const showStepFigureBadges = !isDetailMode && (hasRestartInformation || hasTagInformation);
+  const informationCategories = [
+    ...new Set((choreography.choreography_information || []).map((item) => item.category)),
+  ];
+  const showStepFigureBadges = !isDetailMode && informationCategories.length > 0;
   const showStepFiguresSection =
     choreography.step_figures.length > 0 || isDetailMode || showStepFigureBadges;
   const showPrimaryEmbed = !isDetailMode && Boolean(primaryEmbedUrl);
@@ -217,12 +196,22 @@ const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = ({
               {choreography.step_figures.map((figure) => (
                 <Tag key={figure} value={figure} className="tag-small" />
               ))}
-              {hasRestartInformation && !isDetailMode && (
-                <Tag value="Restart 🔁" className="tag-small" title="Has restart information" />
-              )}
-              {hasTagInformation && !isDetailMode && (
-                <Tag value="Tag 🌉" className="tag-small" title="Has tag information" />
-              )}
+              {showStepFigureBadges &&
+                informationCategories.map((category) =>
+                  (() => {
+                    const Icon = INFORMATION_CATEGORY_ICONS[category.toLowerCase()] || Info;
+                    return (
+                      <span
+                        key={category}
+                        className="tag-small choreography-info-badge"
+                        title={`Has ${category} information`}
+                      >
+                        <Icon size={14} aria-hidden="true" />
+                        <span>{category}</span>
+                      </span>
+                    );
+                  })(),
+                )}
             </TagGroup>
           ) : (
             <span>No step figures</span>
@@ -230,25 +219,13 @@ const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = ({
         </div>
       )}
 
-      {isDetailMode && (
-        <>
+      {isDetailMode &&
+        choreography.choreography_information?.map((information) => (
           <InfoSection
-            title="Restart Information"
-            value={choreography.restart_information}
-            isDetailMode={isDetailMode}
-            isExpanded={isRestartExpanded}
-            onToggle={onRestartToggle}
+            key={information.id ?? `${information.category}-${information.description}`}
+            information={information}
           />
-
-          <InfoSection
-            title="Tag Information"
-            value={choreography.tag_information}
-            isDetailMode={isDetailMode}
-            isExpanded={isTagExpanded}
-            onToggle={onTagToggle}
-          />
-        </>
-      )}
+        ))}
 
       {(choreography.tags.length > 0 || isDetailMode) && (
         <div className="tags">
@@ -422,8 +399,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   videoEmbedMode = "single",
 }) => {
   const isDetailMode = videoEmbedMode === "all";
-  const [isRestartExpanded, setIsRestartExpanded] = useState(false);
-  const [isTagExpanded, setIsTagExpanded] = useState(false);
   const [rating, setRating] = useState<number | null>(choreography.rating);
   const countWallSummary = getCountWallSummary(choreography);
   const demoEmbedUrl = getYouTubeVideoEmbedUrl(choreography.demo_video_url);
@@ -483,10 +458,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       demoEmbedUrl={demoEmbedUrl}
       tutorialEmbedUrl={tutorialEmbedUrl}
       onLinkClick={handleContentLinkClick}
-      isRestartExpanded={isRestartExpanded}
-      isTagExpanded={isTagExpanded}
-      onRestartToggle={() => setIsRestartExpanded((current) => !current)}
-      onTagToggle={() => setIsTagExpanded((current) => !current)}
     />
   );
 

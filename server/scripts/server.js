@@ -18,6 +18,7 @@ import {
   getLevels,
   addLevel,
   getTags,
+  getChoreographyInfoCategories,
   getStepFigures,
   getStepFiguresWithIds,
   getStepFigureHierarchy,
@@ -113,6 +114,7 @@ app.delete('/api/choreographies/:id/rating', deleteChoreographyRating);
 app.get('/api/levels', getLevels);
 app.post('/api/levels', addLevel);
 app.get('/api/tags', getTags);
+app.get('/api/choreography-info-categories', getChoreographyInfoCategories);
 app.get('/api/authors', getAuthors);
 app.get('/api/authors/stats', getAuthorStats);
 app.get('/api/country-codes', getCountryCodes);

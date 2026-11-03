@@ -37,6 +37,12 @@ const DEFAULT_LEVELS = [
   { name: 'HIGH ADVANCED', value: 160 },
 ];
 
+async function seedDefaultLevels(db) {
+  const placeholders = DEFAULT_LEVELS.map(() => '(?, ?)').join(', ');
+  const params = DEFAULT_LEVELS.flatMap(({ name, value }) => [name, value]);
+  await run(db, `INSERT OR IGNORE INTO levels (name, value) VALUES ${placeholders}`, params);
+}
+
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS levels (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,6 +67,19 @@ CREATE TABLE IF NOT EXISTS choreographies (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (level_id) REFERENCES levels(id)
+);
+
+CREATE TABLE IF NOT EXISTS choreography_info_categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL COLLATE NOCASE UNIQUE,
+  is_seeded INTEGER NOT NULL DEFAULT 0 CHECK (is_seeded IN (0, 1))
+);
+
+CREATE TABLE IF NOT EXISTS choreography_information (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  choreography_id INTEGER NOT NULL REFERENCES choreographies(id) ON DELETE CASCADE,
+  category_id INTEGER NOT NULL REFERENCES choreography_info_categories(id),
+  description TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS authors (
@@ -162,12 +181,7 @@ export async function setupChoreographyTestDb() {
   )`,
   );
 
-  for (const level of DEFAULT_LEVELS) {
-    await run(testDb, 'INSERT OR IGNORE INTO levels (name, value) VALUES (?, ?)', [
-      level.name,
-      level.value,
-    ]);
-  }
+  await seedDefaultLevels(testDb);
 
   // Populate test countries data (subset of commonly used countries)
   const testCountries = [
@@ -183,13 +197,12 @@ export async function setupChoreographyTestDb() {
     ['PF', 'PYF', 'French Polynesia'],
   ];
 
-  for (const [iso2, iso3, name] of testCountries) {
-    await run(
-      testDb,
-      'INSERT OR IGNORE INTO countries (iso_2_code, iso_3_code, name) VALUES (?, ?, ?)',
-      [iso2, iso3, name],
-    );
-  }
+  const countryPlaceholders = testCountries.map(() => '(?, ?, ?)').join(', ');
+  await run(
+    testDb,
+    `INSERT OR IGNORE INTO countries (iso_2_code, iso_3_code, name) VALUES ${countryPlaceholders}`,
+    testCountries.flat(),
+  );
 
   // Seed community aliases
   await run(
@@ -226,6 +239,14 @@ export async function clearChoreographyTables() {
   // Delete choreography_tags from personal_data DB first (no cross-DB FK cascade)
   await run(testDb, 'DELETE FROM personal_data.choreography_tags');
   await run(testDb, 'DELETE FROM personal_data.choreography_ratings');
+  await run(testDb, 'DELETE FROM choreography_information');
+  await run(testDb, 'DELETE FROM choreography_info_categories');
+  await run(
+    testDb,
+    `INSERT INTO choreography_info_categories (name, is_seeded)
+     SELECT 'Restart', 1 UNION ALL SELECT 'Tag', 1 UNION ALL SELECT 'Ending', 1
+     UNION ALL SELECT 'Intro', 1 UNION ALL SELECT 'Sequence', 1 UNION ALL SELECT 'Styling', 1`,
+  );
   // Delete choreographies — FK ON DELETE CASCADE removes choreography_authors and choreography_step_figures
   await run(testDb, 'DELETE FROM choreographies');
   await run(testDb, 'DELETE FROM step_figure_components');
@@ -247,10 +268,5 @@ export async function clearChoreographyTables() {
   }
 
   // Re-insert default levels so route handlers can look them up
-  for (const level of DEFAULT_LEVELS) {
-    await run(testDb, 'INSERT OR IGNORE INTO levels (name, value) VALUES (?, ?)', [
-      level.name,
-      level.value,
-    ]);
-  }
+  await seedDefaultLevels(testDb);
 }

@@ -723,6 +723,64 @@ const migrations = [
       });
     },
   },
+  {
+    id: '013_add_choreography_information',
+    up: async () => {
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS choreography_info_categories (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL COLLATE NOCASE UNIQUE,
+          is_seeded INTEGER NOT NULL DEFAULT 0 CHECK (is_seeded IN (0, 1))
+        )`,
+        [],
+        dbName,
+      );
+
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS choreography_information (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          choreography_id INTEGER NOT NULL REFERENCES choreographies(id) ON DELETE CASCADE,
+          category_id INTEGER NOT NULL REFERENCES choreography_info_categories(id),
+          description TEXT NOT NULL
+        )`,
+        [],
+        dbName,
+      );
+
+      const categories = ['Restart', 'Tag', 'Ending', 'Intro', 'Sequence', 'Styling'];
+      await runSequential(categories, async (name) => {
+        await runQuery(
+          `INSERT OR IGNORE INTO choreography_info_categories (name, is_seeded) VALUES (?, 1)`,
+          [name],
+          dbName,
+        );
+      });
+
+      await runQuery(
+        `INSERT INTO choreography_information (choreography_id, category_id, description)
+         SELECT c.id, category.id, c.restart_information
+         FROM choreographies c
+         JOIN choreography_info_categories category ON category.name = 'Restart'
+         WHERE TRIM(COALESCE(c.restart_information, '')) <> ''`,
+        [],
+        dbName,
+      );
+
+      await runQuery(
+        `INSERT INTO choreography_information (choreography_id, category_id, description)
+         SELECT c.id, category.id, c.tag_information
+         FROM choreographies c
+         JOIN choreography_info_categories category
+           ON category.name = CASE
+             WHEN LOWER(TRIM(c.tag_information)) LIKE 'sequence%' THEN 'Sequence'
+             ELSE 'Tag'
+           END
+         WHERE TRIM(COALESCE(c.tag_information, '')) <> ''`,
+        [],
+        dbName,
+      );
+    },
+  },
 ];
 
 export async function runChoreographyMigrations() {

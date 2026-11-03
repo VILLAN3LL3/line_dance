@@ -135,6 +135,52 @@ describe('POST /api/choreographies', () => {
     expect(res.body.tags).toEqual(['fun']);
     expect(res.body.step_figures.sort()).toEqual(['Cha Cha', 'Mambo']);
   });
+
+  it('creates and returns multiple categorized information entries', async () => {
+    const created = await createChoreo({
+      choreography_information: [
+        { category: 'Restart', description: 'Restart at wall 4' },
+        { category: 'New Category', description: 'Keep the hold for two counts' },
+      ],
+    });
+
+    const choreography = await request(app).get(`/api/choreographies/${created.id}`);
+    expect(choreography.body.choreography_information).toEqual([
+      expect.objectContaining({ category: 'Restart', description: 'Restart at wall 4' }),
+      expect.objectContaining({
+        category: 'New Category',
+        description: 'Keep the hold for two counts',
+      }),
+    ]);
+    expect(choreography.body.choreography_information[0].id).toBeTypeOf('number');
+
+    const categories = await request(app).get('/api/choreography-info-categories');
+    expect(categories.body).toContain('New Category');
+  });
+
+  it('deletes a manual category only after its last choreography info is removed', async () => {
+    const first = await createChoreo({
+      name: 'First Dance',
+      choreography_information: [{ category: 'Shared', description: 'First note' }],
+    });
+    const second = await createChoreo({
+      name: 'Second Dance',
+      choreography_information: [{ category: 'Shared', description: 'Second note' }],
+    });
+
+    await request(app)
+      .put(`/api/choreographies/${first.id}`)
+      .send({ name: 'First Dance', level: 'Beginner', choreography_information: [] });
+    let categories = await request(app).get('/api/choreography-info-categories');
+    expect(categories.body).toContain('Shared');
+
+    await request(app)
+      .put(`/api/choreographies/${second.id}`)
+      .send({ name: 'Second Dance', level: 'Beginner', choreography_information: [] });
+    categories = await request(app).get('/api/choreography-info-categories');
+    expect(categories.body).not.toContain('Shared');
+    expect(categories.body).toContain('Restart');
+  });
 });
 
 // ---------------------------------------------------------------------------

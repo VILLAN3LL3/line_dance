@@ -67,8 +67,14 @@ async function createLegacyChoreographyDatabase() {
   const level = await run(db, `INSERT INTO levels (name) VALUES ('Beginner')`);
   const choreo = await run(
     db,
-    `INSERT INTO choreographies (name, level_id, count, wall_count)
-     VALUES ('Legacy Tagged Dance', ?, 32, 4)`,
+    `INSERT INTO choreographies (name, level_id, count, wall_count, tag_information, restart_information)
+     VALUES ('Legacy Tagged Dance', ?, 32, 4, 'Sequence starts after chorus', 'Restart after wall 2')`,
+    [level.id],
+  );
+  await run(
+    db,
+    `INSERT INTO choreographies (name, level_id, tag_information)
+     VALUES ('Legacy Tag Dance', ?, 'Tag on count 8')`,
     [level.id],
   );
   const tag = await run(db, `INSERT INTO tags (name) VALUES ('legacy-tag')`);
@@ -88,6 +94,69 @@ afterEach(async () => {
 });
 
 describe('Choreography tags migration regression', () => {
+  it('moves legacy information into categorized rows and preserves the legacy columns', async () => {
+    await createLegacyChoreographyDatabase();
+
+    const infoRows = await allQuery(
+      `SELECT c.name AS choreography, category.name AS category, info.description
+       FROM choreography_information info
+       JOIN choreography_info_categories category ON category.id = info.category_id
+       JOIN choreographies c ON c.id = info.choreography_id
+       ORDER BY c.name, category.name`,
+    );
+
+    expect(infoRows).toEqual([
+      {
+        choreography: 'Legacy Tag Dance',
+        category: 'Tag',
+        description: 'Tag on count 8',
+      },
+      {
+        choreography: 'Legacy Tagged Dance',
+        category: 'Restart',
+        description: 'Restart after wall 2',
+      },
+      {
+        choreography: 'Legacy Tagged Dance',
+        category: 'Sequence',
+        description: 'Sequence starts after chorus',
+      },
+    ]);
+
+    const categories = await request(app).get('/api/choreography-info-categories');
+    expect(categories.body.slice(0, 6)).toEqual([
+      'Restart',
+      'Tag',
+      'Ending',
+      'Intro',
+      'Sequence',
+      'Styling',
+    ]);
+
+    const legacyRow = await getQuery(
+      `SELECT tag_information, restart_information FROM choreographies WHERE name = ?`,
+      ['Legacy Tagged Dance'],
+    );
+    expect(legacyRow).toEqual({
+      tag_information: 'Sequence starts after chorus',
+      restart_information: 'Restart after wall 2',
+    });
+
+    const choreography = await getQuery(`SELECT id FROM choreographies WHERE name = ?`, [
+      'Legacy Tagged Dance',
+    ]);
+    const updateResponse = await request(app)
+      .put(`/api/choreographies/${choreography.id}`)
+      .send({ name: 'Legacy Tagged Dance', level: 'BEGINNER', choreography_information: [] });
+    expect(updateResponse.status).toBe(200);
+
+    const legacyRowAfterUpdate = await getQuery(
+      `SELECT tag_information, restart_information FROM choreographies WHERE id = ?`,
+      [choreography.id],
+    );
+    expect(legacyRowAfterUpdate).toEqual(legacyRow);
+  });
+
   it('backfills legacy tag data and exposes it through tags/choreography endpoints', async () => {
     await createLegacyChoreographyDatabase();
 
@@ -97,9 +166,11 @@ describe('Choreography tags migration regression', () => {
 
     const choreosRes = await request(app).get('/api/choreographies');
     expect(choreosRes.status).toBe(200);
-    expect(choreosRes.body.data).toHaveLength(1);
-    expect(choreosRes.body.data[0].name).toBe('Legacy Tagged Dance');
-    expect(choreosRes.body.data[0].tags).toEqual(['legacy-tag']);
+    expect(choreosRes.body.data).toHaveLength(2);
+    const migratedChoreography = choreosRes.body.data.find(
+      (choreography) => choreography.name === 'Legacy Tagged Dance',
+    );
+    expect(migratedChoreography.tags).toEqual(['legacy-tag']);
   });
 
   it('is idempotent and does not duplicate backfilled rows on re-run', async () => {

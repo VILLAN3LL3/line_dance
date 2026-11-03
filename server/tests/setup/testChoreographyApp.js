@@ -15,6 +15,7 @@ import {
   getLevels,
   addLevel,
   getTags,
+  getChoreographyInfoCategories,
   getAuthors,
   getStepFigures,
   getStepFigureHierarchy,
@@ -55,6 +56,7 @@ app.get('/api/levels', getLevels);
 app.post('/api/levels', addLevel);
 
 app.get('/api/tags', getTags);
+app.get('/api/choreography-info-categories', getChoreographyInfoCategories);
 app.get('/api/authors', getAuthors);
 app.get('/api/step_figures/hierarchy', getStepFigureHierarchy);
 app.post('/api/step_figures', createStepFigure);

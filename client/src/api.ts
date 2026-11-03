@@ -145,6 +145,11 @@ export async function getTags(): Promise<string[]> {
   return response.data;
 }
 
+export async function getChoreographyInfoCategories(): Promise<string[]> {
+  const response = await api.get("/choreography-info-categories");
+  return response.data;
+}
+
 export async function getAuthors(): Promise<string[]> {
   const response = await api.get("/authors");
   return response.data;

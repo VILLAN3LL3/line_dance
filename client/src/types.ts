@@ -10,6 +10,7 @@ export interface Choreography {
   creation_year?: number;
   tag_information?: string;
   restart_information?: string;
+  choreography_information?: ChoreographyInformation[];
   song?: string;
   artist?: string;
   authors: string[];
@@ -31,11 +32,18 @@ export interface ChoreographyFormData {
   creation_year?: number;
   tag_information?: string;
   restart_information?: string;
+  choreography_information?: ChoreographyInformation[];
   song?: string;
   artist?: string;
   authors: string[];
   tags: string[];
   step_figures: string[];
+}
+
+export interface ChoreographyInformation {
+  id?: number | string;
+  category: string;
+  description: string;
 }
 
 export interface PaginatedResponse<T> {

@@ -7,6 +7,7 @@ import {
   checkChoreographyDuplicates,
   createChoreography,
   getAuthors,
+  getChoreographyInfoCategories,
   getLevels,
   getStepFigures,
   getTags,
@@ -27,6 +28,7 @@ vi.mock("../../api", () => ({
   checkChoreographyDuplicates: vi.fn(),
   createChoreography: vi.fn(),
   getAuthors: vi.fn(),
+  getChoreographyInfoCategories: vi.fn(),
   getLevels: vi.fn(),
   getStepFigures: vi.fn(),
   getTags: vi.fn(),
@@ -39,6 +41,14 @@ describe("ChoreographyCreatePage", () => {
     vi.clearAllMocks();
     vi.mocked(getLevels).mockResolvedValue([{ id: 1, name: "Beginner", value: 30 }]);
     vi.mocked(getAuthors).mockResolvedValue([]);
+    vi.mocked(getChoreographyInfoCategories).mockResolvedValue([
+      "Restart",
+      "Tag",
+      "Ending",
+      "Intro",
+      "Sequence",
+      "Styling",
+    ]);
     vi.mocked(getTags).mockResolvedValue([]);
     vi.mocked(getStepFigures).mockResolvedValue([]);
     vi.mocked(createChoreography).mockResolvedValue({ id: 99, message: "created" });
@@ -111,5 +121,44 @@ describe("ChoreographyCreatePage", () => {
       expect(createChoreography).toHaveBeenCalledOnce();
     });
     expect(screen.queryByText(/Possible duplicate found/)).not.toBeInTheDocument();
+  });
+
+  it("submits multiple-choice choreography information fields", async () => {
+    vi.mocked(checkChoreographyDuplicates).mockResolvedValue([]);
+    render(
+      <MemoryRouter initialEntries={["/choreographies/new"]}>
+        <Routes>
+          <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("option", { name: "Beginner" });
+    fireEvent.change(screen.getByLabelText("Choreography Name *"), {
+      target: { value: "River Dance" },
+    });
+    fireEvent.change(screen.getByLabelText("Level *"), { target: { value: "Beginner" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add Info Field" }));
+    fireEvent.change(screen.getByLabelText("Category 1"), { target: { value: "Mood" } });
+    fireEvent.change(screen.getByLabelText("Description 1"), {
+      target: { value: "Keep the movement light" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add Info Field" }));
+    fireEvent.change(screen.getByLabelText("Category 2"), { target: { value: "Restart" } });
+    fireEvent.change(screen.getByLabelText("Description 2"), {
+      target: { value: "Restart after wall 3" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+
+    await waitFor(() => {
+      expect(createChoreography).toHaveBeenCalledWith(
+        expect.objectContaining({
+          choreography_information: [
+            { category: "Mood", description: "Keep the movement light" },
+            { category: "Restart", description: "Restart after wall 3" },
+          ],
+        }),
+      );
+    });
   });
 });

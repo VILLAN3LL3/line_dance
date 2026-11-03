@@ -63,7 +63,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
         console.error("Failed to fetch step figures:", error);
       }
     };
-    fetchStepFigures();
+    void fetchStepFigures();
   }, []);
 
   const toggleSort = (field: SortField) => {
@@ -93,13 +93,17 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
         case "creation_year":
           return compareOptionalNumber(a.creation_year, b.creation_year) * multiplier;
         case "restart": {
-          const aValue = Boolean(a.restart_information);
-          const bValue = Boolean(b.restart_information);
+          const aValue = (a.choreography_information || []).some(
+            (item) => item.category === "Restart",
+          );
+          const bValue = (b.choreography_information || []).some(
+            (item) => item.category === "Restart",
+          );
           return compareBooleanFlag(aValue, bValue) * multiplier;
         }
         case "tag": {
-          const aValue = Boolean(a.tag_information);
-          const bValue = Boolean(b.tag_information);
+          const aValue = (a.choreography_information || []).some((item) => item.category === "Tag");
+          const bValue = (b.choreography_information || []).some((item) => item.category === "Tag");
           return compareBooleanFlag(aValue, bValue) * multiplier;
         }
         default:
@@ -162,8 +166,18 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                   <td>{choreo.count || "-"}</td>
                   <td>{choreo.wall_count || "-"}</td>
                   <td>{choreo.creation_year || "-"}</td>
-                  <td className="figure-cell">{choreo.restart_information ? "✅" : ""}</td>
-                  <td className="figure-cell">{choreo.tag_information ? "✅" : ""}</td>
+                  <td className="figure-cell">
+                    {(choreo.choreography_information || []).some(
+                      (item) => item.category === "Restart",
+                    )
+                      ? "✅"
+                      : ""}
+                  </td>
+                  <td className="figure-cell">
+                    {(choreo.choreography_information || []).some((item) => item.category === "Tag")
+                      ? "✅"
+                      : ""}
+                  </td>
                   {allStepFigures.map((figure) => (
                     <td key={`${choreo.id}-${figure}`} className="figure-cell">
                       {choreo.step_figures.includes(figure) ? "✅" : ""}

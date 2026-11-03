@@ -458,6 +458,22 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/choreography-info-categories': {
+      get: {
+        tags: ['Metadata'],
+        summary: 'Get choreography information categories',
+        responses: {
+          200: {
+            description: 'Seeded and currently used custom categories',
+            content: {
+              'application/json': {
+                schema: { type: 'array', items: { type: 'string' } },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/authors': {
       get: {
         tags: ['Metadata'],
@@ -1615,6 +1631,10 @@ export const openApiSpec = {
           creation_year: { type: 'integer', nullable: true },
           tag_information: { type: 'string', nullable: true },
           restart_information: { type: 'string', nullable: true },
+          choreography_information: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/ChoreographyInformation' },
+          },
           song: { type: 'string', nullable: true },
           artist: { type: 'string', nullable: true },
           authors: { type: 'array', items: { type: 'string' } },
@@ -1624,6 +1644,15 @@ export const openApiSpec = {
           created_at: { type: 'string', nullable: true },
           updated_at: { type: 'string', nullable: true },
         },
+      },
+      ChoreographyInformation: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          category: { type: 'string' },
+          description: { type: 'string' },
+        },
+        required: ['id', 'category', 'description'],
       },
       ChoreographyCreateRequest: {
         type: 'object',
@@ -1638,6 +1667,17 @@ export const openApiSpec = {
           creation_year: { type: 'integer' },
           tag_information: { type: 'string' },
           restart_information: { type: 'string' },
+          choreography_information: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                category: { type: 'string' },
+                description: { type: 'string' },
+              },
+              required: ['category', 'description'],
+            },
+          },
           song: { type: 'string' },
           artist: { type: 'string' },
           authors: { type: 'array', items: { type: 'string' } },

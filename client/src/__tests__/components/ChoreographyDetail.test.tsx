@@ -7,6 +7,7 @@ import {
   checkChoreographyDuplicates,
   fetchChoreography,
   getAuthors,
+  getChoreographyInfoCategories,
   getLevels,
   getStepFigures,
   getTags,
@@ -33,6 +34,7 @@ vi.mock("../../api", () => ({
   checkChoreographyDuplicates: vi.fn(),
   getLevels: vi.fn(),
   getAuthors: vi.fn(),
+  getChoreographyInfoCategories: vi.fn(),
   getTags: vi.fn(),
   getStepFigures: vi.fn(),
 }));
@@ -63,6 +65,14 @@ describe("ChoreographyDetail", () => {
     vi.mocked(updateChoreography).mockResolvedValue({ id: 1, message: "updated" });
     vi.mocked(getLevels).mockResolvedValue([{ id: 2, name: "Intermediate", value: 50 }]);
     vi.mocked(getAuthors).mockResolvedValue([]);
+    vi.mocked(getChoreographyInfoCategories).mockResolvedValue([
+      "Restart",
+      "Tag",
+      "Ending",
+      "Intro",
+      "Sequence",
+      "Styling",
+    ]);
     vi.mocked(getTags).mockResolvedValue([]);
     vi.mocked(getStepFigures).mockResolvedValue([]);
   });

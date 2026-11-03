@@ -333,12 +333,18 @@ export async function createChoreography(req, res) {
       creation_year,
       tag_information,
       restart_information,
+      choreography_information: rawChoreographyInformation,
       song,
       artist,
       authors,
       tags,
       step_figures,
     } = req.body;
+
+    const choreographyInformation = normalizeChoreographyInformation(rawChoreographyInformation);
+    if (choreographyInformation === null) {
+      return res.status(400).json({ error: 'Choreography information must be an array' });
+    }
 
     if (!name || !level) {
       return res.status(400).json({ error: 'Name and level are required' });
@@ -398,6 +404,7 @@ export async function createChoreography(req, res) {
       'tag_id',
       'personal_data.tags',
     );
+    await replaceChoreographyInformation(choreography_id, choreographyInformation || []);
 
     res.status(201).json({ id: choreography_id, message: 'Choreography created successfully' });
   } catch (error) {
@@ -528,8 +535,7 @@ export async function updateChoreography(req, res) {
       wall_count,
       level,
       creation_year,
-      tag_information,
-      restart_information,
+      choreography_information: rawChoreographyInformation,
       song,
       artist,
       authors,
@@ -537,6 +543,11 @@ export async function updateChoreography(req, res) {
       step_figures,
     } = req.body;
     const choreography_id = req.params.id;
+
+    const choreographyInformation = normalizeChoreographyInformation(rawChoreographyInformation);
+    if (choreographyInformation === null) {
+      return res.status(400).json({ error: 'Choreography information must be an array' });
+    }
 
     const existing = await getQuery('SELECT id FROM choreographies WHERE id = ?', [
       choreography_id,
@@ -566,14 +577,12 @@ export async function updateChoreography(req, res) {
       count || null,
       wall_count || null,
       creation_year || null,
-      tag_information || null,
-      restart_information || null,
       song || null,
       artist || null,
     ];
     const updateQuery = levelId
-      ? `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, level_id = ?, creation_year = ?, tag_information = ?, restart_information = ?, song = ?, artist = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
-      : `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, creation_year = ?, tag_information = ?, restart_information = ?, song = ?, artist = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+      ? `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, level_id = ?, creation_year = ?, song = ?, artist = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+      : `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, creation_year = ?, song = ?, artist = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
 
     const updateParams = levelId
       ? [...updateFields.slice(0, 6), levelId, ...updateFields.slice(6), choreography_id]
@@ -605,6 +614,10 @@ export async function updateChoreography(req, res) {
       getTagId,
     );
 
+    if (choreographyInformation !== undefined) {
+      await replaceChoreographyInformation(choreography_id, choreographyInformation);
+    }
+
     await cleanupOrphanedRecords();
     res.json({ id: choreography_id, message: 'Choreography updated successfully' });
   } catch (error) {
@@ -631,6 +644,13 @@ async function cleanupOrphanedRecords() {
          SELECT DISTINCT tag_id FROM personal_data.choreography_tags WHERE tag_id IS NOT NULL
        )`,
     );
+
+    await runQuery(
+      `DELETE FROM choreography_information
+       WHERE choreography_id NOT IN (SELECT id FROM choreographies)`,
+    );
+
+    await cleanupUnusedChoreographyInfoCategories();
 
     // Delete orphaned non-canonical levels (not used by any choreography)
     const canonicalLevelNames = [
@@ -683,11 +703,70 @@ async function cleanupOrphanedRecords() {
   }
 }
 
+function normalizeChoreographyInformation(value) {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) return null;
+
+  const normalized = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object') return null;
+    if (typeof item.category !== 'string' || typeof item.description !== 'string') return null;
+
+    const category = item.category.trim();
+    const description = item.description.trim();
+    if (category && description) normalized.push({ category, description });
+  }
+
+  return normalized;
+}
+
+async function replaceChoreographyInformation(choreographyId, information) {
+  await runQuery('DELETE FROM choreography_information WHERE choreography_id = ?', [
+    choreographyId,
+  ]);
+
+  await information.reduce(
+    (previous, item) =>
+      previous.then(async () => {
+        await runQuery(
+          `INSERT OR IGNORE INTO choreography_info_categories (name, is_seeded) VALUES (?, 0)`,
+          [item.category],
+        );
+        const category = await getQuery(
+          `SELECT id FROM choreography_info_categories WHERE name = ?`,
+          [item.category],
+        );
+        await runQuery(
+          `INSERT INTO choreography_information (choreography_id, category_id, description)
+           VALUES (?, ?, ?)`,
+          [choreographyId, category.id, item.description],
+        );
+      }),
+    Promise.resolve(),
+  );
+
+  await cleanupUnusedChoreographyInfoCategories();
+}
+
+async function cleanupUnusedChoreographyInfoCategories() {
+  await runQuery(
+    `DELETE FROM choreography_info_categories
+     WHERE is_seeded = 0
+       AND NOT EXISTS (
+         SELECT 1 FROM choreography_information
+         WHERE choreography_information.category_id = choreography_info_categories.id
+       )`,
+  );
+}
+
 export async function deleteChoreography(req, res) {
   try {
     const choreography_id = req.params.id;
 
     // Remove join table entries first
+    await runQuery('DELETE FROM choreography_information WHERE choreography_id = ?', [
+      choreography_id,
+    ]);
     await runQuery('DELETE FROM choreography_authors WHERE choreography_id = ?', [choreography_id]);
     await runQuery('DELETE FROM personal_data.choreography_tags WHERE choreography_id = ?', [
       choreography_id,
@@ -1272,6 +1351,15 @@ async function enrichChoreography(choreography) {
     [choreography.id],
   );
 
+  const choreography_information = await allQuery(
+    `SELECT info.id, category.name AS category, info.description
+     FROM choreography_information info
+     INNER JOIN choreography_info_categories category ON category.id = info.category_id
+     WHERE info.choreography_id = ?
+     ORDER BY info.id ASC`,
+    [choreography.id],
+  );
+
   const ratingRow = await getQuery(
     `SELECT rating FROM personal_data.choreography_ratings WHERE choreography_id = ?`,
     [choreography.id],
@@ -1284,6 +1372,7 @@ async function enrichChoreography(choreography) {
     authors: authorNames,
     tags: tags.map((t) => t.name),
     step_figures: step_figures.map((sf) => sf.name),
+    choreography_information,
     rating: ratingRow ? ratingRow.rating : null,
   };
 }
@@ -1480,6 +1569,19 @@ export async function getTags(req, res) {
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch tags' });
+  }
+}
+
+export async function getChoreographyInfoCategories(req, res) {
+  try {
+    const categories = await allQuery(
+      `SELECT name FROM choreography_info_categories
+       ORDER BY is_seeded DESC, id ASC`,
+    );
+    res.json(categories.map((category) => category.name));
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch choreography information categories' });
   }
 }
 

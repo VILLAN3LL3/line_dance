@@ -22,8 +22,10 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
     authors: ["Alice", "Bob"],
     tags: ["Classic", "Showcase"],
     step_figures: ["Vine", "Rock Step"],
-    restart_information: "Restart after wall 3",
-    tag_information: "Tag after chorus",
+    choreography_information: [
+      { id: 1, category: "Restart", description: "Restart after wall 3" },
+      { id: 2, category: "Tag", description: "Tag after chorus" },
+    ],
     rating: null,
     created_at: "2025-01-01T00:00:00.000Z",
     updated_at: "2025-01-02T00:00:00.000Z",
@@ -51,9 +53,9 @@ describe("buildChoreographyClipboardText", () => {
     expect(text).toContain("• Alice");
     expect(text).toContain("Step Figures:");
     expect(text).toContain("• Vine");
-    expect(text).toContain("Sequence Notes:");
-    expect(text).toContain("• Restart Information: Restart after wall 3");
-    expect(text).toContain("• Tag Information: Tag after chorus");
+    expect(text).toContain("Choreography Information:");
+    expect(text).toContain("• Restart: Restart after wall 3");
+    expect(text).toContain("• Tag: Tag after chorus");
     expect(text).toContain("Tags:");
     expect(text).toContain("• Classic");
     expect(text).toContain("Links:");
@@ -69,8 +71,7 @@ describe("buildChoreographyClipboardText", () => {
         authors: [],
         step_figures: [],
         tags: [],
-        restart_information: undefined,
-        tag_information: undefined,
+        choreography_information: [],
         step_sheet_link: undefined,
         demo_video_url: undefined,
         tutorial_video_url: undefined,
@@ -85,7 +86,7 @@ describe("buildChoreographyClipboardText", () => {
     expect(text).not.toContain("Music:");
     expect(text).not.toContain("Choreographers:");
     expect(text).not.toContain("Step Figures:");
-    expect(text).not.toContain("Sequence Notes:");
+    expect(text).not.toContain("Choreography Information:");
     expect(text).not.toContain("Tags:");
     expect(text).not.toContain("Links:");
   });
