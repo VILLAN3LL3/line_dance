@@ -78,7 +78,7 @@ describe("ChoreographyDetail", () => {
   });
 
   function renderDetail(path = "/choreographies/1") {
-    render(
+    return render(
       <MemoryRouter initialEntries={[path]}>
         <GlobalApiErrorNotice />
         <Routes>
@@ -93,6 +93,17 @@ describe("ChoreographyDetail", () => {
 
     expect(await screen.findByTitle("Demo video for Neon Waltz")).toBeInTheDocument();
     expect(screen.getByTitle("Tutorial video for Neon Waltz")).toBeInTheDocument();
+  });
+
+  it("shows the edit form in the white form view with the choreography title and level", async () => {
+    const { container } = renderDetail("/choreographies/1?edit=1");
+
+    expect(await screen.findByRole("heading", { name: "Neon Waltz" })).toBeInTheDocument();
+    await screen.findByRole("option", { name: "Intermediate" });
+
+    expect(container.querySelector(".form-view")).toBeInTheDocument();
+    expect(container.querySelector(".form-view .level-badge")).toHaveTextContent("Intermediate");
+    expect(screen.queryByRole("heading", { name: "Edit Choreography" })).not.toBeInTheDocument();
   });
 
   it("shows duplicate warning in edit mode when duplicates are found", async () => {

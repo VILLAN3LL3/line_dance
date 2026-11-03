@@ -12,8 +12,8 @@ import {
 import { getChoreographyUpdateErrorMessage } from "../../utils/apiErrors";
 import { Choreography, ChoreographyFormData, DuplicateChoreography } from "../../types";
 import { BackButton, confirmAction, EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
+import { AppFormView } from "../app/AppFormView";
 import { ChoreographyCard } from "./ChoreographyCard";
-import { ChoreographyForm } from "./ChoreographyForm";
 import { DuplicateChoreographyWarning } from "./DuplicateChoreographyWarning";
 
 const ChoreographyDetail: React.FC = () => {
@@ -178,7 +178,8 @@ const ChoreographyDetail: React.FC = () => {
               onCancel={handleCancelDuplicate}
             />
           )}
-          <ChoreographyForm
+          <AppFormView
+            title="Edit Choreography"
             initialData={choreography}
             onSubmit={handleSubmit}
             isLoading={isLoading}

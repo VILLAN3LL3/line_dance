@@ -226,7 +226,7 @@ export const App: React.FC = () => {
 
       {view === "edit" && selectedChoreography && (
         <AppFormView
-          title={`Edit Choreography: ${selectedChoreography.name}`}
+          title="Edit Choreography"
           initialData={selectedChoreographyFormData}
           onSubmit={handleUpdate}
           isLoading={isLoading}

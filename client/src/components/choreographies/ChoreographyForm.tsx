@@ -55,6 +55,7 @@ function ensureEmptyChoreographyInformationRow(information: ChoreographyInformat
 }
 
 interface ChoreographyFormProps {
+  title?: string;
   initialData?: ChoreographyFormData;
   onSubmit: (data: ChoreographyFormData) => Promise<void>;
   isLoading?: boolean;
@@ -62,6 +63,7 @@ interface ChoreographyFormProps {
 }
 
 export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
+  title,
   initialData,
   onSubmit,
   isLoading = false,
@@ -412,15 +414,17 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
       .focus();
   };
 
+  const contextTitle = formData.name.trim() || title;
+
   return (
     <form
       className="choreography-form"
       onSubmit={handleSubmit}
       onInvalidCapture={() => setHasAttemptedSubmit(true)}
     >
-      {(formData.name.trim() || formData.level.trim()) && (
+      {(contextTitle || formData.level.trim()) && (
         <div className="choreography-form-context">
-          {formData.name.trim() && <h3>{formData.name}</h3>}
+          {contextTitle && <h2>{contextTitle}</h2>}
           {formData.level.trim() && <LevelBatch level={formData.level} />}
         </div>
       )}

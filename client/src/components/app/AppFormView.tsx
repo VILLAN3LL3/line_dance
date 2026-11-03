@@ -19,8 +19,8 @@ export const AppFormView: React.FC<AppFormViewProps> = ({
   onCancel,
 }) => (
   <div className="form-view">
-    <h2>{title}</h2>
     <ChoreographyForm
+      title={title}
       initialData={initialData}
       onSubmit={onSubmit}
       isLoading={isLoading}

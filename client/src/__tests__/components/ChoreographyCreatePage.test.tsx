@@ -133,11 +133,15 @@ describe("ChoreographyCreatePage", () => {
     );
 
     await screen.findByRole("option", { name: "Beginner" });
-    expect(container.querySelector(".choreography-form-context")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Add New Choreography" })).toBeInTheDocument();
+    expect(container.querySelector(".choreography-form-context")).toHaveTextContent(
+      "Add New Choreography",
+    );
     fireEvent.change(screen.getByLabelText("Choreography Name *"), {
       target: { value: "River Dance" },
     });
     expect(screen.getByRole("heading", { name: "River Dance" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Add New Choreography" })).not.toBeInTheDocument();
     expect(container.querySelector(".choreography-form-context .level-badge")).toBeNull();
 
     fireEvent.change(screen.getByLabelText("Level *"), { target: { value: "Beginner" } });
