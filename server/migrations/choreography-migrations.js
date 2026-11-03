@@ -781,6 +781,22 @@ const migrations = [
       );
     },
   },
+  {
+    id: '014_drop_legacy_choreography_information_columns',
+    up: async () => {
+      const legacyColumns = ['tag_information', 'restart_information'];
+      await runSequential(legacyColumns, async (column) => {
+        const exists = await getQuery(
+          `SELECT name FROM pragma_table_info('choreographies') WHERE name = ?`,
+          [column],
+          dbName,
+        );
+        if (exists) {
+          await runQuery(`ALTER TABLE choreographies DROP COLUMN ${column}`, [], dbName);
+        }
+      });
+    },
+  },
 ];
 
 export async function runChoreographyMigrations() {

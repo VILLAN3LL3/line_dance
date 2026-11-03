@@ -94,7 +94,7 @@ afterEach(async () => {
 });
 
 describe('Choreography tags migration regression', () => {
-  it('moves legacy information into categorized rows and preserves the legacy columns', async () => {
+  it('backfills legacy information and removes the obsolete columns', async () => {
     await createLegacyChoreographyDatabase();
 
     const infoRows = await allQuery(
@@ -133,28 +133,16 @@ describe('Choreography tags migration regression', () => {
       'Styling',
     ]);
 
-    const legacyRow = await getQuery(
-      `SELECT tag_information, restart_information FROM choreographies WHERE name = ?`,
-      ['Legacy Tagged Dance'],
+    const tagInformationColumn = await getQuery(
+      `SELECT name FROM pragma_table_info('choreographies') WHERE name = ?`,
+      ['tag_information'],
     );
-    expect(legacyRow).toEqual({
-      tag_information: 'Sequence starts after chorus',
-      restart_information: 'Restart after wall 2',
-    });
-
-    const choreography = await getQuery(`SELECT id FROM choreographies WHERE name = ?`, [
-      'Legacy Tagged Dance',
-    ]);
-    const updateResponse = await request(app)
-      .put(`/api/choreographies/${choreography.id}`)
-      .send({ name: 'Legacy Tagged Dance', level: 'BEGINNER', choreography_information: [] });
-    expect(updateResponse.status).toBe(200);
-
-    const legacyRowAfterUpdate = await getQuery(
-      `SELECT tag_information, restart_information FROM choreographies WHERE id = ?`,
-      [choreography.id],
+    const restartInformationColumn = await getQuery(
+      `SELECT name FROM pragma_table_info('choreographies') WHERE name = ?`,
+      ['restart_information'],
     );
-    expect(legacyRowAfterUpdate).toEqual(legacyRow);
+    expect(tagInformationColumn).toBeFalsy();
+    expect(restartInformationColumn).toBeFalsy();
   });
 
   it('backfills legacy tag data and exposes it through tags/choreography endpoints', async () => {

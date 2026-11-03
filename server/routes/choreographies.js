@@ -331,8 +331,6 @@ export async function createChoreography(req, res) {
       wall_count,
       level,
       creation_year,
-      tag_information,
-      restart_information,
       choreography_information: rawChoreographyInformation,
       song,
       artist,
@@ -360,8 +358,8 @@ export async function createChoreography(req, res) {
     }
 
     const choreoResult = await runQuery(
-      `INSERT INTO choreographies (name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level_id, creation_year, tag_information, restart_information, song, artist)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO choreographies (name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level_id, creation_year, song, artist)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         step_sheet_link || null,
@@ -371,8 +369,6 @@ export async function createChoreography(req, res) {
         wall_count || null,
         levelRecord.id,
         creation_year || null,
-        tag_information || null,
-        restart_information || null,
         song || null,
         artist || null,
       ],

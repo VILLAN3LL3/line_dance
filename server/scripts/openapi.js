@@ -1629,8 +1629,6 @@ export const openApiSpec = {
           wall_count: { type: 'integer', nullable: true },
           level: { type: 'string' },
           creation_year: { type: 'integer', nullable: true },
-          tag_information: { type: 'string', nullable: true },
-          restart_information: { type: 'string', nullable: true },
           choreography_information: {
             type: 'array',
             items: { $ref: '#/components/schemas/ChoreographyInformation' },
@@ -1665,8 +1663,6 @@ export const openApiSpec = {
           wall_count: { type: 'integer' },
           level: { type: 'string' },
           creation_year: { type: 'integer' },
-          tag_information: { type: 'string' },
-          restart_information: { type: 'string' },
           choreography_information: {
             type: 'array',
             items: {

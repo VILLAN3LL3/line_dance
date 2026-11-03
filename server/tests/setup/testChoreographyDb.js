@@ -60,8 +60,6 @@ CREATE TABLE IF NOT EXISTS choreographies (
   wall_count INTEGER,
   level_id INTEGER NOT NULL,
   creation_year INTEGER,
-  tag_information TEXT,
-  restart_information TEXT,
   song TEXT,
   artist TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

@@ -8,8 +8,6 @@ export interface Choreography {
   wall_count?: number;
   level: string;
   creation_year?: number;
-  tag_information?: string;
-  restart_information?: string;
   choreography_information?: ChoreographyInformation[];
   song?: string;
   artist?: string;
@@ -30,8 +28,6 @@ export interface ChoreographyFormData {
   wall_count?: number;
   level: string;
   creation_year?: number;
-  tag_information?: string;
-  restart_information?: string;
   choreography_information?: ChoreographyInformation[];
   song?: string;
   artist?: string;
