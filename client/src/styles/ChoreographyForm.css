@@ -68,15 +68,25 @@
   gap: 16px;
 }
 
-.choreography-information-row {
+.choreography-information-entry {
+  padding: 14px 0 4px;
+  border-top: 1px solid var(--color-border);
+}
+
+.choreography-information-entry-heading {
   display: grid;
-  grid-template-columns: minmax(150px, 0.8fr) minmax(0, 2fr) 36px;
-  align-items: start;
+  grid-template-columns: minmax(160px, 360px) 36px;
+  align-items: end;
   gap: 12px;
 }
 
-.choreography-information-row textarea {
-  min-height: 72px;
+.choreography-information-entry-heading .form-group,
+.choreography-information-description {
+  margin-bottom: 12px;
+}
+
+.choreography-information-description textarea {
+  min-height: 80px;
 }
 
 .choreography-information-remove {
@@ -84,7 +94,6 @@
   height: 36px;
   min-width: 36px;
   padding: 0;
-  margin-top: 27px;
   display: grid;
   place-items: center;
 }
@@ -189,20 +198,12 @@
     grid-template-columns: 1fr;
   }
 
-  .choreography-information-row {
+  .choreography-information-entry-heading {
     grid-template-columns: minmax(0, 1fr) 36px;
-    gap: 0 12px;
-  }
-
-  .choreography-information-category,
-  .choreography-information-description {
-    grid-column: 1 / -1;
   }
 
   .choreography-information-remove {
-    grid-column: 2;
     justify-self: end;
-    margin-top: 0;
   }
 
   .form-actions {

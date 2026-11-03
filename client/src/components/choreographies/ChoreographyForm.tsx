@@ -360,22 +360,34 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
         <div className="form-section choreography-information-form-section">
           <h3>Choreography Information</h3>
           {(formData.choreography_information || []).map((item, index) => (
-            <div className="choreography-information-row" key={item.id}>
-              <FormField
-                label={`Category ${index + 1}`}
-                htmlFor={`choreography-information-category-${index}`}
-                className="form-group choreography-information-category"
-              >
-                <input
-                  id={`choreography-information-category-${index}`}
-                  list="choreography-information-categories"
-                  value={item.category}
-                  onChange={(event) =>
-                    updateChoreographyInformation(index, "category", event.target.value)
-                  }
-                  placeholder="Choose or enter a category"
-                />
-              </FormField>
+            <div className="choreography-information-entry" key={item.id}>
+              <div className="choreography-information-entry-heading">
+                <FormField
+                  label={`Category ${index + 1}`}
+                  htmlFor={`choreography-information-category-${index}`}
+                  className="form-group choreography-information-category"
+                >
+                  <input
+                    id={`choreography-information-category-${index}`}
+                    list="choreography-information-categories"
+                    value={item.category}
+                    onChange={(event) =>
+                      updateChoreographyInformation(index, "category", event.target.value)
+                    }
+                    placeholder="Choose or enter a category"
+                  />
+                </FormField>
+                <ActionButton
+                  type="button"
+                  variant="secondary"
+                  className="btn-small choreography-information-remove"
+                  aria-label={`Remove information ${index + 1}`}
+                  title={`Remove information ${index + 1}`}
+                  onClick={() => removeChoreographyInformation(index)}
+                >
+                  <Trash2 size={16} aria-hidden="true" />
+                </ActionButton>
+              </div>
               <FormField
                 label={`Description ${index + 1}`}
                 htmlFor={`choreography-information-description-${index}`}
@@ -390,16 +402,6 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
                   placeholder="Describe this choreography detail"
                 />
               </FormField>
-              <ActionButton
-                type="button"
-                variant="secondary"
-                className="btn-small choreography-information-remove"
-                aria-label={`Remove information ${index + 1}`}
-                title={`Remove information ${index + 1}`}
-                onClick={() => removeChoreographyInformation(index)}
-              >
-                <Trash2 size={16} aria-hidden="true" />
-              </ActionButton>
             </div>
           ))}
           <datalist id="choreography-information-categories">
