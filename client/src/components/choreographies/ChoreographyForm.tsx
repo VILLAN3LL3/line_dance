@@ -366,26 +366,28 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
                   htmlFor={`choreography-information-category-${index}`}
                   className="form-group choreography-information-category"
                 >
-                  <input
-                    id={`choreography-information-category-${index}`}
-                    list="choreography-information-categories"
-                    value={item.category}
-                    onChange={(event) =>
-                      updateChoreographyInformation(index, "category", event.target.value)
-                    }
-                    placeholder="Choose or enter a category"
-                  />
+                  <div className="choreography-information-category-control">
+                    <input
+                      id={`choreography-information-category-${index}`}
+                      list="choreography-information-categories"
+                      value={item.category}
+                      onChange={(event) =>
+                        updateChoreographyInformation(index, "category", event.target.value)
+                      }
+                      placeholder="Choose or enter a category"
+                    />
+                    <ActionButton
+                      type="button"
+                      variant="secondary"
+                      className="btn-small choreography-information-remove"
+                      aria-label={`Remove information ${index + 1}`}
+                      title={`Remove information ${index + 1}`}
+                      onClick={() => removeChoreographyInformation(index)}
+                    >
+                      🗑️
+                    </ActionButton>
+                  </div>
                 </FormField>
-                <ActionButton
-                  type="button"
-                  variant="secondary"
-                  className="btn-small choreography-information-remove"
-                  aria-label={`Remove information ${index + 1}`}
-                  title={`Remove information ${index + 1}`}
-                  onClick={() => removeChoreographyInformation(index)}
-                >
-                  🗑️
-                </ActionButton>
               </div>
               <div className="choreography-information-description">
                 <div className="choreography-information-description-heading">

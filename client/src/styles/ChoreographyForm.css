@@ -86,11 +86,22 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 0;
 }
 
 .choreography-information-category {
   margin-bottom: 0;
+}
+
+.choreography-information-category-control {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.choreography-information-category-control input {
+  width: 100%;
 }
 
 .choreography-information-category label,
@@ -238,6 +249,13 @@ button.choreography-information-remove:focus-visible {
   }
 }
 
+@media (max-width: 1100px) {
+  .choreography-information-entry {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .choreography-form {
     padding: 20px;
@@ -247,9 +265,15 @@ button.choreography-information-remove:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .choreography-information-entry {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
+  .choreography-information-category-control {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+  }
+
+  .choreography-information-category-control input {
+    flex: 1;
+    min-width: 0;
   }
 
   .form-actions {
