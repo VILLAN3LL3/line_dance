@@ -70,8 +70,8 @@
 
 .choreography-information-row {
   display: grid;
-  grid-template-columns: minmax(150px, 1fr) minmax(240px, 2fr) auto;
-  align-items: end;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(0, 2fr) 36px;
+  align-items: start;
   gap: 12px;
 }
 
@@ -80,7 +80,13 @@
 }
 
 .choreography-information-remove {
-  margin-bottom: 16px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  margin-top: 27px;
+  display: grid;
+  place-items: center;
 }
 
 .form-group.form-input-row {
@@ -184,12 +190,19 @@
   }
 
   .choreography-information-row {
-    grid-template-columns: 1fr;
-    gap: 0;
+    grid-template-columns: minmax(0, 1fr) 36px;
+    gap: 0 12px;
+  }
+
+  .choreography-information-category,
+  .choreography-information-description {
+    grid-column: 1 / -1;
   }
 
   .choreography-information-remove {
-    justify-self: start;
+    grid-column: 2;
+    justify-self: end;
+    margin-top: 0;
   }
 
   .form-actions {

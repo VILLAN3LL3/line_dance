@@ -1,6 +1,7 @@
 import "../../styles/ChoreographyForm.css";
 
 import React, { useEffect, useState } from "react";
+import { Trash2 } from "lucide-react";
 
 import {
   getAuthors,
@@ -363,7 +364,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
               <FormField
                 label={`Category ${index + 1}`}
                 htmlFor={`choreography-information-category-${index}`}
-                className="form-group"
+                className="form-group choreography-information-category"
               >
                 <input
                   id={`choreography-information-category-${index}`}
@@ -378,7 +379,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
               <FormField
                 label={`Description ${index + 1}`}
                 htmlFor={`choreography-information-description-${index}`}
-                className="form-group"
+                className="form-group choreography-information-description"
               >
                 <textarea
                   id={`choreography-information-description-${index}`}
@@ -394,9 +395,10 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
                 variant="secondary"
                 className="btn-small choreography-information-remove"
                 aria-label={`Remove information ${index + 1}`}
+                title={`Remove information ${index + 1}`}
                 onClick={() => removeChoreographyInformation(index)}
               >
-                Remove
+                <Trash2 size={16} aria-hidden="true" />
               </ActionButton>
             </div>
           ))}
