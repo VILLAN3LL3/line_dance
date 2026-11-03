@@ -71,31 +71,75 @@
 .choreography-information-entry {
   padding: 14px 0 4px;
   border-top: 1px solid var(--color-border);
-}
-
-.choreography-information-entry-heading {
   display: grid;
-  grid-template-columns: minmax(160px, 360px) 36px;
-  align-items: end;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 2fr);
+  align-items: start;
   gap: 12px;
 }
 
-.choreography-information-entry-heading .form-group,
+.choreography-information-entry > .form-group,
 .choreography-information-description {
   margin-bottom: 12px;
 }
 
-.choreography-information-description textarea {
-  min-height: 80px;
+.choreography-information-description-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
-.choreography-information-remove {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  padding: 0;
+.choreography-information-description-heading label {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.choreography-information-description textarea {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  resize: vertical;
+}
+
+.choreography-information-description textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(123, 63, 138, 0.14);
+}
+
+button.choreography-information-remove {
   display: grid;
   place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-danger);
+  box-shadow: none;
+}
+
+button.choreography-information-remove:hover:not(:disabled) {
+  background: #fcebea;
+  color: #ad3529;
+  transform: none;
+  box-shadow: none;
+}
+
+button.choreography-information-remove:focus-visible {
+  outline: 2px solid var(--color-danger);
+  outline-offset: 2px;
 }
 
 .form-group.form-input-row {
@@ -198,12 +242,9 @@
     grid-template-columns: 1fr;
   }
 
-  .choreography-information-entry-heading {
-    grid-template-columns: minmax(0, 1fr) 36px;
-  }
-
-  .choreography-information-remove {
-    justify-self: end;
+  .choreography-information-entry {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
 
   .form-actions {
