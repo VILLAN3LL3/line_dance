@@ -19,7 +19,7 @@ const ChoreographyCreatePage: React.FC = () => {
     setError(null);
     try {
       await createChoreography(formData);
-      navigate("/");
+      await navigate("/");
     } catch (err) {
       setError("Failed to create choreography");
       console.error(err);

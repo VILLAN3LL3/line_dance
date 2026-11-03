@@ -124,7 +124,7 @@ describe("ChoreographyCreatePage", () => {
   });
 
   it("provides six accessible tabs with arrow-key navigation", async () => {
-    render(
+    const { container } = render(
       <MemoryRouter initialEntries={["/choreographies/new"]}>
         <Routes>
           <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
@@ -133,15 +133,29 @@ describe("ChoreographyCreatePage", () => {
     );
 
     await screen.findByRole("option", { name: "Beginner" });
+    expect(container.querySelector(".choreography-form-context")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Choreography Name *"), {
+      target: { value: "River Dance" },
+    });
+    expect(screen.getByRole("heading", { name: "River Dance" })).toBeInTheDocument();
+    expect(container.querySelector(".choreography-form-context .level-badge")).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("Level *"), { target: { value: "Beginner" } });
+    expect(container.querySelector(".choreography-form-context .level-badge")).toHaveTextContent(
+      "Beginner",
+    );
+
     const basicTab = screen.getByRole("tab", { name: "Basic Information" });
     expect(screen.getAllByRole("tab")).toHaveLength(6);
     expect(basicTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("heading", { name: "Basic Information" })).not.toBeInTheDocument();
 
     fireEvent.keyDown(basicTab, { key: "ArrowRight" });
 
     const choreographersTab = screen.getByRole("tab", { name: "Choreographers" });
     expect(choreographersTab).toHaveAttribute("aria-selected", "true");
     expect(choreographersTab).toHaveFocus();
+    expect(screen.queryByRole("heading", { name: "Choreographers" })).not.toBeInTheDocument();
   });
 
   it("marks invalid tabs without changing the selected tab on submit", async () => {
@@ -155,7 +169,10 @@ describe("ChoreographyCreatePage", () => {
 
     await screen.findByRole("option", { name: "Beginner" });
     fireEvent.click(screen.getByRole("tab", { name: "Additional Information" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add Info Field" }));
+    fireEvent.change(screen.getByLabelText("Category 1"), {
+      target: { value: "__create_new_category__" },
+    });
+    fireEvent.change(screen.getByLabelText("New category 1"), { target: { value: "Restart" } });
     fireEvent.click(screen.getByRole("tab", { name: "Hash Tags" }));
     fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
 
@@ -185,13 +202,18 @@ describe("ChoreographyCreatePage", () => {
     });
     fireEvent.change(screen.getByLabelText("Level *"), { target: { value: "Beginner" } });
     fireEvent.click(screen.getByRole("tab", { name: "Additional Information" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add Info Field" }));
-    fireEvent.change(screen.getByLabelText("Category 1"), { target: { value: "Mood" } });
+    expect(screen.getByLabelText("Category 1")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Styling" })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Category 1"), {
+      target: { value: "__create_new_category__" },
+    });
+    fireEvent.change(screen.getByLabelText("New category 1"), { target: { value: "Mood" } });
+    expect(screen.getByLabelText("Category 2")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Description 1"), {
       target: { value: "Keep the movement light" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Add Info Field" }));
     fireEvent.change(screen.getByLabelText("Category 2"), { target: { value: "Restart" } });
+    expect(screen.getByLabelText("Category 3")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Description 2"), {
       target: { value: "Restart after wall 3" },
     });

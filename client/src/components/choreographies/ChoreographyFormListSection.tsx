@@ -4,6 +4,7 @@ import { AutoCompleteInput, FormField, Tag, TagGroup } from "../shared/ui";
 
 interface ChoreographyFormListSectionProps {
   title: string;
+  showTitle?: boolean;
   listId: string;
   inputValue: string;
   options: string[];
@@ -18,6 +19,7 @@ interface ChoreographyFormListSectionProps {
 
 export const ChoreographyFormListSection: React.FC<ChoreographyFormListSectionProps> = ({
   title,
+  showTitle = true,
   listId,
   inputValue,
   options,
@@ -30,7 +32,7 @@ export const ChoreographyFormListSection: React.FC<ChoreographyFormListSectionPr
   onRemove,
 }) => (
   <div className="form-section">
-    <h3>{title}</h3>
+    {showTitle && <h3>{title}</h3>}
     <FormField className="form-group form-input-row">
       <AutoCompleteInput
         listId={listId}

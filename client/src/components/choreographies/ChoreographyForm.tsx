@@ -9,11 +9,16 @@ import {
   getStepFigures,
   getTags,
 } from "../../api";
-import { ChoreographyFormData } from "../../types";
-import { ActionButton, ActionGroup, FormField } from "../shared/ui";
-import { ChoreographyFormBasicSection } from "./ChoreographyFormBasicSection";
-import { ChoreographyFormLinksSection } from "./ChoreographyFormLinksSection";
-import { ChoreographyFormListSection } from "./ChoreographyFormListSection";
+import { ChoreographyFormData, ChoreographyInformation } from "../../types";
+import { ActionButton, ActionGroup, LevelBatch } from "../shared/ui";
+import {
+  AdditionalInformationTab,
+  BasicInformationTab,
+  ChoreographersTab,
+  HashTagsTab,
+  LinksTab,
+  StepFiguresTab,
+} from "./ChoreographyFormTabs";
 
 const FORM_TABS = [
   { id: "basic-information", label: "Basic Information" },
@@ -37,6 +42,18 @@ function hasInvalidUrl(value?: string): boolean {
   }
 }
 
+function createEmptyChoreographyInformation(): ChoreographyInformation {
+  return { id: crypto.randomUUID(), category: "", description: "" };
+}
+
+function ensureEmptyChoreographyInformationRow(information: ChoreographyInformation[]) {
+  const lastItem = information[information.length - 1];
+  if (!lastItem || lastItem.category.trim() || lastItem.description.trim()) {
+    information.push(createEmptyChoreographyInformation());
+  }
+  return information;
+}
+
 interface ChoreographyFormProps {
   initialData?: ChoreographyFormData;
   onSubmit: (data: ChoreographyFormData) => Promise<void>;
@@ -54,10 +71,12 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     initialData
       ? {
           ...initialData,
-          choreography_information: (initialData.choreography_information || []).map((item) => ({
-            ...item,
-            id: item.id ?? crypto.randomUUID(),
-          })),
+          choreography_information: ensureEmptyChoreographyInformationRow(
+            (initialData.choreography_information || []).map((item) => ({
+              ...item,
+              id: item.id ?? crypto.randomUUID(),
+            })),
+          ),
         }
       : {
           name: "",
@@ -65,7 +84,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           authors: [],
           tags: [],
           step_figures: [],
-          choreography_information: [],
+          choreography_information: [createEmptyChoreographyInformation()],
         },
   );
   const [activeTab, setActiveTab] = useState<FormTabId>("basic-information");
@@ -78,7 +97,10 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const [authorsFromDb, setAuthorsFromDb] = useState<string[]>([]);
   const [tagsFromDb, setTagsFromDb] = useState<string[]>([]);
   const [figuresFromDb, setFiguresFromDb] = useState<string[]>([]);
-  const [informationCategories, setInformationCategories] = useState<string[]>([]);
+  const [informationCategories, setInformationCategories] = useState<string[]>(() =>
+    (initialData?.choreography_information || []).map((item) => item.category),
+  );
+  const [customCategoryRowIds, setCustomCategoryRowIds] = useState<Set<string>>(() => new Set());
 
   const tabValidationErrors: Record<FormTabId, boolean> = {
     "basic-information": !formData.name.trim() || !formData.level.trim(),
@@ -87,9 +109,11 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
       hasInvalidUrl,
     ),
     "step-figures": false,
-    "additional-information": (formData.choreography_information || []).some(
-      (item) => !item.category.trim() || !item.description.trim(),
-    ),
+    "additional-information": (formData.choreography_information || []).some((item) => {
+      const hasCategory = Boolean(item.category.trim());
+      const hasDescription = Boolean(item.description.trim());
+      return hasCategory !== hasDescription;
+    }),
     "hash-tags": false,
   };
 
@@ -220,27 +244,44 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   ) => {
     setFormData((previous) => ({
       ...previous,
-      choreography_information: (previous.choreography_information || []).map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item,
-      ),
+      choreography_information: (() => {
+        const information = (previous.choreography_information || []).map((item, itemIndex) =>
+          itemIndex === index ? { ...item, [field]: value } : item,
+        );
+        const lastItem = information[information.length - 1];
+        if (
+          index === information.length - 1 &&
+          lastItem &&
+          (lastItem.category.trim() || lastItem.description.trim())
+        ) {
+          information.push(createEmptyChoreographyInformation());
+        }
+        return information;
+      })(),
     }));
   };
 
-  const addChoreographyInformation = () => {
-    setFormData((previous) => ({
-      ...previous,
-      choreography_information: [
-        ...(previous.choreography_information || []),
-        { id: crypto.randomUUID(), category: "", description: "" },
-      ],
-    }));
+  const setCustomCategoryMode = (rowId: string, isCustom: boolean) => {
+    setCustomCategoryRowIds((previous) => {
+      if (previous.has(rowId) === isCustom) return previous;
+
+      const next = new Set(previous);
+      if (isCustom) {
+        next.add(rowId);
+      } else {
+        next.delete(rowId);
+      }
+      return next;
+    });
   };
 
   const removeChoreographyInformation = (indexToRemove: number) => {
+    const rowId = String(formData.choreography_information?.[indexToRemove]?.id ?? indexToRemove);
+    setCustomCategoryMode(rowId, false);
     setFormData((previous) => ({
       ...previous,
-      choreography_information: (previous.choreography_information || []).filter(
-        (_, index) => index !== indexToRemove,
+      choreography_information: ensureEmptyChoreographyInformationRow(
+        (previous.choreography_information || []).filter((_, index) => index !== indexToRemove),
       ),
     }));
   };
@@ -336,9 +377,9 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     try {
       await onSubmit({
         ...formData,
-        choreography_information: (formData.choreography_information || []).map(
-          ({ category, description }) => ({ category, description }),
-        ),
+        choreography_information: (formData.choreography_information || [])
+          .filter((item) => item.category.trim() && item.description.trim())
+          .map(({ category, description }) => ({ category, description })),
       });
     } catch (error) {
       console.error("Form submission error:", error);
@@ -377,6 +418,12 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
       onSubmit={handleSubmit}
       onInvalidCapture={() => setHasAttemptedSubmit(true)}
     >
+      {(formData.name.trim() || formData.level.trim()) && (
+        <div className="choreography-form-context">
+          {formData.name.trim() && <h3>{formData.name}</h3>}
+          {formData.level.trim() && <LevelBatch level={formData.level} />}
+        </div>
+      )}
       <div
         className="choreography-form-tabs"
         role="tablist"
@@ -418,145 +465,59 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
         tabIndex={0}
       >
         {activeTab === "basic-information" && (
-          <div className="form-section">
-            <h3>Basic Information</h3>
-            <ChoreographyFormBasicSection
-              name={formData.name}
-              level={formData.level}
-              count={formData.count}
-              wall_count={formData.wall_count}
-              creation_year={formData.creation_year}
-              song={formData.song}
-              artist={formData.artist}
-              levels={levels}
-              onChange={handleChange}
-            />
-          </div>
+          <BasicInformationTab formData={formData} levels={levels} onChange={handleChange} />
         )}
 
         {activeTab === "choreographers" && (
-          <ChoreographyFormListSection
-            title="Choreographers"
-            listId="authors-list"
+          <ChoreographersTab
             inputValue={currentAuthor}
             options={authorsFromDb}
             selectedValues={formData.authors}
-            placeholder="Choreographer name"
-            addButtonLabel="Add Choreographer"
             onInputChange={handleAuthorChange}
             onInputBlur={handleAuthorBlur}
-            onAdd={() => addAuthor()}
+            onAdd={addAuthor}
             onRemove={removeAuthor}
           />
         )}
 
-        {activeTab === "links" && (
-          <div className="form-section">
-            <h3>Links</h3>
-            <ChoreographyFormLinksSection
-              step_sheet_link={formData.step_sheet_link}
-              demo_video_url={formData.demo_video_url}
-              tutorial_video_url={formData.tutorial_video_url}
-              onChange={handleChange}
-            />
-          </div>
-        )}
+        {activeTab === "links" && <LinksTab formData={formData} onChange={handleChange} />}
 
         {activeTab === "step-figures" && (
-          <ChoreographyFormListSection
-            title="Step Figures"
-            listId="figures-list"
+          <StepFiguresTab
             inputValue={currentFigure}
             options={figuresFromDb}
             selectedValues={formData.step_figures}
-            placeholder="Step figure name (e.g., Vine, Shuffle, Grapevine)"
-            addButtonLabel="Add Figure"
             onInputChange={handleFigureChange}
             onInputBlur={handleFigureBlur}
-            onAdd={() => addFigure()}
+            onAdd={addFigure}
             onRemove={removeFigure}
           />
         )}
 
         {activeTab === "additional-information" && (
-          <div className="form-section choreography-information-form-section">
-            <h3>Additional Information</h3>
-            {(formData.choreography_information || []).map((item, index) => (
-              <div className="choreography-information-entry" key={item.id}>
-                <div className="choreography-information-category-column">
-                  <FormField
-                    label={`Category ${index + 1}`}
-                    htmlFor={`choreography-information-category-${index}`}
-                    className="form-group choreography-information-category"
-                  >
-                    <div className="choreography-information-category-control">
-                      <input
-                        id={`choreography-information-category-${index}`}
-                        list="choreography-information-categories"
-                        value={item.category}
-                        onChange={(event) =>
-                          updateChoreographyInformation(index, "category", event.target.value)
-                        }
-                        placeholder="Choose or enter a category"
-                      />
-                      <ActionButton
-                        type="button"
-                        variant="secondary"
-                        className="btn-small choreography-information-remove"
-                        aria-label={`Remove information ${index + 1}`}
-                        title={`Remove information ${index + 1}`}
-                        onClick={() => removeChoreographyInformation(index)}
-                      >
-                        🗑️
-                      </ActionButton>
-                    </div>
-                  </FormField>
-                </div>
-                <div className="choreography-information-description">
-                  <div className="choreography-information-description-heading">
-                    <label htmlFor={`choreography-information-description-${index}`}>
-                      Description {index + 1}
-                    </label>
-                  </div>
-                  <textarea
-                    id={`choreography-information-description-${index}`}
-                    value={item.description}
-                    onChange={(event) =>
-                      updateChoreographyInformation(index, "description", event.target.value)
-                    }
-                    placeholder="Describe this choreography detail"
-                  />
-                </div>
-              </div>
-            ))}
-            <datalist id="choreography-information-categories">
-              {informationCategories.map((category) => (
-                <option key={category} value={category} />
-              ))}
-            </datalist>
-            <ActionButton
-              type="button"
-              variant="secondary"
-              className="btn-small"
-              onClick={addChoreographyInformation}
-            >
-              Add Info Field
-            </ActionButton>
-          </div>
+          <AdditionalInformationTab
+            information={formData.choreography_information || []}
+            categories={informationCategories}
+            customCategoryRowIds={customCategoryRowIds}
+            onCategoryChange={(index, value) =>
+              updateChoreographyInformation(index, "category", value)
+            }
+            onDescriptionChange={(index, value) =>
+              updateChoreographyInformation(index, "description", value)
+            }
+            onCustomCategoryModeChange={setCustomCategoryMode}
+            onRemove={removeChoreographyInformation}
+          />
         )}
 
         {activeTab === "hash-tags" && (
-          <ChoreographyFormListSection
-            title="Hash Tags"
-            listId="tags-list"
+          <HashTagsTab
             inputValue={currentTag}
             options={tagsFromDb}
             selectedValues={formData.tags}
-            placeholder="Tag (e.g., Country, Western, Urban)"
-            addButtonLabel="Add Tag"
             onInputChange={handleTagChange}
             onInputBlur={handleTagBlur}
-            onAdd={() => addTag()}
+            onAdd={addTag}
             onRemove={removeTag}
           />
         )}

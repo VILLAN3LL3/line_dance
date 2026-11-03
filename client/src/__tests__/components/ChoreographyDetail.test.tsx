@@ -4,17 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import {
-  checkChoreographyDuplicates,
-  fetchChoreography,
-  getAuthors,
-  getChoreographyInfoCategories,
-  getLevels,
-  getStepFigures,
-  getTags,
-  updateChoreography,
+  checkChoreographyDuplicates, fetchChoreography, getAuthors, getChoreographyInfoCategories, getLevels, getStepFigures, getTags,
+  updateChoreography
 } from "../../api";
-import { GlobalApiErrorNotice } from "../../components/shared/GlobalApiErrorNotice";
 import ChoreographyDetail from "../../components/choreographies/ChoreographyDetail";
+import { GlobalApiErrorNotice } from "../../components/shared/GlobalApiErrorNotice";
 import { reportGlobalApiError } from "../../utils/apiErrors";
 
 const mockNavigate = vi.fn();

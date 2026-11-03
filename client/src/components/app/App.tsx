@@ -4,8 +4,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { deleteChoreography, searchChoreographies, updateChoreography } from "../../api";
-import { getChoreographyUpdateErrorMessage } from "../../utils/apiErrors";
 import { Choreography, ChoreographyFormData, SearchFilters } from "../../types";
+import { getChoreographyUpdateErrorMessage } from "../../utils/apiErrors";
 import { confirmAction, ErrorMessage } from "../shared/ui";
 import { AppDetailView } from "./AppDetailView";
 import { AppFormView } from "./AppFormView";

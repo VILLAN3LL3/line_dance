@@ -1,24 +1,11 @@
 import axios from "axios";
-import { reportGlobalApiError } from "./utils/apiErrors";
 
 import {
-  Choreography,
-  ChoreographyFormData,
-  DanceCourse,
-  DanceGroup,
-  DuplicateChoreography,
-  LearnedChoreography,
-  LevelOption,
-  PaginatedResponse,
-  SavedFilterConfiguration,
-  SearchFilters,
-  Session,
-  SessionChoreography,
-  SessionStepFigureSuggestionsResult,
-  StepFigureDefinition,
-  StepFigureOption,
-  StepFigureSuggestion,
+  Choreography, ChoreographyFormData, DanceCourse, DanceGroup, DuplicateChoreography, LearnedChoreography, LevelOption, PaginatedResponse,
+  SavedFilterConfiguration, SearchFilters, Session, SessionChoreography, SessionStepFigureSuggestionsResult, StepFigureDefinition,
+  StepFigureOption, StepFigureSuggestion
 } from "./types";
+import { reportGlobalApiError } from "./utils/apiErrors";
 
 import type { Trainer } from "./types";
 
