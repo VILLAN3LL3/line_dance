@@ -384,7 +384,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
                   <ActionButton
                     type="button"
                     variant="delete"
-                    className="choreography-information-remove"
+                    className="btn-small choreography-information-remove"
                     aria-label={`Remove information ${index + 1}`}
                     title={`Remove information ${index + 1}`}
                     onClick={() => removeChoreographyInformation(index)}

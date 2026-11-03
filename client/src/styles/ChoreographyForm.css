@@ -82,12 +82,21 @@
   margin-bottom: 12px;
 }
 
+.choreography-information-category label,
+.choreography-information-description-heading label {
+  display: block;
+  height: 32px;
+  margin-bottom: 0;
+  line-height: 21px;
+}
+
 .choreography-information-description-heading {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 6px;
+  height: 32px;
+  margin-bottom: 0;
 }
 
 .choreography-information-description-heading label {
@@ -123,18 +132,6 @@ button.choreography-information-remove {
   height: 32px;
   min-width: 32px;
   padding: 0;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-danger);
-  box-shadow: none;
-}
-
-button.choreography-information-remove:hover:not(:disabled) {
-  background: #fcebea;
-  color: #ad3529;
-  transform: none;
-  box-shadow: none;
 }
 
 button.choreography-information-remove:focus-visible {
