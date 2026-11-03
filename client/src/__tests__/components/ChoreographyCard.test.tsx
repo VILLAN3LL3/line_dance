@@ -112,8 +112,8 @@ describe("ChoreographyCard", () => {
     expect(screen.getByText(/Count\/Wall:/)).toBeInTheDocument();
     expect(screen.getByText(/Choreographers:/)).toBeInTheDocument();
     expect(screen.getByText(/Tags:/)).toBeInTheDocument();
-    expect(screen.getByText("Restart")).toBeInTheDocument();
-    expect(screen.getByText("Tag")).toBeInTheDocument();
+    expect(screen.getByText("Restart 🔁")).toBeInTheDocument();
+    expect(screen.getByText("Tag 🌉")).toBeInTheDocument();
     expect(screen.queryByText("Restart Information")).not.toBeInTheDocument();
     expect(screen.queryByText("Tag Information")).not.toBeInTheDocument();
 
@@ -149,13 +149,13 @@ describe("ChoreographyCard", () => {
       />,
     );
 
-    expect(screen.getByText("Restart")).toBeInTheDocument();
-    expect(screen.getByText("Tag")).toBeInTheDocument();
-    expect(screen.getByText("Ending")).toBeInTheDocument();
-    expect(screen.getByText("Intro")).toBeInTheDocument();
-    expect(screen.getByText("Sequence")).toBeInTheDocument();
-    expect(screen.getByText("Styling")).toBeInTheDocument();
-    expect(screen.getByText("Freestyle")).toBeInTheDocument();
+    expect(screen.getByText("Restart 🔁")).toBeInTheDocument();
+    expect(screen.getByText("Tag 🌉")).toBeInTheDocument();
+    expect(screen.getByText("Ending 🏁")).toBeInTheDocument();
+    expect(screen.getByText("Intro 🎬")).toBeInTheDocument();
+    expect(screen.getByText("Sequence 🔢")).toBeInTheDocument();
+    expect(screen.getByText("Styling ✨")).toBeInTheDocument();
+    expect(screen.getByText("Freestyle ℹ️")).toBeInTheDocument();
     expect(screen.queryByText("No step figures")).not.toBeInTheDocument();
     expect(screen.queryByText("Restart Information")).not.toBeInTheDocument();
     expect(screen.queryByText("Tag Information")).not.toBeInTheDocument();

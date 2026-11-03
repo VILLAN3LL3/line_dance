@@ -1,16 +1,6 @@
 import "../../styles/ChoreographyCard.css";
 
 import React, { useLayoutEffect, useRef, useState } from "react";
-import {
-  Flag,
-  Info,
-  ListOrdered,
-  Play,
-  Repeat2,
-  Sparkles,
-  Tag as TagIcon,
-  type LucideIcon,
-} from "lucide-react";
 
 import { deleteChoreographyRating, getCountryCodes, setChoreographyRating } from "../../api";
 import { Choreography, ChoreographyInformation } from "../../types";
@@ -75,14 +65,18 @@ const InfoSection: React.FC<{ information: ChoreographyInformation }> = ({ infor
   </div>
 );
 
-const INFORMATION_CATEGORY_ICONS: Record<string, LucideIcon> = {
-  restart: Repeat2,
-  tag: TagIcon,
-  ending: Flag,
-  intro: Play,
-  sequence: ListOrdered,
-  styling: Sparkles,
+const INFORMATION_CATEGORY_ICONS: Record<string, string> = {
+  restart: "🔁",
+  tag: "🌉",
+  ending: "🏁",
+  intro: "🎬",
+  sequence: "🔢",
+  styling: "✨",
 };
+
+function getInformationCategoryIcon(category: string): string {
+  return INFORMATION_CATEGORY_ICONS[category.toLowerCase()] || "ℹ️";
+}
 
 const ChoreographerNames: React.FC<{ authors: string[] }> = ({ authors }) => {
   const textRef = useRef<HTMLDivElement>(null);
@@ -197,21 +191,14 @@ const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = ({
                 <Tag key={figure} value={figure} className="tag-small" />
               ))}
               {showStepFigureBadges &&
-                informationCategories.map((category) =>
-                  (() => {
-                    const Icon = INFORMATION_CATEGORY_ICONS[category.toLowerCase()] || Info;
-                    return (
-                      <span
-                        key={category}
-                        className="tag-small choreography-info-badge"
-                        title={`Has ${category} information`}
-                      >
-                        <Icon size={14} aria-hidden="true" />
-                        <span>{category}</span>
-                      </span>
-                    );
-                  })(),
-                )}
+                informationCategories.map((category) => (
+                  <Tag
+                    key={category}
+                    value={`${category} ${getInformationCategoryIcon(category)}`}
+                    className="tag-small"
+                    title={`Has ${category} information`}
+                  />
+                ))}
             </TagGroup>
           ) : (
             <span>No step figures</span>

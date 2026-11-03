@@ -17,12 +17,6 @@
   font: inherit;
 }
 
-.tag-small.choreography-info-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
 .choreography-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
