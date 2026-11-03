@@ -89,6 +89,10 @@
   gap: 8px;
 }
 
+.choreography-information-category {
+  margin-bottom: 0;
+}
+
 .choreography-information-category label,
 .choreography-information-description-heading label {
   display: block;
