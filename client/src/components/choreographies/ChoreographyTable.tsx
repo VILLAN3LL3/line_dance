@@ -260,7 +260,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                         e.stopPropagation();
                         onDelete?.(choreo.id);
                       }}
-                      variant="delete"
+                      variant="secondary"
                       className="btn-small"
                       disabled={isLoading}
                       title="Delete"

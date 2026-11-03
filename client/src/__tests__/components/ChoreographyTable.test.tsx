@@ -128,7 +128,10 @@ describe("ChoreographyTable", () => {
     });
 
     fireEvent.click(screen.getAllByTitle("Edit")[0]);
-    fireEvent.click(screen.getAllByTitle("Delete")[0]);
+    const deleteButton = screen.getAllByTitle("Delete")[0];
+    expect(deleteButton).toHaveClass("btn-secondary", "btn-small");
+    expect(deleteButton).not.toHaveClass("btn-delete");
+    fireEvent.click(deleteButton);
 
     expect(onEdit).toHaveBeenCalledWith(11);
     expect(onDelete).toHaveBeenCalledWith(11);
