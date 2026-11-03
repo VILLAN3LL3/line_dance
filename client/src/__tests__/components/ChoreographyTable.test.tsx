@@ -48,6 +48,35 @@ describe("ChoreographyTable", () => {
     expect(screen.getByTitle("Cha Cha")).toBeInTheDocument();
   });
 
+  it("renders dynamic information category columns with every description", async () => {
+    render(
+      <ChoreographyTable
+        choreographies={[
+          makeChoreo({
+            choreography_information: [
+              { category: "Restart", description: "Restart after wall 2" },
+              { category: "Custom", description: "Face the front wall" },
+              { category: "Custom", description: "Clap on count 8" },
+            ],
+          }),
+          makeChoreo({
+            id: 2,
+            name: "Beta Dance",
+            choreography_information: [{ category: "Ending", description: "Hold the pose" }],
+          }),
+        ]}
+      />,
+    );
+
+    expect(await screen.findByRole("columnheader", { name: "Restart" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Custom" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Ending" })).toBeInTheDocument();
+    expect(screen.getByText("Restart after wall 2")).toBeInTheDocument();
+    expect(screen.getByText("Face the front wall")).toBeInTheDocument();
+    expect(screen.getByText("Clap on count 8")).toBeInTheDocument();
+    expect(screen.getByText("Hold the pose")).toBeInTheDocument();
+  });
+
   it("calls onSelect when row is clicked", async () => {
     const onSelect = vi.fn();
     render(<ChoreographyTable choreographies={[makeChoreo({ id: 10 })]} onSelect={onSelect} />);

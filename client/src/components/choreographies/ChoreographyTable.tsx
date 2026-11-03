@@ -14,7 +14,8 @@ interface ChoreographyTableProps {
   isLoading?: boolean;
 }
 
-type SortField = "name" | "level" | "count" | "wall_count" | "creation_year" | "restart" | "tag";
+type SortField =
+  "name" | "level" | "count" | "wall_count" | "creation_year" | `information:${string}`;
 type SortDirection = "asc" | "desc";
 
 const getSortIndicator = (
@@ -51,6 +52,19 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
   const [allStepFigures, setAllStepFigures] = useState<string[]>([]);
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const allInformationCategories = useMemo(
+    () =>
+      [
+        ...new Set(
+          choreographies.flatMap((choreography) =>
+            (choreography.choreography_information || []).map(
+              (information) => information.category,
+            ),
+          ),
+        ),
+      ].sort((left, right) => left.localeCompare(right)),
+    [choreographies],
+  );
 
   // Fetch all step figures on mount
   useEffect(() => {
@@ -92,21 +106,17 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
           return compareOptionalNumber(a.wall_count, b.wall_count) * multiplier;
         case "creation_year":
           return compareOptionalNumber(a.creation_year, b.creation_year) * multiplier;
-        case "restart": {
-          const aValue = (a.choreography_information || []).some(
-            (item) => item.category === "Restart",
-          );
-          const bValue = (b.choreography_information || []).some(
-            (item) => item.category === "Restart",
-          );
-          return compareBooleanFlag(aValue, bValue) * multiplier;
-        }
-        case "tag": {
-          const aValue = (a.choreography_information || []).some((item) => item.category === "Tag");
-          const bValue = (b.choreography_information || []).some((item) => item.category === "Tag");
-          return compareBooleanFlag(aValue, bValue) * multiplier;
-        }
         default:
+          if (sortField.startsWith("information:")) {
+            const category = sortField.slice("information:".length);
+            const aValue = (a.choreography_information || []).some(
+              (item) => item.category === category,
+            );
+            const bValue = (b.choreography_information || []).some(
+              (item) => item.category === category,
+            );
+            return compareBooleanFlag(aValue, bValue) * multiplier;
+          }
           return 0;
       }
     });
@@ -135,12 +145,19 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
               <th className="sortable" onClick={() => toggleSort("creation_year")}>
                 Year{getSortIndicator(sortField, "creation_year", sortDirection)}
               </th>
-              <th className="figure-column sortable" onClick={() => toggleSort("restart")}>
-                Restart{getSortIndicator(sortField, "restart", sortDirection)}
-              </th>
-              <th className="figure-column sortable" onClick={() => toggleSort("tag")}>
-                Tag{getSortIndicator(sortField, "tag", sortDirection)}
-              </th>
+              {allInformationCategories.map((category) => {
+                const field: SortField = `information:${category}`;
+                return (
+                  <th
+                    key={category}
+                    className="information-column sortable"
+                    onClick={() => toggleSort(field)}
+                  >
+                    {category}
+                    {getSortIndicator(sortField, field, sortDirection)}
+                  </th>
+                );
+              })}
               {allStepFigures.map((figure) => (
                 <th key={figure} className="figure-column" title={figure}>
                   {figure}
@@ -166,18 +183,23 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                   <td>{choreo.count || "-"}</td>
                   <td>{choreo.wall_count || "-"}</td>
                   <td>{choreo.creation_year || "-"}</td>
-                  <td className="figure-cell">
-                    {(choreo.choreography_information || []).some(
-                      (item) => item.category === "Restart",
-                    )
-                      ? "✅"
-                      : ""}
-                  </td>
-                  <td className="figure-cell">
-                    {(choreo.choreography_information || []).some((item) => item.category === "Tag")
-                      ? "✅"
-                      : ""}
-                  </td>
+                  {allInformationCategories.map((category) => {
+                    const descriptions = (choreo.choreography_information || [])
+                      .filter((information) => information.category === category)
+                      .map((information) => information.description);
+
+                    return (
+                      <td key={`${choreo.id}-information-${category}`} className="information-cell">
+                        {descriptions.length > 0 && (
+                          <div className="choreography-info-values">
+                            {descriptions.map((description, index) => (
+                              <span key={`${index}-${description}`}>{description}</span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
                   {allStepFigures.map((figure) => (
                     <td key={`${choreo.id}-${figure}`} className="figure-cell">
                       {choreo.step_figures.includes(figure) ? "✅" : ""}
