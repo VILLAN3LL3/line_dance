@@ -69,9 +69,9 @@ const INFORMATION_CATEGORY_ICONS: Record<string, string> = {
   restart: "🔁",
   tag: "🌉",
   ending: "🏁",
-  intro: "🎬",
-  sequence: "🔢",
-  styling: "✨",
+  intro: "➡️",
+  sequence: "🆎",
+  styling: "💅",
 };
 
 function getInformationCategoryIcon(category: string): string {

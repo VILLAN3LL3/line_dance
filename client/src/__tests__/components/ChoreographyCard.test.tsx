@@ -152,9 +152,9 @@ describe("ChoreographyCard", () => {
     expect(screen.getByText("Restart 🔁")).toBeInTheDocument();
     expect(screen.getByText("Tag 🌉")).toBeInTheDocument();
     expect(screen.getByText("Ending 🏁")).toBeInTheDocument();
-    expect(screen.getByText("Intro 🎬")).toBeInTheDocument();
-    expect(screen.getByText("Sequence 🔢")).toBeInTheDocument();
-    expect(screen.getByText("Styling ✨")).toBeInTheDocument();
+    expect(screen.getByText("Intro ➡️")).toBeInTheDocument();
+    expect(screen.getByText("Sequence 🆎")).toBeInTheDocument();
+    expect(screen.getByText("Styling 💅")).toBeInTheDocument();
     expect(screen.getByText("Freestyle ℹ️")).toBeInTheDocument();
     expect(screen.queryByText("No step figures")).not.toBeInTheDocument();
     expect(screen.queryByText("Restart Information")).not.toBeInTheDocument();
