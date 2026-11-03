@@ -4,14 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import {
-  checkChoreographyDuplicates,
-  fetchChoreography,
-  getAuthors,
-  getChoreographyInfoCategories,
-  getLevels,
-  getStepFigures,
-  getTags,
-  updateChoreography,
+  checkChoreographyDuplicates, fetchChoreography, getAuthors, getChoreographyInfoCategories, getLevels, getStepFigures, getTags,
+  updateChoreography
 } from "../../api";
 import ChoreographyDetail from "../../components/choreographies/ChoreographyDetail";
 import { GlobalApiErrorNotice } from "../../components/shared/GlobalApiErrorNotice";

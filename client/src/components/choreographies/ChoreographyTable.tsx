@@ -150,7 +150,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                 return (
                   <th
                     key={category}
-                    className="information-column sortable"
+                    className="figure-column sortable"
                     onClick={() => toggleSort(field)}
                   >
                     {category}
@@ -184,19 +184,17 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                   <td>{choreo.wall_count || "-"}</td>
                   <td>{choreo.creation_year || "-"}</td>
                   {allInformationCategories.map((category) => {
-                    const descriptions = (choreo.choreography_information || [])
-                      .filter((information) => information.category === category)
-                      .map((information) => information.description);
+                    const hasInformation = (choreo.choreography_information || []).some(
+                      (information) => information.category === category,
+                    );
 
                     return (
-                      <td key={`${choreo.id}-information-${category}`} className="information-cell">
-                        {descriptions.length > 0 && (
-                          <div className="choreography-info-values">
-                            {descriptions.map((description, index) => (
-                              <span key={`${index}-${description}`}>{description}</span>
-                            ))}
-                          </div>
-                        )}
+                      <td
+                        key={`${choreo.id}-information-${category}`}
+                        className="figure-cell"
+                        title={hasInformation ? `${category} information available` : undefined}
+                      >
+                        {hasInformation ? "✅" : ""}
                       </td>
                     );
                   })}

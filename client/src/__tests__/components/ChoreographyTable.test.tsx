@@ -48,8 +48,8 @@ describe("ChoreographyTable", () => {
     expect(screen.getByTitle("Cha Cha")).toBeInTheDocument();
   });
 
-  it("renders dynamic information category columns with every description", async () => {
-    render(
+  it("renders dynamic information category columns with checks only when a category exists", async () => {
+    const { container } = render(
       <ChoreographyTable
         choreographies={[
           makeChoreo({
@@ -71,10 +71,30 @@ describe("ChoreographyTable", () => {
     expect(await screen.findByRole("columnheader", { name: "Restart" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Custom" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Ending" })).toBeInTheDocument();
-    expect(screen.getByText("Restart after wall 2")).toBeInTheDocument();
-    expect(screen.getByText("Face the front wall")).toBeInTheDocument();
-    expect(screen.getByText("Clap on count 8")).toBeInTheDocument();
-    expect(screen.getByText("Hold the pose")).toBeInTheDocument();
+
+    const headers = Array.from(container.querySelectorAll("thead th"));
+    const customCategoryIndex = headers.findIndex((header) =>
+      header.textContent?.includes("Custom"),
+    );
+    const restartCategoryIndex = headers.findIndex((header) =>
+      header.textContent?.includes("Restart"),
+    );
+    const endingCategoryIndex = headers.findIndex((header) =>
+      header.textContent?.includes("Ending"),
+    );
+    const choreographyRows = Array.from(container.querySelectorAll("tbody tr"));
+    const alphaCells = Array.from(choreographyRows[0].children);
+    const betaCells = Array.from(choreographyRows[1].children);
+
+    expect(alphaCells[customCategoryIndex]).toHaveTextContent("✅");
+    expect(alphaCells[restartCategoryIndex]).toHaveTextContent("✅");
+    expect(betaCells[customCategoryIndex]).toBeEmptyDOMElement();
+    expect(betaCells[endingCategoryIndex]).toHaveTextContent("✅");
+    expect(alphaCells[customCategoryIndex]).toHaveAttribute(
+      "title",
+      "Custom information available",
+    );
+    expect(screen.queryByText("Restart after wall 2")).not.toBeInTheDocument();
   });
 
   it("calls onSelect when row is clicked", async () => {

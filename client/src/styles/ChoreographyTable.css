@@ -103,12 +103,6 @@
   white-space: nowrap;
 }
 
-.choreography-table th.information-column {
-  min-width: 150px;
-  max-width: 220px;
-  white-space: normal;
-}
-
 .choreography-table tbody tr {
   border-bottom: 1px solid #ebe7f0;
   cursor: pointer;
@@ -130,21 +124,6 @@
   font-size: 14px;
   width: 30px;
   max-width: 30px;
-}
-
-.choreography-table td.information-cell {
-  min-width: 150px;
-  max-width: 260px;
-  vertical-align: top;
-}
-
-.choreography-info-values {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-height: 84px;
-  overflow: auto;
-  overflow-wrap: anywhere;
 }
 
 .name-cell {
