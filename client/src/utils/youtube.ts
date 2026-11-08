@@ -76,7 +76,7 @@ export function getYouTubeVideoEmbedUrl(rawUrl?: string): string | null {
     return null;
   }
 
-  return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?rel=0`;
+  return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
 }
 
 export function getYouTubePlaylistPageUrl(rawUrl?: string): string | null {

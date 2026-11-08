@@ -8,13 +8,14 @@ interface YouTubeVideoProps {
 export const YouTubeVideo: React.FC<YouTubeVideoProps> = ({ src, title }) => (
   <div className="video-embed-wrapper">
     <iframe
+      width="560"
+      height="315"
       src={src}
       title={title}
-      loading="lazy"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-      referrerPolicy="no-referrer"
+      frameBorder="0"
+      allow="autoplay; encrypted-media"
       allowFullScreen
-      sandbox="allow-same-origin allow-scripts allow-popups allow-presentation"
     />
   </div>
 );
+
