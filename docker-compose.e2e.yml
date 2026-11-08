@@ -5,6 +5,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+    container_name: line_dance_server
     ports:
       - "3001:3001"
     environment:
@@ -18,12 +19,13 @@ services:
       interval: 5s
       timeout: 10s
       retries: 10
-      start_period: 10s
+      start_period: 15s
 
   client:
     build:
       context: ./client
       dockerfile: Dockerfile.e2e
+    container_name: line_dance_client
     ports:
       - "3000:3000"
     depends_on:
@@ -40,6 +42,7 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile.e2e
+    container_name: line_dance_e2e
     working_dir: /app
     command: npx playwright test --reporter=html,junit
     depends_on:
@@ -48,11 +51,11 @@ services:
       client:
         condition: service_started
     environment:
-      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "0"
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "false"
       DOCKER_ENV: "1"
+      CI: "true"
       VITE_API_URL: http://server:3001/api
+      PLAYWRIGHT_TIMEOUT: "60000"
     volumes:
       - ./client:/app
       - ./client/playwright-results:/app/playwright-results
-    ports:
-      - "3000"

@@ -19,29 +19,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker
+      - name: Verify Docker installation
         run: |
+          echo "Docker version:"
           docker --version
-          docker-compose --version
+          echo "Docker Compose version:"
+          docker compose version
 
       - name: Build Docker images
-        run: docker-compose -f docker-compose.e2e.yml build
+        run: docker compose -f docker-compose.e2e.yml build --no-cache
 
       - name: Start services
         run: |
-          docker-compose -f docker-compose.e2e.yml up -d server client
+          docker compose -f docker-compose.e2e.yml up -d server client
           echo "Waiting for server to be healthy..."
-          for i in {1..30}; do
-            if docker-compose -f docker-compose.e2e.yml exec -T server curl -f http://localhost:3001/api/choreographies?limit=1 > /dev/null 2>&1; then
-              echo "Server is healthy"
+          for i in {1..60}; do
+            if docker compose -f docker-compose.e2e.yml exec -T server curl -s -f http://localhost:3001/api/choreographies?limit=1 > /dev/null 2>&1; then
+              echo "✓ Server is healthy"
               break
             fi
-            echo "Waiting... ($i/30)"
-            sleep 2
+            echo "Waiting... ($i/60)"
+            sleep 1
           done
 
       - name: Run E2E tests
-        run: docker-compose -f docker-compose.e2e.yml run --rm e2e
+        run: |
+          echo "Starting E2E tests..."
+          docker compose -f docker-compose.e2e.yml run --rm e2e
+          echo "E2E tests completed"
+
+      - name: Check test results
+        if: always()
+        run: |
+          echo "Checking for test results..."
+          ls -la client/playwright-results/ || echo "No playwright-results directory"
+          find client -name "junit.xml" -type f 2>/dev/null || echo "No junit.xml found"
 
       - name: Upload test results
         if: always()
@@ -50,14 +62,26 @@ jobs:
           name: playwright-results
           path: client/playwright-results/
           retention-days: 7
+          if-no-files-found: ignore
 
       - name: Publish test results
         if: always()
+        continue-on-error: true
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: client/playwright-results/junit.xml
           check_name: E2E Test Results
 
+      - name: Show service logs
+        if: always()
+        run: |
+          echo "=== Server logs ==="
+          docker compose -f docker-compose.e2e.yml logs server --tail 50 || true
+          echo -e "\n=== Client logs ==="
+          docker compose -f docker-compose.e2e.yml logs client --tail 50 || true
+          echo -e "\n=== E2E logs ==="
+          docker compose -f docker-compose.e2e.yml logs e2e --tail 100 || true
+
       - name: Clean up
         if: always()
-        run: docker-compose -f docker-compose.e2e.yml down -v
+        run: docker compose -f docker-compose.e2e.yml down -v 2>/dev/null || true
