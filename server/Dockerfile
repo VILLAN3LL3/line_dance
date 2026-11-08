@@ -1,9 +1,9 @@
-FROM node:26-alpine
+FROM node:26
 
 WORKDIR /app
 
 # Install curl for healthcheck
-RUN apk add --no-cache curl
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 

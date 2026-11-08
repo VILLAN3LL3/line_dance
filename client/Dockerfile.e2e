@@ -1,4 +1,9 @@
-FROM node:26-alpine
+FROM mcr.microsoft.com/playwright:v1.48.0-focal
+
+# Update Node.js to version 26
+RUN curl -fsSL https://deb.nodesource.com/setup_26.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -9,9 +14,6 @@ RUN npm ci
 COPY . .
 
 RUN npm run build
-
-# Install Playwright dependencies
-RUN npx playwright install --with-deps chromium
 
 # Create playwright-results directory
 RUN mkdir -p /app/playwright-results
