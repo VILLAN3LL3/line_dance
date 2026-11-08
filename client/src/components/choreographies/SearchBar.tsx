@@ -270,7 +270,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onChange={(e) => setValues((prev) => ({ ...prev, searchTerm: e.target.value }))}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              handleSearch();
+              void handleSearch();
             }
           }}
           onBlur={handleSearch}
@@ -284,7 +284,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onChange={(e) => setValues((prev) => ({ ...prev, songArtistTerm: e.target.value }))}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              handleSearch();
+              void handleSearch();
             }
           }}
           onBlur={handleSearch}
@@ -312,6 +312,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           </span>
           <span>Clear All Filters</span>
         </ActionButton>
+        {showAdvanced && (
+          <ActionButton
+            onClick={handleSearch}
+            variant="primary"
+            disabled={isLoading}
+            className="btn-apply-filters"
+          >
+            Apply Filters
+          </ActionButton>
+        )}
       </div>
 
       {showAdvanced && (
@@ -384,13 +394,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         />
       )}
 
-      {showAdvanced && (
-        <div className="search-actions">
-          <ActionButton onClick={handleSearch} variant="primary" disabled={isLoading}>
-            Apply Filters
-          </ActionButton>
-        </div>
-      )}
     </div>
   );
 };

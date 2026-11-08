@@ -34,7 +34,7 @@ export const SearchBarStepFiguresFilter: React.FC<SearchBarStepFiguresFilterProp
   onStepFiguresMatchModeChange,
 }) => (
   <div className="filter-group">
-    <label htmlFor="figure-input">Step Figures:</label>
+    <label htmlFor="figure-input">Step Figures</label>
     <div className="filter-checkbox">
       <label>
         <input

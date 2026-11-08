@@ -14,7 +14,7 @@ export const SearchBarMaxCountFilter: React.FC<SearchBarMaxCountFilterProps> = (
   onMaxCountChange,
 }) => (
   <div className="filter-group">
-    <label htmlFor="max-count-slider">Max Counts:</label>
+    <label htmlFor="max-count-slider">Max Counts</label>
     <div className="max-count-filter">
       <input
         id="max-count-slider"

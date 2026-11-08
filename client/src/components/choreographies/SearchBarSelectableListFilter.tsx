@@ -32,7 +32,7 @@ export const SearchBarSelectableListFilter: React.FC<SearchBarSelectableListFilt
   onToggleValue,
 }) => (
   <div className="filter-group">
-    <label htmlFor={inputId}>{label}:</label>
+    <label htmlFor={inputId}>{label}</label>
     <div className="filter-input-container">
       {inputControl === "select" ? (
         <select id={inputId} value={inputValue} onChange={onInputChange} disabled={isLoading}>

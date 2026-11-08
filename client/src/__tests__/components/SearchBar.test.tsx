@@ -84,6 +84,22 @@ describe("SearchBar", () => {
     });
   });
 
+  it("groups choreographers and rating under max counts while keeping tags full-width", () => {
+    const onSearch = vi.fn().mockResolvedValue(undefined);
+    render(<SearchBar onSearch={onSearch} filters={{}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
+
+    const maxCountColumn = screen.getByText("Max Counts").parentElement?.parentElement;
+    expect(maxCountColumn).toHaveClass("advanced-filter-column");
+    expect(screen.getByText("Choreographers").parentElement?.parentElement).toBe(maxCountColumn);
+    expect(screen.getByText("Minimum Rating").parentElement?.parentElement).toBe(maxCountColumn);
+
+    const tagFilter = screen.getByText("Tags").parentElement;
+    expect(tagFilter).toHaveClass("advanced-filter-tags");
+    expect(tagFilter?.parentElement).toHaveClass("advanced-filters");
+  });
+
   it("triggers search when user presses Enter in search input", async () => {
     const onSearch = vi.fn().mockResolvedValue(undefined);
     render(<SearchBar onSearch={onSearch} filters={{}} />);
@@ -109,13 +125,24 @@ describe("SearchBar", () => {
     });
   });
 
+  it("shows Apply Filters in the toolbar only when advanced filters are open", () => {
+    const onSearch = vi.fn().mockResolvedValue(undefined);
+    render(<SearchBar onSearch={onSearch} filters={{}} />);
+
+    expect(screen.queryByRole("button", { name: /apply filters/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
+
+    const applyButton = screen.getByRole("button", { name: /apply filters/i });
+    expect(applyButton.parentElement).toHaveClass("filter-toolbar");
+  });
+
   it("adds a level filter from the autocomplete", async () => {
     const onSearch = vi.fn().mockResolvedValue(undefined);
     render(<SearchBar onSearch={onSearch} filters={{}} />);
 
     fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
 
-    const levelInput = await screen.findByRole("combobox", { name: "Level:" });
+    const levelInput = await screen.findByRole("combobox", { name: "Level" });
 
     fireEvent.change(levelInput, {
       target: { value: "Beginner" },
@@ -135,7 +162,7 @@ describe("SearchBar", () => {
     fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
     fireEvent.click(screen.getByRole("radio", { name: /up to max level/i }));
 
-    const maxLevelSelect = await screen.findByRole("combobox", { name: "Level:" });
+    const maxLevelSelect = await screen.findByRole("combobox", { name: "Level" });
     fireEvent.change(maxLevelSelect, { target: { value: "20" } });
     fireEvent.click(screen.getByRole("button", { name: /apply filters/i }));
 
@@ -151,7 +178,7 @@ describe("SearchBar", () => {
     fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
     fireEvent.click(screen.getByRole("radio", { name: /exclude matches/i }));
 
-    const tagInput = await screen.findByRole("combobox", { name: "Tags:" });
+    const tagInput = await screen.findByRole("combobox", { name: "Tags" });
     fireEvent.change(tagInput, { target: { value: "classic" } });
     fireEvent.keyDown(tagInput, { key: "Enter", code: "Enter" });
     fireEvent.click(screen.getByRole("button", { name: /apply filters/i }));

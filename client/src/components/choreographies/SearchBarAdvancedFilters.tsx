@@ -123,43 +123,82 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
       isLoading={isLoading}
     />
 
-    <SearchBarLevelFilter
-      levelMode={levelMode}
-      selectedLevel={selectedLevel}
-      inputLevel={inputLevel}
-      levelOptions={levelOptions}
-      maxLevelValue={maxLevelValue}
-      maxLevelOptions={maxLevelOptions}
-      isLoading={isLoading}
-      onLevelModeChange={onLevelModeChange}
-      onLevelInput={onLevelInput}
-      onAddLevelFromInput={onAddLevelFromInput}
-      onToggleLevel={onToggleLevel}
-      onMaxLevelValueChange={onMaxLevelValueChange}
-    />
+    <div className="advanced-filter-columns">
+      <div className="advanced-filter-column">
+        <SearchBarLevelFilter
+          levelMode={levelMode}
+          selectedLevel={selectedLevel}
+          inputLevel={inputLevel}
+          levelOptions={levelOptions}
+          maxLevelValue={maxLevelValue}
+          maxLevelOptions={maxLevelOptions}
+          isLoading={isLoading}
+          onLevelModeChange={onLevelModeChange}
+          onLevelInput={onLevelInput}
+          onAddLevelFromInput={onAddLevelFromInput}
+          onToggleLevel={onToggleLevel}
+          onMaxLevelValueChange={onMaxLevelValueChange}
+        />
 
-    <SearchBarMaxCountFilter
-      maxCount={maxCount}
-      maxCountLimit={maxCountLimit}
-      isLoading={isLoading}
-      onMaxCountChange={onMaxCountChange}
-    />
+        <SearchBarStepFiguresFilter
+          selectedFigures={selectedFigures}
+          inputFigure={inputFigure}
+          figureOptions={figureOptions}
+          withoutStepFigures={withoutStepFigures}
+          stepFiguresMatchMode={stepFiguresMatchMode}
+          requiredFigures={requiredFigures}
+          isLoading={isLoading}
+          onFigureInput={onFigureInput}
+          onAddFigureFromInput={onAddFigureFromInput}
+          onToggleFigure={onToggleFigure}
+          onToggleRequiredFigure={onToggleRequiredFigure}
+          onWithoutStepFiguresChange={onWithoutStepFiguresChange}
+          onStepFiguresMatchModeChange={onStepFiguresMatchModeChange}
+        />
+      </div>
 
-    <SearchBarStepFiguresFilter
-      selectedFigures={selectedFigures}
-      inputFigure={inputFigure}
-      figureOptions={figureOptions}
-      withoutStepFigures={withoutStepFigures}
-      stepFiguresMatchMode={stepFiguresMatchMode}
-      requiredFigures={requiredFigures}
-      isLoading={isLoading}
-      onFigureInput={onFigureInput}
-      onAddFigureFromInput={onAddFigureFromInput}
-      onToggleFigure={onToggleFigure}
-      onToggleRequiredFigure={onToggleRequiredFigure}
-      onWithoutStepFiguresChange={onWithoutStepFiguresChange}
-      onStepFiguresMatchModeChange={onStepFiguresMatchModeChange}
-    />
+      <div className="advanced-filter-column">
+        <SearchBarMaxCountFilter
+          maxCount={maxCount}
+          maxCountLimit={maxCountLimit}
+          isLoading={isLoading}
+          onMaxCountChange={onMaxCountChange}
+        />
+
+        <SearchBarSelectableListFilter
+          label="Choreographers"
+          inputId="author-input"
+          listId="authors-list"
+          inputValue={inputAuthor}
+          options={authorOptions}
+          selectedValues={selectedAuthors}
+          placeholder="Add choreographer..."
+          isLoading={isLoading}
+          onInputChange={(e) => onAuthorInput(e as React.ChangeEvent<HTMLInputElement>)}
+          onAddFromInput={onAddAuthorFromInput}
+          onToggleValue={onToggleAuthor}
+        />
+
+        <div className="filter-section">
+          <div className="filter-label" aria-hidden="true">
+            Minimum Rating
+          </div>
+          <div className="rating-filter">
+            <StarRating rating={minRating} onChange={onMinRatingChange} />
+            {minRating !== null && (
+              <button
+                type="button"
+                className="btn-clear-rating"
+                onClick={() => onMinRatingChange(null)}
+                disabled={isLoading}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
 
     <SearchBarTagFilter
       inputTag={inputTag}
@@ -175,37 +214,5 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
       onRemoveExcludedTag={onRemoveExcludedTag}
     />
 
-    <SearchBarSelectableListFilter
-      label="Choreographers"
-      inputId="author-input"
-      listId="authors-list"
-      inputValue={inputAuthor}
-      options={authorOptions}
-      selectedValues={selectedAuthors}
-      placeholder="Add choreographer..."
-      isLoading={isLoading}
-      onInputChange={(e) => onAuthorInput(e as React.ChangeEvent<HTMLInputElement>)}
-      onAddFromInput={onAddAuthorFromInput}
-      onToggleValue={onToggleAuthor}
-    />
-
-    <div className="filter-section">
-      <div className="filter-label" aria-hidden="true">
-        Minimum Rating
-      </div>
-      <div className="rating-filter">
-        <StarRating rating={minRating} onChange={onMinRatingChange} />
-        {minRating !== null && (
-          <button
-            type="button"
-            className="btn-clear-rating"
-            onClick={() => onMinRatingChange(null)}
-            disabled={isLoading}
-          >
-            Clear
-          </button>
-        )}
-      </div>
-    </div>
   </div>
 );

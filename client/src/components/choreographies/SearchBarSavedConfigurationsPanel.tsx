@@ -52,7 +52,7 @@ export const SearchBarSavedConfigurationsPanel: React.FC<
 
       {showSavedConfigurations && (
         <div className="filter-group saved-filters-group saved-filters-panel">
-          <label htmlFor="saved-filter-name">Saved Configurations:</label>
+          <label htmlFor="saved-filter-name">Saved Configurations</label>
           <div className="saved-filters-controls">
             <input
               id="saved-filter-name"

@@ -33,10 +33,10 @@ export const SearchBarLevelFilter: React.FC<SearchBarLevelFilterProps> = ({
   onMaxLevelValueChange,
 }) => (
   <div className="filter-group">
-    <label htmlFor={levelMode === "selected" ? "level-input" : "max-level-select"}>Level:</label>
+    <label htmlFor={levelMode === "selected" ? "level-input" : "max-level-select"}>Level</label>
 
     <div className="filter-mode-toggle">
-      <label>Mode:</label>
+      <span>Mode:</span>
       <div className="match-mode-radios" role="radiogroup" aria-label="Level filter mode">
         <label
           className={`match-mode-option mode-level-list ${levelMode === "selected" ? "active" : ""}`}

@@ -33,7 +33,7 @@ export const SearchBarTagFilter: React.FC<SearchBarTagFilterProps> = ({
 
   return (
     <div className="filter-group advanced-filter-tags">
-      <label htmlFor="tag-input">Tags:</label>
+      <label htmlFor="tag-input">Tags</label>
 
       <div className="filter-mode-toggle">
         <span>When adding:</span>
