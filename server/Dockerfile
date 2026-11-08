@@ -2,6 +2,9 @@ FROM node:26-alpine
 
 WORKDIR /app
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 COPY package*.json ./
 
 RUN npm ci

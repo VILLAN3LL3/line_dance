@@ -13,6 +13,9 @@ RUN npm run build
 # Install Playwright dependencies
 RUN npx playwright install --with-deps chromium
 
+# Create playwright-results directory
+RUN mkdir -p /app/playwright-results
+
 EXPOSE 3000
 
 # Run dev server for E2E tests (with live reload)

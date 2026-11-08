@@ -13,5 +13,6 @@ raw_data/
 src/**/*.js
 playwright-report/
 client/playwright-report/
+client/playwright-results/
 test-results/
 client/test-results/
