@@ -291,6 +291,20 @@ const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = ({
 
   return (
     <>
+      {choreography.tutorial_video_url && (
+        <a
+          href={choreography.tutorial_video_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => event.stopPropagation()}
+          className="btn-secondary btn-small tutorial-action"
+          aria-label="Open tutorial in a new tab"
+          title="Open tutorial in a new tab"
+        >
+          👩‍🎓
+        </a>
+      )}
+
       {choreography.step_sheet_link && (
         <a
           href={choreography.step_sheet_link}

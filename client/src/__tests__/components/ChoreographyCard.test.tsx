@@ -129,6 +129,19 @@ describe("ChoreographyCard", () => {
       "href",
       "https://example.com/tutorial",
     );
+
+    const tutorialAction = screen.getByRole("link", { name: "Open tutorial in a new tab" });
+    expect(tutorialAction).toHaveAttribute("href", "https://example.com/tutorial");
+    expect(tutorialAction).toHaveAttribute("target", "_blank");
+    expect(tutorialAction).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("omits the tutorial footer action when no tutorial URL is available", () => {
+    render(<ChoreographyCard choreography={makeChoreography({ tutorial_video_url: undefined })} />);
+
+    expect(
+      screen.queryByRole("link", { name: "Open tutorial in a new tab" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows restart/tag badges in small cards even without step figures", () => {
