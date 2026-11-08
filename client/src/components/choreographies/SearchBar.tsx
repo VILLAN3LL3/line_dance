@@ -393,7 +393,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           applyLoadedFilters={applyLoadedFilters}
         />
       )}
-
     </div>
   );
 };

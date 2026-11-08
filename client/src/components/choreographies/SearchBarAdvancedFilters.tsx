@@ -213,6 +213,5 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
       onRemoveIncludedTag={onRemoveIncludedTag}
       onRemoveExcludedTag={onRemoveExcludedTag}
     />
-
   </div>
 );
