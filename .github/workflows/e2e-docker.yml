@@ -11,6 +11,10 @@ on:
       - main
       - develop
 
+permissions:
+  contents: read
+  checks: write
+
 jobs:
   e2e:
     runs-on: ubuntu-latest
@@ -53,6 +57,9 @@ jobs:
           echo ""
           echo "Looking for XML files:"
           find client -name "*.xml" -type f 2>/dev/null || echo "⚠ No XML files found"
+          echo ""
+          echo "Docker containers status:"
+          docker compose -f docker-compose.e2e.yml ps
 
       - name: Upload test results
         if: always()

@@ -1,24 +1,8 @@
 FROM mcr.microsoft.com/playwright:v1.48.0-focal
 
-# Update Node.js to version 26
-RUN curl -fsSL https://deb.nodesource.com/setup_26.x | bash - && \
-    apt-get install -y nodejs && \
-    rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
-
-COPY package*.json ./
-
-RUN npm ci
-
-COPY . .
-
-RUN npm run build
 
 # Create playwright-results directory
 RUN mkdir -p /app/playwright-results
 
 EXPOSE 3000
-
-# Run dev server for E2E tests (with live reload)
-CMD ["npm", "run", "preview"]

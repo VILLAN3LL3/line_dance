@@ -13,7 +13,6 @@ services:
       NODE_ENV: test
     volumes:
       - ./raw_data:/app/raw_data
-      - ./server:/app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api/choreographies?limit=1"]
       interval: 5s
@@ -24,7 +23,7 @@ services:
   client:
     build:
       context: ./client
-      dockerfile: Dockerfile.e2e
+      dockerfile: Dockerfile.preview
     container_name: line_dance_client
     ports:
       - "3000:3000"
@@ -32,30 +31,33 @@ services:
       server:
         condition: service_healthy
     environment:
-      VITE_API_BASE: http://server:3001/api
-    volumes:
-      - ./client:/app
-      - /app/node_modules
-      - /app/dist
+      VITE_API_URL: http://server:3001/api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
 
   e2e:
-    build:
-      context: ./client
-      dockerfile: Dockerfile.e2e
+    image: mcr.microsoft.com/playwright:v1.48.0-focal
     container_name: line_dance_e2e
     working_dir: /app
-    command: npx playwright test --reporter=html,junit
+    entrypoint: sh
+    command: >
+      -c "
+      npm ci &&
+      npx playwright test --reporter=html,junit
+      "
     depends_on:
+      client:
+        condition: service_healthy
       server:
         condition: service_healthy
-      client:
-        condition: service_started
     environment:
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "false"
       DOCKER_ENV: "1"
       CI: "true"
       VITE_API_URL: http://server:3001/api
-      PLAYWRIGHT_TIMEOUT: "60000"
     volumes:
       - ./client:/app
-      - ./client/playwright-results:/app/playwright-results
