@@ -16,7 +16,12 @@ export default defineConfig({
     timeout: 10_000,
   },
   reporter: isCI
-    ? [["list"], ["github"], ["html", { open: "never" }], ["junit", { outputFile: "playwright-results/junit.xml" }]]
+    ? [
+        ["list"],
+        ["github"],
+        ["html", { open: "never" }],
+        ["junit", { outputFile: "playwright-results/junit.xml" }],
+      ]
     : [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: isDocker ? "http://client:3000" : `http://127.0.0.1:${e2eAppPort}`,
@@ -24,31 +29,33 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
-  webServer: !isDocker ? [
-    {
-      command: "npm --prefix ../server start",
-      port: e2eApiPort,
-      env: {
-        ...process.env,
-        PORT: String(e2eApiPort),
-        CHOREOGRAPHY_DB_PATH: ":memory:",
-        DANCE_GROUPS_DB_PATH: ":memory:",
-        TAGS_DB_PATH: ":memory:",
-      },
-      reuseExistingServer: false,
-      timeout: 120_000,
-    },
-    {
-      command: `npm run dev -- --host 127.0.0.1 --port ${e2eAppPort}`,
-      port: e2eAppPort,
-      env: {
-        ...process.env,
-        VITE_API_URL: `http://127.0.0.1:${e2eApiPort}/api`,
-      },
-      reuseExistingServer: false,
-      timeout: 120_000,
-    },
-  ] : undefined,
+  webServer: !isDocker
+    ? [
+        {
+          command: "npm --prefix ../server start",
+          port: e2eApiPort,
+          env: {
+            ...process.env,
+            PORT: String(e2eApiPort),
+            CHOREOGRAPHY_DB_PATH: ":memory:",
+            DANCE_GROUPS_DB_PATH: ":memory:",
+            TAGS_DB_PATH: ":memory:",
+          },
+          reuseExistingServer: false,
+          timeout: 120_000,
+        },
+        {
+          command: `npm run dev -- --host 127.0.0.1 --port ${e2eAppPort}`,
+          port: e2eAppPort,
+          env: {
+            ...process.env,
+            VITE_API_URL: `http://127.0.0.1:${e2eApiPort}/api`,
+          },
+          reuseExistingServer: false,
+          timeout: 120_000,
+        },
+      ]
+    : undefined,
   projects: [
     {
       name: "chromium",
