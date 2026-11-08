@@ -55,4 +55,3 @@ describe("getYouTubePlaylistPageUrl", () => {
     expect(getYouTubePlaylistPageUrl(url)).toBeNull();
   });
 });
-
