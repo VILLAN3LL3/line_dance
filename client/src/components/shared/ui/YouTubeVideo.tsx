@@ -14,6 +14,8 @@ export const YouTubeVideo: React.FC<YouTubeVideoProps> = ({ src, title }) => (
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
       referrerPolicy="no-referrer"
       allowFullScreen
+      sandbox="allow-same-origin allow-scripts allow-popups allow-presentation"
     />
   </div>
 );
+

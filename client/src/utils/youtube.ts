@@ -76,7 +76,7 @@ export function getYouTubeVideoEmbedUrl(rawUrl?: string): string | null {
     return null;
   }
 
-  return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}`;
+  return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?rel=0`;
 }
 
 export function getYouTubePlaylistPageUrl(rawUrl?: string): string | null {
