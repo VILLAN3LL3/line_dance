@@ -34,8 +34,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:3000/"]
       interval: 2s
       timeout: 5s
-      retries: 20
-      start_period: 15s
+      retries: 30
+      start_period: 45s
 
   e2e:
     image: mcr.microsoft.com/playwright:v1.48.0-focal
