@@ -9,8 +9,8 @@ test.describe("Saved Filter Configurations", () => {
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
     await page.getByRole("button", { name: /Saved Configurations/i }).click();
 
-    await page.getByRole("combobox", { name: "Level:" }).fill("BEGINNER");
-    await page.getByRole("combobox", { name: "Level:" }).press("Enter");
+    await page.locator("#level-input").fill("BEGINNER");
+    await page.locator("#level-input").press("Enter");
 
     await page.getByPlaceholder(/Configuration name/i).fill(configName);
     await page.getByRole("button", { name: /Save Current Filters/i }).click();
@@ -34,8 +34,8 @@ test.describe("Saved Filter Configurations", () => {
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
     await page.getByRole("button", { name: /Saved Configurations/i }).click();
 
-    await page.getByRole("combobox", { name: "Level:" }).fill("BEGINNER");
-    await page.getByRole("combobox", { name: "Level:" }).press("Enter");
+    await page.locator("#level-input").fill("BEGINNER");
+    await page.locator("#level-input").press("Enter");
     await expect(page.locator(".filter-tags .level-batch", { hasText: "BEGINNER" })).toBeVisible();
 
     await page.getByPlaceholder(/Configuration name/i).fill(configName);
@@ -50,8 +50,8 @@ test.describe("Saved Filter Configurations", () => {
     await expect(page.getByText(`Loaded "${configName}"`)).toBeVisible();
     await expect(page.locator(".filter-tags .level-batch", { hasText: "BEGINNER" })).toBeVisible();
 
-    await page.getByRole("combobox", { name: "Tags:" }).fill("E2E-Updated");
-    await page.getByRole("combobox", { name: "Tags:" }).press("Enter");
+    await page.locator("#tag-input").fill("E2E-Updated");
+    await page.locator("#tag-input").press("Enter");
     await page.getByRole("button", { name: /Update Loaded/i }).click();
     await expect(page.getByText(`Updated "${configName}"`)).toBeVisible();
 
@@ -97,12 +97,12 @@ test.describe("Saved Filter Configurations", () => {
     await page.getByRole("button", { name: /Saved Configurations/i }).click();
 
     await page.getByRole("radio", { name: /Up to max level/i }).check();
-    await page.getByRole("combobox", { name: "Level:" }).selectOption({ label: "BEGINNER" });
+    await page.locator("#max-level-select").selectOption({ label: "BEGINNER" });
     await page.getByRole("radio", { name: /Exclude matches/i }).check();
 
-    const tagsGroup = page.locator(".filter-group", { hasText: /^Tags:/ });
-    await tagsGroup.getByRole("combobox", { name: "Tags:" }).fill("E2E-BLOCK");
-    await tagsGroup.getByRole("combobox", { name: "Tags:" }).press("Enter");
+    const tagsGroup = page.locator(".filter-group", { hasText: /^Tags/ });
+    await tagsGroup.locator("#tag-input").fill("E2E-BLOCK");
+    await tagsGroup.locator("#tag-input").press("Enter");
 
     await page.getByPlaceholder(/Configuration name/i).fill(configName);
     await page.getByRole("button", { name: /Save Current Filters/i }).click();
@@ -114,7 +114,7 @@ test.describe("Saved Filter Configurations", () => {
 
     await expect(page.getByText(`Loaded "${configName}"`)).toBeVisible();
     await expect(page.getByRole("radio", { name: /Up to max level/i })).toBeChecked();
-    await expect(page.getByRole("combobox", { name: "Level:" })).toHaveValue(/^\d+$/);
+    await expect(page.locator("#max-level-select")).toHaveValue(/^\d+$/);
     await expect(page.locator(".filter-tag-exclude", { hasText: "E2E-BLOCK" })).toBeVisible();
 
     await page.getByRole("button", { name: /Apply Filters/i }).click();

@@ -1,0 +1,43 @@
+---
+name: E2E Tests (Docker)
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run E2E tests in Docker
+        run: docker-compose -f docker-compose.e2e.yml up --abort-on-container-exit --remove-orphans
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: client/playwright-results/
+          retention-days: 7
+
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: client/playwright-results/junit.xml
+          check_name: E2E Test Results
+
+      - name: Clean up
+        if: always()
+        run: docker-compose -f docker-compose.e2e.yml down

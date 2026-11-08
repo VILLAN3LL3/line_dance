@@ -125,8 +125,8 @@ test.describe("Choreography Search", () => {
     await page.getByPlaceholder(/Search choreographies by name/i).fill(runId);
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
 
-    await page.getByRole("combobox", { name: "Level:" }).fill("BEGINNER");
-    await page.getByRole("combobox", { name: "Level:" }).press("Enter");
+    await page.locator("#level-input").fill("BEGINNER");
+    await page.locator("#level-input").press("Enter");
     await page.getByRole("button", { name: /Apply Filters/i }).click();
 
     await page.getByRole("button", { name: /^Table$/i }).click();
@@ -170,7 +170,7 @@ test.describe("Choreography Search", () => {
     await page.getByPlaceholder(/Search choreographies by name/i).fill(runId);
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
     await page.getByRole("radio", { name: /Up to max level/i }).check();
-    await page.getByRole("combobox", { name: "Level:" }).selectOption({ label: "INTERMEDIATE" });
+    await page.locator("#max-level-select").selectOption({ label: "INTERMEDIATE" });
     await page.getByRole("button", { name: /Apply Filters/i }).click();
 
     await expect(page.locator(".choreography-card", { hasText: beginnerName })).toBeVisible();
@@ -211,9 +211,9 @@ test.describe("Choreography Search", () => {
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
     await page.getByRole("radio", { name: /Exclude matches/i }).check();
 
-    const tagsGroup = page.locator(".filter-group", { hasText: /^Tags:/ });
-    await tagsGroup.getByRole("combobox", { name: "Tags:" }).fill("E2E-BLOCK");
-    await tagsGroup.getByRole("combobox", { name: "Tags:" }).press("Enter");
+    const tagsGroup = page.locator(".filter-group", { hasText: /^Tags/ });
+    await tagsGroup.locator("#tag-input").fill("E2E-BLOCK");
+    await tagsGroup.locator("#tag-input").press("Enter");
     await page.getByRole("button", { name: /Apply Filters/i }).click();
 
     await expect(page.locator(".choreography-card", { hasText: includedName })).toBeVisible();
@@ -281,7 +281,7 @@ test.describe("Choreography Search", () => {
     await page.getByPlaceholder(/Search choreographies by name/i).fill(runId);
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
 
-    const figuresGroup = page.locator(".filter-group", { hasText: /^Step Figures:/ });
+    const figuresGroup = page.locator(".filter-group", { hasText: /^Step Figures/ });
     await figuresGroup.getByPlaceholder(/Add step figure/i).fill("Vine");
     await figuresGroup.getByRole("button", { name: /^\+$/ }).click();
 

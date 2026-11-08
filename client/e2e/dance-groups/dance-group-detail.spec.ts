@@ -51,7 +51,7 @@ test.describe("Dance Group Detail", () => {
     await expect(page).toHaveURL(/\/$/);
     await page.getByRole("button", { name: /Advanced Filters/i }).click();
     await expect(page.getByRole("radio", { name: /Up to max level/i })).toBeChecked();
-    await expect(page.getByRole("combobox", { name: "Level:" })).toHaveValue(/^\d+$/);
+    await expect(page.locator("#max-level-select")).toHaveValue(/^\d+$/);
     await expect(page.locator(".filter-tag", { hasText: "Vine" })).toBeVisible();
   });
 

@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      NODE_ENV: test
+    volumes:
+      - ./raw_data:/app/raw_data
+      - ./server:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/choreographies?limit=1"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.e2e
+    ports:
+      - "3000:3000"
+    depends_on:
+      server:
+        condition: service_healthy
+    environment:
+      VITE_API_BASE: http://server:3001/api
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      - /app/dist
+
+  e2e:
+    image: mcr.microsoft.com/playwright:v1.48.0-focal
+    working_dir: /app
+    command: sh -c "npm install && npm run test:e2e"
+    depends_on:
+      server:
+        condition: service_healthy
+      client:
+        condition: service_started
+    environment:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "0"
+    volumes:
+      - ./client:/app
+      - ./client/playwright-results:/app/playwright-results
+    ports:
+      - "3000"
