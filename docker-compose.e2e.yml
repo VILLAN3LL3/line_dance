@@ -37,9 +37,11 @@ services:
       - /app/dist
 
   e2e:
-    image: mcr.microsoft.com/playwright:v1.48.0-focal
+    build:
+      context: ./client
+      dockerfile: Dockerfile.e2e
     working_dir: /app
-    command: sh -c "npm install && npm run test:e2e"
+    command: npx playwright test --reporter=html,junit
     depends_on:
       server:
         condition: service_healthy
@@ -47,6 +49,8 @@ services:
         condition: service_started
     environment:
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "0"
+      DOCKER_ENV: "1"
+      VITE_API_URL: http://server:3001/api
     volumes:
       - ./client:/app
       - ./client/playwright-results:/app/playwright-results

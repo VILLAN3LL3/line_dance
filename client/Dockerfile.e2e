@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:26-alpine
 
 WORKDIR /app
 
@@ -9,6 +9,9 @@ RUN npm ci
 COPY . .
 
 RUN npm run build
+
+# Install Playwright dependencies
+RUN npx playwright install --with-deps chromium
 
 EXPOSE 3000
 
