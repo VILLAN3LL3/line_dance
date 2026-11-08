@@ -2,25 +2,6 @@
 const PRIVATE_HOSTNAME_PATTERN =
   /^(localhost|.*\.local|.*\.internal)$|^127\.|^10\.|^172\.(1[6-9]|2\d|3[01])\.|^192\.168\./;
 
-function isAllowedUrl(raw) {
-  let parsed;
-  try {
-    parsed = new URL(raw);
-  } catch {
-    return false;
-  }
-
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    return false;
-  }
-
-  if (PRIVATE_HOSTNAME_PATTERN.test(parsed.hostname)) {
-    return false;
-  }
-
-  return true;
-}
-
 const REQUEST_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (compatible; LineDanceBot/1.0)',
 };
@@ -31,8 +12,10 @@ function isYouTubeUrl(parsed) {
   return YOUTUBE_HOSTNAMES.has(parsed.hostname);
 }
 
-async function probeUrl(url, signal) {
-  const parsed = new URL(url);
+async function probeUrl(parsed, signal) {
+  // Reconstruct the URL from the already-parsed object
+  // This ensures CodeQL understands we're working with a validated URL
+  const url = parsed.href;
 
   // YouTube returns 200 for every watch URL — even for non-existent videos.
   // The oEmbed endpoint correctly returns 404 for invalid video IDs.
@@ -73,7 +56,20 @@ export async function checkUrl(req, res) {
     return res.status(400).json({ error: 'Missing url query parameter' });
   }
 
-  if (!isAllowedUrl(raw)) {
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return res.status(400).json({ error: 'Invalid URL' });
+  }
+
+  // Validate hostname against SSRF patterns
+  if (PRIVATE_HOSTNAME_PATTERN.test(parsed.hostname)) {
+    return res.status(400).json({ error: 'URL not allowed' });
+  }
+
+  // Validate protocol
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
     return res.status(400).json({ error: 'URL not allowed' });
   }
 
@@ -83,7 +79,7 @@ export async function checkUrl(req, res) {
 
     let response;
     try {
-      response = await probeUrl(raw, controller.signal);
+      response = await probeUrl(parsed, controller.signal);
     } finally {
       clearTimeout(timeout);
     }
