@@ -11,12 +11,12 @@ const YOUTUBE_HOSTS = new Set([
 ]);
 
 function parseUrl(rawUrl?: string): URL | null {
-  if (!rawUrl || !rawUrl.trim()) {
+  if (!rawUrl?.trim()) {
     return null;
   }
 
   // Accept copied iframe snippets from YouTube's share dialog.
-  const iframeSrcMatch = rawUrl.match(/src\s*=\s*"([^"]+)"/i);
+  const iframeSrcMatch = new RegExp(/src\s*=\s*"([^"]+)"/i).exec(rawUrl);
   const candidate = iframeSrcMatch?.[1] ?? rawUrl;
 
   // Only decode &amp; since that's the common issue with YouTube's share dialog.
@@ -43,7 +43,7 @@ function getVideoId(url: URL): string | null {
   const host = url.hostname.toLowerCase();
 
   if (host === "youtu.be" || host === "www.youtu.be") {
-    const shortId = url.pathname.split("/").filter(Boolean)[0];
+    const shortId = url.pathname.split("/").find(Boolean);
     return shortId || null;
   }
 
