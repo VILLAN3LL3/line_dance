@@ -32,7 +32,11 @@
   font-weight: 600;
   cursor: pointer;
   border-radius: var(--border-radius);
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
   font-size: 14px;
 }
 
@@ -119,8 +123,23 @@
 .advanced-filters {
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 20px 24px;
   animation: expandDown 0.3s ease;
+}
+
+.advanced-filters > .saved-configurations-container,
+.advanced-filters > .advanced-filter-tags {
+  grid-column: 1 / -1;
+}
+
+.advanced-filters > .filter-group,
+.advanced-filters > .filter-section {
+  min-width: 0;
+  margin-bottom: 0;
 }
 
 @keyframes expandDown {
@@ -139,10 +158,10 @@
 }
 
 .saved-filters-group {
-  padding: 14px;
-  border: 1px solid #e7e7e7;
-  border-radius: var(--border-radius);
-  background-color: #fafafa;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-soft);
 }
 
 .saved-filters-panel {
@@ -158,7 +177,10 @@
   font-weight: 600;
   cursor: pointer;
   border-radius: var(--border-radius);
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
   font-size: 13px;
 }
 
@@ -169,19 +191,20 @@
 
 .saved-filters-controls {
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .saved-filters-actions-row {
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 0;
 }
 
 .saved-filters-actions-row .btn-secondary,
 .saved-filters-actions-row .btn-danger {
-  flex: 1;
+  flex: 0 1 auto;
 }
 
 .saved-filters-controls input,
@@ -235,12 +258,13 @@
   text-align: right;
 }
 
-.filter-group label {
+.filter-group > label,
+.filter-section > .filter-label {
   display: block;
-  font-weight: 600;
+  margin-bottom: 10px;
   color: var(--color-primary);
-  margin-bottom: 12px;
   font-size: 14px;
+  font-weight: 600;
 }
 
 .filter-options {
@@ -274,7 +298,7 @@
 .custom-input input {
   flex: 1;
   padding: 10px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   font-size: 14px;
 }
@@ -334,7 +358,7 @@
 .search-actions {
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--color-border);
   display: flex;
   justify-content: center;
   gap: 12px;
@@ -353,6 +377,11 @@
 }
 
 @media (max-width: 768px) {
+  .advanced-filters {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
   .search-main {
     flex-direction: column;
   }
@@ -405,7 +434,7 @@
 
 .filter-select {
   padding: 10px 12px;
-  border: 2px solid #e0e0e0;
+  border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   font-size: 14px;
   background-color: white;
@@ -428,7 +457,7 @@
 .filter-input-container input {
   flex: 1;
   padding: 10px 12px;
-  border: 2px solid #e0e0e0;
+  border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   font-size: 14px;
   transition: border-color 0.2s ease;
@@ -437,7 +466,7 @@
 .filter-input-container select {
   flex: 1;
   padding: 10px 12px;
-  border: 2px solid #e0e0e0;
+  border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   font-size: 14px;
   background-color: white;
@@ -495,7 +524,9 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
-  transition: all 0.2s ease;
+  transition:
+    filter 0.2s ease,
+    transform 0.2s ease;
   min-width: 44px;
 }
 
@@ -518,7 +549,9 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 16px;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
   min-width: 40px;
 }
 
@@ -653,7 +686,11 @@
   font-size: 12px;
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .filter-mode-toggle .match-mode-option input[type="radio"] {
@@ -718,4 +755,24 @@
   color: var(--color-primary);
   font-weight: 500;
   margin-top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .advanced-filters,
+  .saved-filters-panel,
+  .btn-toggle-advanced,
+  .btn-toggle-saved-configs,
+  .btn-add-filter,
+  .btn-remove-filter,
+  .filter-mode-toggle .match-mode-option {
+    animation: none;
+    transition: none;
+  }
+
+  .btn-toggle-advanced:hover,
+  .btn-add-filter:hover:not(:disabled),
+  .btn-remove-filter:hover:not(:disabled),
+  .match-mode-option:hover {
+    transform: none;
+  }
 }

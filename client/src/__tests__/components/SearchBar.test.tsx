@@ -75,7 +75,9 @@ describe("SearchBar", () => {
     render(<SearchBar onSearch={onSearch} filters={{}} />);
 
     fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
+    expect(screen.queryByPlaceholderText("Configuration name...")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /saved configurations/i }));
+    expect(screen.getByPlaceholderText("Configuration name...")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(getSavedFilterConfigurations).toHaveBeenCalledTimes(1);
