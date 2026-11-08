@@ -17,4 +17,3 @@ export const YouTubeVideo: React.FC<YouTubeVideoProps> = ({ src, title }) => (
     />
   </div>
 );
-
