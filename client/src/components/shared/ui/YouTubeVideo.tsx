@@ -11,9 +11,10 @@ export const YouTubeVideo: React.FC<YouTubeVideoProps> = ({ src, title }) => (
       src={src}
       title={title}
       loading="lazy"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      referrerPolicy="strict-origin-when-cross-origin"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+      referrerPolicy="no-referrer"
       allowFullScreen
     />
   </div>
 );
+
