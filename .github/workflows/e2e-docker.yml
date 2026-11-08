@@ -34,17 +34,7 @@ jobs:
         run: docker compose -f docker-compose.e2e.yml build
 
       - name: Start server and client services
-        run: |
-          docker compose -f docker-compose.e2e.yml up -d server client
-          echo "Waiting for server health check..."
-          for i in {1..60}; do
-            if docker compose -f docker-compose.e2e.yml exec -T server curl -s -f http://localhost:3001/api/choreographies?limit=1 > /dev/null 2>&1; then
-              echo "✓ Server is healthy"
-              break
-            fi
-            echo "Waiting... ($i/60)"
-            sleep 1
-          done
+        run: docker compose -f docker-compose.e2e.yml up -d --wait server client
 
       - name: Run E2E tests
         run: docker compose -f docker-compose.e2e.yml run --rm e2e

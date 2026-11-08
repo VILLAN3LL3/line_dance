@@ -1,8 +1,0 @@
-FROM mcr.microsoft.com/playwright:v1.48.0-focal
-
-WORKDIR /app
-
-# Create playwright-results directory
-RUN mkdir -p /app/playwright-results
-
-EXPOSE 3000

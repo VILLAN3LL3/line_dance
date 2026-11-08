@@ -4,11 +4,13 @@ services:
       context: ./server
       dockerfile: Dockerfile
     container_name: line_dance_server
-    ports:
-      - "3001:3001"
     environment:
       PORT: 3001
       NODE_ENV: test
+      # Fresh, isolated databases per run (same as the local Playwright webServer).
+      CHOREOGRAPHY_DB_PATH: ":memory:"
+      DANCE_GROUPS_DB_PATH: ":memory:"
+      TAGS_DB_PATH: ":memory:"
     volumes:
       - ./raw_data:/app/raw_data
     healthcheck:
@@ -23,13 +25,9 @@ services:
       context: ./client
       dockerfile: Dockerfile.preview
     container_name: line_dance_client
-    ports:
-      - "3000:3000"
     depends_on:
       server:
         condition: service_healthy
-    environment:
-      VITE_API_URL: http://server:3001/api
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/"]
       interval: 2s
@@ -38,24 +36,26 @@ services:
       start_period: 45s
 
   e2e:
-    image: mcr.microsoft.com/playwright:v1.65.0-focal
+    image: mcr.microsoft.com/playwright:v1.65.0-noble
     container_name: line_dance_e2e
+    # Share the client's network namespace so the app is served from http://localhost:3000.
+    # Browsers only expose crypto.randomUUID (used by the app) in secure contexts, and
+    # http://client:3000 is not one. The server is still reachable as "server".
+    network_mode: "service:client"
     working_dir: /app
     entrypoint: sh
-    command: >
-      -c "
-      npm ci &&
-      npx playwright test --reporter=html,junit
-      "
+    # Reporters (incl. junit.xml) come from playwright.config.ts when CI is set.
+    command: -c "npm ci && npx playwright test"
     depends_on:
       client:
         condition: service_healthy
       server:
         condition: service_healthy
     environment:
-      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "false"
       DOCKER_ENV: "1"
       CI: "true"
-      VITE_API_URL: http://server:3001/api
+      E2E_API_URL: http://server:3001/api
     volumes:
       - ./client:/app
+      # Keep container-installed deps off the host so npm ci never touches local node_modules.
+      - /app/node_modules

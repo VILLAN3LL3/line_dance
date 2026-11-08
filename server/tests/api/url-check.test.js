@@ -57,7 +57,7 @@ describe('GET /api/url-check — HEAD succeeds', () => {
     expect(res.body).toEqual({ ok: true, status: 200 });
     expect(mockFetch).toHaveBeenCalledOnce();
     expect(mockFetch).toHaveBeenCalledWith(
-      'https://example.com',
+      'https://example.com/',
       expect.objectContaining({ method: 'HEAD' }),
     );
   });

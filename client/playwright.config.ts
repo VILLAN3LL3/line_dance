@@ -24,7 +24,7 @@ export default defineConfig({
       ]
     : [["list"], ["html", { open: "never" }]],
   use: {
-    baseURL: isDocker ? "http://client:3000" : `http://127.0.0.1:${e2eAppPort}`,
+    baseURL: isDocker ? "http://localhost:3000" : `http://127.0.0.1:${e2eAppPort}`,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",

@@ -1,6 +1,10 @@
 import { APIRequestContext, expect } from "@playwright/test";
 
-export const API_BASE = "http://127.0.0.1:3101/api";
+// The client has no @types/node; only env access is needed here.
+declare const process: { env: Record<string, string | undefined> };
+
+// Overridden in Docker, where the API is reachable as http://server:3001/api.
+export const API_BASE = process.env.E2E_API_URL ?? "http://127.0.0.1:3101/api";
 
 function expectOk(response: Awaited<ReturnType<APIRequestContext["post"]>>) {
   expect(response.ok()).toBeTruthy();

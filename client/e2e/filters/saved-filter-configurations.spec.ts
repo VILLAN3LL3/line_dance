@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { API_BASE } from "../helpers/api";
+
 test.describe("Saved Filter Configurations", () => {
   test("supports save, rename, and delete lifecycle", async ({ page }) => {
     const configName = `E2E Config ${Date.now()}`;
@@ -68,7 +70,7 @@ test.describe("Saved Filter Configurations", () => {
     const keepName = `Saved Keep ${runId}`;
     const blockedName = `Saved Blocked ${runId}`;
 
-    await request.post("http://127.0.0.1:3101/api/choreographies", {
+    await request.post(`${API_BASE}/choreographies`, {
       data: {
         name: keepName,
         level: "BEGINNER",
@@ -79,7 +81,7 @@ test.describe("Saved Filter Configurations", () => {
         wall_count: 4,
       },
     });
-    await request.post("http://127.0.0.1:3101/api/choreographies", {
+    await request.post(`${API_BASE}/choreographies`, {
       data: {
         name: blockedName,
         level: "ADVANCED",

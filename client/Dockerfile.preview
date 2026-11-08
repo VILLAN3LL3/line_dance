@@ -8,9 +8,16 @@ RUN npm ci
 
 COPY . .
 
+# VITE_* variables are inlined at build time, so the API URL must be set here.
+# The browser runs in the e2e container and reaches the API via the compose network.
+ARG VITE_API_URL=http://server:3001/api
+ENV VITE_API_URL=$VITE_API_URL
+
 RUN npm run build
+
+# vite.config.ts sets server.open, which preview inherits; no browser exists in Docker.
+ENV BROWSER=none
 
 EXPOSE 3000
 
-# Disable opening browser on startup (not available in Docker)
-CMD ["npm", "run", "preview", "--", "--port", "3000", "--host", "0.0.0.0", "--open=false"]
+CMD ["npm", "run", "preview", "--", "--port", "3000", "--host", "0.0.0.0"]
