@@ -42,14 +42,14 @@ async function probeUrl(url, signal) {
       method: 'GET',
       headers: REQUEST_HEADERS,
       signal,
-      redirect: 'follow',
+      redirect: 'error',
     });
   }
   const headResponse = await fetch(url, {
     method: 'HEAD',
     headers: REQUEST_HEADERS,
     signal,
-    redirect: 'follow',
+    redirect: 'error',
   });
 
   // Some servers (e.g. copperknob.co.uk) reject HEAD with 405/501.
@@ -59,7 +59,7 @@ async function probeUrl(url, signal) {
       method: 'GET',
       headers: REQUEST_HEADERS,
       signal,
-      redirect: 'follow',
+      redirect: 'error',
     });
   }
 

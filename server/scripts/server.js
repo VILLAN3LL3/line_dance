@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
@@ -181,7 +182,15 @@ app.get('/api/health', (req, res) => {
 });
 
 // URL reachability check (server-side proxy, avoids CORS)
-app.get('/api/url-check', checkUrl);
+// Rate limit to prevent abuse and resource exhaustion
+const urlCheckLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // limit each IP to 30 requests per windowMs
+  message: 'Too many URL checks from this IP, please try again later.',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+app.get('/api/url-check', urlCheckLimiter, checkUrl);
 
 app.use(apiErrorHandler);
 

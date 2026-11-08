@@ -19,15 +19,17 @@ function parseUrl(rawUrl?: string): URL | null {
   const iframeSrcMatch = rawUrl.match(/src\s*=\s*"([^"]+)"/i);
   const candidate = iframeSrcMatch?.[1] ?? rawUrl;
 
-  // Decode common HTML entities so query params like &amp;list= are parsed correctly.
-  const normalized = candidate
-    .trim()
-    .replace(/&amp;/gi, "&")
-    .replace(/&#38;/g, "&")
-    .replace(/&quot;/gi, '"');
+  // Only decode &amp; since that's the common issue with YouTube's share dialog.
+  // Avoid decoding other entities to prevent encoding bypass attacks.
+  const normalized = candidate.trim().replace(/&amp;/gi, "&");
 
   try {
-    return new URL(normalized);
+    const url = new URL(normalized);
+    // Validate that the parsed URL is actually a YouTube URL
+    if (!isYouTubeHost(url.hostname)) {
+      return null;
+    }
+    return url;
   } catch {
     return null;
   }
