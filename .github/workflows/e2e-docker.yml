@@ -17,6 +17,8 @@ permissions:
 
 jobs:
   e2e:
+    # Must match the required status check configured for the branch.
+    name: E2E – Playwright
     runs-on: ubuntu-latest
     env:
       CI: "true"
