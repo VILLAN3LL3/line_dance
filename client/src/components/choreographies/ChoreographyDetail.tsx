@@ -10,7 +10,7 @@ import {
   updateChoreography,
 } from "../../api";
 import { Choreography, ChoreographyFormData, DuplicateChoreography } from "../../types";
-import { getChoreographyUpdateErrorMessage } from "../../utils/apiErrors";
+import { getChoreographyUpdateErrorMessage, getFieldIssues } from "../../utils/apiErrors";
 import { AppFormView } from "../app/AppFormView";
 import { BackButton, confirmAction, EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
 import { ChoreographyCard } from "./ChoreographyCard";
@@ -95,6 +95,7 @@ const ChoreographyDetail: React.FC = () => {
       await loadChoreography();
       setView("view");
     } catch (err) {
+      if (getFieldIssues(err)) throw err;
       setError(getChoreographyUpdateErrorMessage(err));
       console.error(err);
     } finally {
@@ -116,13 +117,14 @@ const ChoreographyDetail: React.FC = () => {
       if (found.length > 0) {
         setDuplicates(found);
         setPendingFormData(data);
-        setIsLoading(false);
         return;
       }
       await doUpdate(data);
     } catch (err) {
+      if (getFieldIssues(err)) throw err;
       setError(getChoreographyUpdateErrorMessage(err));
       console.error(err);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -130,8 +132,13 @@ const ChoreographyDetail: React.FC = () => {
   const handleConfirmUpdate = async () => {
     if (pendingFormData) {
       setDuplicates([]);
-      await doUpdate(pendingFormData);
-      setPendingFormData(null);
+      try {
+        await doUpdate(pendingFormData);
+        setPendingFormData(null);
+      } catch (err) {
+        setError("Validation failed. Save the form again to review the field errors.");
+        console.error(err);
+      }
     }
   };
 

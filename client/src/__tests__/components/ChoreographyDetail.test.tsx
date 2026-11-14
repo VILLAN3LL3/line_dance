@@ -12,6 +12,7 @@ import {
   getStepFigures,
   getTags,
   updateChoreography,
+  validateChoreography,
 } from "../../api";
 import ChoreographyDetail from "../../components/choreographies/ChoreographyDetail";
 import { GlobalApiErrorNotice } from "../../components/shared/GlobalApiErrorNotice";
@@ -37,6 +38,7 @@ vi.mock("../../api", () => ({
   getChoreographyInfoCategories: vi.fn(),
   getTags: vi.fn(),
   getStepFigures: vi.fn(),
+  validateChoreography: vi.fn(),
 }));
 
 const BASE_CHOREOGRAPHY = {
@@ -63,6 +65,7 @@ describe("ChoreographyDetail", () => {
     vi.mocked(fetchChoreography).mockResolvedValue(BASE_CHOREOGRAPHY);
     vi.mocked(checkChoreographyDuplicates).mockResolvedValue([]);
     vi.mocked(updateChoreography).mockResolvedValue({ id: 1, message: "updated" });
+    vi.mocked(validateChoreography).mockResolvedValue();
     vi.mocked(getLevels).mockResolvedValue([{ id: 2, name: "Intermediate", value: 50 }]);
     vi.mocked(getAuthors).mockResolvedValue([]);
     vi.mocked(getChoreographyInfoCategories).mockResolvedValue([
@@ -104,6 +107,20 @@ describe("ChoreographyDetail", () => {
     expect(container.querySelector(".form-view")).toBeInTheDocument();
     expect(container.querySelector(".form-view .level-badge")).toHaveTextContent("Intermediate");
     expect(screen.queryByRole("heading", { name: "Edit Choreography" })).not.toBeInTheDocument();
+  });
+
+  it("shows server validation issues in edit mode without checking duplicates or updating", async () => {
+    vi.mocked(validateChoreography).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 400, data: { issues: [{ field: "level", key: "invalid_level" }] } },
+    });
+    renderDetail("/choreographies/1?edit=1");
+    await screen.findByRole("option", { name: "Intermediate" });
+    fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+    expect(await screen.findByText("Select a valid level.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Level *")).toHaveAccessibleDescription("Select a valid level.");
+    expect(checkChoreographyDuplicates).not.toHaveBeenCalled();
+    expect(updateChoreography).not.toHaveBeenCalled();
   });
 
   it("shows duplicate warning in edit mode when duplicates are found", async () => {

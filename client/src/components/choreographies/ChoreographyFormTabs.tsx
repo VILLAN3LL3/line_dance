@@ -15,12 +15,14 @@ type ChoreographyChangeHandler = (
 interface BasicInformationTabProps {
   formData: ChoreographyFormData;
   levels: { id: number; name: string }[];
+  errors: { name?: string; level?: string };
   onChange: ChoreographyChangeHandler;
 }
 
 export const BasicInformationTab: React.FC<BasicInformationTabProps> = ({
   formData,
   levels,
+  errors,
   onChange,
 }) => (
   <div className="form-section">
@@ -33,6 +35,7 @@ export const BasicInformationTab: React.FC<BasicInformationTabProps> = ({
       song={formData.song}
       artist={formData.artist}
       levels={levels}
+      errors={errors}
       onChange={onChange}
     />
   </div>
@@ -75,15 +78,17 @@ export const ChoreographersTab: React.FC<ChoreographersTabProps> = ({
 
 interface LinksTabProps {
   formData: ChoreographyFormData;
+  errors: { step_sheet_link?: string; demo_video_url?: string; tutorial_video_url?: string };
   onChange: ChoreographyChangeHandler;
 }
 
-export const LinksTab: React.FC<LinksTabProps> = ({ formData, onChange }) => (
+export const LinksTab: React.FC<LinksTabProps> = ({ formData, errors, onChange }) => (
   <div className="form-section">
     <ChoreographyFormLinksSection
       step_sheet_link={formData.step_sheet_link}
       demo_video_url={formData.demo_video_url}
       tutorial_video_url={formData.tutorial_video_url}
+      errors={errors}
       onChange={onChange}
     />
   </div>
@@ -128,6 +133,7 @@ interface AdditionalInformationTabProps {
   information: ChoreographyInformation[];
   categories: string[];
   customCategoryRowIds: Set<string>;
+  errors: Record<string, string>;
   onCategoryChange: (index: number, value: string) => void;
   onDescriptionChange: (index: number, value: string) => void;
   onCustomCategoryModeChange: (rowId: string, isCustom: boolean) => void;
@@ -138,6 +144,7 @@ export const AdditionalInformationTab: React.FC<AdditionalInformationTabProps> =
   information,
   categories,
   customCategoryRowIds,
+  errors,
   onCategoryChange,
   onDescriptionChange,
   onCustomCategoryModeChange,
@@ -152,6 +159,10 @@ export const AdditionalInformationTab: React.FC<AdditionalInformationTabProps> =
       const isCustomCategory =
         customCategoryRowIds.has(rowId) || (Boolean(item.category) && !existingCategory);
       const selectedCategory = isCustomCategory ? NEW_CATEGORY_VALUE : (existingCategory ?? "");
+      const categoryError = errors[`choreography_information.${rowId}.category`];
+      const descriptionError = errors[`choreography_information.${rowId}.description`];
+      const categoryErrorId = `choreography-information-category-${rowId}-error`;
+      const descriptionErrorId = `choreography-information-description-${rowId}-error`;
 
       return (
         <div className="choreography-information-entry" key={rowId}>
@@ -160,6 +171,7 @@ export const AdditionalInformationTab: React.FC<AdditionalInformationTabProps> =
               label={`Category ${index + 1}`}
               htmlFor={`choreography-information-category-${rowId}`}
               className="form-group choreography-information-category"
+              error={categoryError}
             >
               <div
                 className={
@@ -171,6 +183,10 @@ export const AdditionalInformationTab: React.FC<AdditionalInformationTabProps> =
                 <select
                   id={`choreography-information-category-${rowId}`}
                   value={selectedCategory}
+                  aria-invalid={categoryError && !isCustomCategory ? true : undefined}
+                  aria-describedby={
+                    categoryError && !isCustomCategory ? categoryErrorId : undefined
+                  }
                   onChange={(event) => {
                     const value = event.target.value;
                     if (value === NEW_CATEGORY_VALUE) {
@@ -197,6 +213,8 @@ export const AdditionalInformationTab: React.FC<AdditionalInformationTabProps> =
                   <input
                     aria-label={`New category ${index + 1}`}
                     value={item.category}
+                    aria-invalid={categoryError ? true : undefined}
+                    aria-describedby={categoryError ? categoryErrorId : undefined}
                     onChange={(event) => onCategoryChange(index, event.target.value)}
                     placeholder="Enter a category"
                   />
@@ -227,7 +245,14 @@ export const AdditionalInformationTab: React.FC<AdditionalInformationTabProps> =
               value={item.description}
               onChange={(event) => onDescriptionChange(index, event.target.value)}
               placeholder="Describe this choreography detail"
+              aria-invalid={descriptionError ? true : undefined}
+              aria-describedby={descriptionError ? descriptionErrorId : undefined}
             />
+            {descriptionError && (
+              <span id={descriptionErrorId} className="form-field-error">
+                {descriptionError}
+              </span>
+            )}
           </div>
         </div>
       );

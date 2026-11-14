@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { deleteChoreography, searchChoreographies, updateChoreography } from "../../api";
 import { Choreography, ChoreographyFormData, SearchFilters } from "../../types";
-import { getChoreographyUpdateErrorMessage } from "../../utils/apiErrors";
+import { getChoreographyUpdateErrorMessage, getFieldIssues } from "../../utils/apiErrors";
 import { confirmAction, ErrorMessage } from "../shared/ui";
 import { AppDetailView } from "./AppDetailView";
 import { AppFormView } from "./AppFormView";
@@ -139,6 +139,7 @@ export const App: React.FC = () => {
       await updateChoreography(selectedChoreography.id, formData);
       await returnToList();
     } catch (err) {
+      if (getFieldIssues(err)) throw err;
       setError(getChoreographyUpdateErrorMessage(err));
       console.error(err);
     } finally {

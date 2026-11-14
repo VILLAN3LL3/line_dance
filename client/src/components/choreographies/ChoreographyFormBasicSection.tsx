@@ -16,6 +16,7 @@ interface ChoreographyFormBasicSectionProps {
   song?: string;
   artist?: string;
   levels: LevelOption[];
+  errors: { name?: string; level?: string };
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => void;
@@ -30,10 +31,16 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
   song,
   artist,
   levels,
+  errors,
   onChange,
 }) => (
   <>
-    <FormField label="Choreography Name *" htmlFor="name" className="form-group">
+    <FormField
+      label="Choreography Name *"
+      htmlFor="name"
+      className="form-group"
+      error={errors.name}
+    >
       <input
         type="text"
         id="name"
@@ -41,12 +48,22 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
         value={name}
         onChange={onChange}
         required
+        aria-invalid={errors.name ? true : undefined}
+        aria-describedby={errors.name ? "name-error" : undefined}
         placeholder="Enter choreography name"
       />
     </FormField>
 
-    <FormField label="Level *" htmlFor="level" className="form-group">
-      <select id="level" name="level" value={level} onChange={onChange} required>
+    <FormField label="Level *" htmlFor="level" className="form-group" error={errors.level}>
+      <select
+        id="level"
+        name="level"
+        value={level}
+        onChange={onChange}
+        required
+        aria-invalid={errors.level ? true : undefined}
+        aria-describedby={errors.level ? "level-error" : undefined}
+      >
         <option value="">Select a level</option>
         {levels.map((item) => (
           <option key={item.id} value={item.name}>

@@ -97,6 +97,10 @@ export async function createChoreography(
   return response.data;
 }
 
+export async function validateChoreography(data: ChoreographyFormData): Promise<void> {
+  await api.post("/choreographies/validate", data);
+}
+
 export async function updateChoreography(
   id: number,
   data: Partial<ChoreographyFormData>,

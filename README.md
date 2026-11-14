@@ -20,6 +20,7 @@ __All code was written by GitHub Copilot. Use with caution.__
 - Switch between card and table views; filters and view mode persist in local storage
 - Choreographer names in cards are limited to two lines, with a fade-out on overflow; click to expand or collapse the full list
 - Create, edit, and delete choreographies with ratings (0–5)
+- On save, invalid choreography fields show inline validation messages and their tabs are marked; edited fields are checked again on the next save.
 - Add multiple choreography information entries, each with a category and description. Restart, Tag, Ending, Intro, Sequence, and Styling are seeded categories; custom categories can also be entered.
 
 ### Choreographers
@@ -93,6 +94,10 @@ The pre-commit hook runs `prettier` on both packages. It is activated automatica
 Interactive docs (Swagger UI): **`http://localhost:3001/api/docs`**
 
 Raw OpenAPI spec: `http://localhost:3001/api/openapi.json`
+
+`POST /api/choreographies/validate` validates choreography data without saving. It shares the
+create/update field rules and returns HTTP 400 with `issues` containing `{ field, key }` entries;
+information row fields use paths such as `choreography_information.0.category`.
 
 ---
 

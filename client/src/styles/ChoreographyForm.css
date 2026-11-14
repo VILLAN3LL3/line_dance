@@ -222,6 +222,25 @@ button.choreography-form-tab:focus-visible {
   box-shadow: 0 0 0 3px rgba(123, 63, 138, 0.14);
 }
 
+.choreography-form input[aria-invalid="true"],
+.choreography-form select[aria-invalid="true"],
+.choreography-form textarea[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.choreography-form input[aria-invalid="true"]:focus,
+.choreography-form select[aria-invalid="true"]:focus,
+.choreography-form textarea[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 2px var(--color-danger);
+}
+
+.form-field-error {
+  display: block;
+  margin-top: 6px;
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
 button.choreography-information-remove {
   display: grid;
   place-items: center;

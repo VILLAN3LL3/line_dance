@@ -11,6 +11,7 @@ import { runMigrations } from '../migrations/index.js';
 import { openApiSpec } from './openapi.js';
 import {
   createChoreography,
+  validateChoreography,
   getChoreographies,
   getChoreographyById,
   updateChoreography,
@@ -103,6 +104,7 @@ await runMigrations();
 
 // Routes
 app.post('/api/choreographies', createChoreography);
+app.post('/api/choreographies/validate', validateChoreography);
 app.get('/api/choreographies', getChoreographies);
 app.get('/api/choreographies/search', searchChoreographies);
 app.get('/api/choreographies/max-count', getMaxChoreographyCount);

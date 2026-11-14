@@ -11,6 +11,7 @@ interface UrlInputProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   disabled?: boolean;
+  error?: string;
 }
 
 type UrlCheckStatus = "idle" | "checking" | "ok" | "error";
@@ -22,6 +23,7 @@ export const UrlInput: React.FC<UrlInputProps> = ({
   onChange,
   placeholder,
   disabled,
+  error,
 }) => {
   const [status, setStatus] = useState<UrlCheckStatus>("idle");
 
@@ -65,6 +67,8 @@ export const UrlInput: React.FC<UrlInputProps> = ({
         onBlur={handleBlur}
         placeholder={placeholder}
         disabled={disabled}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
       />
       {status === "checking" && (
         <span className="url-status-indicator checking" aria-label="Checking URL" />

@@ -87,6 +87,67 @@ describe('POST /api/choreographies', () => {
     expect(res.body.message).toMatch(/created/i);
   });
 
+  describe('choreography field validation', () => {
+    it('returns all field issues without creating a choreography', async () => {
+      const body = {
+        name: '  ',
+        level: '',
+        demo_video_url: 'invalid',
+        choreography_information: [
+          { category: 'Restart', description: '' },
+          { category: '', description: 'Details' },
+          { category: '', description: '' },
+        ],
+      };
+      const response = await request(app).post('/api/choreographies/validate').send(body);
+      expect(response.status).toBe(400);
+      expect(response.body.issues).toEqual(
+        expect.arrayContaining([
+          { field: 'name', key: 'required' },
+          { field: 'level', key: 'required' },
+          { field: 'demo_video_url', key: 'invalid_url' },
+          { field: 'choreography_information.0.description', key: 'required' },
+          { field: 'choreography_information.1.category', key: 'required' },
+        ]),
+      );
+      expect(response.body.issues).toHaveLength(5);
+      const create = await request(app).post('/api/choreographies').send(body);
+      expect(create.status).toBe(400);
+      expect(create.body.issues).toEqual(response.body.issues);
+      expect((await request(app).get('/api/choreographies')).body.data).toHaveLength(0);
+    });
+
+    it('validates existing levels and rejects invalid updates without changing the saved entry', async () => {
+      const created = await createChoreo({ name: 'Original', level: 'Beginner' });
+      const body = { name: 'Updated', level: 'Not a real level', step_sheet_link: 'not a URL' };
+      const validation = await request(app).post('/api/choreographies/validate').send(body);
+      expect(validation.body.issues).toEqual(
+        expect.arrayContaining([
+          { field: 'level', key: 'invalid_level' },
+          { field: 'step_sheet_link', key: 'invalid_url' },
+        ]),
+      );
+      const update = await request(app).put(`/api/choreographies/${created.id}`).send(body);
+      expect(update.status).toBe(400);
+      expect(update.body.issues).toEqual(validation.body.issues);
+      expect((await request(app).get(`/api/choreographies/${created.id}`)).body.name).toBe(
+        'Original',
+      );
+    });
+
+    it('accepts valid data and ignores a completely empty information row', async () => {
+      const response = await request(app)
+        .post('/api/choreographies/validate')
+        .send({
+          name: 'Valid Dance',
+          level: 'Beginner',
+          choreography_information: [{ category: '', description: '' }],
+        });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ valid: true });
+    });
+  });
+
   it('returns 400 when name is missing', async () => {
     const res = await request(app).post('/api/choreographies').send({ level: 'Beginner' });
 

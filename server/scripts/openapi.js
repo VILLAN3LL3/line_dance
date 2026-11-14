@@ -96,6 +96,35 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/choreographies/validate': {
+      post: {
+        tags: ['Choreographies'],
+        summary: 'Validate choreography fields without saving',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ChoreographyCreateRequest' },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Choreography data is valid',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { valid: { type: 'boolean', enum: [true] } },
+                  required: ['valid'],
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/ChoreographyValidationError' },
+        },
+      },
+    },
     '/api/choreographies': {
       get: {
         tags: ['Choreographies'],
@@ -135,7 +164,7 @@ export const openApiSpec = {
               },
             },
           },
-          400: { $ref: '#/components/responses/BadRequest' },
+          400: { $ref: '#/components/responses/ChoreographyValidationError' },
         },
       },
     },
@@ -362,6 +391,7 @@ export const openApiSpec = {
               },
             },
           },
+          400: { $ref: '#/components/responses/ChoreographyValidationError' },
           404: { $ref: '#/components/responses/NotFound' },
         },
       },
@@ -1569,6 +1599,14 @@ export const openApiSpec = {
       },
     },
     responses: {
+      ChoreographyValidationError: {
+        description: 'Invalid choreography fields',
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/ChoreographyValidationError' },
+          },
+        },
+      },
       BadRequest: {
         description: 'Bad request',
         content: {
@@ -1595,6 +1633,31 @@ export const openApiSpec = {
       },
     },
     schemas: {
+      ChoreographyValidationError: {
+        type: 'object',
+        required: ['error', 'issues'],
+        properties: {
+          error: { type: 'string' },
+          issues: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['field', 'key'],
+              properties: {
+                field: {
+                  type: 'string',
+                  description:
+                    'Field name or indexed path such as choreography_information.0.category',
+                },
+                key: {
+                  type: 'string',
+                  enum: ['required', 'invalid_level', 'invalid_url', 'invalid_information'],
+                },
+              },
+            },
+          },
+        },
+      },
       ErrorResponse: {
         type: 'object',
         properties: {

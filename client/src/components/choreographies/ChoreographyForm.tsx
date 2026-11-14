@@ -1,6 +1,6 @@
 import "../../styles/ChoreographyForm.css";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   getAuthors,
@@ -8,8 +8,11 @@ import {
   getLevels,
   getStepFigures,
   getTags,
+  validateChoreography,
 } from "../../api";
 import { ChoreographyFormData, ChoreographyInformation } from "../../types";
+import { getFieldIssues } from "../../utils/apiErrors";
+import type { FieldIssue } from "../../utils/apiErrors";
 import { ActionButton, ActionGroup, LevelBatch } from "../shared/ui";
 import {
   AdditionalInformationTab,
@@ -31,15 +34,38 @@ const FORM_TABS = [
 
 type FormTabId = (typeof FORM_TABS)[number]["id"];
 
-function hasInvalidUrl(value?: string): boolean {
-  if (!value?.trim()) return false;
+const FIELD_ISSUE_MESSAGES: Record<string, string> = {
+  "name.required": "Enter a choreography name.",
+  "level.required": "Select a level.",
+  "level.invalid_level": "Select a valid level.",
+  "step_sheet_link.invalid_url": "Enter a valid URL.",
+  "demo_video_url.invalid_url": "Enter a valid URL.",
+  "tutorial_video_url.invalid_url": "Enter a valid URL.",
+  "category.required": "Choose or enter a category.",
+  "description.required": "Enter a description.",
+};
 
-  try {
-    new URL(value.trim());
-    return false;
-  } catch {
-    return true;
+function mapFieldIssues(issues: FieldIssue[], formData: ChoreographyFormData) {
+  const fieldErrors: Record<string, string> = {};
+  let hasUnmappedIssue = false;
+  for (const issue of issues) {
+    const match = /^choreography_information\.(\d+)\.(category|description)$/.exec(issue.field);
+    let field = issue.field;
+    let messageField = issue.field;
+    if (match) {
+      const row = formData.choreography_information?.[Number(match[1])];
+      if (row?.id === undefined) {
+        hasUnmappedIssue = true;
+        continue;
+      }
+      field = `choreography_information.${row.id}.${match[2]}`;
+      messageField = match[2];
+    }
+    const message = FIELD_ISSUE_MESSAGES[`${messageField}.${issue.key}`];
+    if (message) fieldErrors[field] = message;
+    else hasUnmappedIssue = true;
   }
+  return { fieldErrors, hasUnmappedIssue };
 }
 
 function createEmptyChoreographyInformation(): ChoreographyInformation {
@@ -90,7 +116,10 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
         },
   );
   const [activeTab, setActiveTab] = useState<FormTabId>("basic-information");
-  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const validationVersion = useRef(0);
 
   const [currentAuthor, setCurrentAuthor] = useState("");
   const [currentTag, setCurrentTag] = useState("");
@@ -105,17 +134,15 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const [customCategoryRowIds, setCustomCategoryRowIds] = useState<Set<string>>(() => new Set());
 
   const tabValidationErrors: Record<FormTabId, boolean> = {
-    "basic-information": !formData.name.trim() || !formData.level.trim(),
+    "basic-information": Boolean(fieldErrors.name || fieldErrors.level),
     choreographers: false,
-    links: [formData.step_sheet_link, formData.demo_video_url, formData.tutorial_video_url].some(
-      hasInvalidUrl,
+    links: Boolean(
+      fieldErrors.step_sheet_link || fieldErrors.demo_video_url || fieldErrors.tutorial_video_url,
     ),
     "step-figures": false,
-    "additional-information": (formData.choreography_information || []).some((item) => {
-      const hasCategory = Boolean(item.category.trim());
-      const hasDescription = Boolean(item.description.trim());
-      return hasCategory !== hasDescription;
-    }),
+    "additional-information": Object.keys(fieldErrors).some((field) =>
+      field.startsWith("choreography_information."),
+    ),
     "hash-tags": false,
   };
 
@@ -158,6 +185,12 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
+    validationVersion.current += 1;
+    setFieldErrors((previous) => {
+      const next = { ...previous };
+      delete next[name];
+      return next;
+    });
     if (type === "checkbox") {
       const isChecked = (e.target as HTMLInputElement).checked;
       setFormData((prev) => ({
@@ -186,6 +219,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     const author = (authorValue ?? currentAuthor).trim();
     const normalizedAuthor = findOptionIgnoreCase(authorsFromDb, author) ?? author;
     if (normalizedAuthor && !includesIgnoreCase(formData.authors, normalizedAuthor)) {
+      validationVersion.current += 1;
       setFormData((prev) => ({
         ...prev,
         authors: [...prev.authors, normalizedAuthor],
@@ -198,6 +232,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     const tag = (tagValue ?? currentTag).trim();
     const normalizedTag = findOptionIgnoreCase(tagsFromDb, tag) ?? tag;
     if (normalizedTag && !includesIgnoreCase(formData.tags, normalizedTag)) {
+      validationVersion.current += 1;
       setFormData((prev) => ({
         ...prev,
         tags: [...prev.tags, normalizedTag],
@@ -210,6 +245,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     const figure = (figureValue ?? currentFigure).trim();
     const normalizedFigure = findOptionIgnoreCase(figuresFromDb, figure) ?? figure;
     if (normalizedFigure && !includesIgnoreCase(formData.step_figures, normalizedFigure)) {
+      validationVersion.current += 1;
       setFormData((prev) => ({
         ...prev,
         step_figures: [...prev.step_figures, normalizedFigure],
@@ -219,6 +255,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   };
 
   const removeAuthor = (authorToRemove: string) => {
+    validationVersion.current += 1;
     setFormData((prev) => ({
       ...prev,
       authors: prev.authors.filter((author) => author !== authorToRemove),
@@ -226,6 +263,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   };
 
   const removeTag = (tagToRemove: string) => {
+    validationVersion.current += 1;
     setFormData((prev) => ({
       ...prev,
       tags: prev.tags.filter((tag) => tag !== tagToRemove),
@@ -233,6 +271,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   };
 
   const removeFigure = (figureToRemove: string) => {
+    validationVersion.current += 1;
     setFormData((prev) => ({
       ...prev,
       step_figures: prev.step_figures.filter((figure) => figure !== figureToRemove),
@@ -244,6 +283,13 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
     field: "category" | "description",
     value: string,
   ) => {
+    validationVersion.current += 1;
+    const rowId = String(formData.choreography_information?.[index]?.id ?? index);
+    setFieldErrors((previous) => {
+      const next = { ...previous };
+      delete next[`choreography_information.${rowId}.${field}`];
+      return next;
+    });
     setFormData((previous) => ({
       ...previous,
       choreography_information: (() => {
@@ -279,6 +325,14 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
   const removeChoreographyInformation = (indexToRemove: number) => {
     const rowId = String(formData.choreography_information?.[indexToRemove]?.id ?? indexToRemove);
+    validationVersion.current += 1;
+    setFieldErrors((previous) =>
+      Object.fromEntries(
+        Object.entries(previous).filter(
+          ([field]) => !field.startsWith(`choreography_information.${rowId}.`),
+        ),
+      ),
+    );
     setCustomCategoryMode(rowId, false);
     setFormData((previous) => ({
       ...previous,
@@ -373,18 +427,38 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setHasAttemptedSubmit(true);
-    if (Object.values(tabValidationErrors).some(Boolean)) return;
-
+    if (isValidating) return;
+    const submittedVersion = validationVersion.current;
+    setIsValidating(true);
+    setValidationError(null);
     try {
+      await validateChoreography(formData);
+      if (validationVersion.current !== submittedVersion) {
+        setValidationError("The form changed during validation. Please save again.");
+        return;
+      }
+      setFieldErrors({});
       await onSubmit({
         ...formData,
-        choreography_information: (formData.choreography_information || [])
-          .filter((item) => item.category.trim() && item.description.trim())
-          .map(({ category, description }) => ({ category, description })),
+        choreography_information: (formData.choreography_information || []).map(
+          ({ category, description }) => ({ category, description }),
+        ),
       });
     } catch (error) {
-      console.error("Form submission error:", error);
+      const issues = getFieldIssues(error);
+      if (validationVersion.current !== submittedVersion) {
+        setValidationError("The form changed during validation. Please save again.");
+      } else if (issues) {
+        const { fieldErrors: nextErrors, hasUnmappedIssue } = mapFieldIssues(issues, formData);
+        setFieldErrors(nextErrors);
+        if (hasUnmappedIssue)
+          setValidationError("Some fields could not be validated. Please try again.");
+      } else {
+        setValidationError("Failed to validate or save the choreography. Please try again.");
+        console.error("Form submission error:", error);
+      }
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -417,11 +491,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const contextTitle = formData.name.trim() || title;
 
   return (
-    <form
-      className="choreography-form"
-      onSubmit={handleSubmit}
-      onInvalidCapture={() => setHasAttemptedSubmit(true)}
-    >
+    <form className="choreography-form" onSubmit={handleSubmit} noValidate>
       {(contextTitle || formData.level.trim()) && (
         <div className="choreography-form-context">
           {contextTitle && <h2>{contextTitle}</h2>}
@@ -435,7 +505,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
       >
         {FORM_TABS.map((tab, index) =>
           (() => {
-            const hasError = hasAttemptedSubmit && tabValidationErrors[tab.id];
+            const hasError = tabValidationErrors[tab.id];
             return (
               <button
                 key={tab.id}
@@ -469,7 +539,12 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
         tabIndex={0}
       >
         {activeTab === "basic-information" && (
-          <BasicInformationTab formData={formData} levels={levels} onChange={handleChange} />
+          <BasicInformationTab
+            formData={formData}
+            levels={levels}
+            errors={fieldErrors}
+            onChange={handleChange}
+          />
         )}
 
         {activeTab === "choreographers" && (
@@ -484,7 +559,9 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
           />
         )}
 
-        {activeTab === "links" && <LinksTab formData={formData} onChange={handleChange} />}
+        {activeTab === "links" && (
+          <LinksTab formData={formData} errors={fieldErrors} onChange={handleChange} />
+        )}
 
         {activeTab === "step-figures" && (
           <StepFiguresTab
@@ -503,6 +580,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
             information={formData.choreography_information || []}
             categories={informationCategories}
             customCategoryRowIds={customCategoryRowIds}
+            errors={fieldErrors}
             onCategoryChange={(index, value) =>
               updateChoreographyInformation(index, "category", value)
             }
@@ -527,9 +605,14 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
         )}
       </div>
 
+      {validationError && (
+        <p role="alert" className="form-field-error">
+          {validationError}
+        </p>
+      )}
       <ActionGroup className="form-actions">
-        <ActionButton type="submit" variant="primary" disabled={isLoading}>
-          {isLoading ? "Saving..." : "Save Choreography"}
+        <ActionButton type="submit" variant="primary" disabled={isLoading || isValidating}>
+          {isLoading || isValidating ? "Saving..." : "Save Choreography"}
         </ActionButton>
         {onCancel && (
           <ActionButton type="button" onClick={onCancel} variant="edit" className="btn-small">

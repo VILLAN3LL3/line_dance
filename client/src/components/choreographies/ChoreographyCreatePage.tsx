@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { checkChoreographyDuplicates, createChoreography } from "../../api";
 import { ChoreographyFormData, DuplicateChoreography } from "../../types";
+import { getFieldIssues } from "../../utils/apiErrors";
 import { AppFormView } from "../app/AppFormView";
 import { ErrorMessage } from "../shared/ui";
 import { DuplicateChoreographyWarning } from "./DuplicateChoreographyWarning";
@@ -21,6 +22,7 @@ const ChoreographyCreatePage: React.FC = () => {
       await createChoreography(formData);
       await navigate("/");
     } catch (err) {
+      if (getFieldIssues(err)) throw err;
       setError("Failed to create choreography");
       console.error(err);
     } finally {
@@ -41,13 +43,14 @@ const ChoreographyCreatePage: React.FC = () => {
       if (found.length > 0) {
         setDuplicates(found);
         setPendingFormData(formData);
-        setIsLoading(false);
         return;
       }
       await doCreate(formData);
     } catch (err) {
+      if (getFieldIssues(err)) throw err;
       setError("Failed to create choreography");
       console.error(err);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -55,8 +58,13 @@ const ChoreographyCreatePage: React.FC = () => {
   const handleConfirmCreate = async () => {
     if (pendingFormData) {
       setDuplicates([]);
-      await doCreate(pendingFormData);
-      setPendingFormData(null);
+      try {
+        await doCreate(pendingFormData);
+        setPendingFormData(null);
+      } catch (err) {
+        setError("Validation failed. Save the form again to review the field errors.");
+        console.error(err);
+      }
     }
   };
 

@@ -39,6 +39,7 @@ import {
 } from '../../routes/dance-groups.js';
 import {
   createChoreography,
+  validateChoreography,
   searchChoreographies,
   getLevels,
   getStepFigures,
@@ -98,6 +99,7 @@ app.get('/api/learned-choreographies', getLearnedChoreographies);
 // Choreographies (subset needed for suggestion tests)
 app.get('/api/levels', getLevels);
 app.post('/api/choreographies', createChoreography);
+app.post('/api/choreographies/validate', validateChoreography);
 app.get('/api/choreographies/search', searchChoreographies);
 app.get('/api/step_figures', getStepFigures);
 app.get('/api/step_figures/with-ids', getStepFiguresWithIds);

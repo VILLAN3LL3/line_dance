@@ -7,6 +7,7 @@ import express from 'express';
 import { apiErrorHandler } from '../../utils/apiErrorHandler.js';
 import {
   createChoreography,
+  validateChoreography,
   getChoreographies,
   getChoreographyById,
   updateChoreography,
@@ -46,6 +47,7 @@ app.get('/api/choreographies/max-count', getMaxChoreographyCount);
 app.get('/api/choreographies/duplicates', checkDuplicateChoreographies);
 app.get('/api/choreographies', getChoreographies);
 app.post('/api/choreographies', createChoreography);
+app.post('/api/choreographies/validate', validateChoreography);
 app.get('/api/choreographies/:id', getChoreographyById);
 app.put('/api/choreographies/:id', updateChoreography);
 app.delete('/api/choreographies/:id', deleteChoreography);
