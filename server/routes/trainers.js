@@ -1,18 +1,23 @@
-import { runQuery, getQuery, allQuery, withTransaction } from '../scripts/db.js';
+import * as trainers from '../features/trainers/flow.js';
 import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.js';
 
-const dbName = 'danceGroups';
+const trainerErrors = {
+  name_required: [400, 'Name is required'],
+  phone_required: [400, 'Phone is required'],
+  email_required: [400, 'Email is required'],
+  duplicate_email: [400, 'A trainer with that email already exists'],
+  not_found: [404, 'Trainer not found'],
+};
 
-// Trainers endpoints
+function sendTrainerError(res, error) {
+  const response = trainerErrors[error];
+  if (!response) throw new Error(`Unknown trainer error: ${error}`);
+  return res.status(response[0]).json({ error: response[1] });
+}
 
 export async function getTrainers(req, res) {
   try {
-    const rows = await allQuery(
-      `SELECT id, name, phone, email, created_at FROM trainers ORDER BY LOWER(name) ASC`,
-      [],
-      dbName,
-    );
-    res.json(rows);
+    res.json(await trainers.getTrainers());
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch trainers' });
@@ -21,100 +26,30 @@ export async function getTrainers(req, res) {
 
 export async function createTrainer(req, res) {
   try {
-    const { name, phone, email } = req.body;
-
-    if (!name || typeof name !== 'string' || !name.trim()) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
-    if (!phone || typeof phone !== 'string' || !phone.trim()) {
-      return res.status(400).json({ error: 'Phone is required' });
-    }
-    if (!email || typeof email !== 'string' || !email.trim()) {
-      return res.status(400).json({ error: 'Email is required' });
-    }
-
-    const result = await runQuery(
-      `INSERT INTO trainers (name, phone, email) VALUES (?, ?, ?)`,
-      [name.trim(), phone.trim(), email.trim()],
-      dbName,
-    );
-
-    const trainer = await getQuery(
-      `SELECT id, name, phone, email, created_at FROM trainers WHERE id = ?`,
-      [result.id],
-      dbName,
-    );
-
-    res.status(201).json(trainer);
+    const result = await trainers.createTrainer(req.body);
+    if (result.error) return sendTrainerError(res, result.error);
+    res.status(201).json(result.value);
   } catch (error) {
     captureError(error);
-    if (error.message?.includes('UNIQUE constraint failed')) {
-      return res.status(400).json({ error: 'A trainer with that email already exists' });
-    }
     res.status(500).json({ error: 'Failed to create trainer' });
   }
 }
 
 export async function updateTrainer(req, res) {
   try {
-    const { id } = req.params;
-    const { name, phone, email } = req.body;
-
-    if (!name || typeof name !== 'string' || !name.trim()) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
-    if (!phone || typeof phone !== 'string' || !phone.trim()) {
-      return res.status(400).json({ error: 'Phone is required' });
-    }
-    if (!email || typeof email !== 'string' || !email.trim()) {
-      return res.status(400).json({ error: 'Email is required' });
-    }
-
-    const existing = await getQuery(`SELECT id FROM trainers WHERE id = ?`, [id], dbName);
-
-    if (!existing) {
-      return res.status(404).json({ error: 'Trainer not found' });
-    }
-
-    await runQuery(
-      `UPDATE trainers SET name = ?, phone = ?, email = ? WHERE id = ?`,
-      [name.trim(), phone.trim(), email.trim(), id],
-      dbName,
-    );
-
-    const updated = await getQuery(
-      `SELECT id, name, phone, email, created_at FROM trainers WHERE id = ?`,
-      [id],
-      dbName,
-    );
-
-    res.json(updated);
+    const result = await trainers.updateTrainer(req.params.id, req.body);
+    if (result.error) return sendTrainerError(res, result.error);
+    res.json(result.value);
   } catch (error) {
     captureError(error);
-    if (error.message?.includes('UNIQUE constraint failed')) {
-      return res.status(400).json({ error: 'A trainer with that email already exists' });
-    }
     res.status(500).json({ error: 'Failed to update trainer' });
   }
 }
 
 export async function deleteTrainer(req, res) {
   try {
-    const { id } = req.params;
-
-    const result = await withTransaction(dbName, async () => {
-      await runQuery(
-        `UPDATE dance_courses SET trainer_id = NULL WHERE trainer_id = ?`,
-        [id],
-        dbName,
-      );
-      return runQuery(`DELETE FROM trainers WHERE id = ?`, [id], dbName);
-    });
-
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'Trainer not found' });
-    }
-
+    const result = await trainers.deleteTrainer(req.params.id);
+    if (result.error) return sendTrainerError(res, result.error);
     res.json({ message: 'Trainer deleted successfully' });
   } catch (error) {
     captureError(error);

@@ -101,6 +101,33 @@ describe('POST /api/trainers', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/already exists/i);
   });
+
+  it('only creates one trainer when simultaneous requests use the same email', async () => {
+    const responses = await Promise.all([
+      request(app).post('/api/trainers').send(BASE),
+      request(app)
+        .post('/api/trainers')
+        .send({ ...BASE, name: 'Another trainer' }),
+    ]);
+
+    expect(responses.map((response) => response.status).sort()).toEqual([201, 400]);
+    expect((await request(app).get('/api/trainers')).body).toHaveLength(1);
+  });
+
+  it('does not report unrelated database constraints as duplicate emails', async () => {
+    await runQuery(
+      "CREATE TEMP TRIGGER reject_trainer_insert BEFORE INSERT ON trainers BEGIN SELECT RAISE(ABORT, 'Forced trainer failure'); END",
+      [],
+      'danceGroups',
+    );
+    try {
+      const res = await request(app).post('/api/trainers').send(BASE);
+      expect(res.status).toBe(500);
+      expect(res.body).toEqual({ error: 'Failed to create trainer' });
+    } finally {
+      await runQuery('DROP TRIGGER reject_trainer_insert', [], 'danceGroups');
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -153,6 +180,12 @@ describe('PUT /api/trainers/:id', () => {
       .put(`/api/trainers/${created.body.id}`)
       .send({ name: '', phone: BASE.phone, email: BASE.email });
     expect(res.status).toBe(400);
+  });
+
+  it('validates fields before checking whether the trainer exists', async () => {
+    const res = await request(app).put('/api/trainers/99999').send({ name: ' ', phone: '' });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Name is required' });
   });
 });
 

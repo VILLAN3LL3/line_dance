@@ -220,6 +220,32 @@ describe('POST /api/dance-courses', () => {
     expect(res.status).toBe(201);
     expect(res.body.trainer_id).toBeNull();
   });
+
+  it('does not leave a deleted trainer assigned during concurrent course creation', async () => {
+    const group = await createGroup();
+    const trainer = await createTrainer();
+    const [created, deleted] = await Promise.all([
+      request(app)
+        .post('/api/dance-courses')
+        .send({ dance_group_id: group.id, name: 'Concurrent course', trainer_id: trainer.id }),
+      request(app).delete(`/api/trainers/${trainer.id}`),
+    ]);
+
+    expect(deleted.status).toBe(200);
+    expect([201, 404]).toContain(created.status);
+    const courses = await request(app).get(`/api/dance-courses?dance_group_id=${group.id}`);
+    expect(courses.body.every((course) => course.trainer_id === null)).toBe(true);
+  });
+
+  it('returns the existing duplicate course error when the course id is already used', async () => {
+    const group = await createGroup();
+    await request(app).post('/api/dance-courses').send({ dance_group_id: group.id, course_id: 42 });
+    const res = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.id, course_id: 42 });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'A course for this group and semester already exists' });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -306,6 +332,18 @@ describe('PUT /api/dance-courses/:id', () => {
       .send({ semester: 'WS 2025', trainer_id: 99999 });
     expect(res.status).toBe(404);
     expect(res.body.error).toMatch(/trainer not found/i);
+  });
+
+  it('checks the trainer before validating the updated course identity', async () => {
+    const group = await createGroup();
+    const created = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.id, name: 'Course' });
+    const res = await request(app)
+      .put(`/api/dance-courses/${created.body.id}`)
+      .send({ name: '', trainer_id: 99999 });
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Trainer not found' });
   });
 });
 

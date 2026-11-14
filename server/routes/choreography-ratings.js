@@ -1,32 +1,23 @@
-import { runQuery, getQuery } from '../scripts/db.js';
+import * as ratings from '../features/ratings/flow.js';
 import { captureError } from './choreography-shared.js';
+
+const ratingErrors = {
+  invalid_id: [400, 'Invalid choreography id'],
+  not_found: [404, 'Choreography not found'],
+  invalid_rating: [400, 'Rating must be an integer between 0 and 5'],
+};
+
+function sendRatingError(res, error) {
+  const response = ratingErrors[error];
+  if (!response) throw new Error(`Unknown rating error: ${error}`);
+  return res.status(response[0]).json({ error: response[1] });
+}
 
 export async function rateChoreography(req, res) {
   try {
-    const choreographyId = Number.parseInt(req.params.id, 10);
-    if (Number.isNaN(choreographyId)) {
-      return res.status(400).json({ error: 'Invalid choreography id' });
-    }
-
-    const existing = await getQuery('SELECT id FROM choreographies WHERE id = ?', [choreographyId]);
-    if (!existing) {
-      return res.status(404).json({ error: 'Choreography not found' });
-    }
-
-    const raw = req.body?.rating;
-    const rating = Number.parseInt(String(raw), 10);
-    if (Number.isNaN(rating) || rating < 0 || rating > 5) {
-      return res.status(400).json({ error: 'Rating must be an integer between 0 and 5' });
-    }
-
-    await runQuery(
-      `INSERT INTO personal_data.choreography_ratings (choreography_id, rating)
-       VALUES (?, ?)
-       ON CONFLICT(choreography_id) DO UPDATE SET rating = excluded.rating`,
-      [choreographyId, rating],
-    );
-
-    res.json({ choreography_id: choreographyId, rating });
+    const result = await ratings.rateChoreography(req.params.id, req.body);
+    if (result.error) return sendRatingError(res, result.error);
+    res.json(result.value);
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to save rating' });
@@ -35,15 +26,8 @@ export async function rateChoreography(req, res) {
 
 export async function deleteChoreographyRating(req, res) {
   try {
-    const choreographyId = Number.parseInt(req.params.id, 10);
-    if (Number.isNaN(choreographyId)) {
-      return res.status(400).json({ error: 'Invalid choreography id' });
-    }
-
-    await runQuery('DELETE FROM personal_data.choreography_ratings WHERE choreography_id = ?', [
-      choreographyId,
-    ]);
-
+    const result = await ratings.removeRating(req.params.id);
+    if (result.error) return sendRatingError(res, result.error);
     res.json({ message: 'Rating removed' });
   } catch (error) {
     captureError(error);

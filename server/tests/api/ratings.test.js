@@ -101,6 +101,12 @@ describe('PUT /api/choreographies/:id/rating', () => {
     const res = await request(app).put('/api/choreographies/99999/rating').send({ rating: 3 });
     expect(res.status).toBe(404);
   });
+
+  it('checks choreography existence before validating the rating', async () => {
+    const res = await request(app).put('/api/choreographies/99999/rating').send({ rating: 6 });
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Choreography not found' });
+  });
 });
 
 // ---------------------------------------------------------------------------
