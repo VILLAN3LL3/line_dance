@@ -114,6 +114,22 @@ describe('GET /api/dance-groups', () => {
 });
 
 describe('POST /api/dance-groups', () => {
+  it('rolls back group creation when assigning default figures fails', async () => {
+    await seedBaseFigure('Kick');
+    await runQuery(
+      "CREATE TEMP TRIGGER reject_base_figure BEFORE INSERT ON group_base_step_figures BEGIN SELECT RAISE(ABORT, 'Forced assignment failure'); END",
+      [],
+      'danceGroups',
+    );
+    try {
+      const response = await request(app).post('/api/dance-groups').send({ name: 'Failed Group' });
+      expect(response.status).toBe(500);
+      expect((await request(app).get('/api/dance-groups')).body).toEqual([]);
+    } finally {
+      await runQuery('DROP TRIGGER reject_base_figure', [], 'danceGroups');
+    }
+  });
+
   it('creates a dance group and returns 201', async () => {
     const res = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
     expect(res.status).toBe(201);
@@ -456,6 +472,30 @@ async function seedBaseFigure(name) {
 }
 
 describe('PUT /api/dance-groups/:groupId/base-step-figures', () => {
+  it('retains existing figures if replacing assignments fails', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
+    const original = await seedBaseFigure('Mambo');
+    const replacement = await seedBaseFigure('Grapevine');
+    await request(app)
+      .put(`/api/dance-groups/${group.body.id}/base-step-figures`)
+      .send({ step_figure_ids: [original.id] });
+    await runQuery(
+      "CREATE TEMP TRIGGER reject_base_figure BEFORE INSERT ON group_base_step_figures BEGIN SELECT RAISE(ABORT, 'Forced assignment failure'); END",
+      [],
+      'danceGroups',
+    );
+    try {
+      const response = await request(app)
+        .put(`/api/dance-groups/${group.body.id}/base-step-figures`)
+        .send({ step_figure_ids: [replacement.id] });
+      expect(response.status).toBe(500);
+      const after = await request(app).get(`/api/dance-groups/${group.body.id}/base-step-figures`);
+      expect(after.body).toEqual([{ id: original.id, name: original.name }]);
+    } finally {
+      await runQuery('DROP TRIGGER reject_base_figure', [], 'danceGroups');
+    }
+  });
+
   it('ignores duplicate figure IDs when setting base figures', async () => {
     const group = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
     const figure = await seedBaseFigure('Mambo');

@@ -1,4 +1,4 @@
-import { runQuery, getQuery, allQuery } from '../scripts/db.js';
+import { runQuery, getQuery, allQuery, withTransaction } from '../scripts/db.js';
 import {
   captureError,
   normalizeStringArray,
@@ -135,22 +135,24 @@ export async function saveFilterConfiguration(req, res) {
     const filters = normalizeSavedFilters(req.body?.filters || {});
     const filtersJson = JSON.stringify(filters);
 
-    await runQuery(
-      `INSERT INTO personal_data.saved_filter_configurations (name, filters_json)
+    const saved = await withTransaction('choreography', async () => {
+      await runQuery(
+        `INSERT INTO personal_data.saved_filter_configurations (name, filters_json)
        VALUES (?, ?)
        ON CONFLICT(name)
        DO UPDATE SET
          filters_json = excluded.filters_json,
          updated_at = CURRENT_TIMESTAMP`,
-      [name, filtersJson],
-    );
+        [name, filtersJson],
+      );
 
-    const saved = await getQuery(
-      `SELECT id, name, filters_json, created_at, updated_at
+      return getQuery(
+        `SELECT id, name, filters_json, created_at, updated_at
        FROM personal_data.saved_filter_configurations
        WHERE name = ?`,
-      [name],
-    );
+        [name],
+      );
+    });
 
     res.status(201).json({
       id: saved.id,
@@ -175,52 +177,58 @@ export async function updateSavedFilterConfiguration(req, res) {
       return res.status(400).json({ error: 'Invalid configuration id' });
     }
 
-    const existing = await getQuery(
-      `SELECT id, name, filters_json, created_at, updated_at
+    const outcome = await withTransaction('choreography', async () => {
+      const existing = await getQuery(
+        `SELECT id, name, filters_json, created_at, updated_at
        FROM personal_data.saved_filter_configurations
        WHERE id = ?`,
-      [configurationId],
-    );
+        [configurationId],
+      );
 
-    if (!existing) {
-      return res.status(404).json({ error: 'Saved filter configuration not found' });
-    }
-
-    const hasNameUpdate = Object.hasOwn(req.body || {}, 'name');
-    const hasFiltersUpdate = Object.hasOwn(req.body || {}, 'filters');
-
-    if (!hasNameUpdate && !hasFiltersUpdate) {
-      return res.status(400).json({ error: 'Nothing to update' });
-    }
-
-    let nextName = existing.name;
-    if (hasNameUpdate) {
-      const rawName = req.body?.name;
-      const trimmedName = typeof rawName === 'string' ? rawName.trim() : '';
-      if (!trimmedName) {
-        return res.status(400).json({ error: 'Configuration name is required' });
+      if (!existing) {
+        return { status: 404, error: 'Saved filter configuration not found' };
       }
-      nextName = trimmedName;
-    }
 
-    const nextFilters = hasFiltersUpdate
-      ? normalizeSavedFilters(req.body?.filters || {})
-      : parseStoredFilters(existing.filters_json);
+      const hasNameUpdate = Object.hasOwn(req.body || {}, 'name');
+      const hasFiltersUpdate = Object.hasOwn(req.body || {}, 'filters');
 
-    await runQuery(
-      `UPDATE personal_data.saved_filter_configurations
+      if (!hasNameUpdate && !hasFiltersUpdate) {
+        return { status: 400, error: 'Nothing to update' };
+      }
+
+      let nextName = existing.name;
+      if (hasNameUpdate) {
+        const rawName = req.body?.name;
+        const trimmedName = typeof rawName === 'string' ? rawName.trim() : '';
+        if (!trimmedName) {
+          return { status: 400, error: 'Configuration name is required' };
+        }
+        nextName = trimmedName;
+      }
+
+      const nextFilters = hasFiltersUpdate
+        ? normalizeSavedFilters(req.body?.filters || {})
+        : parseStoredFilters(existing.filters_json);
+
+      await runQuery(
+        `UPDATE personal_data.saved_filter_configurations
        SET name = ?, filters_json = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [nextName, JSON.stringify(nextFilters), configurationId],
-    );
+        [nextName, JSON.stringify(nextFilters), configurationId],
+      );
 
-    const updated = await getQuery(
-      `SELECT id, name, filters_json, created_at, updated_at
+      const updated = await getQuery(
+        `SELECT id, name, filters_json, created_at, updated_at
        FROM personal_data.saved_filter_configurations
        WHERE id = ?`,
-      [configurationId],
-    );
+        [configurationId],
+      );
 
+      return { updated };
+    });
+
+    if (outcome.error) return res.status(outcome.status).json({ error: outcome.error });
+    const { updated } = outcome;
     res.json({
       id: updated.id,
       name: updated.name,

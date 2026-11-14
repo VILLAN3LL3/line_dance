@@ -26,6 +26,29 @@ async function createChoreographyWithFigure(stepFigureName) {
 }
 
 describe('step figure hierarchy endpoints', () => {
+  it('rejects concurrent case-insensitive duplicate names', async () => {
+    const responses = await Promise.all([
+      createStepFigure('Grapevine'),
+      createStepFigure('grapevine'),
+    ]);
+    expect(responses.map((response) => response.status).sort()).toEqual([201, 400]);
+    const figures = await request(app).get('/api/step_figures');
+    expect(figures.body).toHaveLength(1);
+    expect(figures.body[0].toLowerCase()).toBe('grapevine');
+  });
+
+  it('rejects concurrent renames to the same case-insensitive name', async () => {
+    const first = await createStepFigure('First');
+    const second = await createStepFigure('Second');
+    const responses = await Promise.all([
+      request(app).put(`/api/step_figures/${first.body.id}`).send({ name: 'Grapevine' }),
+      request(app).put(`/api/step_figures/${second.body.id}`).send({ name: 'grapevine' }),
+    ]);
+    expect(responses.map((response) => response.status).sort()).toEqual([200, 400]);
+    const figures = await request(app).get('/api/step_figures');
+    expect(figures.body.filter((name) => name.toLowerCase() === 'grapevine')).toHaveLength(1);
+  });
+
   it('creates a step figure with components and returns hierarchy details', async () => {
     const rock = await createStepFigure('Rock Step');
     const weave = await createStepFigure('Weave');

@@ -364,6 +364,30 @@ describe('GET /api/dance-courses/:id/export-pdf', () => {
     expect(res.headers['content-type']).toContain('application/pdf');
     expect(res.headers['content-disposition']).toContain('attachment;');
     expect(res.headers['content-disposition']).toContain('.pdf');
+    expect(res.body.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(res.body.toString('latin1')).toContain('%%EOF');
+  });
+
+  it('renders a complete PDF with trainer, sessions and playlist links', async () => {
+    const group = await createGroup('PDF Group');
+    const trainer = await createTrainer();
+    const course = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'WS 2025',
+      name: 'PDF Course',
+      trainer_id: trainer.id,
+      youtube_playlist_url: 'https://example.com/playlist',
+      spotify_playlist_url: 'https://example.com/music',
+    });
+    await request(app).post('/api/sessions').send({
+      dance_course_id: course.body.id,
+      session_date: '2025-01-15',
+    });
+
+    const res = await request(app).get(`/api/dance-courses/${course.body.id}/export-pdf`);
+    expect(res.status).toBe(200);
+    expect(res.body.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(res.body.toString('latin1')).toContain('%%EOF');
   });
 
   it('returns 404 for non-existent course id', async () => {

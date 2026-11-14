@@ -6,29 +6,34 @@ import {
   getChoreographyById,
   updateChoreography,
   deleteChoreography,
-  searchChoreographies,
+  checkDuplicateChoreographies,
+} from './choreographies.js';
+import { searchChoreographies } from './choreography-search.js';
+import {
   getLevels,
   addLevel,
   getTags,
   getChoreographyInfoCategories,
+  getAuthors,
+  getAuthorStats,
+  getCountryCodes,
+  getMaxChoreographyCount,
+} from './choreography-metadata.js';
+import {
   getStepFigures,
   getStepFiguresWithIds,
   getStepFigureHierarchy,
   createStepFigure,
   updateStepFigure,
   deleteStepFigure,
-  getAuthors,
-  getAuthorStats,
-  getCountryCodes,
+} from './step-figures.js';
+import {
   getSavedFilterConfigurations,
   saveFilterConfiguration,
   updateSavedFilterConfiguration,
   deleteSavedFilterConfiguration,
-  getMaxChoreographyCount,
-  rateChoreography,
-  deleteChoreographyRating,
-  checkDuplicateChoreographies,
-} from './choreographies.js';
+} from './saved-filters.js';
+import { rateChoreography, deleteChoreographyRating } from './choreography-ratings.js';
 
 export function createChoreographyRouter() {
   const router = Router();

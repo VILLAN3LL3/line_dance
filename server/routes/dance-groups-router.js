@@ -5,23 +5,24 @@ import {
   getDanceGroupById,
   updateDanceGroup,
   deleteDanceGroup,
-  getTrainers,
-  createTrainer,
-  updateTrainer,
-  deleteTrainer,
+  getGroupMaxLevel,
+  updateGroupMaxLevel,
+  getGroupBaseStepFigures,
+  updateGroupBaseStepFigures,
+} from './dance-groups.js';
+import { getTrainers, createTrainer, updateTrainer, deleteTrainer } from './trainers.js';
+import {
   getDanceCourses,
   createDanceCourse,
   updateDanceCourse,
   deleteDanceCourse,
-  exportDanceCoursePdf,
+} from './dance-courses.js';
+import { exportDanceCoursePdf } from './course-pdf.js';
+import {
   getLearnedChoreographies,
-  getGroupMaxLevel,
-  updateGroupMaxLevel,
   getStepFigureSuggestions,
   getSessionStepFigureSuggestions,
-  getGroupBaseStepFigures,
-  updateGroupBaseStepFigures,
-} from './dance-groups.js';
+} from './step-figure-suggestions.js';
 import {
   getSessions,
   createSession,

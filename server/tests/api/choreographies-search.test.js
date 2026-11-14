@@ -239,6 +239,26 @@ describe('GET /api/choreographies/search — step_figures "any" mode', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.map((c) => c.name)).toContain('Composite Dance');
   });
+
+  it('requires all composite components in exact mode but not in any mode', async () => {
+    const rock = await createStepFigure('Rock Step');
+    const shuffle = await createStepFigure('Shuffle');
+    const kick = await createStepFigure('Kick');
+    await createStepFigure('Composite', [rock.body.id, shuffle.body.id, kick.body.id]);
+    await post({ name: 'Composite Dance', level: 'Beginner', step_figures: ['Composite'] });
+
+    const partial = ['Rock Step', 'Shuffle'];
+    const any = await search({ step_figures: partial, step_figures_match_mode: 'any' });
+    const exact = await search({ step_figures: partial, step_figures_match_mode: 'exact' });
+    const complete = await search({
+      step_figures: [...partial, 'Kick'],
+      step_figures_match_mode: 'exact',
+    });
+
+    expect(any.body.data.map((dance) => dance.name)).toContain('Composite Dance');
+    expect(exact.body.data.map((dance) => dance.name)).not.toContain('Composite Dance');
+    expect(complete.body.data.map((dance) => dance.name)).toContain('Composite Dance');
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -66,6 +66,16 @@ describe('GET /api/saved-filters', () => {
 // ---------------------------------------------------------------------------
 
 describe('POST /api/saved-filters', () => {
+  it('returns the result of each concurrent upsert', async () => {
+    const responses = await Promise.all([
+      createConfig('Shared', { search: 'Waltz' }),
+      createConfig('Shared', { search: 'Tango' }),
+    ]);
+    expect(responses.map((response) => response.status)).toEqual([201, 201]);
+    expect(responses.map((response) => response.body.filters.search)).toEqual(['Waltz', 'Tango']);
+    expect(responses[0].body.id).toBe(responses[1].body.id);
+  });
+
   it('creates a configuration and returns 201', async () => {
     const res = await createConfig('New Filter', { search: 'Tango' });
     expect(res.status).toBe(201);
@@ -116,6 +126,19 @@ describe('POST /api/saved-filters', () => {
 // ---------------------------------------------------------------------------
 
 describe('PATCH /api/saved-filters/:id', () => {
+  it('preserves independent concurrent name and filter updates', async () => {
+    const created = await createConfig('Original', { search: 'Waltz' });
+    const responses = await Promise.all([
+      request(app).patch(`/api/saved-filters/${created.body.id}`).send({ name: 'Renamed' }),
+      request(app)
+        .patch(`/api/saved-filters/${created.body.id}`)
+        .send({ filters: { search: 'Tango' } }),
+    ]);
+    expect(responses.map((response) => response.status)).toEqual([200, 200]);
+    const all = await request(app).get('/api/saved-filters');
+    expect(all.body[0]).toMatchObject({ name: 'Renamed', filters: { search: 'Tango' } });
+  });
+
   it('updates the name', async () => {
     const created = await createConfig('Original');
 

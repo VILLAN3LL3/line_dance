@@ -185,19 +185,20 @@ export async function createStepFigure(req, res) {
       return res.status(400).json({ error: 'Step figure name is required' });
     }
 
-    const duplicate = await getQuery('SELECT id FROM step_figures WHERE UPPER(name) = UPPER(?)', [
-      name,
-    ]);
-    if (duplicate) {
-      return res.status(400).json({ error: 'This step figure already exists' });
-    }
-
     const createdId = await runStepFigureMutation(async () => {
+      const duplicate = await getQuery('SELECT id FROM step_figures WHERE UPPER(name) = UPPER(?)', [
+        name,
+      ]);
+      if (duplicate) return null;
       const created = await runQuery('INSERT INTO step_figures (name) VALUES (?)', [name]);
       await validateComponentIds(created.id, componentIds);
       await syncStepFigureComponents(created.id, componentIds);
       return created.id;
     });
+
+    if (createdId === null) {
+      return res.status(400).json({ error: 'This step figure already exists' });
+    }
 
     const created = await getStepFigureDetailById(createdId);
     res.status(201).json(created);
@@ -236,19 +237,23 @@ export async function updateStepFigure(req, res) {
       return res.status(400).json({ error: 'Step figure name is required' });
     }
 
-    const duplicate = await getQuery(
-      'SELECT id FROM step_figures WHERE UPPER(name) = UPPER(?) AND id != ?',
-      [name, stepFigureId],
-    );
-    if (duplicate) {
-      return res.status(400).json({ error: 'This step figure already exists' });
-    }
-
-    await runStepFigureMutation(async () => {
+    const outcome = await runStepFigureMutation(async () => {
+      if (!(await ensureStepFigureExists(stepFigureId))) return 'not_found';
+      const duplicate = await getQuery(
+        'SELECT id FROM step_figures WHERE UPPER(name) = UPPER(?) AND id != ?',
+        [name, stepFigureId],
+      );
+      if (duplicate) return 'duplicate';
       await validateComponentIds(stepFigureId, componentIds);
       await runQuery('UPDATE step_figures SET name = ? WHERE id = ?', [name, stepFigureId]);
       await syncStepFigureComponents(stepFigureId, componentIds);
+      return 'updated';
     });
+
+    if (outcome === 'not_found') return res.status(404).json({ error: 'Step figure not found' });
+    if (outcome === 'duplicate') {
+      return res.status(400).json({ error: 'This step figure already exists' });
+    }
 
     const updated = await getStepFigureDetailById(stepFigureId);
     res.json(updated);

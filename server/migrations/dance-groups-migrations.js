@@ -1,4 +1,4 @@
-import { allQuery, getQuery, runQuery } from '../scripts/db.js';
+import { allQuery, getQuery, runQuery, withTransaction } from '../scripts/db.js';
 
 const dbName = 'danceGroups';
 
@@ -387,18 +387,13 @@ async function applyMigration(migration) {
     return;
   }
 
-  await runQuery('BEGIN IMMEDIATE TRANSACTION', [], dbName);
-  try {
+  const applied = await withTransaction(dbName, async () => {
+    if (await hasMigration(migration.id)) return false;
     await migration.up();
     await runQuery(`INSERT INTO schema_migrations (id) VALUES (?)`, [migration.id], dbName);
-    await runQuery('COMMIT', [], dbName);
-    console.log(`Applied migration: ${migration.id}`);
-  } catch (error) {
-    await runQuery('ROLLBACK', [], dbName).catch(() => {
-      // Best effort rollback if transaction state already changed by SQLite.
-    });
-    throw error;
-  }
+    return true;
+  });
+  if (applied) console.log(`Applied migration: ${migration.id}`);
 }
 
 export async function runDanceGroupsMigrations() {

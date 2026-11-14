@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
+import { runQuery } from '../../scripts/db.js';
 import app from '../setup/testApp.js';
 
 beforeAll(async () => {
@@ -160,6 +161,29 @@ describe('PUT /api/trainers/:id', () => {
 // ---------------------------------------------------------------------------
 
 describe('DELETE /api/trainers/:id', () => {
+  it('retains course assignments if deleting the trainer fails', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Group' });
+    const trainer = await request(app).post('/api/trainers').send(BASE);
+    await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.body.id,
+      name: 'Course',
+      trainer_id: trainer.body.id,
+    });
+    await runQuery(
+      "CREATE TEMP TRIGGER reject_trainer_delete BEFORE DELETE ON trainers BEGIN SELECT RAISE(ABORT, 'Forced trainer failure'); END",
+      [],
+      'danceGroups',
+    );
+    try {
+      const response = await request(app).delete(`/api/trainers/${trainer.body.id}`);
+      expect(response.status).toBe(500);
+      const courses = await request(app).get(`/api/dance-courses?dance_group_id=${group.body.id}`);
+      expect(courses.body[0].trainer_id).toBe(trainer.body.id);
+    } finally {
+      await runQuery('DROP TRIGGER reject_trainer_delete', [], 'danceGroups');
+    }
+  });
+
   it('deletes the trainer and returns a message', async () => {
     const created = await request(app).post('/api/trainers').send(BASE);
     const res = await request(app).delete(`/api/trainers/${created.body.id}`);

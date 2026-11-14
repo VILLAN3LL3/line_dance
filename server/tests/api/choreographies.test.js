@@ -2,7 +2,12 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import { setupChoreographyTestDb, clearChoreographyTables } from '../setup/testChoreographyDb.js';
 import app from '../setup/testChoreographyApp.js';
-import { allQuery, getDatabase, DATABASE_RESTARTING_ERROR_CODE } from '../../scripts/db.js';
+import {
+  allQuery,
+  getDatabase,
+  runQuery,
+  DATABASE_RESTARTING_ERROR_CODE,
+} from '../../scripts/db.js';
 import * as databaseModule from '../../scripts/db.js';
 
 beforeAll(async () => {
@@ -77,6 +82,30 @@ describe('GET /api/choreographies', () => {
 // ---------------------------------------------------------------------------
 
 describe('POST /api/choreographies', () => {
+  it('rolls back the choreography and related records if a tag assignment fails', async () => {
+    await runQuery(
+      "CREATE TEMP TRIGGER reject_choreography_tag BEFORE INSERT ON personal_data.choreography_tags BEGIN SELECT RAISE(ABORT, 'Forced tag failure'); END",
+    );
+    try {
+      const response = await request(app)
+        .post('/api/choreographies')
+        .send({
+          name: 'Failed Dance',
+          level: 'Beginner',
+          authors: ['New Author'],
+          tags: ['New Tag'],
+        });
+      expect(response.status).toBe(500);
+      expect((await request(app).get('/api/choreographies')).body.data).toEqual([]);
+      expect(await allQuery("SELECT name FROM authors WHERE name = 'New Author'")).toEqual([]);
+      expect(await allQuery("SELECT name FROM personal_data.tags WHERE name = 'New Tag'")).toEqual(
+        [],
+      );
+    } finally {
+      await runQuery('DROP TRIGGER reject_choreography_tag');
+    }
+  });
+
   it('creates a choreography with required fields only and returns 201', async () => {
     const res = await request(app)
       .post('/api/choreographies')
@@ -271,6 +300,53 @@ describe('GET /api/choreographies/:id', () => {
 // ---------------------------------------------------------------------------
 
 describe('PUT /api/choreographies/:id', () => {
+  it('rolls back changes when cleanup fails', async () => {
+    const created = await createChoreo({ name: 'Original', authors: ['Original Author'] });
+    await runQuery(
+      "CREATE TEMP TRIGGER reject_author_cleanup BEFORE DELETE ON authors BEGIN SELECT RAISE(ABORT, 'Forced cleanup failure'); END",
+    );
+    try {
+      const response = await request(app)
+        .put(`/api/choreographies/${created.id}`)
+        .send({ name: 'Changed', authors: ['New Author'] });
+      expect(response.status).toBe(500);
+      const after = await request(app).get(`/api/choreographies/${created.id}`);
+      expect(after.body.name).toBe('Original');
+      expect(after.body.authors).toEqual(['Original Author']);
+    } finally {
+      await runQuery('DROP TRIGGER reject_author_cleanup');
+    }
+  });
+
+  it('rolls back changes when replacing choreography information fails', async () => {
+    const created = await createChoreo({
+      name: 'Original',
+      authors: ['Original Author'],
+      choreography_information: [{ category: 'Restart', description: 'Original' }],
+    });
+    await runQuery(
+      "CREATE TEMP TRIGGER reject_choreography_info BEFORE INSERT ON choreography_information BEGIN SELECT RAISE(ABORT, 'Forced information failure'); END",
+    );
+    try {
+      const response = await request(app)
+        .put(`/api/choreographies/${created.id}`)
+        .send({
+          name: 'Changed',
+          authors: ['New Author'],
+          choreography_information: [{ category: 'Restart', description: 'Changed' }],
+        });
+      expect(response.status).toBe(500);
+      const after = await request(app).get(`/api/choreographies/${created.id}`);
+      expect(after.body.name).toBe('Original');
+      expect(after.body.authors).toEqual(['Original Author']);
+      expect(after.body.choreography_information).toEqual([
+        expect.objectContaining({ category: 'Restart', description: 'Original' }),
+      ]);
+    } finally {
+      await runQuery('DROP TRIGGER reject_choreography_info');
+    }
+  });
+
   it('updates basic fields', async () => {
     const created = await createChoreo({ name: 'Old Name', level: 'Beginner', count: 32 });
 
@@ -422,6 +498,23 @@ describe('PUT /api/choreographies/:id', () => {
 // ---------------------------------------------------------------------------
 
 describe('DELETE /api/choreographies/:id', () => {
+  it('retains the choreography and its relationships if deletion fails', async () => {
+    const created = await createChoreo({ authors: ['Original Author'], tags: ['Original Tag'] });
+    await runQuery(
+      "CREATE TEMP TRIGGER reject_choreography_delete BEFORE DELETE ON choreographies BEGIN SELECT RAISE(ABORT, 'Forced delete failure'); END",
+    );
+    try {
+      const response = await request(app).delete(`/api/choreographies/${created.id}`);
+      expect(response.status).toBe(500);
+      const after = await request(app).get(`/api/choreographies/${created.id}`);
+      expect(after.status).toBe(200);
+      expect(after.body.authors).toEqual(['Original Author']);
+      expect(after.body.tags).toEqual(['Original Tag']);
+    } finally {
+      await runQuery('DROP TRIGGER reject_choreography_delete');
+    }
+  });
+
   it('deletes a choreography and returns a message', async () => {
     const created = await createChoreo();
 

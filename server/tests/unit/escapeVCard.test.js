@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { escapeVCardValue } from '../../routes/dance-groups.js';
+import { escapeVCardValue } from '../../routes/course-pdf.js';
 
 describe('escapeVCardValue', () => {
   it('leaves a plain ASCII string unchanged', () => {
