@@ -6,6 +6,9 @@ import { prepareInput } from './prepare-input.ts';
 import { captureError } from '../utils/choreographyRouteErrors.js';
 
 type RatingError = 'invalid_id' | 'not_found' | 'invalid_rating';
+type ErrorResponse = { error: string };
+type RatingResponse = { choreography_id: number; rating: number } | ErrorResponse;
+type DeleteResponse = { message: 'Rating removed' } | ErrorResponse;
 
 const ratingErrors: Record<RatingError, [number, string]> = {
   invalid_id: [400, 'Invalid choreography id'],
@@ -13,7 +16,10 @@ const ratingErrors: Record<RatingError, [number, string]> = {
   invalid_rating: [400, 'Rating must be an integer between 0 and 5'],
 };
 
-function sendRatingError(res: Response, error: RatingError): Response {
+function sendRatingError<T>(
+  res: Response<T | ErrorResponse>,
+  error: RatingError,
+): Response<T | ErrorResponse> {
   const response = ratingErrors[error];
   if (!response) throw new Error(`Unknown rating error: ${error}`);
   return res.status(response[0]).json({ error: response[1] });
@@ -22,9 +28,9 @@ function sendRatingError(res: Response, error: RatingError): Response {
 export const prepareRating = prepareInput((req) => req.body, validateRating);
 
 export async function rateChoreography(
-  req: Request<{ id: string }, unknown, unknown>,
-  res: Response<unknown, { input: RatingRequest }>,
-): Promise<Response | void> {
+  req: Pick<Request<{ id: string }>, 'params'>,
+  res: Response<RatingResponse, { input: RatingRequest }>,
+): Promise<Response<RatingResponse> | void> {
   try {
     const result = await ratings.rateChoreography(req.params.id, res.locals.input);
     if ('error' in result) return sendRatingError(res, result.error);
@@ -36,9 +42,9 @@ export async function rateChoreography(
 }
 
 export async function deleteChoreographyRating(
-  req: Request<{ id: string }>,
-  res: Response,
-): Promise<Response | void> {
+  req: Pick<Request<{ id: string }>, 'params'>,
+  res: Response<DeleteResponse>,
+): Promise<Response<DeleteResponse> | void> {
   try {
     const result = await ratings.removeRating(req.params.id);
     if ('error' in result) return sendRatingError(res, result.error);

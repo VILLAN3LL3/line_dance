@@ -29,10 +29,12 @@ import {
 } from './step-figures.js';
 import {
   getSavedFilterConfigurations,
+  prepareSaveFilter,
+  prepareUpdateFilter,
   saveFilterConfiguration,
   updateSavedFilterConfiguration,
   deleteSavedFilterConfiguration,
-} from './saved-filters.js';
+} from './saved-filters.ts';
 import {
   prepareRating,
   rateChoreography,
@@ -66,8 +68,8 @@ export function createChoreographyRouter() {
   router.get('/api/step_figures', getStepFigures);
   router.get('/api/step_figures/with-ids', getStepFiguresWithIds);
   router.get('/api/saved-filters', getSavedFilterConfigurations);
-  router.post('/api/saved-filters', saveFilterConfiguration);
-  router.patch('/api/saved-filters/:id', updateSavedFilterConfiguration);
+  router.post('/api/saved-filters', prepareSaveFilter, saveFilterConfiguration);
+  router.patch('/api/saved-filters/:id', prepareUpdateFilter, updateSavedFilterConfiguration);
   router.delete('/api/saved-filters/:id', deleteSavedFilterConfiguration);
   return router;
 }

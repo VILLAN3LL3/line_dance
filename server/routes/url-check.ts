@@ -10,13 +10,14 @@ const errors: Record<UrlValidationError, string> = {
   invalid_url: 'Invalid URL',
   url_not_allowed: 'URL not allowed',
 };
+type UrlCheckResponse = { ok: boolean; status: number | null } | { error: string };
 
 export const prepareUrl = prepareInput((req) => req.query.url, validateUrl);
 
 export async function checkUrl(
   _req: Request,
-  res: Response<unknown, { input: PreparedInput<UrlValidationResult> }>,
-): Promise<Response> {
+  res: Response<UrlCheckResponse, { input: PreparedInput<UrlValidationResult> }>,
+): Promise<Response<UrlCheckResponse>> {
   const input = res.locals.input;
   if ('exception' in input) throw input.exception;
   if ('error' in input) {

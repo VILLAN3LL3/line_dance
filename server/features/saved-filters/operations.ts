@@ -6,69 +6,83 @@ import {
 } from '../../utils/choreographyNormalization.ts';
 
 const matchModeSchema = z.enum(['all', 'any', 'exact']);
+const nameSchema = z.string().trim().min(1).brand<'ConfigurationName'>();
+const saveBodySchema = z.object({
+  name: nameSchema,
+  filters: z.unknown().optional(),
+});
+const updateBodySchema = z.object({
+  name: z.unknown().optional(),
+  filters: z.unknown().optional(),
+});
+const stringField = z.preprocess(normalizeStringField, z.string());
+const stringArray = z.preprocess(normalizeStringArray, z.array(z.string()));
+const nonNegativeInteger = z.preprocess(
+  normalizeNonNegativeInteger,
+  z.custom<number | null>((value) => value === null || typeof value === 'number'),
+);
+const filterFieldsSchema = z.object({
+  search: stringField,
+  song_artist: stringField,
+  level: stringArray,
+  max_level_value: nonNegativeInteger,
+  step_figures: stringArray,
+  step_figures_match_mode: matchModeSchema.optional().catch(undefined),
+  without_step_figures: z.literal(true).optional().catch(undefined),
+  required_step_figures: stringArray,
+  tags: stringArray,
+  excluded_tags: stringArray,
+  authors: stringArray,
+  max_count: nonNegativeInteger,
+  min_rating: nonNegativeInteger,
+});
 
-export interface SavedFilters {
-  search?: string;
-  song_artist?: string;
-  level?: string[];
-  max_level_value?: number;
-  step_figures?: string[];
-  step_figures_match_mode?: z.output<typeof matchModeSchema>;
-  without_step_figures?: true;
-  required_step_figures?: string[];
-  tags?: string[];
-  excluded_tags?: string[];
-  authors?: string[];
-  max_count?: number;
-  min_rating?: number;
-}
+type FilterFields = z.output<typeof filterFieldsSchema>;
+export type SavedFilters = { [K in keyof FilterFields]?: NonNullable<FilterFields[K]> };
 
 type ArrayField = 'step_figures' | 'required_step_figures' | 'authors';
-type NameResult = { error: 'name_required' } | { value: string };
-type UpdateResult =
+type ConfigurationName = z.output<typeof nameSchema>;
+type NameResult = { error: 'name_required' } | { value: ConfigurationName };
+export type SaveInput =
+  { error: 'name_required' } | { value: { name: ConfigurationName; filters: SavedFilters } };
+export type UpdateInput =
   | { error: 'nothing_to_update' | 'name_required' }
-  | { value: { name: string; hasFilters: boolean } };
+  | {
+      value:
+        | { name: ConfigurationName; filters?: SavedFilters }
+        | { name?: never; filters: SavedFilters };
+    };
 
-function assignNonEmptyArray(target: SavedFilters, key: ArrayField, rawValue: unknown): void {
-  const arr = normalizeStringArray(rawValue);
-  if (arr.length > 0) target[key] = arr;
-}
-
-function isFilterObject(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
+function assignNonEmptyArray(target: SavedFilters, key: ArrayField, values: string[]): void {
+  if (values.length > 0) target[key] = values;
 }
 
 export function normalizeSavedFilters(rawFilters: unknown): SavedFilters {
-  if (!isFilterObject(rawFilters)) return {};
-  const raw = rawFilters;
+  if (!rawFilters || typeof rawFilters !== 'object' || Array.isArray(rawFilters)) return {};
+  const parsed = filterFieldsSchema.parse(rawFilters);
   const normalized: SavedFilters = {};
-  const search = normalizeStringField(raw.search);
-  if (search) normalized.search = search;
-  const songArtist = normalizeStringField(raw.song_artist);
-  if (songArtist) normalized.song_artist = songArtist;
-  const level = normalizeStringArray(raw.level);
-  if (level.length > 0) normalized.level = level;
+  if (parsed.search) normalized.search = parsed.search;
+  if (parsed.song_artist) normalized.song_artist = parsed.song_artist;
+  if (parsed.level.length > 0) normalized.level = parsed.level;
 
-  const maxLevel = normalizeNonNegativeInteger(raw.max_level_value);
-  if (maxLevel !== null) normalized.max_level_value = maxLevel;
+  if (parsed.max_level_value !== null) normalized.max_level_value = parsed.max_level_value;
 
-  assignNonEmptyArray(normalized, 'step_figures', raw.step_figures);
-  const matchMode = matchModeSchema.safeParse(raw.step_figures_match_mode);
-  if (matchMode.success) normalized.step_figures_match_mode = matchMode.data;
-  if (raw.without_step_figures === true) normalized.without_step_figures = true;
-  assignNonEmptyArray(normalized, 'required_step_figures', raw.required_step_figures);
+  assignNonEmptyArray(normalized, 'step_figures', parsed.step_figures);
+  if (parsed.step_figures_match_mode) {
+    normalized.step_figures_match_mode = parsed.step_figures_match_mode;
+  }
+  if (parsed.without_step_figures) normalized.without_step_figures = true;
+  assignNonEmptyArray(normalized, 'required_step_figures', parsed.required_step_figures);
 
-  const tags = normalizeStringArray(raw.tags);
+  const tags = parsed.tags;
   if (tags.length > 0) normalized.tags = tags;
-  const excludedTags = normalizeStringArray(raw.excluded_tags).filter((tag) => !tags.includes(tag));
+  const excludedTags = parsed.excluded_tags.filter((tag) => !tags.includes(tag));
   if (excludedTags.length > 0) normalized.excluded_tags = excludedTags;
-  assignNonEmptyArray(normalized, 'authors', raw.authors);
+  assignNonEmptyArray(normalized, 'authors', parsed.authors);
 
-  const maxCount = normalizeNonNegativeInteger(raw.max_count);
-  if (maxCount !== null) normalized.max_count = maxCount;
-  const minRating = normalizeNonNegativeInteger(raw.min_rating);
-  if (minRating !== null && minRating <= 5) {
-    normalized.min_rating = minRating;
+  if (parsed.max_count !== null) normalized.max_count = parsed.max_count;
+  if (parsed.min_rating !== null && parsed.min_rating <= 5) {
+    normalized.min_rating = parsed.min_rating;
   }
   return normalized;
 }
@@ -79,18 +93,38 @@ export function validateConfigurationId(id: string): { error: 'invalid_id' } | {
 }
 
 export function validateConfigurationName(rawName: unknown): NameResult {
-  const name = typeof rawName === 'string' ? rawName.trim() : '';
-  return name ? { value: name } : { error: 'name_required' };
+  const name = nameSchema.safeParse(rawName);
+  return name.success ? { value: name.data } : { error: 'name_required' };
 }
 
-export function validateConfigurationUpdate(input: unknown, existingName: string): UpdateResult {
-  const fields: Record<string, unknown> = Object(input || {});
+export function prepareConfigurationSave(input: unknown): SaveInput {
+  const result = saveBodySchema.safeParse(input);
+  if (!result.success) return { error: 'name_required' };
+  return {
+    value: {
+      name: result.data.name,
+      filters: normalizeSavedFilters(result.data.filters || {}),
+    },
+  };
+}
+
+export function prepareConfigurationUpdate(input: unknown): UpdateInput {
+  const result = updateBodySchema.safeParse(input);
+  if (!result.success) return { error: 'nothing_to_update' };
+  const fields = result.data;
   const hasName = Object.hasOwn(fields, 'name');
   const hasFilters = Object.hasOwn(fields, 'filters');
   if (!hasName && !hasFilters) return { error: 'nothing_to_update' };
-  const name = hasName ? validateConfigurationName(fields.name) : { value: existingName };
-  if ('error' in name) return name;
-  return { value: { name: name.value, hasFilters } };
+
+  if (hasName) {
+    const name = validateConfigurationName(fields.name);
+    if ('error' in name) return name;
+    if (hasFilters) {
+      return { value: { name: name.value, filters: normalizeSavedFilters(fields.filters || {}) } };
+    }
+    return { value: { name: name.value } };
+  }
+  return { value: { filters: normalizeSavedFilters(fields.filters || {}) } };
 }
 
 export function parseStoredFilters(storedValue: string): SavedFilters {

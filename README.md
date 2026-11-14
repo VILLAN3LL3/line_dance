@@ -124,13 +124,11 @@ for responsibility boundaries, transaction handling, and testing.
 
 The backend is being migrated incrementally from JavaScript to TypeScript. `npm run typecheck`
 checks migrated TypeScript files and tests in strict mode; existing JavaScript is not yet type-checked.
-The URL checker, trainers, ratings, and database helper are migrated; the remaining backend and tests still
-require migration. Shared choreography normalization and saved-filter operations are also in
-TypeScript; the saved-filter flow, repository, and HTTP adapter remain JavaScript.
-The migrated URL, trainer, and rating endpoints validate untrusted input with Zod in pure operations
-invoked by shared HTTP middleware, configured per endpoint with its input source and validator.
-Flows receive typed validation results, with branded types for
-successfully validated values. Existing error responses and their precedence are preserved;
+The URL checker, trainers, ratings, saved filters, shared choreography normalization, and database
+helper are migrated; the remaining backend and tests still require migration.
+The migrated endpoints validate untrusted input with Zod and pure operations invoked by shared HTTP
+middleware, configured per endpoint with its input source and validator. Flows receive typed
+validation results, with branded types where appropriate. Existing error responses and their precedence are preserved;
 rating conversion remains backward-compatible with the existing API.
 
 The database helper `withTransaction()` serializes transactions and queries per SQLite connection.

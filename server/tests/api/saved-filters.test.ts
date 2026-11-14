@@ -15,7 +15,10 @@ beforeEach(async () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function createConfig(name, filters = {}) {
+async function createConfig(
+  name: string,
+  filters: Record<string, unknown> = {},
+): Promise<request.Response> {
   return request(app).post('/api/saved-filters').send({ name, filters });
 }
 
@@ -119,6 +122,12 @@ describe('POST /api/saved-filters', () => {
     expect(res.status).toBe(201);
     expect(res.body.filters).not.toHaveProperty('unknown');
   });
+
+  it('reports an invalid name before attempting filter conversion', async () => {
+    const res = await createConfig('', { max_count: { toString: null } });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Configuration name is required' });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -209,6 +218,22 @@ describe('PATCH /api/saved-filters/:id', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/already exists/i);
+  });
+
+  it('preserves ID and existence errors before filter conversion errors', async () => {
+    const input = { filters: { max_count: { toString: null } } };
+    const invalid = await request(app).patch('/api/saved-filters/invalid').send(input);
+    expect(invalid.status).toBe(400);
+    expect(invalid.body).toEqual({ error: 'Invalid configuration id' });
+
+    const missing = await request(app).patch('/api/saved-filters/99999').send(input);
+    expect(missing.status).toBe(404);
+    expect(missing.body).toEqual({ error: 'Saved filter configuration not found' });
+
+    const created = await createConfig('Existing');
+    const existing = await request(app).patch(`/api/saved-filters/${created.body.id}`).send(input);
+    expect(existing.status).toBe(500);
+    expect(existing.body).toEqual({ error: 'Failed to update configuration' });
   });
 });
 

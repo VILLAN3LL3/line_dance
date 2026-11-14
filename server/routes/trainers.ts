@@ -8,6 +8,10 @@ import { captureDanceGroupError as captureError } from '../utils/danceGroupRoute
 
 type TrainerError =
   'name_required' | 'phone_required' | 'email_required' | 'duplicate_email' | 'not_found';
+type ErrorResponse = { error: string };
+type Trainer = Awaited<ReturnType<typeof trainers.getTrainers>>[number];
+type TrainerResponse = Trainer | undefined | ErrorResponse;
+type DeleteResponse = { message: 'Trainer deleted successfully' } | ErrorResponse;
 
 const trainerErrors: Record<TrainerError, [number, string]> = {
   name_required: [400, 'Name is required'],
@@ -17,7 +21,10 @@ const trainerErrors: Record<TrainerError, [number, string]> = {
   not_found: [404, 'Trainer not found'],
 };
 
-function sendTrainerError(res: Response, error: TrainerError): Response {
+function sendTrainerError<T>(
+  res: Response<T | ErrorResponse>,
+  error: TrainerError,
+): Response<T | ErrorResponse> {
   const response = trainerErrors[error];
   if (!response) throw new Error(`Unknown trainer error: ${error}`);
   return res.status(response[0]).json({ error: response[1] });
@@ -25,7 +32,10 @@ function sendTrainerError(res: Response, error: TrainerError): Response {
 
 export const prepareTrainer = prepareInput((req) => req.body, validateTrainer);
 
-export async function getTrainers(_req: Request, res: Response): Promise<void> {
+export async function getTrainers(
+  _req: Request,
+  res: Response<Trainer[] | ErrorResponse>,
+): Promise<void> {
   try {
     res.json(await trainers.getTrainers());
   } catch (error) {
@@ -35,9 +45,9 @@ export async function getTrainers(_req: Request, res: Response): Promise<void> {
 }
 
 export async function createTrainer(
-  req: Request<object, unknown, unknown>,
-  res: Response<unknown, { input: PreparedInput<TrainerValidationResult> }>,
-): Promise<Response | void> {
+  _req: Request,
+  res: Response<TrainerResponse, { input: PreparedInput<TrainerValidationResult> }>,
+): Promise<Response<TrainerResponse> | void> {
   try {
     const input = res.locals.input;
     if ('exception' in input) throw input.exception;
@@ -52,9 +62,9 @@ export async function createTrainer(
 }
 
 export async function updateTrainer(
-  req: Request<{ id: string }, unknown, unknown>,
-  res: Response<unknown, { input: PreparedInput<TrainerValidationResult> }>,
-): Promise<Response | void> {
+  req: Pick<Request<{ id: string }>, 'params'>,
+  res: Response<TrainerResponse, { input: PreparedInput<TrainerValidationResult> }>,
+): Promise<Response<TrainerResponse> | void> {
   try {
     const input = res.locals.input;
     if ('exception' in input) throw input.exception;
@@ -69,9 +79,9 @@ export async function updateTrainer(
 }
 
 export async function deleteTrainer(
-  req: Request<{ id: string }>,
-  res: Response,
-): Promise<Response | void> {
+  req: Pick<Request<{ id: string }>, 'params'>,
+  res: Response<DeleteResponse>,
+): Promise<Response<DeleteResponse> | void> {
   try {
     const result = await trainers.deleteTrainer(req.params.id);
     if ('error' in result && result.error) return sendTrainerError(res, result.error);

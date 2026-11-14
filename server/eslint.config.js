@@ -42,7 +42,6 @@ export default [
       'routes/choreography-metadata.js',
       'routes/sessions.js',
       'routes/step-figure-suggestions.js',
-      'routes/saved-filters.js',
       'routes/step-figures.js',
       'routes/choreographies.js',
       'routes/choreography-search.js',

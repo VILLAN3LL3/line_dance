@@ -252,5 +252,8 @@ describe('normalizeSavedFilters', () => {
       normalizeSavedFilters({ max_level_value: [3], max_count: '12suffix', min_rating: '2.5' }),
     ).toEqual({ max_level_value: 3, max_count: 12, min_rating: 2 });
     expect(() => normalizeSavedFilters({ max_count: { toString: null } })).toThrow(TypeError);
+    expect(normalizeSavedFilters({ max_count: '9'.repeat(1000) })).toEqual({
+      max_count: Infinity,
+    });
   });
 });
