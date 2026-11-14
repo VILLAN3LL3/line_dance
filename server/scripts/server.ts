@@ -2,7 +2,7 @@ import { createApp } from '../app.ts';
 import { runMigrations } from '../migrations/index.js';
 import { closeDatabase, getDatabase } from './db.ts';
 
-const port = process.env.PORT || 3001;
+const port: string | number = process.env.PORT || 3001;
 
 getDatabase();
 getDatabase('danceGroups');
