@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { checkUrl } from '../../features/url-check/flow.js';
+import { checkUrl } from '../../features/url-check/flow.ts';
 
 afterEach(() => {
   vi.unstubAllGlobals();

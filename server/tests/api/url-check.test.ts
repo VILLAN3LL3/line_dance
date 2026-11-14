@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
-import { checkUrl } from '../../routes/url-check.js';
+import { checkUrl } from '../../routes/url-check.ts';
 
 // ---------------------------------------------------------------------------
 // Minimal test app
@@ -128,9 +128,11 @@ describe('GET /api/url-check — YouTube oEmbed validation', () => {
     expect(res.body).toEqual({ ok: true, status: 200 });
     // Must call oEmbed, not the original watch URL
     expect(mockFetch).toHaveBeenCalledOnce();
-    expect(mockFetch.mock.calls[0][0]).toContain('youtube.com/oembed');
-    expect(mockFetch.mock.calls[0][0]).toContain(
-      encodeURIComponent('https://www.youtube.com/watch?v=yIe9HTIOSl4'),
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining(
+        `youtube.com/oembed?url=${encodeURIComponent('https://www.youtube.com/watch?v=yIe9HTIOSl4')}`,
+      ),
+      expect.anything(),
     );
   });
 
@@ -154,7 +156,10 @@ describe('GET /api/url-check — YouTube oEmbed validation', () => {
       .query({ url: 'https://youtu.be/yIe9HTIOSl4' });
 
     expect(res.body.ok).toBe(true);
-    expect(mockFetch.mock.calls[0][0]).toContain('youtube.com/oembed');
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('youtube.com/oembed'),
+      expect.anything(),
+    );
   });
 });
 

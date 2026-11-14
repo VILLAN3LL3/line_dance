@@ -1,9 +1,9 @@
-import { requestUrl } from './http-gateway.js';
-import { initialProbe, shouldRetryWithGet, validateUrl } from './operations.js';
+import { requestUrl } from './http-gateway.ts';
+import { initialProbe, shouldRetryWithGet, validateUrl } from './operations.ts';
 
-export async function checkUrl(raw) {
+export async function checkUrl(raw: unknown) {
   const validation = validateUrl(raw);
-  if (validation.error) return validation;
+  if ('error' in validation) return validation;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);

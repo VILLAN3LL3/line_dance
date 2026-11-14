@@ -9,6 +9,10 @@ Use this skill for every backend change, including small fixes. Inspect the affe
 existing tests first; preserve established behavior unless a change is explicitly requested. Apply
 the planning and verification workflows in the project instructions where applicable.
 
+The backend is migrating from JavaScript to TypeScript. Write migrated code and tests in
+TypeScript with strict type checking, and retain the boundaries below. JavaScript files are not yet
+checked by `server/tsconfig.json`; a passing typecheck does not mean the migration is complete.
+
 ## Responsibilities and dependencies
 
 The backend is a modular monolith assembled by `server/app.js`; routes are registered under

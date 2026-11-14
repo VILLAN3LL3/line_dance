@@ -3,7 +3,7 @@ import {
   initialProbe,
   shouldRetryWithGet,
   validateUrl,
-} from '../../features/url-check/operations.js';
+} from '../../features/url-check/operations.ts';
 
 describe('URL check operations', () => {
   it('distinguishes missing, invalid and disallowed URLs', () => {
@@ -11,7 +11,7 @@ describe('URL check operations', () => {
     expect(validateUrl('not a URL')).toEqual({ error: 'invalid_url' });
     expect(validateUrl('http://localhost/test')).toEqual({ error: 'url_not_allowed' });
     expect(validateUrl('ftp://example.com')).toEqual({ error: 'url_not_allowed' });
-    expect(validateUrl('https://example.com').value.href).toBe('https://example.com/');
+    expect(validateUrl('https://example.com')).toEqual({ value: new URL('https://example.com/') });
   });
 
   it('uses oEmbed for YouTube and retries only rejected HEAD probes', () => {

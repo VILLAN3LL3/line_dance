@@ -1,13 +1,15 @@
 import js from '@eslint/js';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
 export default [
   {
-    ignores: ['coverage', 'line_dance.db', 'dance_groups.db', '**/*.db', 'test-temp'],
+    ignores: ['dist', 'coverage', 'line_dance.db', 'dance_groups.db', '**/*.db', 'test-temp'],
   },
   js.configs.recommended,
+  ...tseslint.configs.recommended.map((config) => ({ ...config, files: ['**/*.ts'] })),
   {
-    files: ['**/*.{js,mjs,cjs}'],
+    files: ['**/*.{js,mjs,cjs,ts}'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
@@ -23,6 +25,10 @@ export default [
     },
   },
   {
+    files: ['**/*.ts'],
+    rules: { 'no-unused-vars': 'off' },
+  },
+  {
     files: [
       'routes/trainers.js',
       'routes/dance-courses.js',
@@ -36,36 +42,50 @@ export default [
       'routes/step-figures.js',
       'routes/choreographies.js',
       'routes/choreography-search.js',
-      'routes/url-check.js',
+      'routes/url-check.ts',
+      'routes/**/*.ts',
     ],
     rules: {
-      'no-restricted-imports': ['error', { patterns: ['**/scripts/db.js', 'sqlite3'] }],
+      'no-restricted-imports': [
+        'error',
+        { patterns: ['**/scripts/db.js', '**/scripts/db.ts', 'sqlite3'] },
+      ],
       'no-restricted-globals': ['error', { name: 'fetch', message: 'Use an application flow.' }],
     },
   },
   {
-    files: ['features/**/*flow.js', 'features/**/*validation.js', 'features/**/*operations.js'],
+    files: [
+      'features/**/*flow.{js,ts}',
+      'features/**/*validation.{js,ts}',
+      'features/**/*operations.{js,ts}',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
-        { patterns: ['**/scripts/db.js', 'sqlite3', 'express', '**/routes/**'] },
+        {
+          patterns: ['**/scripts/db.js', '**/scripts/db.ts', 'sqlite3', 'express', '**/routes/**'],
+        },
       ],
     },
   },
   {
-    files: ['features/**/*validation.js', 'features/**/*operations.js'],
+    files: ['features/**/*validation.{js,ts}', 'features/**/*operations.{js,ts}'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             '**/scripts/db.js',
+            '**/scripts/db.ts',
             'sqlite3',
             'express',
             '**/routes/**',
             '**/*repository.js',
+            '**/*repository.ts',
             '**/*flow.js',
+            '**/*flow.ts',
             '**/*gateway.js',
+            '**/*gateway.ts',
           ],
         },
       ],

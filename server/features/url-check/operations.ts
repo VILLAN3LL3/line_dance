@@ -3,7 +3,11 @@ const privateHostnamePattern =
 
 const youtubeHostnames = new Set(['www.youtube.com', 'youtube.com', 'youtu.be', 'm.youtube.com']);
 
-export function validateUrl(raw) {
+export type UrlValidationError = 'missing_url' | 'invalid_url' | 'url_not_allowed';
+export type UrlValidationResult = { error: UrlValidationError } | { value: URL };
+export type UrlProbe = { url: string; method: 'HEAD' | 'GET' };
+
+export function validateUrl(raw: unknown): UrlValidationResult {
   if (typeof raw !== 'string' || !raw.trim()) return { error: 'missing_url' };
   let parsed;
   try {
@@ -21,7 +25,7 @@ export function validateUrl(raw) {
   return { value: parsed };
 }
 
-export function initialProbe(parsed) {
+export function initialProbe(parsed: URL): UrlProbe {
   if (youtubeHostnames.has(parsed.hostname)) {
     return {
       url: `https://www.youtube.com/oembed?url=${encodeURIComponent(parsed.href)}&format=json`,
@@ -31,6 +35,6 @@ export function initialProbe(parsed) {
   return { url: parsed.href, method: 'HEAD' };
 }
 
-export function shouldRetryWithGet(probe, response) {
+export function shouldRetryWithGet(probe: UrlProbe, response: { status: number }): boolean {
   return probe.method === 'HEAD' && (response.status === 405 || response.status === 501);
 }

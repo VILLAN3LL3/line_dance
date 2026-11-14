@@ -63,7 +63,7 @@ __All code was written by GitHub Copilot. Use with caution.__
 
 ### Prerequisites
 
-- Node.js 24 LTS recommended for development and tests
+- Node.js 24 LTS or newer (the backend currently runs TypeScript using Node's type stripping)
 
 ### Install & Run
 
@@ -122,6 +122,10 @@ requests in route handlers and pure operations.
 For backend changes, follow the [backend architecture skill](.github/skills/backend-architecture/SKILL.md)
 for responsibility boundaries, transaction handling, and testing.
 
+The backend is being migrated incrementally from JavaScript to TypeScript. `npm run typecheck`
+checks migrated TypeScript files and tests in strict mode; existing JavaScript is not yet type-checked.
+The URL checker is the first migrated feature. The remaining backend and tests still require migration.
+
 The database helper `withTransaction()` serializes transactions and queries per SQLite connection.
 Choreography writes (including cleanup), group/base-figure changes, trainer writes, course creation
 and updates, rating updates, level creation, saved-filter and step-figure writes, session creation,
@@ -142,6 +146,7 @@ are therefore not a single consistent snapshot.
 | `npm run dev` | Start with Node's built-in watcher; restarts when imported server files change |
 | `npm start` | Start without file watching |
 | `npm run migrate` | Run database migrations |
+| `npm run typecheck` | Type-check migrated TypeScript code and tests |
 | `npm test` | Run tests |
 | `npm run test:watch` | Tests in watch mode |
 

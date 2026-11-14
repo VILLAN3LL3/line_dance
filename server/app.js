@@ -9,7 +9,7 @@ import { apiErrorHandler } from './utils/apiErrorHandler.js';
 import { openApiSpec } from './scripts/openapi.js';
 import { createChoreographyRouter } from './routes/choreography-router.js';
 import { createDanceGroupsRouter } from './routes/dance-groups-router.js';
-import { checkUrl } from './routes/url-check.js';
+import { checkUrl } from './routes/url-check.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const clientDistPath = path.resolve(__dirname, '../client/dist');
