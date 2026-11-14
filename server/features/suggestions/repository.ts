@@ -1,38 +1,61 @@
 import { getQuery, allQuery } from '../../scripts/db.ts';
+import type { Suggestion, prepareLearnedGroupId } from './operations.ts';
 
-const dbName = 'danceGroups';
+type LearnedChoreography = {
+  dance_group_id: number;
+  dance_group_name: string;
+  choreography_id: number;
+  times_danced: number;
+  first_learned_date: string | null;
+  last_danced_date: string | null;
+};
+type Group = { id: number; max_group_level_value: number | null };
+type Session = { id: number; dance_course_id: number; session_date: string };
+type Course = { id: number; dance_group_id: number };
+type ChoreographyId = { choreography_id: number };
 
-export function listLearnedChoreographies(groupId) {
+const dbName = 'danceGroups' as const;
+
+export async function listLearnedChoreographies(
+  groupId: ReturnType<typeof prepareLearnedGroupId>['value'],
+): Promise<LearnedChoreography[]> {
   const filter = groupId ? ' WHERE dance_group_id = ?' : '';
-  return allQuery(
+  return allQuery<LearnedChoreography>(
     `SELECT * FROM learned_choreographies${filter} ORDER BY dance_group_name, last_danced_date DESC`,
     groupId ? [groupId] : [],
     dbName,
   );
 }
 
-export function findGroup(groupId) {
-  return getQuery(
+export async function findGroup(groupId: number): Promise<Group | undefined> {
+  return getQuery<Group>(
     'SELECT id, max_group_level_value FROM dance_groups WHERE id = ?',
     [groupId],
     dbName,
   );
 }
 
-export function findSession(sessionId) {
-  return getQuery(
+export async function findSession(sessionId: number): Promise<Session | undefined> {
+  return getQuery<Session>(
     'SELECT id, dance_course_id, session_date FROM sessions WHERE id = ?',
     [sessionId],
     dbName,
   );
 }
 
-export function findCourse(courseId) {
-  return getQuery('SELECT id, dance_group_id FROM dance_courses WHERE id = ?', [courseId], dbName);
+export async function findCourse(courseId: number): Promise<Course | undefined> {
+  return getQuery<Course>(
+    'SELECT id, dance_group_id FROM dance_courses WHERE id = ?',
+    [courseId],
+    dbName,
+  );
 }
 
-export function findLearnedChoreographies(groupId, today) {
-  return allQuery(
+export async function findLearnedChoreographies(
+  groupId: number,
+  today: string,
+): Promise<ChoreographyId[]> {
+  return allQuery<ChoreographyId>(
     `SELECT choreography_id FROM learned_choreographies
      WHERE dance_group_id = ? AND first_learned_date < ?`,
     [groupId, today],
@@ -40,8 +63,11 @@ export function findLearnedChoreographies(groupId, today) {
   );
 }
 
-export function findPriorSessionChoreographies(groupId, date) {
-  return allQuery(
+export async function findPriorSessionChoreographies(
+  groupId: number,
+  date: string,
+): Promise<ChoreographyId[]> {
+  return allQuery<ChoreographyId>(
     `SELECT DISTINCT sc.choreography_id
      FROM sessions s
      INNER JOIN session_choreographies sc ON s.id = sc.session_id
@@ -52,17 +78,19 @@ export function findPriorSessionChoreographies(groupId, date) {
   );
 }
 
-export function findBaseFigures(groupId) {
-  return allQuery(
+export async function findBaseFigures(groupId: number): Promise<{ step_figure_id: number }[]> {
+  return allQuery<{ step_figure_id: number }>(
     'SELECT step_figure_id FROM group_base_step_figures WHERE dance_group_id = ?',
     [groupId],
     dbName,
   );
 }
 
-export function findChoreographyFigures(choreographyIds) {
-  if (choreographyIds.length === 0) return Promise.resolve([]);
-  return allQuery(
+export async function findChoreographyFigures(
+  choreographyIds: number[],
+): Promise<{ id: number }[]> {
+  if (choreographyIds.length === 0) return [];
+  return allQuery<{ id: number }>(
     `SELECT DISTINCT csf.step_figure_id AS id
      FROM choreography_step_figures csf
      WHERE csf.choreography_id IN (${choreographyIds.map(() => '?').join(',')})`,
@@ -70,9 +98,9 @@ export function findChoreographyFigures(choreographyIds) {
   );
 }
 
-export function findExpandedFigures(ids) {
-  if (ids.length === 0) return Promise.resolve([]);
-  return allQuery(
+export async function findExpandedFigures(ids: number[]): Promise<{ name: string }[]> {
+  if (ids.length === 0) return [];
+  return allQuery<{ name: string }>(
     `WITH RECURSIVE known_ids(id) AS (
        SELECT id FROM step_figures WHERE id IN (${ids.map(() => '?').join(',')})
        UNION
@@ -88,14 +116,17 @@ export function findExpandedFigures(ids) {
   );
 }
 
-export function findSuggestions(namesLower, maxLevelValue) {
+export async function findSuggestions(
+  namesLower: string[],
+  maxLevelValue: number | null,
+): Promise<Suggestion[]> {
   const knownFiguresCte =
     namesLower.length === 0
       ? 'SELECT NULL AS name_lower WHERE 1=0'
       : namesLower.map(() => 'SELECT ? AS name_lower').join('\n       UNION\n       ');
   const levelCondition = maxLevelValue === null ? '' : 'AND (l.value IS NOT NULL AND l.value <= ?)';
   const params = maxLevelValue === null ? namesLower : [...namesLower, maxLevelValue];
-  return allQuery(
+  return allQuery<Suggestion>(
     `WITH known_figures AS (
        ${knownFiguresCte}
      ),

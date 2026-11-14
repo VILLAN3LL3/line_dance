@@ -1,13 +1,21 @@
-import {
-  currentSuggestionDate,
-  knownFigureNames,
-  parseMaxLevel,
-  uniqueIds,
-  validatePositiveId,
-} from './operations.js';
-import * as suggestions from './repository.js';
+import { currentSuggestionDate, knownFigureNames, uniqueIds } from './operations.ts';
+import type { GroupRequest, IdResult, Suggestion, prepareLearnedGroupId } from './operations.ts';
+import * as suggestions from './repository.ts';
 
-async function getKnownFigures(groupId, choreographyIds) {
+type SessionResult =
+  | { error: 'invalid_session_id' | 'session_not_found' | 'course_not_found' }
+  | {
+      value: {
+        suggestions: Suggestion[];
+        known_step_figures: string[];
+        max_level_value: number | null;
+      };
+    };
+
+async function getKnownFigures(
+  groupId: number,
+  choreographyIds: number[],
+): Promise<{ names: string[]; namesLower: string[] }> {
   const baseRows = await suggestions.findBaseFigures(groupId);
   const choreographyRows = await suggestions.findChoreographyFigures(choreographyIds);
   const seedIds = uniqueIds(
@@ -17,30 +25,34 @@ async function getKnownFigures(groupId, choreographyIds) {
   return knownFigureNames(await suggestions.findExpandedFigures(seedIds));
 }
 
-export function getLearnedChoreographies(groupId) {
+export async function getLearnedChoreographies(
+  groupId: ReturnType<typeof prepareLearnedGroupId>['value'],
+): Promise<Awaited<ReturnType<typeof suggestions.listLearnedChoreographies>>> {
   return suggestions.listLearnedChoreographies(groupId);
 }
 
-export async function getGroupSuggestions(rawId, rawMaxLevel) {
-  const id = validatePositiveId(rawId, 'invalid_group_id');
-  if (id.error) return id;
-  const maxLevel = parseMaxLevel(rawMaxLevel);
-  if (!(await suggestions.findGroup(id.value))) return { error: 'group_not_found' };
+export async function getGroupSuggestions(
+  input: GroupRequest,
+): Promise<{ error: 'invalid_group_id' | 'group_not_found' } | { value: Suggestion[] }> {
+  if ('error' in input) return input;
+  const { id, maxLevel } = input.value;
+  if (!(await suggestions.findGroup(id))) return { error: 'group_not_found' };
 
   const learned = await suggestions.findLearnedChoreographies(
-    id.value,
+    id,
     currentSuggestionDate(Date.now()),
   );
   const known = await getKnownFigures(
-    id.value,
+    id,
     learned.map((row) => row.choreography_id),
   );
   return { value: await suggestions.findSuggestions(known.namesLower, maxLevel) };
 }
 
-export async function getSessionSuggestions(rawId) {
-  const id = validatePositiveId(rawId, 'invalid_session_id');
-  if (id.error) return id;
+export async function getSessionSuggestions(
+  id: IdResult<'invalid_session_id'>,
+): Promise<SessionResult> {
+  if ('error' in id) return id;
   const session = await suggestions.findSession(id.value);
   if (!session) return { error: 'session_not_found' };
   const course = await suggestions.findCourse(session.dance_course_id);

@@ -4,7 +4,11 @@ import { runQuery } from '../../scripts/db.ts';
 import * as groups from '../../features/groups/flow.js';
 import * as courses from '../../features/courses/flow.js';
 import * as sessions from '../../features/sessions/flow.js';
-import * as suggestions from '../../features/suggestions/flow.js';
+import * as suggestions from '../../features/suggestions/flow.ts';
+import {
+  prepareGroupSuggestion,
+  prepareSessionSuggestion,
+} from '../../features/suggestions/operations.ts';
 
 beforeAll(async () => {
   await setupTestDb();
@@ -38,10 +42,18 @@ describe('step figure suggestion flows', () => {
       session_date: '2099-01-01',
     });
 
-    expect(await suggestions.getGroupSuggestions(String(group.value.id))).toEqual({
+    expect(
+      await suggestions.getGroupSuggestions(
+        prepareGroupSuggestion({ groupId: String(group.value.id) }),
+      ),
+    ).toEqual({
       value: [{ step_figure: 'Missing', additional_choreographies: 1 }],
     });
-    expect(await suggestions.getSessionSuggestions(String(session.value.id))).toEqual({
+    expect(
+      await suggestions.getSessionSuggestions(
+        prepareSessionSuggestion({ sessionId: String(session.value.id) }),
+      ),
+    ).toEqual({
       value: {
         suggestions: [{ step_figure: 'Missing', additional_choreographies: 1 }],
         known_step_figures: ['Child', 'Parent'],
@@ -51,9 +63,17 @@ describe('step figure suggestion flows', () => {
   });
 
   it('returns domain errors for invalid and missing groups or sessions', async () => {
-    expect(await suggestions.getGroupSuggestions('0')).toEqual({ error: 'invalid_group_id' });
-    expect(await suggestions.getGroupSuggestions('999')).toEqual({ error: 'group_not_found' });
-    expect(await suggestions.getSessionSuggestions('0')).toEqual({ error: 'invalid_session_id' });
-    expect(await suggestions.getSessionSuggestions('999')).toEqual({ error: 'session_not_found' });
+    expect(await suggestions.getGroupSuggestions(prepareGroupSuggestion({ groupId: '0' }))).toEqual(
+      { error: 'invalid_group_id' },
+    );
+    expect(
+      await suggestions.getGroupSuggestions(prepareGroupSuggestion({ groupId: '999' })),
+    ).toEqual({ error: 'group_not_found' });
+    expect(
+      await suggestions.getSessionSuggestions(prepareSessionSuggestion({ sessionId: '0' })),
+    ).toEqual({ error: 'invalid_session_id' });
+    expect(
+      await suggestions.getSessionSuggestions(prepareSessionSuggestion({ sessionId: '999' })),
+    ).toEqual({ error: 'session_not_found' });
   });
 });

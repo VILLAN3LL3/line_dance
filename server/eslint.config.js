@@ -41,7 +41,6 @@ export default [
       'routes/course-pdf.js',
       'routes/choreography-metadata.js',
       'routes/sessions.js',
-      'routes/step-figure-suggestions.js',
       'routes/choreographies.js',
       'routes/choreography-search.js',
       'routes/url-check.ts',

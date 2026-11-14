@@ -249,6 +249,19 @@ async function seedChoreo(name, level, stepFigures) {
 }
 
 describe('GET /api/dance-groups/:groupId/step-figure-suggestions', () => {
+  it('keeps ID validation ahead of malformed level conversion', async () => {
+    const invalid = await request(app).get(
+      '/api/dance-groups/invalid/step-figure-suggestions?max_level_value[toString]=bad',
+    );
+    const missing = await request(app).get(
+      '/api/dance-groups/99999/step-figure-suggestions?max_level_value[toString]=bad',
+    );
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.error).toBe('Invalid group ID');
+    expect(missing.status).toBe(500);
+    expect(missing.body.error).toBe('Failed to compute step figure suggestions');
+  });
+
   it('returns empty array for group with no choreography data at all', async () => {
     const group = await request(app).post('/api/dance-groups').send({ name: 'Empty Group' });
     const res = await request(app).get(

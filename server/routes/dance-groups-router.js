@@ -28,7 +28,10 @@ import {
   getLearnedChoreographies,
   getStepFigureSuggestions,
   getSessionStepFigureSuggestions,
-} from './step-figure-suggestions.js';
+  prepareLearned,
+  prepareGroup,
+  prepareSession,
+} from './step-figure-suggestions.ts';
 import {
   getSessions,
   createSession,
@@ -47,7 +50,11 @@ export function createDanceGroupsRouter() {
   router.post('/api/dance-groups', createDanceGroup);
   router.get('/api/dance-groups/:groupId/max-level', getGroupMaxLevel);
   router.put('/api/dance-groups/:groupId/max-level', updateGroupMaxLevel);
-  router.get('/api/dance-groups/:groupId/step-figure-suggestions', getStepFigureSuggestions);
+  router.get(
+    '/api/dance-groups/:groupId/step-figure-suggestions',
+    prepareGroup,
+    getStepFigureSuggestions,
+  );
   router.get('/api/dance-groups/:groupId/base-step-figures', getGroupBaseStepFigures);
   router.put('/api/dance-groups/:groupId/base-step-figures', updateGroupBaseStepFigures);
   router.get('/api/dance-groups/:id', getDanceGroupById);
@@ -71,7 +78,11 @@ export function createDanceGroupsRouter() {
   router.post('/api/session-choreographies', addChoreographyToSession);
   router.delete('/api/session-choreographies/:id', removeChoreographyFromSession);
   router.post('/api/sessions/:sessionId/swap/:targetSessionId', swapSessions);
-  router.get('/api/sessions/:sessionId/step-figure-suggestions', getSessionStepFigureSuggestions);
-  router.get('/api/learned-choreographies', getLearnedChoreographies);
+  router.get(
+    '/api/sessions/:sessionId/step-figure-suggestions',
+    prepareSession,
+    getSessionStepFigureSuggestions,
+  );
+  router.get('/api/learned-choreographies', prepareLearned, getLearnedChoreographies);
   return router;
 }
