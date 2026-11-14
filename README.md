@@ -124,11 +124,9 @@ for responsibility boundaries, transaction handling, and testing.
 
 The backend is being migrated incrementally from JavaScript to TypeScript. `npm run typecheck`
 checks migrated TypeScript files and tests in strict mode; existing JavaScript is not yet type-checked.
-The URL checker, trainers, dance groups, courses, ratings, saved filters, step figures, step-figure
+The URL checker, trainers, dance groups, courses, sessions, ratings, saved filters, step figures, step-figure
 suggestions, metadata, course PDF generation, shared choreography normalization, and database
 helper are migrated; the remaining backend and tests still require migration.
-Session content rearrangement and repetition persistence are also migrated; session CRUD,
-assignment flows, and their HTTP validation remain in JavaScript.
 The migrated endpoints validate untrusted input with Zod and pure operations invoked by shared HTTP
 middleware, configured per endpoint with its input source and validator. Flows receive typed
 validation results, with branded types where appropriate. Existing error responses and their precedence are preserved;

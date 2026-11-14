@@ -1413,3 +1413,36 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('session input compatibility', () => {
+  it('validates required fields before checking whether resources exist', async () => {
+    const update = await request(app).put('/api/sessions/99999').send({ session_date: '' });
+    expect(update.status).toBe(400);
+    expect(update.body).toEqual({ error: 'Session date is required' });
+
+    const assignment = await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: 99999 });
+    expect(assignment.status).toBe(400);
+    expect(assignment.body).toEqual({ error: 'Session ID and choreography ID are required' });
+  });
+
+  it('preserves raw CRUD IDs while swaps accept numeric prefixes', async () => {
+    const { s1, s2 } = await createTwoSessionsInSameCourse();
+    const update = await request(app)
+      .put(`/api/sessions/${s1.id}suffix`)
+      .send({ session_date: '2026-10-01' });
+    expect(update.status).toBe(404);
+    const swap = await request(app).post(`/api/sessions/${s1.id}suffix/swap/${s2.id}suffix`);
+    expect(swap.status).toBe(200);
+  });
+
+  it('retains the behavior for JSON numbers outside the finite range', async () => {
+    const res = await request(app)
+      .post('/api/sessions')
+      .set('Content-Type', 'application/json')
+      .send('{"dance_course_id":1e400,"session_date":"2026-01-01"}');
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Dance course not found' });
+  });
+});

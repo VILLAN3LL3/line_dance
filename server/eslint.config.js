@@ -36,7 +36,6 @@ export default [
   },
   {
     files: [
-      'routes/sessions.js',
       'routes/choreographies.js',
       'routes/choreography-search.js',
       'routes/url-check.ts',

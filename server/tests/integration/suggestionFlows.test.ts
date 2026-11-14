@@ -5,7 +5,8 @@ import * as groups from '../../features/groups/flow.ts';
 import { prepareBaseFiguresUpdate, validateGroupName } from '../../features/groups/validation.ts';
 import * as courses from '../../features/courses/flow.ts';
 import { prepareNewCourse } from '../../features/courses/validation.ts';
-import * as sessions from '../../features/sessions/flow.js';
+import * as sessions from '../../features/sessions/flow.ts';
+import { validateNewSession } from '../../features/sessions/validation.ts';
 import * as suggestions from '../../features/suggestions/flow.ts';
 import {
   prepareGroupSuggestion,
@@ -48,10 +49,13 @@ describe('step figure suggestion flows', () => {
       prepareNewCourse({ dance_group_id: group.value.id, name: 'Course' }),
     );
     if ('error' in course || !course.value) throw new Error('Course creation failed');
-    const session = await sessions.createSession({
-      dance_course_id: course.value.id,
-      session_date: '2099-01-01',
-    });
+    const session = await sessions.createSession(
+      validateNewSession({
+        dance_course_id: course.value.id,
+        session_date: '2099-01-01',
+      }),
+    );
+    if ('error' in session || !session.value) throw new Error('Session creation failed');
 
     expect(
       await suggestions.getGroupSuggestions(

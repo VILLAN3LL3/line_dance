@@ -1,0 +1,88 @@
+import { z } from 'zod';
+import { jsonInput } from '../../utils/json-input.ts';
+import type { JsonValue } from '../../utils/json-input.ts';
+
+const requiredValue = jsonInput.refine(Boolean);
+const comment = jsonInput.nullish().transform((value) => value ?? null);
+const newSession = z
+  .object({ dance_course_id: requiredValue, session_date: requiredValue, comment })
+  .brand<'NewSession'>();
+const sessionUpdate = z.object({ session_date: requiredValue, comment }).brand<'SessionUpdate'>();
+const assignment = z
+  .object({ session_id: requiredValue, choreography_id: requiredValue })
+  .brand<'NewAssignment'>();
+const sessionId = requiredValue.brand<'SessionId'>();
+const query = z.object({
+  dance_course_id: jsonInput.optional(),
+  session_id: jsonInput.optional(),
+});
+const reorder = z.object({
+  session_ids: z
+    .array(z.number().refine((id) => Number.isSafeInteger(id) && id > 0))
+    .min(2)
+    .refine((ids) => new Set(ids).size === ids.length),
+});
+const swapParams = z.object({ sessionId: z.string(), targetSessionId: z.string() });
+
+export type NewSession = z.output<typeof newSession>;
+export type SessionUpdate = z.output<typeof sessionUpdate>;
+export type NewAssignment = z.output<typeof assignment>;
+export type SessionId = z.output<typeof sessionId>;
+export type NewSessionResult = { error: 'course_and_date_required' } | { value: NewSession };
+export type SessionUpdateResult = { error: 'date_required' } | { value: SessionUpdate };
+export type AssignmentResult = { error: 'assignment_ids_required' } | { value: NewAssignment };
+export type SessionIdResult = { error: 'session_id_required' } | { value: SessionId };
+export type ReorderResult = { error: 'invalid_reorder_ids' } | { value: number[] };
+export type SwapResult = { error: 'invalid_swap_ids' } | { value: [number, number] };
+
+function requireBody(input: unknown): unknown {
+  if (input === null || input === undefined) throw new TypeError('Session input is missing');
+  return input;
+}
+
+export function validateNewSession(input: unknown): NewSessionResult {
+  const parsed = newSession.safeParse(requireBody(input));
+  return parsed.success ? { value: parsed.data } : { error: 'course_and_date_required' };
+}
+
+export function validateSessionUpdate(input: unknown): SessionUpdateResult {
+  const parsed = sessionUpdate.safeParse(requireBody(input));
+  return parsed.success ? { value: parsed.data } : { error: 'date_required' };
+}
+
+export function validateSessionId(input: unknown): SessionIdResult {
+  const parsed = sessionId.safeParse(input);
+  return parsed.success ? { value: parsed.data } : { error: 'session_id_required' };
+}
+
+export function validateAssignment(input: unknown): AssignmentResult {
+  const parsed = assignment.safeParse(requireBody(input));
+  return parsed.success ? { value: parsed.data } : { error: 'assignment_ids_required' };
+}
+
+export function validateReorder(input: unknown): ReorderResult {
+  const parsed = reorder.safeParse(input);
+  return parsed.success ? { value: parsed.data.session_ids } : { error: 'invalid_reorder_ids' };
+}
+
+export function validateSwap(firstId: string, secondId: string): SwapResult {
+  const first = Number.parseInt(firstId, 10);
+  const second = Number.parseInt(secondId, 10);
+  if (!Number.isFinite(first) || !Number.isFinite(second) || first === second) {
+    return { error: 'invalid_swap_ids' };
+  }
+  return { value: [first, second] };
+}
+
+export function prepareSessionFilter(input: unknown): { value: JsonValue | undefined } {
+  return { value: query.parse(input).dance_course_id };
+}
+
+export function prepareAssignmentSession(input: unknown): SessionIdResult {
+  return validateSessionId(query.parse(input).session_id);
+}
+
+export function prepareSwap(input: unknown): SwapResult {
+  const { sessionId: first, targetSessionId: second } = swapParams.parse(input);
+  return validateSwap(first, second);
+}

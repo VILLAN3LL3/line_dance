@@ -1,16 +1,7 @@
 import { z } from 'zod';
+import { jsonInput as json } from '../../utils/json-input.ts';
+import type { JsonValue } from '../../utils/json-input.ts';
 
-type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
-const json: z.ZodType<JsonValue> = z.lazy(() =>
-  z.union([
-    z.null(),
-    z.boolean(),
-    z.custom<number>((value) => typeof value === 'number'),
-    z.string(),
-    z.array(json),
-    z.record(z.string(), json),
-  ]),
-);
 const fields = z.object({
   dance_group_id: json.optional(),
   course_id: json.optional(),

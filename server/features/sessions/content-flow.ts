@@ -1,6 +1,6 @@
 import { planRearrangement } from './operations.ts';
 import type { RearrangementMode, RearrangementPlan } from './operations.ts';
-import { withSessionTransaction } from './repository.js';
+import { withSessionTransaction } from './repository.ts';
 import { clearAutomaticRepetitions, distributeRepetitions } from './repetition-repository.ts';
 import {
   deleteSessionChoreographies,

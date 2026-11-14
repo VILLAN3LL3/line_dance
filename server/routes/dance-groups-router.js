@@ -52,7 +52,14 @@ import {
   removeChoreographyFromSession,
   swapSessions,
   reorderSessionContents,
-} from './sessions.js';
+  prepareFilter as prepareSessionFilter,
+  prepareNew as prepareNewSession,
+  prepareUpdate as prepareSessionUpdate,
+  prepareAssignmentFilter,
+  prepareAssignment,
+  prepareReorder,
+  prepareSwapIds,
+} from './sessions.ts';
 
 export function createDanceGroupsRouter() {
   const router = Router();
@@ -87,15 +94,15 @@ export function createDanceGroupsRouter() {
   router.put('/api/dance-courses/:id', prepareUpdate, updateDanceCourse);
   router.delete('/api/dance-courses/:id', deleteDanceCourse);
   router.get('/api/dance-courses/:id/export-pdf', preparePdfId, exportDanceCoursePdf);
-  router.get('/api/sessions', getSessions);
-  router.post('/api/sessions', createSession);
-  router.post('/api/sessions/reorder-contents', reorderSessionContents);
-  router.put('/api/sessions/:id', updateSession);
+  router.get('/api/sessions', prepareSessionFilter, getSessions);
+  router.post('/api/sessions', prepareNewSession, createSession);
+  router.post('/api/sessions/reorder-contents', prepareReorder, reorderSessionContents);
+  router.put('/api/sessions/:id', prepareSessionUpdate, updateSession);
   router.delete('/api/sessions/:id', deleteSession);
-  router.get('/api/session-choreographies', getSessionChoreographies);
-  router.post('/api/session-choreographies', addChoreographyToSession);
+  router.get('/api/session-choreographies', prepareAssignmentFilter, getSessionChoreographies);
+  router.post('/api/session-choreographies', prepareAssignment, addChoreographyToSession);
   router.delete('/api/session-choreographies/:id', removeChoreographyFromSession);
-  router.post('/api/sessions/:sessionId/swap/:targetSessionId', swapSessions);
+  router.post('/api/sessions/:sessionId/swap/:targetSessionId', prepareSwapIds, swapSessions);
   router.get(
     '/api/sessions/:sessionId/step-figure-suggestions',
     prepareSession,

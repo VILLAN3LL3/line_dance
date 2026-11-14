@@ -7,13 +7,14 @@ import {
   validateSessionId,
   validateSessionUpdate,
   validateSwap,
-} from '../../features/sessions/validation.js';
+} from '../../features/sessions/validation.ts';
 
 describe('session validation operations', () => {
   it('requires course and date and normalizes a missing comment', () => {
     expect(validateNewSession({ dance_course_id: 1 })).toEqual({
       error: 'course_and_date_required',
     });
+
     expect(validateNewSession({ dance_course_id: 1, session_date: '2026-01-01' })).toEqual({
       value: { dance_course_id: 1, session_date: '2026-01-01', comment: null },
     });
@@ -21,6 +22,18 @@ describe('session validation operations', () => {
     expect(validateSessionUpdate({ session_date: '2026-01-01', comment: '' })).toEqual({
       value: { session_date: '2026-01-01', comment: '' },
     });
+  });
+
+  it('retains the existing truthy input and numeric-prefix conversion rules', () => {
+    expect(validateNewSession({ dance_course_id: [1], session_date: 42, comment: 0 })).toEqual({
+      value: { dance_course_id: [1], session_date: 42, comment: 0 },
+    });
+    expect(validateAssignment({ session_id: 0, choreography_id: 1 })).toEqual({
+      error: 'assignment_ids_required',
+    });
+    expect(validateSwap('12suffix', '-3')).toEqual({ value: [12, -3] });
+    expect(() => validateNewSession(null)).toThrow(TypeError);
+    expect(validateReorder(null)).toEqual({ error: 'invalid_reorder_ids' });
   });
 
   it('requires session and choreography identifiers for assignments', () => {
