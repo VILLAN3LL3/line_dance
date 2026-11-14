@@ -27,7 +27,7 @@ module.exports = {
   apps: [
     {
       name: 'line-dance',
-      script: './server/scripts/server.ts',
+      script: './server/dist/scripts/server.js',
       cwd: __dirname,
       interpreter: localEnv.NODE_BINARY,
       env: {

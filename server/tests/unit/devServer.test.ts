@@ -16,7 +16,7 @@ const manifest = z
 describe('development server', () => {
   it('uses the native watcher without nodemon', () => {
     expect(manifest.scripts.dev).toBe('node --watch scripts/server.ts');
-    expect(manifest.scripts.start).toBe('node scripts/server.ts');
+    expect(manifest.scripts.start).toBe('node dist/scripts/server.js');
     expect(manifest.devDependencies).not.toHaveProperty('nodemon');
   });
 

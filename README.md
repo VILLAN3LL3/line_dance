@@ -63,7 +63,7 @@ __All code was written by GitHub Copilot. Use with caution.__
 
 ### Prerequisites
 
-- Node.js 24 LTS or newer (the backend currently runs TypeScript using Node's type stripping)
+- Node.js 24 LTS or newer (backend development uses Node's TypeScript type stripping)
 
 ### Install & Run
 
@@ -73,8 +73,8 @@ npm install
 cd server && npm install && cd ..
 cd client && npm install && cd ..
 
-# Run database migrations
-cd server && npm run migrate && cd ..
+# Build the backend and run database migrations
+cd server && npm run build && npm run migrate && cd ..
 
 # Start backend (port 3001)
 cd server && npm run dev
@@ -124,6 +124,9 @@ for responsibility boundaries, transaction handling, and testing.
 
 The backend is being migrated incrementally from JavaScript to TypeScript. `npm run typecheck`
 checks migrated TypeScript files and tests in strict mode; existing JavaScript is not yet type-checked.
+`npm run build` emits production JavaScript to `server/dist/` and rewrites relative TypeScript
+imports. Production start and migration commands use this build; the development watcher runs
+TypeScript directly. Database paths and PDF assets remain relative to `server/`, not `server/dist/`.
 The URL checker, trainers, dance groups, courses, sessions, ratings, saved filters, step figures, step-figure
 suggestions, metadata, course PDF generation, shared choreography normalization, and database
 helper are migrated; the remaining backend and tests still require migration.
@@ -154,8 +157,9 @@ are therefore not a single consistent snapshot.
 | Command | Description |
 |---|---|
 | `npm run dev` | Start with Node's built-in watcher; restarts when imported server files change |
-| `npm start` | Start without file watching |
-| `npm run migrate` | Run database migrations |
+| `npm run build` | Compile the backend to `dist/` |
+| `npm start` | Start the compiled backend without file watching (build first) |
+| `npm run migrate` | Run compiled database migrations (build first) |
 | `npm run typecheck` | Type-check migrated TypeScript code and tests |
 | `npm test` | Run tests |
 | `npm run test:watch` | Tests in watch mode |
@@ -219,7 +223,8 @@ Run the app as a persistent local service that auto-starts on login and rebuilds
 ### Setup
 
 ```bash
-# 1. Build the client
+# 1. Build the server and client
+cd server && npm run build && cd ..
 cd client && npm run build && cd ..
 
 # 2. Create local PM2 config
@@ -236,6 +241,16 @@ pm2 save
 
 App is available at **`http://localhost:3001`**.
 
+If `line-dance` was registered before the backend build was introduced, its PM2 entry point
+still points to TypeScript. After building, recreate that process and save the updated PM2
+configuration:
+
+```bash
+pm2 delete line-dance
+pm2 start ecosystem.config.js
+pm2 save
+```
+
 ### Useful Commands
 
 ```bash
@@ -247,9 +262,11 @@ pm2 reload line-dance      # zero-downtime reload
 
 ### Auto-Deploy On Commit
 
-The `post-commit` hook rebuilds `client/dist/` and restarts PM2 automatically after every `git commit`.
+The `post-commit` hook rebuilds the server and client and restarts PM2 automatically after every `git commit`.
 It resolves PM2 from `PATH` or an existing nvm installation; set `PM2_BINARY` to an absolute executable path to override this lookup.
-Build or restart failures stop deployment without reporting success. The commit itself is already created when this hook runs.
+Build or restart failures stop deployment without reporting success. An existing process with a
+different entry point must be recreated as described above. The commit itself is already created
+when this hook runs.
 
 ### Uninstall
 
@@ -264,7 +281,7 @@ pm2 unstartup launchd   # copy and run the printed sudo command
 
 GitHub Actions runs on every push and pull request:
 
-- **server**: install + test
+- **server**: install + lint + type-check + build + test
 - **client**: typecheck + test + build
 - **e2e**: Playwright Chromium suite (artifacts uploaded on every run)
 
@@ -277,7 +294,7 @@ Workflow: `.github/workflows/ci.yml`
 Choreography and dance-group schema changes are versioned under `server/migrations/`. The server runs migrations on startup; run them manually with:
 
 ```bash
-cd server && npm run migrate
+cd server && npm run build && npm run migrate
 ```
 
 ---

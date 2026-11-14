@@ -2,17 +2,15 @@
  * One-time migration: copy tags and choreography_tags from data/line_dance.db
  * into data/personal_data.db.
  *
- * Run once from server/: node scripts/migrate-tags-to-personal-db.ts
+ * Run once from server/: node dist/scripts/migrate-tags-to-personal-db.js
  */
 import sqlite3 from 'sqlite3';
 import type { Database } from 'sqlite3';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { serverRoot } from '../utils/server-paths.ts';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const sourcePath = path.join(__dirname, '..', 'data', 'line_dance.db');
-const targetPath = path.join(__dirname, '..', 'data', 'personal_data.db');
+const sourcePath = path.join(serverRoot, 'data', 'line_dance.db');
+const targetPath = path.join(serverRoot, 'data', 'personal_data.db');
 
 type SqlValue = string | number | null;
 type TagRow = { id: number; name: string };

@@ -1,18 +1,14 @@
 import sqlite3 from 'sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { Database } from 'sqlite3';
+import { serverRoot } from '../utils/server-paths.ts';
 
 type DatabaseName = 'choreography' | 'danceGroups' | 'tags';
 type DatabaseError = NodeJS.ErrnoException;
 type TransactionContext = { db: Database; active: boolean };
 export type WriteResult = { id: number; changes: number };
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const serverRoot = path.resolve(__dirname, '..');
 
 const isInMemorySafetyMode = [
   process.env.CHOREOGRAPHY_DB_PATH,

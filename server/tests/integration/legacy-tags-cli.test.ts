@@ -57,10 +57,15 @@ function runScript(): SpawnSyncReturns<string> {
 beforeEach(() => {
   directory = mkdtempSync(join(tmpdir(), 'line-dance-legacy-tags-'));
   mkdirSync(join(directory, 'scripts'));
+  mkdirSync(join(directory, 'utils'));
   mkdirSync(join(directory, 'data'));
   copyFileSync(
     join(serverDirectory, 'scripts/migrate-tags-to-personal-db.ts'),
     join(directory, 'scripts/migrate-tags-to-personal-db.ts'),
+  );
+  copyFileSync(
+    join(serverDirectory, 'utils/server-paths.ts'),
+    join(directory, 'utils/server-paths.ts'),
   );
   symlinkSync(join(serverDirectory, 'node_modules'), join(directory, 'node_modules'), 'dir');
   sourcePath = join(directory, 'data/line_dance.db');
@@ -70,11 +75,13 @@ beforeEach(() => {
 afterEach(() => {
   rmSync(join(directory, 'node_modules'), { force: true });
   rmSync(join(directory, 'scripts/migrate-tags-to-personal-db.ts'), { force: true });
+  rmSync(join(directory, 'utils/server-paths.ts'), { force: true });
   rmSync(sourcePath, { force: true });
   rmSync(targetPath, { force: true });
   rmSync(`${sourcePath}-journal`, { force: true });
   rmSync(`${targetPath}-journal`, { force: true });
   rmdirSync(join(directory, 'scripts'));
+  rmdirSync(join(directory, 'utils'));
   rmdirSync(join(directory, 'data'));
   rmdirSync(directory);
 });

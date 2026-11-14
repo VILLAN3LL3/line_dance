@@ -32,7 +32,7 @@ export default defineConfig({
   webServer: !isDocker
     ? [
         {
-          command: "npm --prefix ../server start",
+          command: "npm --prefix ../server run build && npm --prefix ../server start",
           port: e2eApiPort,
           env: {
             ...process.env,

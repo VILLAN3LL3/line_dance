@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import type { Writable } from 'node:stream';
 import PDFDocument from 'pdfkit';
 import SVGtoPDF from 'svg-to-pdfkit';
 import { hslToHex } from '../utils/colorUtils.ts';
+import { serverRoot } from '../utils/server-paths.ts';
 import type { CoursePdfDocument } from '../features/courses/pdf-flow.ts';
 import type { CoursePdf } from '../features/courses/pdf-operations.ts';
 
@@ -18,25 +20,25 @@ type PlaceholderLayout = {
 };
 type PlaceholderColors = { headerBg: string; title: string };
 
-function loadOptionalAssetBuffer(relativeAssetPath: string): Buffer | null {
+function loadOptionalAssetBuffer(assetName: string): Buffer | null {
   try {
-    return readFileSync(new URL(relativeAssetPath, import.meta.url));
+    return readFileSync(path.join(serverRoot, 'assets', assetName));
   } catch {
     return null;
   }
 }
 
-function loadOptionalAssetText(relativeAssetPath: string): string | null {
+function loadOptionalAssetText(assetName: string): string | null {
   try {
-    return readFileSync(new URL(relativeAssetPath, import.meta.url), 'utf8');
+    return readFileSync(path.join(serverRoot, 'assets', assetName), 'utf8');
   } catch {
     return null;
   }
 }
 
-const trainerPhoneIcon = loadOptionalAssetBuffer('../assets/icons8-mobile-phone-90.png');
-const trainerEmailIcon = loadOptionalAssetBuffer('../assets/icons8-email-90.png');
-const dancingIconSvg = loadOptionalAssetText('../assets/dancing.svg');
+const trainerPhoneIcon = loadOptionalAssetBuffer('icons8-mobile-phone-90.png');
+const trainerEmailIcon = loadOptionalAssetBuffer('icons8-email-90.png');
+const dancingIconSvg = loadOptionalAssetText('dancing.svg');
 
 function courseIdToColors(courseId: number): {
   headerBg: string;

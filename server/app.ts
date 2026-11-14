@@ -3,7 +3,6 @@ import type { Express } from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import swaggerUi from 'swagger-ui-express';
 import { apiErrorHandler } from './utils/apiErrorHandler.ts';
@@ -11,9 +10,9 @@ import { openApiSpec } from './scripts/openapi.ts';
 import { createChoreographyRouter } from './routes/choreography-router.ts';
 import { createDanceGroupsRouter } from './routes/dance-groups-router.ts';
 import { prepareUrl, checkUrl } from './routes/url-check.ts';
+import { serverRoot } from './utils/server-paths.ts';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const clientDistPath = path.resolve(__dirname, '../client/dist');
+const clientDistPath = path.resolve(serverRoot, '../client/dist');
 
 export function createApp(): Express {
   const app = express();
