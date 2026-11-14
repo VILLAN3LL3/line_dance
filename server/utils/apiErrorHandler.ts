@@ -1,7 +1,17 @@
-import { DATABASE_RESTARTING_ERROR_CODE, restartAfterDatabaseResponse } from '../scripts/db.ts';
+import type { NextFunction, Request, Response } from 'express';
+import {
+  DATABASE_RESTARTING_ERROR_CODE,
+  isDatabaseRestartingError,
+  restartAfterDatabaseResponse,
+} from '../scripts/db.ts';
 
-export function apiErrorHandler(error, req, res, next) {
-  if (error?.code === DATABASE_RESTARTING_ERROR_CODE) {
+export function apiErrorHandler(
+  error: unknown,
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Response | void {
+  if (isDatabaseRestartingError(error)) {
     res.once('finish', restartAfterDatabaseResponse);
     return res.set('Retry-After', '3').status(503).json({
       error:

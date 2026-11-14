@@ -3,7 +3,7 @@ import * as ratings from '../features/ratings/flow.ts';
 import type { RatingRequest } from '../features/ratings/flow.ts';
 import { validateRating } from '../features/ratings/validation.ts';
 import { prepareInput } from './prepare-input.ts';
-import { captureError } from '../utils/choreographyRouteErrors.js';
+import { captureError } from '../utils/choreographyRouteErrors.ts';
 
 type RatingError = 'invalid_id' | 'not_found' | 'invalid_rating';
 type ErrorResponse = { error: string };

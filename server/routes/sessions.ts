@@ -19,7 +19,7 @@ import type {
 } from '../features/sessions/validation.ts';
 import { prepareInput } from './prepare-input.ts';
 import type { PreparedInput } from './prepare-input.ts';
-import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.js';
+import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.ts';
 
 type Session = Awaited<ReturnType<typeof sessions.getSessions>>[number];
 type ErrorResponse = { error: string };

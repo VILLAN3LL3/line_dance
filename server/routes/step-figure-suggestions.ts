@@ -7,7 +7,7 @@ import {
 } from '../features/suggestions/operations.ts';
 import { prepareInput } from './prepare-input.ts';
 import type { PreparedInput } from './prepare-input.ts';
-import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.js';
+import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.ts';
 
 type SuggestionError =
   | 'invalid_group_id'

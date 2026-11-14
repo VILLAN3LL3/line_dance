@@ -5,7 +5,7 @@ import {
   prepareWriteRequest,
 } from '../features/choreographies/validation.ts';
 import type { ChoreographyIssue, WriteRequest } from '../features/choreographies/validation.ts';
-import { captureError } from '../utils/choreographyRouteErrors.js';
+import { captureError } from '../utils/choreographyRouteErrors.ts';
 import { prepareInput } from './prepare-input.ts';
 import type { PreparedInput } from './prepare-input.ts';
 

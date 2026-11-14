@@ -12,7 +12,7 @@ import type {
   SearchQuery,
 } from '../features/choreographies/read-validation.ts';
 import type { Pagination } from '../features/choreographies/read-operations.ts';
-import { captureError } from '../utils/choreographyRouteErrors.js';
+import { captureError } from '../utils/choreographyRouteErrors.ts';
 import { prepareInput } from './prepare-input.ts';
 import type { PreparedInput } from './prepare-input.ts';
 

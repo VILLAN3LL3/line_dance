@@ -4,7 +4,7 @@ import { validateTrainer } from '../features/trainers/validation.ts';
 import type { TrainerValidationResult } from '../features/trainers/validation.ts';
 import { prepareInput } from './prepare-input.ts';
 import type { PreparedInput } from './prepare-input.ts';
-import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.js';
+import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.ts';
 
 type TrainerError =
   'name_required' | 'phone_required' | 'email_required' | 'duplicate_email' | 'not_found';

@@ -1,4 +1,4 @@
-import { captureError } from '../../utils/choreographyRouteErrors.js';
+import { captureError } from '../../utils/choreographyRouteErrors.ts';
 import { parseStoredFilters, validateConfigurationId } from './operations.ts';
 import type { SavedFilters, SaveInput, UpdateInput } from './operations.ts';
 import * as filters from './repository.ts';

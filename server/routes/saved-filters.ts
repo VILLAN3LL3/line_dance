@@ -6,7 +6,7 @@ import {
   prepareConfigurationUpdate,
 } from '../features/saved-filters/operations.ts';
 import { prepareInput } from './prepare-input.ts';
-import { captureError } from '../utils/choreographyRouteErrors.js';
+import { captureError } from '../utils/choreographyRouteErrors.ts';
 
 type FilterError =
   'invalid_id' | 'not_found' | 'name_required' | 'nothing_to_update' | 'duplicate_name';

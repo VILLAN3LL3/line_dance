@@ -3,7 +3,7 @@ import * as figures from '../features/step-figures/flow.ts';
 import type { FigureRequest } from '../features/step-figures/flow.ts';
 import { validateFigure } from '../features/step-figures/operations.ts';
 import { prepareInput } from './prepare-input.ts';
-import { captureError } from '../utils/choreographyRouteErrors.js';
+import { captureError } from '../utils/choreographyRouteErrors.ts';
 
 type FigureError =
   | 'invalid_id'

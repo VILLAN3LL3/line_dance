@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import swaggerUi from 'swagger-ui-express';
-import { apiErrorHandler } from './utils/apiErrorHandler.js';
+import { apiErrorHandler } from './utils/apiErrorHandler.ts';
 import { openApiSpec } from './scripts/openapi.js';
 import { createChoreographyRouter } from './routes/choreography-router.ts';
 import { createDanceGroupsRouter } from './routes/dance-groups-router.ts';

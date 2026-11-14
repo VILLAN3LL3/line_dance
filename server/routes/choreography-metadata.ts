@@ -4,7 +4,7 @@ import { prepareLevel } from '../features/metadata/operations.ts';
 import type { LevelInput } from '../features/metadata/operations.ts';
 import { prepareInput } from './prepare-input.ts';
 import type { PreparedInput } from './prepare-input.ts';
-import { captureError } from '../utils/choreographyRouteErrors.js';
+import { captureError } from '../utils/choreographyRouteErrors.ts';
 
 type LevelError = 'name_required' | 'duplicate_level' | 'invalid_value';
 type ErrorResponse = { error: string };

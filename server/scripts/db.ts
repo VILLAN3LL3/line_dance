@@ -44,6 +44,15 @@ const databases = {
 
 export const DATABASE_RESTARTING_ERROR_CODE = 'DATABASE_RESTARTING';
 
+export function isDatabaseRestartingError(error: unknown): boolean {
+  return (
+    error !== null &&
+    (typeof error === 'object' || typeof error === 'function') &&
+    'code' in error &&
+    error.code === DATABASE_RESTARTING_ERROR_CODE
+  );
+}
+
 let dbConnections: Partial<Record<DatabaseName, Database>> = {};
 let dbReadyPromises: Partial<Record<DatabaseName, Promise<void>>> = {};
 const openedDatabaseFiles = new Map<DatabaseName, Map<string, string>>();

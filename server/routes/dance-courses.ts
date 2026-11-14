@@ -8,7 +8,7 @@ import {
 import type { CourseInput, NewCourse } from '../features/courses/validation.ts';
 import { prepareInput } from './prepare-input.ts';
 import type { PreparedInput } from './prepare-input.ts';
-import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.js';
+import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.ts';
 
 type CourseError = Extract<courses.CourseResult, { error: string }>['error'];
 type Course = Awaited<ReturnType<typeof courses.getCourses>>[number];
