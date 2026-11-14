@@ -11,6 +11,7 @@ import {
 import { searchChoreographies } from './choreography-search.js';
 import {
   getLevels,
+  prepareLevelInput,
   addLevel,
   getTags,
   getChoreographyInfoCategories,
@@ -18,7 +19,7 @@ import {
   getAuthorStats,
   getCountryCodes,
   getMaxChoreographyCount,
-} from './choreography-metadata.js';
+} from './choreography-metadata.ts';
 import {
   getStepFigures,
   getStepFiguresWithIds,
@@ -56,7 +57,7 @@ export function createChoreographyRouter() {
   router.put('/api/choreographies/:id/rating', prepareRating, rateChoreography);
   router.delete('/api/choreographies/:id/rating', deleteChoreographyRating);
   router.get('/api/levels', getLevels);
-  router.post('/api/levels', addLevel);
+  router.post('/api/levels', prepareLevelInput, addLevel);
   router.get('/api/tags', getTags);
   router.get('/api/choreography-info-categories', getChoreographyInfoCategories);
   router.get('/api/authors', getAuthors);

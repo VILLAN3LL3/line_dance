@@ -3,9 +3,10 @@ import {
   authorStatistics,
   countryCodeMap,
   nextLevelValue,
+  prepareLevel,
   validateLevelName,
   validateLevelValue,
-} from '../../features/metadata/operations.js';
+} from '../../features/metadata/operations.ts';
 
 describe('metadata operations', () => {
   it('validates names and optional numeric values', () => {
@@ -16,6 +17,19 @@ describe('metadata operations', () => {
     expect(validateLevelValue('no')).toEqual({ error: 'invalid_value' });
     expect(nextLevelValue(20)).toBe(30);
     expect(nextLevelValue(null)).toBe(10);
+  });
+
+  it('preserves parsing, conversion errors and name validation precedence', () => {
+    expect(validateLevelValue('15suffix')).toEqual({ value: 15 });
+    expect(validateLevelValue([-3])).toEqual({ value: -3 });
+    expect(validateLevelValue('  ')).toEqual({ value: null });
+    const invalidValue = { toString: null };
+    expect(prepareLevel({ name: '', value: invalidValue })).toEqual({ error: 'name_required' });
+    const prepared = prepareLevel({ name: 'New', value: invalidValue });
+    if ('error' in prepared) throw new Error('Expected valid name');
+    expect(prepared.value.levelValue).toEqual({ exception: expect.any(TypeError) });
+    expect(() => validateLevelName({ name: 7 })).toThrow(TypeError);
+    expect(() => validateLevelName(undefined)).toThrow(TypeError);
   });
 
   it('aggregates choreography counts by author and level', () => {

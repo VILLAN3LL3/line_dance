@@ -725,6 +725,31 @@ describe('POST /api/levels', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/already exists/i);
   });
+
+  it('keeps duplicate-name precedence for malformed values', async () => {
+    const invalidValue = { toString: null };
+    const duplicate = await request(app)
+      .post('/api/levels')
+      .send({ name: 'Beginner', value: invalidValue });
+    const invalid = await request(app)
+      .post('/api/levels')
+      .send({ name: 'Bad Conversion', value: invalidValue });
+    expect(duplicate.status).toBe(400);
+    expect(duplicate.body.error).toMatch(/already exists/i);
+    expect(invalid.status).toBe(500);
+    expect(invalid.body.error).toBe('Failed to add level');
+  });
+
+  it('preserves integer-prefix parsing and non-string name errors', async () => {
+    const parsed = await request(app)
+      .post('/api/levels')
+      .send({ name: 'Prefix', value: '12suffix' });
+    const invalidName = await request(app).post('/api/levels').send({ name: 12 });
+    expect(parsed.status).toBe(201);
+    expect(parsed.body.value).toBe(12);
+    expect(invalidName.status).toBe(500);
+    expect(invalidName.body.error).toBe('Failed to add level');
+  });
 });
 
 // ---------------------------------------------------------------------------
