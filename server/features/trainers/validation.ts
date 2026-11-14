@@ -1,4 +1,19 @@
-export function validateTrainer(input) {
+export interface TrainerInput {
+  name?: unknown;
+  phone?: unknown;
+  email?: unknown;
+}
+
+export interface TrainerDetails {
+  name: string;
+  phone: string;
+  email: string;
+}
+
+export type TrainerValidationResult =
+  { error: 'name_required' | 'phone_required' | 'email_required' } | { value: TrainerDetails };
+
+export function validateTrainer(input: TrainerInput): TrainerValidationResult {
   const { name, phone, email } = input;
 
   if (!name || typeof name !== 'string' || !name.trim()) {

@@ -1,4 +1,4 @@
-import { allQuery, getQuery, runQuery, withTransaction } from '../../scripts/db.js';
+import { allQuery, getQuery, runQuery, withTransaction } from '../../scripts/db.ts';
 
 const dbName = 'danceGroups';
 const groupColumns = 'id, name, max_group_level_value, created_at';

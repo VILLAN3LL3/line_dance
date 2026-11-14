@@ -1,10 +1,10 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
-import { getQuery, runQuery } from '../../scripts/db.js';
+import { getQuery, runQuery } from '../../scripts/db.ts';
 import * as groups from '../../features/groups/flow.js';
 import * as courses from '../../features/courses/flow.js';
 import { prepareCoursePdf } from '../../features/courses/pdf-flow.js';
-import * as trainers from '../../features/trainers/flow.js';
+import * as trainers from '../../features/trainers/flow.ts';
 import * as ratings from '../../features/ratings/flow.js';
 
 beforeAll(async () => {
@@ -24,6 +24,7 @@ describe('group, course and trainer flows', () => {
       phone: '1',
       email: 'a@b.test',
     });
+    if (!('value' in trainer) || !trainer.value) throw new Error('Trainer creation failed');
 
     const course = await courses.createCourse({
       dance_group_id: group.value.id,
@@ -36,7 +37,7 @@ describe('group, course and trainer flows', () => {
     });
     expect(course.value.trainer_id).toBe(trainer.value.id);
     expect(await trainers.deleteTrainer(trainer.value.id)).toEqual({ value: true });
-    expect((await courses.getCourses(group.value.id))[0].trainer_id).toBeNull();
+    expect(await courses.getCourses(group.value.id)).toMatchObject([{ trainer_id: null }]);
   });
 
   it('rolls back all default assignments if group creation fails', async () => {
@@ -77,9 +78,10 @@ describe('group, course and trainer flows', () => {
       'danceGroups',
     );
     const result = await prepareCoursePdf(course.value.id);
-    expect(result.value.sessions.map((session) => session.session_date)).toEqual([
-      '2026-01-01',
-      '2026-02-01',
+    if (!result.value) throw new Error('Course PDF preparation failed');
+    expect(result.value.sessions).toMatchObject([
+      { session_date: '2026-01-01' },
+      { session_date: '2026-02-01' },
     ]);
     expect(result.value.linksWithQr[0].qr.subarray(0, 8)).toEqual(
       Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),

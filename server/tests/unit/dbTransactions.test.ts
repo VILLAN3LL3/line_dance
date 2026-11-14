@@ -7,14 +7,15 @@ import {
   allQuery,
   closeDatabase,
   getDatabase,
+  getQuery,
   runQuery,
   setDatabaseConnection,
   withTransaction,
-} from '../../scripts/db.js';
+} from '../../scripts/db.ts';
 
-function deferred() {
-  let resolve;
-  const promise = new Promise((done) => {
+function deferred(): { promise: Promise<void>; resolve: () => void } {
+  let resolve!: () => void;
+  const promise = new Promise<void>((done) => {
     resolve = done;
   });
   return { promise, resolve };
@@ -57,6 +58,39 @@ describe('SQLite transactions', () => {
     ).rejects.toThrow('Nested transactions');
     await runQuery("INSERT INTO entries VALUES ('after')");
     expect(await allQuery('SELECT value FROM entries')).toEqual([{ value: 'after' }]);
+  });
+
+  it('queues reads until a failed transaction has rolled back', async () => {
+    const entered = deferred();
+    const proceed = deferred();
+    const transaction = withTransaction('choreography', async () => {
+      await runQuery("INSERT INTO entries VALUES ('temporary')");
+      entered.resolve();
+      await proceed.promise;
+      throw new Error('transaction failed');
+    });
+    await entered.promise;
+    const reads = Promise.all([
+      getQuery('SELECT value FROM entries'),
+      allQuery('SELECT value FROM entries'),
+    ]);
+    let completed = false;
+    void reads.then(() => {
+      completed = true;
+    });
+    try {
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      expect(completed).toBe(false);
+    } finally {
+      proceed.resolve();
+    }
+    await expect(transaction).rejects.toThrow('transaction failed');
+    expect(await reads).toEqual([undefined, []]);
+  });
+
+  it('rejects failed single-row and multi-row queries', async () => {
+    await expect(getQuery('SELECT * FROM missing_table')).rejects.toThrow();
+    await expect(allQuery('SELECT * FROM missing_table')).rejects.toThrow();
   });
 
   it('uses the same transaction when database names reference the same connection', async () => {

@@ -4,7 +4,7 @@
  * Call setupChoreographyTestDb() in beforeAll and clearChoreographyTables() in beforeEach.
  */
 import sqlite3 from 'sqlite3';
-import { setDatabaseConnection } from '../../scripts/db.js';
+import { setDatabaseConnection } from '../../scripts/db.ts';
 
 let testDb = null;
 

@@ -1,4 +1,4 @@
-import { DATABASE_RESTARTING_ERROR_CODE } from '../scripts/db.js';
+import { DATABASE_RESTARTING_ERROR_CODE } from '../scripts/db.ts';
 
 export function captureDanceGroupError(error) {
   if (error?.code === DATABASE_RESTARTING_ERROR_CODE) {

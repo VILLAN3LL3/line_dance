@@ -27,7 +27,7 @@ describe('SQLite replacement recovery', () => {
     process.env.PM2_HOME = path.join(databaseDirectory, 'pm2');
 
     vi.resetModules();
-    databaseModule = await import('../../scripts/db.js');
+    databaseModule = await import('../../scripts/db.ts');
     await databaseModule.runQuery('CREATE TABLE recovery_test (id INTEGER PRIMARY KEY)');
   });
 

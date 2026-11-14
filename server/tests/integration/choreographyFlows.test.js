@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
-import { runQuery } from '../../scripts/db.js';
+import { runQuery } from '../../scripts/db.ts';
 import * as choreography from '../../features/choreographies/write-flow.js';
 import * as reads from '../../features/choreographies/read-flow.js';
 import * as figures from '../../features/step-figures/flow.js';

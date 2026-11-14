@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
-import { runQuery } from '../../scripts/db.js';
+import { runQuery } from '../../scripts/db.ts';
 import * as figures from '../../features/step-figures/flow.js';
 
 beforeAll(async () => {

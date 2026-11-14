@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
-import { runQuery } from '../../scripts/db.js';
+import { runQuery } from '../../scripts/db.ts';
 import * as groups from '../../features/groups/flow.js';
 import * as courses from '../../features/courses/flow.js';
 import * as sessions from '../../features/sessions/flow.js';

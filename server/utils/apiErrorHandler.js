@@ -1,4 +1,4 @@
-import { DATABASE_RESTARTING_ERROR_CODE, restartAfterDatabaseResponse } from '../scripts/db.js';
+import { DATABASE_RESTARTING_ERROR_CODE, restartAfterDatabaseResponse } from '../scripts/db.ts';
 
 export function apiErrorHandler(error, req, res, next) {
   if (error?.code === DATABASE_RESTARTING_ERROR_CODE) {

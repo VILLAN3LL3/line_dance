@@ -29,8 +29,13 @@ export default [
     rules: { 'no-unused-vars': 'off' },
   },
   {
+    files: ['**/*.ts'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': ['error', { allowExpressions: true }],
+    },
+  },
+  {
     files: [
-      'routes/trainers.js',
       'routes/dance-courses.js',
       'routes/dance-groups.js',
       'routes/course-pdf.js',

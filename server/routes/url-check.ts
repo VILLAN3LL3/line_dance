@@ -8,7 +8,7 @@ const errors: Record<UrlValidationError, string> = {
   url_not_allowed: 'URL not allowed',
 };
 
-export async function checkUrl(req: Request, res: Response) {
+export async function checkUrl(req: Request, res: Response): Promise<Response> {
   const result = await check(req.query.url);
   if ('error' in result) {
     const message = errors[result.error];

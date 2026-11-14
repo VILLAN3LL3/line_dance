@@ -1,4 +1,4 @@
-import { allQuery, getQuery, runQuery, withTransaction } from '../../scripts/db.js';
+import { allQuery, getQuery, runQuery, withTransaction } from '../../scripts/db.ts';
 
 let tableReady = false;
 const columns = 'id, name, filters_json, created_at, updated_at';

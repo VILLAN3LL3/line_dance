@@ -1,6 +1,6 @@
 import { createApp } from '../app.js';
 import { runMigrations } from '../migrations/index.js';
-import { closeDatabase, getDatabase } from './db.js';
+import { closeDatabase, getDatabase } from './db.ts';
 
 const port = process.env.PORT || 3001;
 

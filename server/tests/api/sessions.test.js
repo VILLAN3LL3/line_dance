@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import app from '../setup/testApp.js';
-import { runQuery } from '../../scripts/db.js';
+import { runQuery } from '../../scripts/db.ts';
 import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.js';
 
 beforeAll(async () => {

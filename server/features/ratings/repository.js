@@ -1,4 +1,4 @@
-import { getQuery, runQuery, withTransaction } from '../../scripts/db.js';
+import { getQuery, runQuery, withTransaction } from '../../scripts/db.ts';
 
 export function withRatingTransaction(action) {
   return withTransaction('choreography', action);

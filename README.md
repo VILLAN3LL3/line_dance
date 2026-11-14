@@ -124,7 +124,8 @@ for responsibility boundaries, transaction handling, and testing.
 
 The backend is being migrated incrementally from JavaScript to TypeScript. `npm run typecheck`
 checks migrated TypeScript files and tests in strict mode; existing JavaScript is not yet type-checked.
-The URL checker is the first migrated feature. The remaining backend and tests still require migration.
+The URL checker, trainers, and database helper are migrated; the remaining backend and tests still
+require migration.
 
 The database helper `withTransaction()` serializes transactions and queries per SQLite connection.
 Choreography writes (including cleanup), group/base-figure changes, trainer writes, course creation

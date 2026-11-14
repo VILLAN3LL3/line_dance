@@ -12,6 +12,8 @@ the planning and verification workflows in the project instructions where applic
 The backend is migrating from JavaScript to TypeScript. Write migrated code and tests in
 TypeScript with strict type checking, and retain the boundaries below. JavaScript files are not yet
 checked by `server/tsconfig.json`; a passing typecheck does not mean the migration is complete.
+Give named backend TypeScript functions explicit return types and use `async` for Promise-returning
+functions unless preserving Promise identity or other observable behavior requires otherwise.
 
 ## Responsibilities and dependencies
 
@@ -41,7 +43,7 @@ layers a feature needs, and reuse existing helpers rather than introducing unnec
 The course PDF renderer is a transport-specific exception: it writes the prepared document to the
 response; its data preparation remains in the feature flow.
 
-Examples to inspect: `server/routes/trainers.js` and `server/features/trainers/`,
+Examples to inspect: `server/routes/trainers.ts` and `server/features/trainers/`,
 `server/features/choreographies/` (including `search-query.js`), and
 `server/features/url-check/`. `server/eslint.config.js` enforces some boundaries, but its route
 list and import restrictions are not a complete architectural proof. Extend relevant restrictions

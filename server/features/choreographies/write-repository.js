@@ -1,4 +1,4 @@
-import { getQuery, runQuery, withTransaction } from '../../scripts/db.js';
+import { getQuery, runQuery, withTransaction } from '../../scripts/db.ts';
 
 const relationships = {
   authors: { entities: 'authors', links: 'choreography_authors', id: 'author_id' },

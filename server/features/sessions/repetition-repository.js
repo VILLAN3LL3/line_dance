@@ -1,4 +1,4 @@
-import { runQuery } from '../../scripts/db.js';
+import { runQuery } from '../../scripts/db.ts';
 
 const dbName = 'danceGroups';
 

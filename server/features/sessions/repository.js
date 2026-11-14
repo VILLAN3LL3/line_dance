@@ -1,4 +1,4 @@
-import { allQuery, getQuery, runQuery, withTransaction } from '../../scripts/db.js';
+import { allQuery, getQuery, runQuery, withTransaction } from '../../scripts/db.ts';
 
 const dbName = 'danceGroups';
 const sessionSelect = `SELECT s.id, s.dance_course_id, s.session_date, s.comment, s.created_at,

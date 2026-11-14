@@ -1,7 +1,12 @@
-import * as trainers from '../features/trainers/flow.js';
+import type { Request, Response } from 'express';
+import * as trainers from '../features/trainers/flow.ts';
+import type { TrainerInput } from '../features/trainers/validation.ts';
 import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.js';
 
-const trainerErrors = {
+type TrainerError =
+  'name_required' | 'phone_required' | 'email_required' | 'duplicate_email' | 'not_found';
+
+const trainerErrors: Record<TrainerError, [number, string]> = {
   name_required: [400, 'Name is required'],
   phone_required: [400, 'Phone is required'],
   email_required: [400, 'Email is required'],
@@ -9,13 +14,13 @@ const trainerErrors = {
   not_found: [404, 'Trainer not found'],
 };
 
-function sendTrainerError(res, error) {
+function sendTrainerError(res: Response, error: TrainerError): Response {
   const response = trainerErrors[error];
   if (!response) throw new Error(`Unknown trainer error: ${error}`);
   return res.status(response[0]).json({ error: response[1] });
 }
 
-export async function getTrainers(req, res) {
+export async function getTrainers(_req: Request, res: Response): Promise<void> {
   try {
     res.json(await trainers.getTrainers());
   } catch (error) {
@@ -24,10 +29,13 @@ export async function getTrainers(req, res) {
   }
 }
 
-export async function createTrainer(req, res) {
+export async function createTrainer(
+  req: Request<object, unknown, TrainerInput>,
+  res: Response,
+): Promise<Response | void> {
   try {
     const result = await trainers.createTrainer(req.body);
-    if (result.error) return sendTrainerError(res, result.error);
+    if ('error' in result && result.error) return sendTrainerError(res, result.error);
     res.status(201).json(result.value);
   } catch (error) {
     captureError(error);
@@ -35,10 +43,13 @@ export async function createTrainer(req, res) {
   }
 }
 
-export async function updateTrainer(req, res) {
+export async function updateTrainer(
+  req: Request<{ id: string }, unknown, TrainerInput>,
+  res: Response,
+): Promise<Response | void> {
   try {
     const result = await trainers.updateTrainer(req.params.id, req.body);
-    if (result.error) return sendTrainerError(res, result.error);
+    if ('error' in result && result.error) return sendTrainerError(res, result.error);
     res.json(result.value);
   } catch (error) {
     captureError(error);
@@ -46,10 +57,13 @@ export async function updateTrainer(req, res) {
   }
 }
 
-export async function deleteTrainer(req, res) {
+export async function deleteTrainer(
+  req: Request<{ id: string }>,
+  res: Response,
+): Promise<Response | void> {
   try {
     const result = await trainers.deleteTrainer(req.params.id);
-    if (result.error) return sendTrainerError(res, result.error);
+    if ('error' in result && result.error) return sendTrainerError(res, result.error);
     res.json({ message: 'Trainer deleted successfully' });
   } catch (error) {
     captureError(error);

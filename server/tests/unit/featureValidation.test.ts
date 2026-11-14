@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateTrainer } from '../../features/trainers/validation.js';
+import { validateTrainer } from '../../features/trainers/validation.ts';
 import { validateChoreographyId, validateRating } from '../../features/ratings/validation.js';
 import {
   hasTrainerId,

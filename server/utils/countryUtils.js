@@ -1,4 +1,4 @@
-import { getQuery } from '../scripts/db.js';
+import { getQuery } from '../scripts/db.ts';
 
 const countryCache = new Map();
 

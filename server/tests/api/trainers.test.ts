@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
-import { runQuery } from '../../scripts/db.js';
+import { runQuery } from '../../scripts/db.ts';
 import app from '../setup/testApp.js';
 
 beforeAll(async () => {
@@ -31,7 +31,7 @@ describe('GET /api/trainers', () => {
     await request(app).post('/api/trainers').send({ name: 'mike', phone: '3', email: 'm@m.com' });
 
     const res = await request(app).get('/api/trainers');
-    expect(res.body.map((t) => t.name)).toEqual(['Anna', 'mike', 'zara']);
+    expect(res.body.map((t: { name: string }) => t.name)).toEqual(['Anna', 'mike', 'zara']);
   });
 
   it('includes all fields in the response', async () => {
@@ -251,7 +251,7 @@ describe('DELETE /api/trainers/:id', () => {
     await request(app).delete(`/api/trainers/${trainer.body.id}`);
 
     const courses = await request(app).get(`/api/dance-courses?dance_group_id=${group.body.id}`);
-    const updated = courses.body.find((c) => c.id === course.body.id);
+    const updated = courses.body.find((c: { id: number }) => c.id === course.body.id);
     expect(updated.trainer_id).toBeNull();
     expect(updated.trainer_name).toBeNull();
   });

@@ -3,6 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AsyncLocalStorage } from 'node:async_hooks';
+import type { Database } from 'sqlite3';
+
+type DatabaseName = 'choreography' | 'danceGroups' | 'tags';
+type DatabaseError = NodeJS.ErrnoException;
+type TransactionContext = { db: Database; active: boolean };
+export type WriteResult = { id: number; changes: number };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,7 +20,7 @@ const isInMemorySafetyMode = [
   process.env.TAGS_DB_PATH,
 ].includes(':memory:');
 
-function resolveDatabasePath(inputPath, fallbackFileName) {
+function resolveDatabasePath(inputPath: string | undefined, fallbackFileName: string): string {
   if (inputPath === ':memory:') {
     return ':memory:';
   }
@@ -38,18 +44,18 @@ const databases = {
 
 export const DATABASE_RESTARTING_ERROR_CODE = 'DATABASE_RESTARTING';
 
-let dbConnections = {};
-let dbReadyPromises = {};
-const openedDatabaseFiles = new Map();
+let dbConnections: Partial<Record<DatabaseName, Database>> = {};
+let dbReadyPromises: Partial<Record<DatabaseName, Promise<void>>> = {};
+const openedDatabaseFiles = new Map<DatabaseName, Map<string, string>>();
 let restartScheduled = false;
 let restartExitScheduled = false;
-const connectionQueues = new WeakMap();
-const transactionContext = new AsyncLocalStorage();
+const connectionQueues = new WeakMap<Database, Promise<void>>();
+const transactionContext = new AsyncLocalStorage<TransactionContext>();
 
-function runExclusively(db, action) {
-  const previous = connectionQueues.get(db) || Promise.resolve();
-  let release;
-  const current = new Promise((resolve) => {
+async function runExclusively<T>(db: Database, action: () => T | Promise<T>): Promise<T> {
+  const previous = connectionQueues.get(db) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => {
     release = resolve;
   });
   connectionQueues.set(db, current);
@@ -59,13 +65,13 @@ function runExclusively(db, action) {
   });
 }
 
-function runOnConnection(db, action) {
+async function runOnConnection<T>(db: Database, action: () => T | Promise<T>): Promise<T> {
   const context = transactionContext.getStore();
   if (context?.db === db && context.active) return action();
   return runExclusively(db, action);
 }
 
-function getFileIdentity(filePath) {
+function getFileIdentity(filePath: string): string | null {
   if (filePath === ':memory:') return null;
 
   try {
@@ -76,7 +82,7 @@ function getFileIdentity(filePath) {
   }
 }
 
-function rememberDatabaseFile(name, filePath) {
+function rememberDatabaseFile(name: DatabaseName, filePath: string): void {
   const identity = getFileIdentity(filePath);
   if (!identity) return;
 
@@ -85,7 +91,7 @@ function rememberDatabaseFile(name, filePath) {
   openedDatabaseFiles.set(name, files);
 }
 
-function restartIfDatabaseWasReplaced(error, name) {
+function restartIfDatabaseWasReplaced(error: DatabaseError, name: DatabaseName): void {
   const isReadonlyError =
     error?.code === 'SQLITE_READONLY' || error?.code?.startsWith('SQLITE_READONLY_');
   if (!isReadonlyError) return;
@@ -110,15 +116,16 @@ function restartIfDatabaseWasReplaced(error, name) {
   );
 }
 
-export function restartAfterDatabaseResponse() {
+export function restartAfterDatabaseResponse(): void {
   if (!process.env.PM2_HOME || !restartScheduled || restartExitScheduled) return;
 
   restartExitScheduled = true;
   setImmediate(() => process.exit(1));
 }
 
-export function getDatabase(name = 'choreography') {
-  if (!dbConnections[name]) {
+export function getDatabase(name: DatabaseName = 'choreography'): Database {
+  let db = dbConnections[name];
+  if (!db) {
     const dbPath = databases[name];
     if (!dbPath) {
       throw new Error(`Unknown database: ${name}`);
@@ -128,14 +135,15 @@ export function getDatabase(name = 'choreography') {
       fs.mkdirSync(path.dirname(dbPath), { recursive: true });
     }
 
-    dbConnections[name] = new sqlite3.Database(dbPath, (err) => {
+    db = new sqlite3.Database(dbPath, (err) => {
       if (err) {
         // Skip logging in production
       } else {
         rememberDatabaseFile(name, dbPath);
       }
     });
-    dbConnections[name].configure('busyTimeout', 5000);
+    dbConnections[name] = db;
+    db.configure('busyTimeout', 5000);
     dbReadyPromises[name] = Promise.resolve();
 
     if (name === 'choreography') {
@@ -143,8 +151,9 @@ export function getDatabase(name = 'choreography') {
       if (tagsDbPath !== ':memory:') {
         fs.mkdirSync(path.dirname(tagsDbPath), { recursive: true });
       }
-      dbReadyPromises[name] = new Promise((resolve, reject) => {
-        dbConnections[name].run(`ATTACH DATABASE ? AS personal_data`, [tagsDbPath], (err) => {
+      const connection = db;
+      dbReadyPromises[name] = new Promise<void>((resolve, reject) => {
+        connection.run(`ATTACH DATABASE ? AS personal_data`, [tagsDbPath], (err) => {
           if (err) {
             if (process.env.NODE_ENV !== 'test') {
               process.stderr.write(
@@ -160,66 +169,78 @@ export function getDatabase(name = 'choreography') {
       });
     }
   }
-  return dbConnections[name];
-}
-
-async function getReadyDatabase(name = 'choreography') {
-  const db = getDatabase(name);
-  await (dbReadyPromises[name] || Promise.resolve());
   return db;
 }
-export function runQuery(query, params = [], dbName = 'choreography') {
-  return getReadyDatabase(dbName).then((db) =>
-    runOnConnection(
-      db,
-      () =>
-        new Promise((resolve, reject) => {
-          db.run(query, params, function (err) {
-            if (err) {
-              restartIfDatabaseWasReplaced(err, dbName);
-              reject(err);
-            } else resolve({ id: this.lastID, changes: this.changes });
-          });
-        }),
-    ),
+
+async function getReadyDatabase(name: DatabaseName = 'choreography'): Promise<Database> {
+  const db = getDatabase(name);
+  await (dbReadyPromises[name] ?? Promise.resolve());
+  return db;
+}
+export async function runQuery(
+  query: string,
+  params: unknown[] = [],
+  dbName: DatabaseName = 'choreography',
+): Promise<WriteResult> {
+  const db = await getReadyDatabase(dbName);
+  return runOnConnection(
+    db,
+    () =>
+      new Promise<WriteResult>((resolve, reject) => {
+        db.run(query, params, function (err) {
+          if (err) {
+            restartIfDatabaseWasReplaced(err, dbName);
+            reject(err);
+          } else resolve({ id: this.lastID, changes: this.changes });
+        });
+      }),
   );
 }
 
-export function getQuery(query, params = [], dbName = 'choreography') {
-  return getReadyDatabase(dbName).then((db) =>
-    runOnConnection(
-      db,
-      () =>
-        new Promise((resolve, reject) => {
-          db.get(query, params, (err, row) => {
-            if (err) {
-              restartIfDatabaseWasReplaced(err, dbName);
-              reject(err);
-            } else resolve(row);
-          });
-        }),
-    ),
+export async function getQuery<Row = unknown>(
+  query: string,
+  params: unknown[] = [],
+  dbName: DatabaseName = 'choreography',
+): Promise<Row | undefined> {
+  const db = await getReadyDatabase(dbName);
+  return runOnConnection(
+    db,
+    () =>
+      new Promise<Row | undefined>((resolve, reject) => {
+        db.get<Row | undefined>(query, params, (err, row) => {
+          if (err) {
+            restartIfDatabaseWasReplaced(err, dbName);
+            reject(err);
+          } else resolve(row);
+        });
+      }),
   );
 }
 
-export function allQuery(query, params = [], dbName = 'choreography') {
-  return getReadyDatabase(dbName).then((db) =>
-    runOnConnection(
-      db,
-      () =>
-        new Promise((resolve, reject) => {
-          db.all(query, params, (err, rows) => {
-            if (err) {
-              restartIfDatabaseWasReplaced(err, dbName);
-              reject(err);
-            } else resolve(rows || []);
-          });
-        }),
-    ),
+export async function allQuery<Row = unknown>(
+  query: string,
+  params: unknown[] = [],
+  dbName: DatabaseName = 'choreography',
+): Promise<Row[]> {
+  const db = await getReadyDatabase(dbName);
+  return runOnConnection(
+    db,
+    () =>
+      new Promise<Row[]>((resolve, reject) => {
+        db.all<Row>(query, params, (err, rows) => {
+          if (err) {
+            restartIfDatabaseWasReplaced(err, dbName);
+            reject(err);
+          } else resolve(rows || []);
+        });
+      }),
   );
 }
 
-export async function withTransaction(dbName, action) {
+export async function withTransaction<T>(
+  dbName: DatabaseName,
+  action: () => T | Promise<T>,
+): Promise<T> {
   const db = await getReadyDatabase(dbName);
   const current = transactionContext.getStore();
   if (current?.db === db && current.active) {
@@ -249,25 +270,24 @@ export async function withTransaction(dbName, action) {
   });
 }
 
-export function setDatabaseConnection(name, db) {
+export function setDatabaseConnection(name: DatabaseName, db: Database): void {
   dbConnections[name] = db;
   dbReadyPromises[name] = Promise.resolve();
   openedDatabaseFiles.delete(name);
 }
 
-export function closeDatabase() {
+export async function closeDatabase(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const dbNames = Object.keys(dbConnections);
+    const connections = Object.values(dbConnections);
     let closedCount = 0;
     let hasError = false;
 
-    if (dbNames.length === 0) {
+    if (connections.length === 0) {
       resolve();
       return;
     }
 
-    dbNames.forEach((name) => {
-      const db = dbConnections[name];
+    connections.forEach((db) => {
       if (db) {
         db.close((err) => {
           if (err && !hasError) {
@@ -275,7 +295,7 @@ export function closeDatabase() {
             reject(err);
           } else {
             closedCount++;
-            if (closedCount === dbNames.length) {
+            if (closedCount === connections.length) {
               dbConnections = {};
               dbReadyPromises = {};
               openedDatabaseFiles.clear();
@@ -287,7 +307,7 @@ export function closeDatabase() {
         });
       } else {
         closedCount++;
-        if (closedCount === dbNames.length) {
+        if (closedCount === connections.length) {
           dbReadyPromises = {};
           resolve();
         }

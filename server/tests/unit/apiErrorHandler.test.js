@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
-import { DATABASE_RESTARTING_ERROR_CODE } from '../../scripts/db.js';
+import { DATABASE_RESTARTING_ERROR_CODE } from '../../scripts/db.ts';
 import { apiErrorHandler } from '../../utils/apiErrorHandler.js';
 
 describe('global API error handling', () => {

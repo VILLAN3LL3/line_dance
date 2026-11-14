@@ -6,7 +6,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { runChoreographyMigrations } from '../../migrations/choreography-migrations.js';
 import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.js';
-import { allQuery, closeDatabase, runQuery, setDatabaseConnection } from '../../scripts/db.js';
+import { allQuery, closeDatabase, runQuery, setDatabaseConnection } from '../../scripts/db.ts';
 import app from '../setup/testApp.js';
 
 let directory;

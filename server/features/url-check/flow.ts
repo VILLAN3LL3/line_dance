@@ -1,7 +1,11 @@
 import { requestUrl } from './http-gateway.ts';
 import { initialProbe, shouldRetryWithGet, validateUrl } from './operations.ts';
+import type { UrlValidationError } from './operations.ts';
 
-export async function checkUrl(raw: unknown) {
+type UrlCheckResult =
+  { error: UrlValidationError } | { value: { ok: boolean; status: number | null } };
+
+export async function checkUrl(raw: unknown): Promise<UrlCheckResult> {
   const validation = validateUrl(raw);
   if ('error' in validation) return validation;
 

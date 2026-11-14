@@ -10,7 +10,7 @@ import {
   getGroupBaseStepFigures,
   updateGroupBaseStepFigures,
 } from './dance-groups.js';
-import { getTrainers, createTrainer, updateTrainer, deleteTrainer } from './trainers.js';
+import { getTrainers, createTrainer, updateTrainer, deleteTrainer } from './trainers.ts';
 import {
   getDanceCourses,
   createDanceCourse,

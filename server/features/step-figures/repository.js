@@ -1,4 +1,4 @@
-import { allQuery, getQuery, runQuery, withTransaction } from '../../scripts/db.js';
+import { allQuery, getQuery, runQuery, withTransaction } from '../../scripts/db.ts';
 
 export function withFigureTransaction(action) {
   return withTransaction('choreography', action);

@@ -3,7 +3,7 @@ import request from 'supertest';
 import sqlite3 from 'sqlite3';
 
 import app from '../setup/testChoreographyApp.js';
-import { setDatabaseConnection, closeDatabase, allQuery, getQuery } from '../../scripts/db.js';
+import { setDatabaseConnection, closeDatabase, allQuery, getQuery } from '../../scripts/db.ts';
 import { runChoreographyMigrations } from '../../migrations/choreography-migrations.js';
 
 function run(db, sql, params = []) {

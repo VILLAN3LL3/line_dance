@@ -7,8 +7,8 @@ import {
   getDatabase,
   runQuery,
   DATABASE_RESTARTING_ERROR_CODE,
-} from '../../scripts/db.js';
-import * as databaseModule from '../../scripts/db.js';
+} from '../../scripts/db.ts';
+import * as databaseModule from '../../scripts/db.ts';
 
 beforeAll(async () => {
   await setupChoreographyTestDb();
