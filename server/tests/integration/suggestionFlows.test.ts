@@ -1,7 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import { runQuery } from '../../scripts/db.ts';
-import * as groups from '../../features/groups/flow.js';
+import * as groups from '../../features/groups/flow.ts';
+import { prepareBaseFiguresUpdate, validateGroupName } from '../../features/groups/validation.ts';
 import * as courses from '../../features/courses/flow.js';
 import * as sessions from '../../features/sessions/flow.js';
 import * as suggestions from '../../features/suggestions/flow.ts';
@@ -34,8 +35,14 @@ describe('step figure suggestion flows', () => {
       'INSERT INTO choreography_step_figures (choreography_id, step_figure_id) VALUES (?, ?), (?, ?)',
       [dance.id, child.id, dance.id, missing.id],
     );
-    const group = await groups.createGroup({ name: 'Group' });
-    await groups.updateBaseFigures(String(group.value.id), { step_figure_ids: [parent.id] });
+    const group = await groups.createGroup(validateGroupName({ name: 'Group' }));
+    if ('error' in group || !group.value) throw new Error('Group creation failed');
+    await groups.updateBaseFigures(
+      prepareBaseFiguresUpdate({
+        groupId: String(group.value.id),
+        body: { step_figure_ids: [parent.id] },
+      }),
+    );
     const course = await courses.createCourse({ dance_group_id: group.value.id, name: 'Course' });
     const session = await sessions.createSession({
       dance_course_id: course.value.id,

@@ -1,7 +1,13 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import { getQuery, runQuery } from '../../scripts/db.ts';
-import * as groups from '../../features/groups/flow.js';
+import * as groups from '../../features/groups/flow.ts';
+import {
+  prepareBaseFigureId,
+  prepareGroupId,
+  validateGroupName,
+} from '../../features/groups/validation.ts';
+import type { Group } from '../../features/groups/repository.ts';
 import * as courses from '../../features/courses/flow.js';
 import { prepareCoursePdf } from '../../features/courses/pdf-flow.ts';
 import { prepareCoursePdfId } from '../../features/courses/pdf-operations.ts';
@@ -25,25 +31,33 @@ function validTrainer(): TrainerInput {
   return result.value;
 }
 
+async function createTestGroup(name: string): Promise<Group> {
+  const result = await groups.createGroup(validateGroupName({ name }));
+  if ('error' in result || !result.value) throw new Error('Group creation failed');
+  return result.value;
+}
+
 describe('group, course and trainer flows', () => {
   it('creates defaults, assigns a trainer, and clears assignments when deleting the trainer', async () => {
     await runQuery("INSERT INTO step_figures (name) VALUES ('Kick')");
-    const group = await groups.createGroup({ name: ' Group ' });
+    const group = await createTestGroup(' Group ');
     const trainer = await trainers.createTrainer(validTrainer());
     if (!('value' in trainer) || !trainer.value) throw new Error('Trainer creation failed');
 
     const course = await courses.createCourse({
-      dance_group_id: group.value.id,
+      dance_group_id: group.id,
       name: 'Course',
       trainer_id: trainer.value.id,
     });
 
-    expect(await groups.getBaseFigures(String(group.value.id))).toMatchObject({
+    expect(
+      await groups.getBaseFigures(prepareBaseFigureId({ groupId: String(group.id) })),
+    ).toMatchObject({
       value: [{ name: 'Kick' }],
     });
     expect(course.value.trainer_id).toBe(trainer.value.id);
     expect(await trainers.deleteTrainer(trainer.value.id)).toEqual({ value: true });
-    expect(await courses.getCourses(group.value.id)).toMatchObject([{ trainer_id: null }]);
+    expect(await courses.getCourses(group.id)).toMatchObject([{ trainer_id: null }]);
   });
 
   it('rolls back all default assignments if group creation fails', async () => {
@@ -54,7 +68,9 @@ describe('group, course and trainer flows', () => {
       'danceGroups',
     );
     try {
-      await expect(groups.createGroup({ name: 'Group' })).rejects.toThrow('Forced failure');
+      await expect(groups.createGroup(validateGroupName({ name: 'Group' }))).rejects.toThrow(
+        'Forced failure',
+      );
       expect(await groups.getGroups()).toEqual([]);
     } finally {
       await runQuery('DROP TRIGGER reject_default_figure', [], 'danceGroups');
@@ -69,13 +85,15 @@ describe('group, course and trainer flows', () => {
     expect(await courses.createCourse({ dance_group_id: 999, name: 'Course' })).toEqual({
       error: 'group_not_found',
     });
-    expect(await groups.getGroup(999)).toEqual({ error: 'group_not_found' });
+    expect(await groups.getGroup(prepareGroupId({ id: '999' }))).toEqual({
+      error: 'group_not_found',
+    });
   });
 
   it('prepares PDF data and QR codes from persisted course and session data', async () => {
-    const group = await groups.createGroup({ name: 'Group' });
+    const group = await createTestGroup('Group');
     const course = await courses.createCourse({
-      dance_group_id: group.value.id,
+      dance_group_id: group.id,
       name: 'Course',
       youtube_playlist_url: 'https://example.com/video',
     });
@@ -98,8 +116,8 @@ describe('group, course and trainer flows', () => {
     });
   });
   it('propagates QR generation failures without returning a partial document', async () => {
-    const group = await groups.createGroup({ name: 'Group' });
-    const course = await courses.createCourse({ dance_group_id: group.value.id, name: 'Course' });
+    const group = await createTestGroup('Group');
+    const course = await courses.createCourse({ dance_group_id: group.id, name: 'Course' });
     await runQuery(
       'UPDATE dance_courses SET youtube_playlist_url = ? WHERE id = ?',
       ['https://example.com/' + 'a'.repeat(5000), course.value.id],

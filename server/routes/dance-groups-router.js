@@ -9,7 +9,14 @@ import {
   updateGroupMaxLevel,
   getGroupBaseStepFigures,
   updateGroupBaseStepFigures,
-} from './dance-groups.js';
+  prepareGroupName,
+  prepareGroupIdentifier,
+  prepareGroupChanges,
+  prepareMaxIdentifier,
+  prepareMaxChanges,
+  prepareBaseIdentifier,
+  prepareBaseChanges,
+} from './dance-groups.ts';
 import {
   getTrainers,
   prepareTrainer,
@@ -47,19 +54,27 @@ import {
 export function createDanceGroupsRouter() {
   const router = Router();
   router.get('/api/dance-groups', getDanceGroups);
-  router.post('/api/dance-groups', createDanceGroup);
-  router.get('/api/dance-groups/:groupId/max-level', getGroupMaxLevel);
-  router.put('/api/dance-groups/:groupId/max-level', updateGroupMaxLevel);
+  router.post('/api/dance-groups', prepareGroupName, createDanceGroup);
+  router.get('/api/dance-groups/:groupId/max-level', prepareMaxIdentifier, getGroupMaxLevel);
+  router.put('/api/dance-groups/:groupId/max-level', prepareMaxChanges, updateGroupMaxLevel);
   router.get(
     '/api/dance-groups/:groupId/step-figure-suggestions',
     prepareGroup,
     getStepFigureSuggestions,
   );
-  router.get('/api/dance-groups/:groupId/base-step-figures', getGroupBaseStepFigures);
-  router.put('/api/dance-groups/:groupId/base-step-figures', updateGroupBaseStepFigures);
-  router.get('/api/dance-groups/:id', getDanceGroupById);
-  router.put('/api/dance-groups/:id', updateDanceGroup);
-  router.delete('/api/dance-groups/:id', deleteDanceGroup);
+  router.get(
+    '/api/dance-groups/:groupId/base-step-figures',
+    prepareBaseIdentifier,
+    getGroupBaseStepFigures,
+  );
+  router.put(
+    '/api/dance-groups/:groupId/base-step-figures',
+    prepareBaseChanges,
+    updateGroupBaseStepFigures,
+  );
+  router.get('/api/dance-groups/:id', prepareGroupIdentifier, getDanceGroupById);
+  router.put('/api/dance-groups/:id', prepareGroupChanges, updateDanceGroup);
+  router.delete('/api/dance-groups/:id', prepareGroupIdentifier, deleteDanceGroup);
   router.get('/api/trainers', getTrainers);
   router.post('/api/trainers', prepareTrainer, createTrainer);
   router.put('/api/trainers/:id', prepareTrainer, updateTrainer);

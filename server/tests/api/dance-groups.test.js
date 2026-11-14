@@ -446,6 +446,25 @@ describe('GET /api/dance-groups/:groupId/step-figure-suggestions', () => {
 // Base Step Figures
 // ---------------------------------------------------------------------------
 
+describe('PUT /api/dance-groups/:groupId/max-level', () => {
+  it('validates the level before checking whether the group exists', async () => {
+    const invalidId = await request(app)
+      .put('/api/dance-groups/invalid/max-level')
+      .send({ max_group_level_value: { toString: null } });
+    const invalidLevel = await request(app)
+      .put('/api/dance-groups/99999/max-level')
+      .send({ max_group_level_value: -1 });
+    const missing = await request(app)
+      .put('/api/dance-groups/99999/max-level')
+      .send({ max_group_level_value: '2suffix' });
+    expect(invalidId.status).toBe(400);
+    expect(invalidId.body.error).toBe('Valid group ID is required');
+    expect(invalidLevel.status).toBe(400);
+    expect(invalidLevel.body.error).toMatch(/non-negative integer/);
+    expect(missing.status).toBe(404);
+  });
+});
+
 describe('GET /api/dance-groups/:groupId/base-step-figures', () => {
   it('seeds existing default figures regardless of name casing', async () => {
     const kick = await seedBaseFigure('kIcK');
@@ -485,6 +504,24 @@ async function seedBaseFigure(name) {
 }
 
 describe('PUT /api/dance-groups/:groupId/base-step-figures', () => {
+  it('checks group IDs and existence before malformed input', async () => {
+    const invalid = await request(app).put('/api/dance-groups/invalid/base-step-figures');
+    const missing = await request(app).put('/api/dance-groups/99999/base-step-figures');
+    const missingWithBadBody = await request(app)
+      .put('/api/dance-groups/99999/base-step-figures')
+      .send({ step_figure_ids: 'bad' });
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Group' });
+    const invalidBody = await request(app)
+      .put(`/api/dance-groups/${group.body.id}/base-step-figures`)
+      .send({ step_figure_ids: 'bad' });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.error).toBe('Invalid group ID');
+    expect(missing.status).toBe(404);
+    expect(missingWithBadBody.status).toBe(404);
+    expect(invalidBody.status).toBe(400);
+    expect(invalidBody.body.error).toMatch(/array of positive integers/);
+  });
+
   it('retains existing figures if replacing assignments fails', async () => {
     const group = await request(app).post('/api/dance-groups').send({ name: 'Test Group' });
     const original = await seedBaseFigure('Mambo');

@@ -12,7 +12,9 @@ import {
   validateGroupName,
   validateMaxLevel,
   validateMaxLevelGroupId,
-} from '../../features/groups/validation.js';
+  prepareBaseFiguresUpdate,
+  prepareMaxLevelUpdate,
+} from '../../features/groups/validation.ts';
 
 describe('trainer validation', () => {
   it('reports the first missing field and trims valid values', () => {
@@ -137,5 +139,27 @@ describe('group validation', () => {
     expect(validateBaseFigureIds({ step_figure_ids: [1, '2'] })).toEqual({
       error: 'invalid_figure_ids',
     });
+  });
+
+  it('preserves coercion and validation precedence for group updates', () => {
+    expect(validateMaxLevel({ max_group_level_value: '12suffix' })).toEqual({ value: 12 });
+    expect(validateMaxLevel({ max_group_level_value: [3] })).toEqual({ value: 3 });
+    expect(validateBaseFigureIds({ step_figure_ids: [9007199254740992] })).toEqual({
+      value: [9007199254740992],
+    });
+    expect(
+      prepareMaxLevelUpdate({
+        groupId: 'invalid',
+        body: { max_group_level_value: { toString: null } },
+      }),
+    ).toEqual({
+      error: 'valid_group_id_required',
+    });
+    expect(() =>
+      prepareMaxLevelUpdate({ groupId: '1', body: { max_group_level_value: { toString: null } } }),
+    ).toThrow(TypeError);
+    const prepared = prepareBaseFiguresUpdate({ groupId: '1', body: null });
+    if ('error' in prepared) throw new Error('Expected valid group ID');
+    expect(prepared.value.figures).toEqual({ exception: expect.any(TypeError) });
   });
 });
