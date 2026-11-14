@@ -1,13 +1,30 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import type { Database } from 'sqlite3';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+function makeDatabaseReadonly(database: Database): void {
+  vi.spyOn(database, 'run').mockImplementation(function (this: Database, _sql, ...args) {
+    const callback = args.at(-1);
+    if (typeof callback !== 'function') throw new Error('Expected SQLite callback');
+    callback(
+      Object.assign(new Error('attempt to write a readonly database'), {
+        code: 'SQLITE_READONLY',
+      }),
+    );
+    return this;
+  });
+}
+
 describe('SQLite replacement recovery', () => {
-  let databaseDirectory;
-  let databasePath;
-  let databaseModule;
-  let originalEnvironment;
+  let databaseDirectory: string;
+  let databasePath: string;
+  let databaseModule: typeof import('../../scripts/db.ts');
+  let originalEnvironment: Pick<
+    NodeJS.ProcessEnv,
+    'CHOREOGRAPHY_DB_PATH' | 'DANCE_GROUPS_DB_PATH' | 'TAGS_DB_PATH' | 'NODE_ENV' | 'PM2_HOME'
+  >;
 
   beforeEach(async () => {
     databaseDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'line-dance-db-recovery-'));
@@ -46,18 +63,11 @@ describe('SQLite replacement recovery', () => {
   it('marks a read-only error as a database restart only after file replacement', async () => {
     const database = databaseModule.getDatabase();
     const originalDatabasePath = path.join(databaseDirectory, 'original.db');
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
     fs.renameSync(databasePath, originalDatabasePath);
     fs.writeFileSync(databasePath, 'replacement database');
 
-    database.run = (...args) => {
-      args.at(-1)(
-        Object.assign(new Error('attempt to write a readonly database'), {
-          code: 'SQLITE_READONLY',
-        }),
-      );
-      return database;
-    };
+    makeDatabaseReadonly(database);
 
     await expect(databaseModule.runQuery('UPDATE recovery_test SET id = id')).rejects.toMatchObject(
       {
@@ -67,28 +77,21 @@ describe('SQLite replacement recovery', () => {
     expect(exitSpy).not.toHaveBeenCalled();
 
     databaseModule.restartAfterDatabaseResponse();
-    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => setImmediate(resolve));
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
   it('does not restart PM2 for a read-only error when the database file is unchanged', async () => {
     const database = databaseModule.getDatabase();
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
-    database.run = (...args) => {
-      args.at(-1)(
-        Object.assign(new Error('attempt to write a readonly database'), {
-          code: 'SQLITE_READONLY',
-        }),
-      );
-      return database;
-    };
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    makeDatabaseReadonly(database);
 
     await expect(databaseModule.runQuery('UPDATE recovery_test SET id = id')).rejects.toMatchObject(
       {
         code: 'SQLITE_READONLY',
       },
     );
-    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => setImmediate(resolve));
 
     expect(exitSpy).not.toHaveBeenCalled();
   });
@@ -99,14 +102,7 @@ describe('SQLite replacement recovery', () => {
     delete process.env.PM2_HOME;
     fs.renameSync(databasePath, originalDatabasePath);
     fs.writeFileSync(databasePath, 'replacement database');
-    database.run = (...args) => {
-      args.at(-1)(
-        Object.assign(new Error('attempt to write a readonly database'), {
-          code: 'SQLITE_READONLY',
-        }),
-      );
-      return database;
-    };
+    makeDatabaseReadonly(database);
 
     await expect(databaseModule.runQuery('UPDATE recovery_test SET id = id')).rejects.toMatchObject(
       {

@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import type { SpawnSyncReturns } from 'node:child_process';
 import {
   existsSync,
   mkdirSync,
@@ -15,15 +16,21 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const hookPath = fileURLToPath(new URL('../../../.husky/post-commit', import.meta.url));
-let directory;
-let binDirectory;
-let environment;
+let directory: string;
+let binDirectory: string;
+let environment: {
+  HOME: string;
+  NVM_DIR: string;
+  PATH: string;
+  REPOSITORY_ROOT: string;
+  COMMAND_LOG: string;
+};
 
-function writeExecutable(path, content) {
+function writeExecutable(path: string, content: string): void {
   writeFileSync(path, `#!/bin/sh\n${content}\n`, { mode: 0o755 });
 }
 
-function installPm2(path) {
+function installPm2(path: string): void {
   writeExecutable(
     path,
     [
@@ -38,7 +45,9 @@ function installPm2(path) {
   );
 }
 
-function runHook(overrides = {}) {
+function runHook(
+  overrides: NodeJS.ProcessEnv = {},
+): SpawnSyncReturns<string> & { commands: string } {
   const result = spawnSync('/bin/sh', [hookPath], {
     env: { ...environment, ...overrides },
     encoding: 'utf8',
