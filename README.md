@@ -130,6 +130,7 @@ helper are migrated; the remaining backend and tests still require migration.
 Choreography reads and writes, field validation, search filters, and their HTTP input preparation
 are migrated, as are the server entry point, Express app, choreography and dance-group routers, and shared API error handling.
 The choreography and dance-group schema migrations and their entry points are also migrated.
+The one-time legacy tag migration script is migrated as well.
 The migrated endpoints validate untrusted input with Zod and pure operations invoked by shared HTTP
 middleware, configured per endpoint with its input source and validator. Flows receive typed
 validation results, with branded types where appropriate. Existing error responses and their precedence are preserved;

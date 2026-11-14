@@ -2,9 +2,10 @@
  * One-time migration: copy tags and choreography_tags from data/line_dance.db
  * into data/personal_data.db.
  *
- * Run once:  node migrate-tags-to-personal-db.js
+ * Run once from server/: node scripts/migrate-tags-to-personal-db.ts
  */
 import sqlite3 from 'sqlite3';
+import type { Database } from 'sqlite3';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,8 +14,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const sourcePath = path.join(__dirname, '..', 'data', 'line_dance.db');
 const targetPath = path.join(__dirname, '..', 'data', 'personal_data.db');
 
-function open(filePath, mode) {
-  return new Promise((resolve, reject) => {
+type SqlValue = string | number | null;
+type TagRow = { id: number; name: string };
+type JunctionRow = { choreography_id: number | null; tag_id: number | null };
+
+async function open(filePath: string, mode: number): Promise<Database> {
+  return new Promise<Database>((resolve, reject) => {
     const db = new sqlite3.Database(filePath, mode, (err) => {
       if (err) reject(err);
       else resolve(db);
@@ -22,8 +27,12 @@ function open(filePath, mode) {
   });
 }
 
-function run(db, sql, params = []) {
-  return new Promise((resolve, reject) => {
+async function run(
+  db: Database,
+  sql: string,
+  params: SqlValue[] = [],
+): Promise<{ id: number; changes: number }> {
+  return new Promise<{ id: number; changes: number }>((resolve, reject) => {
     db.run(sql, params, function (err) {
       if (err) reject(err);
       else resolve({ id: this.lastID, changes: this.changes });
@@ -31,24 +40,26 @@ function run(db, sql, params = []) {
   });
 }
 
-function all(db, sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
+async function all<Row>(db: Database, sql: string, params: SqlValue[] = []): Promise<Row[]> {
+  return new Promise<Row[]>((resolve, reject) => {
+    db.all<Row>(sql, params, (err, rows) => {
       if (err) reject(err);
       else resolve(rows);
     });
   });
 }
 
-async function tableExists(db, tableName) {
-  const rows = await all(db, `SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`, [
-    tableName,
-  ]);
+async function tableExists(db: Database, tableName: string): Promise<boolean> {
+  const rows = await all<{ name: string }>(
+    db,
+    `SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`,
+    [tableName],
+  );
   return rows.length > 0;
 }
 
-function close(db) {
-  return new Promise((resolve, reject) => {
+async function close(db: Database): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     db.close((err) => {
       if (err) reject(err);
       else resolve();
@@ -56,7 +67,7 @@ function close(db) {
   });
 }
 
-async function main() {
+async function main(): Promise<void> {
   const source = await open(sourcePath, sqlite3.OPEN_READONLY);
   const target = await open(targetPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE);
 
@@ -88,20 +99,34 @@ async function main() {
 
   await run(target, 'BEGIN');
   try {
-    const tags = await all(source, 'SELECT id, name FROM tags');
-    for (const tag of tags) {
-      await run(target, 'INSERT OR IGNORE INTO tags (id, name) VALUES (?, ?)', [tag.id, tag.name]);
-    }
+    const tags = await all<TagRow>(source, 'SELECT id, name FROM tags');
+    await tags.reduce(
+      (previous, tag) =>
+        previous.then(async () => {
+          await run(target, 'INSERT OR IGNORE INTO tags (id, name) VALUES (?, ?)', [
+            tag.id,
+            tag.name,
+          ]);
+        }),
+      Promise.resolve(),
+    );
     console.log(`Migrated ${tags.length} tag(s).`);
 
-    const junctions = await all(source, 'SELECT choreography_id, tag_id FROM choreography_tags');
-    for (const row of junctions) {
-      await run(
-        target,
-        'INSERT OR IGNORE INTO choreography_tags (choreography_id, tag_id) VALUES (?, ?)',
-        [row.choreography_id, row.tag_id],
-      );
-    }
+    const junctions = await all<JunctionRow>(
+      source,
+      'SELECT choreography_id, tag_id FROM choreography_tags',
+    );
+    await junctions.reduce(
+      (previous, row) =>
+        previous.then(async () => {
+          await run(
+            target,
+            'INSERT OR IGNORE INTO choreography_tags (choreography_id, tag_id) VALUES (?, ?)',
+            [row.choreography_id, row.tag_id],
+          );
+        }),
+      Promise.resolve(),
+    );
     console.log(`Migrated ${junctions.length} choreography_tags row(s).`);
 
     await run(target, 'COMMIT');
