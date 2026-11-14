@@ -7,8 +7,8 @@ import { existsSync } from 'node:fs';
 import swaggerUi from 'swagger-ui-express';
 import { apiErrorHandler } from './utils/apiErrorHandler.js';
 import { openApiSpec } from './scripts/openapi.js';
-import { createChoreographyRouter } from './routes/choreography-router.js';
-import { createDanceGroupsRouter } from './routes/dance-groups-router.js';
+import { createChoreographyRouter } from './routes/choreography-router.ts';
+import { createDanceGroupsRouter } from './routes/dance-groups-router.ts';
 import { prepareUrl, checkUrl } from './routes/url-check.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

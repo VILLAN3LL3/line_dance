@@ -51,7 +51,7 @@ import {
   deleteChoreographyRating,
 } from './choreography-ratings.ts';
 
-export function createChoreographyRouter() {
+export function createChoreographyRouter(): Router {
   const router = Router();
   router.post('/api/choreographies', prepareWrite, createChoreography);
   router.post('/api/choreographies/validate', prepareWrite, validateChoreography);

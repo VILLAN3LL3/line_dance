@@ -61,7 +61,7 @@ import {
   prepareSwapIds,
 } from './sessions.ts';
 
-export function createDanceGroupsRouter() {
+export function createDanceGroupsRouter(): Router {
   const router = Router();
   router.get('/api/dance-groups', getDanceGroups);
   router.post('/api/dance-groups', prepareGroupName, createDanceGroup);

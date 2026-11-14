@@ -128,7 +128,7 @@ The URL checker, trainers, dance groups, courses, sessions, ratings, saved filte
 suggestions, metadata, course PDF generation, shared choreography normalization, and database
 helper are migrated; the remaining backend and tests still require migration.
 Choreography reads and writes, field validation, search filters, and their HTTP input preparation
-are migrated.
+are migrated, as are the choreography and dance-group routers.
 The migrated endpoints validate untrusted input with Zod and pure operations invoked by shared HTTP
 middleware, configured per endpoint with its input source and validator. Flows receive typed
 validation results, with branded types where appropriate. Existing error responses and their precedence are preserved;
