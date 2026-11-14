@@ -6,7 +6,7 @@ import {
   validateFigure,
   validateFigureId,
   validateNoSelfComponent,
-} from '../../features/step-figures/operations.js';
+} from '../../features/step-figures/operations.ts';
 
 describe('step figure operations', () => {
   it('validates and normalizes figure inputs', () => {
@@ -15,6 +15,19 @@ describe('step figure operations', () => {
     expect(validateFigure({ name: ' ' })).toEqual({ error: 'name_required' });
     expect(validateFigure({ name: ' Waltz ', component_ids: ['2', 2, 0, 'bad', 3] })).toEqual({
       value: { name: 'Waltz', componentIds: [2, 3] },
+    });
+  });
+
+  it('checks the name before converting component IDs', () => {
+    const invalidComponent = { toString: null };
+    expect(validateFigure({ name: ' ', component_ids: [invalidComponent] })).toEqual({
+      error: 'name_required',
+    });
+    expect(() => validateFigure({ name: 'Figure', component_ids: [invalidComponent] })).toThrow(
+      TypeError,
+    );
+    expect(validateFigure({ name: 'Figure', component_ids: 'invalid' })).toEqual({
+      value: { name: 'Figure', componentIds: [] },
     });
   });
 

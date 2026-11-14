@@ -23,10 +23,11 @@ import {
   getStepFigures,
   getStepFiguresWithIds,
   getStepFigureHierarchy,
+  prepareFigure,
   createStepFigure,
   updateStepFigure,
   deleteStepFigure,
-} from './step-figures.js';
+} from './step-figures.ts';
 import {
   getSavedFilterConfigurations,
   prepareSaveFilter,
@@ -62,8 +63,8 @@ export function createChoreographyRouter() {
   router.get('/api/authors/stats', getAuthorStats);
   router.get('/api/country-codes', getCountryCodes);
   router.get('/api/step_figures/hierarchy', getStepFigureHierarchy);
-  router.post('/api/step_figures', createStepFigure);
-  router.put('/api/step_figures/:id', updateStepFigure);
+  router.post('/api/step_figures', prepareFigure, createStepFigure);
+  router.put('/api/step_figures/:id', prepareFigure, updateStepFigure);
   router.delete('/api/step_figures/:id', deleteStepFigure);
   router.get('/api/step_figures', getStepFigures);
   router.get('/api/step_figures/with-ids', getStepFiguresWithIds);

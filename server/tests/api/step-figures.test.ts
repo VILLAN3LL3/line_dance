@@ -11,11 +11,14 @@ beforeEach(async () => {
   await clearChoreographyTables();
 });
 
-async function createStepFigure(name, component_ids = []) {
+async function createStepFigure(
+  name: string,
+  component_ids: number[] = [],
+): Promise<request.Response> {
   return request(app).post('/api/step_figures').send({ name, component_ids });
 }
 
-async function createChoreographyWithFigure(stepFigureName) {
+async function createChoreographyWithFigure(stepFigureName: string): Promise<request.Response> {
   return request(app)
     .post('/api/choreographies')
     .send({
@@ -46,7 +49,9 @@ describe('step figure hierarchy endpoints', () => {
     ]);
     expect(responses.map((response) => response.status).sort()).toEqual([200, 400]);
     const figures = await request(app).get('/api/step_figures');
-    expect(figures.body.filter((name) => name.toLowerCase() === 'grapevine')).toHaveLength(1);
+    expect(figures.body.filter((name: string) => name.toLowerCase() === 'grapevine')).toHaveLength(
+      1,
+    );
   });
 
   it('creates a step figure with components and returns hierarchy details', async () => {
@@ -57,7 +62,7 @@ describe('step figure hierarchy endpoints', () => {
 
     expect(combo.status).toBe(201);
     expect(combo.body.name).toBe('Rock And Weave');
-    expect(combo.body.components.map((component) => component.name)).toEqual([
+    expect(combo.body.components.map((component: { name: string }) => component.name)).toEqual([
       'Rock Step',
       'Weave',
     ]);
@@ -73,11 +78,16 @@ describe('step figure hierarchy endpoints', () => {
 
     expect(res.status).toBe(200);
 
-    const composite = res.body.find((figure) => figure.name === 'Rock And Weave');
-    const child = res.body.find((figure) => figure.name === 'Rock Step');
+    const composite = res.body.find((figure: { name: string }) => figure.name === 'Rock And Weave');
+    const child = res.body.find((figure: { name: string }) => figure.name === 'Rock Step');
 
-    expect(composite.components.map((component) => component.name)).toEqual(['Rock Step', 'Weave']);
-    expect(child.parents.map((parent) => parent.name)).toEqual(['Rock And Weave']);
+    expect(composite.components.map((component: { name: string }) => component.name)).toEqual([
+      'Rock Step',
+      'Weave',
+    ]);
+    expect(child.parents.map((parent: { name: string }) => parent.name)).toEqual([
+      'Rock And Weave',
+    ]);
   });
 
   it('updates a step figure name and component list', async () => {
@@ -95,7 +105,9 @@ describe('step figure hierarchy endpoints', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.name).toBe('Combo Updated');
-    expect(res.body.components.map((component) => component.name)).toEqual(['Kick']);
+    expect(res.body.components.map((component: { name: string }) => component.name)).toEqual([
+      'Kick',
+    ]);
   });
 
   it('rejects cyclic hierarchies', async () => {
@@ -112,6 +124,36 @@ describe('step figure hierarchy endpoints', () => {
     expect(child.status).toBe(201);
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/cannot contain cycles/i);
+  });
+
+  it('prioritizes invalid and missing IDs over invalid request bodies', async () => {
+    const invalid = await request(app).put('/api/step_figures/invalid').send({ name: '' });
+    const missing = await request(app).put('/api/step_figures/99999').send({ name: '' });
+    const figure = await createStepFigure('Existing');
+    const invalidBody = await request(app)
+      .put(`/api/step_figures/${figure.body.id}`)
+      .send({ name: '' });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.error).toBe('Invalid step figure id');
+    expect(missing.status).toBe(404);
+    expect(missing.body.error).toBe('Step figure not found');
+    expect(invalidBody.status).toBe(400);
+    expect(invalidBody.body.error).toBe('Step figure name is required');
+  });
+
+  it('preserves error precedence when component ID conversion fails', async () => {
+    const body = { name: 'Figure', component_ids: [{ toString: null }] };
+    const invalid = await request(app).put('/api/step_figures/invalid').send(body);
+    const missing = await request(app).put('/api/step_figures/99999').send(body);
+    const nameError = await request(app)
+      .post('/api/step_figures')
+      .send({ ...body, name: '' });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.error).toBe('Invalid step figure id');
+    expect(missing.status).toBe(404);
+    expect(missing.body.error).toBe('Step figure not found');
+    expect(nameError.status).toBe(400);
+    expect(nameError.body.error).toBe('Step figure name is required');
   });
 
   it('prevents deleting step figures that are still used by choreographies or parents', async () => {

@@ -3,7 +3,8 @@ import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import { runQuery } from '../../scripts/db.ts';
 import * as choreography from '../../features/choreographies/write-flow.js';
 import * as reads from '../../features/choreographies/read-flow.js';
-import * as figures from '../../features/step-figures/flow.js';
+import * as figures from '../../features/step-figures/flow.ts';
+import { validateFigure } from '../../features/step-figures/operations.ts';
 
 beforeAll(async () => {
   await setupTestDb();
@@ -72,12 +73,14 @@ describe('choreography integration flows', () => {
   });
 
   it('expands hierarchy for exact searches and filters on attached tags', async () => {
-    const first = await figures.createFigure({ name: 'First' });
-    const second = await figures.createFigure({ name: 'Second' });
-    await figures.createFigure({
-      name: 'Combined',
-      component_ids: [first.value.id, second.value.id],
-    });
+    const first = await figures.createFigure(validateFigure({ name: 'First' }));
+    const second = await figures.createFigure(validateFigure({ name: 'Second' }));
+    await figures.createFigure(
+      validateFigure({
+        name: 'Combined',
+        component_ids: [first.value.id, second.value.id],
+      }),
+    );
     const created = await choreography.createChoreography({
       name: 'Composite Dance',
       level: 'BEGINNER',
