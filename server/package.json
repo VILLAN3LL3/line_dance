@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "migrate": "node migrations/run-migrations.js",
+    "migrate": "node migrations/run-migrations.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -5,7 +5,7 @@
  */
 import sqlite3 from 'sqlite3';
 import { setDatabaseConnection } from '../../scripts/db.ts';
-import { runChoreographyMigrations } from '../../migrations/choreography-migrations.js';
+import { runChoreographyMigrations } from '../../migrations/choreography-migrations.ts';
 import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.ts';
 
 let testDb = null;

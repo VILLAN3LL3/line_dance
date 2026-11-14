@@ -1,5 +1,5 @@
 import { createApp } from '../app.ts';
-import { runMigrations } from '../migrations/index.js';
+import { runMigrations } from '../migrations/index.ts';
 import { closeDatabase, getDatabase } from './db.ts';
 
 const port: string | number = process.env.PORT || 3001;

@@ -1,4 +1,4 @@
-import { runMigrations } from './index.js';
+import { runMigrations } from './index.ts';
 
 try {
   await runMigrations();

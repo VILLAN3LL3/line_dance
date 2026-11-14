@@ -4,7 +4,7 @@ import sqlite3 from 'sqlite3';
 
 import app from '../setup/testChoreographyApp.js';
 import { setDatabaseConnection, closeDatabase, allQuery, getQuery } from '../../scripts/db.ts';
-import { runChoreographyMigrations } from '../../migrations/choreography-migrations.js';
+import { runChoreographyMigrations } from '../../migrations/choreography-migrations.ts';
 
 function run(db, sql, params = []) {
   return new Promise((resolve, reject) => {
@@ -94,6 +94,33 @@ afterEach(async () => {
 });
 
 describe('Choreography tags migration regression', () => {
+  it('rolls back information backfill and its migration marker on failure', async () => {
+    const db = await createLegacyChoreographyDatabase();
+    const originalRows = await allQuery(
+      'SELECT choreography_id, category_id, description FROM choreography_information ORDER BY id',
+    );
+    await run(db, 'ALTER TABLE choreographies ADD COLUMN restart_information TEXT');
+    await run(db, 'ALTER TABLE choreographies ADD COLUMN tag_information TEXT');
+    await run(db, "UPDATE choreographies SET restart_information = 'New restart'");
+    await run(db, "DELETE FROM schema_migrations WHERE id = '013_add_choreography_information'");
+    await run(
+      db,
+      "CREATE TEMP TRIGGER fail_info_backfill BEFORE INSERT ON choreography_information BEGIN SELECT RAISE(ABORT, 'Backfill failure'); END",
+    );
+
+    await expect(runChoreographyMigrations()).rejects.toThrow('Backfill failure');
+    expect(
+      await allQuery(
+        'SELECT choreography_id, category_id, description FROM choreography_information ORDER BY id',
+      ),
+    ).toEqual(originalRows);
+    expect(
+      await getQuery('SELECT id FROM schema_migrations WHERE id = ?', [
+        '013_add_choreography_information',
+      ]),
+    ).toBeUndefined();
+  });
+
   it('backfills legacy information and removes the obsolete columns', async () => {
     await createLegacyChoreographyDatabase();
 

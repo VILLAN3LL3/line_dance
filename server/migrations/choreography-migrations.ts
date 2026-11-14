@@ -1,12 +1,16 @@
 import { allQuery, getQuery, runQuery, withTransaction } from '../scripts/db.ts';
 
+type Migration = { id: string; up: () => Promise<void> };
+type NamedRow = { name: string };
+type IdRow = { id: number };
+
 const dbName = 'choreography';
 
-async function runSequential(items, action) {
+async function runSequential<T>(items: T[], action: (item: T) => Promise<void>): Promise<void> {
   await items.reduce((previous, item) => previous.then(() => action(item)), Promise.resolve());
 }
 
-async function ensureMigrationTable() {
+async function ensureMigrationTable(): Promise<void> {
   await runQuery(
     `CREATE TABLE IF NOT EXISTS schema_migrations (
       id TEXT PRIMARY KEY,
@@ -17,12 +21,16 @@ async function ensureMigrationTable() {
   );
 }
 
-async function hasMigration(id) {
-  const row = await getQuery(`SELECT id FROM schema_migrations WHERE id = ?`, [id], dbName);
+async function hasMigration(id: string): Promise<boolean> {
+  const row = await getQuery<{ id: string }>(
+    `SELECT id FROM schema_migrations WHERE id = ?`,
+    [id],
+    dbName,
+  );
   return Boolean(row);
 }
 
-const migrations = [
+const migrations: Migration[] = [
   {
     id: '001_create_choreography_core_schema',
     up: async () => {
@@ -122,13 +130,13 @@ const migrations = [
   {
     id: '002_seed_default_levels',
     up: async () => {
-      const valueColumn = await getQuery(
+      const valueColumn = await getQuery<NamedRow>(
         `SELECT name FROM pragma_table_info('levels') WHERE name = 'value'`,
         [],
         dbName,
       );
 
-      const defaultLevels = [
+      const defaultLevels: [string, number][] = [
         ['UNKNOWN', 0],
         ['ABSOLUTE BEGINNER', 10],
         ['EASY BEGINNER', 20],
@@ -149,7 +157,7 @@ const migrations = [
       ];
 
       await runSequential(defaultLevels, async ([name, value]) => {
-        const existing = await getQuery(
+        const existing = await getQuery<IdRow>(
           `SELECT id FROM levels WHERE UPPER(name) = UPPER(?) LIMIT 1`,
           [name],
           dbName,
@@ -193,12 +201,12 @@ const migrations = [
         dbName,
       );
 
-      const legacyTagsTable = await getQuery(
+      const legacyTagsTable = await getQuery<NamedRow>(
         `SELECT name FROM main.sqlite_master WHERE type = 'table' AND name = 'tags'`,
         [],
         dbName,
       );
-      const legacyJunctionTable = await getQuery(
+      const legacyJunctionTable = await getQuery<NamedRow>(
         `SELECT name FROM main.sqlite_master WHERE type = 'table' AND name = 'choreography_tags'`,
         [],
         dbName,
@@ -224,7 +232,7 @@ const migrations = [
   {
     id: '004_add_level_value_and_backfill',
     up: async () => {
-      const valueColumn = await getQuery(
+      const valueColumn = await getQuery<NamedRow>(
         `SELECT name FROM pragma_table_info('levels') WHERE name = 'value'`,
         [],
         dbName,
@@ -234,7 +242,7 @@ const migrations = [
         await runQuery(`ALTER TABLE levels ADD COLUMN value INTEGER`, [], dbName);
       }
 
-      const defaults = [
+      const defaults: [string, number][] = [
         ['Beginner', 10],
         ['Intermediate', 20],
         ['Advanced', 30],
@@ -249,14 +257,14 @@ const migrations = [
         );
       });
 
-      const maxValueRow = await getQuery(
+      const maxValueRow = await getQuery<{ max_value: number | string | null }>(
         `SELECT COALESCE(MAX(value), 0) AS max_value FROM levels WHERE value IS NOT NULL`,
         [],
         dbName,
       );
 
       let nextValue = Number(maxValueRow?.max_value || 0) + 10;
-      const levelsWithoutValue = await allQuery(
+      const levelsWithoutValue = await allQuery<IdRow>(
         `SELECT id FROM levels WHERE value IS NULL ORDER BY id ASC`,
         [],
         dbName,
@@ -271,7 +279,7 @@ const migrations = [
   {
     id: '005_ensure_canonical_level_catalog',
     up: async () => {
-      const valueColumn = await getQuery(
+      const valueColumn = await getQuery<NamedRow>(
         `SELECT name FROM pragma_table_info('levels') WHERE name = 'value'`,
         [],
         dbName,
@@ -281,7 +289,7 @@ const migrations = [
         await runQuery(`ALTER TABLE levels ADD COLUMN value INTEGER`, [], dbName);
       }
 
-      const canonicalLevels = [
+      const canonicalLevels: [string, number][] = [
         ['UNKNOWN', 0],
         ['ABSOLUTE BEGINNER', 10],
         ['EASY BEGINNER', 20],
@@ -302,7 +310,7 @@ const migrations = [
       ];
 
       await runSequential(canonicalLevels, async ([name, value]) => {
-        const existing = await getQuery(
+        const existing = await getQuery<IdRow>(
           `SELECT id FROM levels WHERE UPPER(name) = UPPER(?) ORDER BY id ASC LIMIT 1`,
           [name],
           dbName,
@@ -353,7 +361,7 @@ const migrations = [
         dbName,
       );
 
-      const legacyTable = await getQuery(
+      const legacyTable = await getQuery<NamedRow>(
         `SELECT name FROM main.sqlite_master WHERE type = 'table' AND name = 'saved_filter_configurations'`,
         [],
         dbName,
@@ -406,7 +414,7 @@ const migrations = [
       );
 
       // Populate with ISO country data
-      const countriesData = [
+      const countriesData: [string, string, string][] = [
         ['AD', 'AND', 'Andorra'],
         ['AE', 'ARE', 'United Arab Emirates'],
         ['AF', 'AFG', 'Afghanistan'],
@@ -682,7 +690,7 @@ const migrations = [
 
       // Common informal abbreviations used in the line dance community
       // that differ from the official ISO 3166-1 alpha-3 codes
-      const aliases = [
+      const aliases: [string, string][] = [
         ['IRE', 'IE'], // Ireland (official ISO 3-char: IRL)
         ['UK', 'GB'], // United Kingdom (official ISO 2-char: GB)
         ['ENG', 'GB'], // England (part of GB, no separate ISO code)
@@ -706,7 +714,7 @@ const migrations = [
   {
     id: '012_add_missing_country_code_aliases',
     up: async () => {
-      const aliases = [
+      const aliases: [string, string][] = [
         ['UK', 'GB'], // United Kingdom (official ISO 2-char: GB)
         ['WLS', 'GB'], // Wales – alt abbreviation
         ['INA', 'ID'], // Indonesia (official ISO 2-char: ID)
@@ -786,7 +794,7 @@ const migrations = [
     up: async () => {
       const legacyColumns = ['tag_information', 'restart_information'];
       await runSequential(legacyColumns, async (column) => {
-        const exists = await getQuery(
+        const exists = await getQuery<NamedRow>(
           `SELECT name FROM pragma_table_info('choreographies') WHERE name = ?`,
           [column],
           dbName,
@@ -799,7 +807,7 @@ const migrations = [
   },
 ];
 
-export async function runChoreographyMigrations() {
+export async function runChoreographyMigrations(): Promise<void> {
   await ensureMigrationTable();
 
   await runSequential(migrations, async (migration) => {

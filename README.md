@@ -129,7 +129,7 @@ suggestions, metadata, course PDF generation, shared choreography normalization,
 helper are migrated; the remaining backend and tests still require migration.
 Choreography reads and writes, field validation, search filters, and their HTTP input preparation
 are migrated, as are the server entry point, Express app, choreography and dance-group routers, and shared API error handling.
-The dance-group schema migrations are also migrated; choreography schema migrations remain JavaScript.
+The choreography and dance-group schema migrations and their entry points are also migrated.
 The migrated endpoints validate untrusted input with Zod and pure operations invoked by shared HTTP
 middleware, configured per endpoint with its input source and validator. Flows receive typed
 validation results, with branded types where appropriate. Existing error responses and their precedence are preserved;
