@@ -101,6 +101,21 @@ information row fields use paths such as `choreography_information.0.category`.
 
 ---
 
+## Backend structure
+
+The Express application is assembled in `server/app.js`; `server/scripts/server.js` initializes the
+databases and migrations, starts the listener, and handles shutdown. Production and API tests use the
+same app and route registrations. Choreography and dance-group HTTP routes are registered in their
+respective router modules under `server/routes/`.
+
+Session choreography repetition and session content rearrangement are coordinated in
+`session-repetitions.js` and `session-content-flow.js`. Multi-statement runtime mutations use
+`withTransaction()` from `server/scripts/db.js`, which serializes work per SQLite connection.
+Transactions do not make writes on the separate dance-groups and choreography connections atomic;
+the attached `personal_data` database uses the choreography connection.
+
+---
+
 ## Scripts
 
 **Server** (`cd server`):
@@ -144,7 +159,7 @@ API integration tests run against in-memory SQLite. Coverage includes:
 - Step figure hierarchy CRUD and validation (cycles, delete protection)
 - Saved filter configuration lifecycle
 - PDF export response headers
-- OpenAPI spec plausibility (every route in `server.js` must be documented)
+- OpenAPI spec plausibility (every API route registered in the Express app must be documented)
 
 ### Client (Vitest + Testing Library)
 

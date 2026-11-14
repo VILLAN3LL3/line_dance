@@ -1,4 +1,4 @@
-import { runQuery, getQuery, allQuery } from '../scripts/db.js';
+import { runQuery, getQuery, allQuery, withTransaction } from '../scripts/db.js';
 import { captureError, normalizeIdArray, normalizeStringField } from './choreography-shared.js';
 
 async function getStepFigureDetails() {
@@ -143,18 +143,7 @@ async function syncStepFigureComponents(parentStepFigureId, componentIds) {
 }
 
 async function runStepFigureMutation(callback) {
-  await runQuery('BEGIN IMMEDIATE TRANSACTION');
-
-  try {
-    const result = await callback();
-    await runQuery('COMMIT');
-    return result;
-  } catch (error) {
-    await runQuery('ROLLBACK').catch(() => {
-      // Best effort rollback if transaction state already changed by SQLite.
-    });
-    throw error;
-  }
+  return withTransaction('choreography', callback);
 }
 
 export async function getStepFigures(req, res) {

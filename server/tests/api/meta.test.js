@@ -1,6 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import app from '../setup/testApp.js';
@@ -34,29 +31,25 @@ describe('GET /api/openapi.json', () => {
 // OpenAPI spec plausibility
 // ---------------------------------------------------------------------------
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const serverJsPath = resolve(__dirname, '../../scripts/server.js');
-
-function extractServerRoutes(content) {
-  const pattern = /app\.(get|post|put|patch|delete)\(\s*['"`]([^'"`]+)['"`]/g;
+function extractRoutes(stack) {
   const routes = [];
-  let match;
-  while ((match = pattern.exec(content)) !== null) {
-    const method = match[1].toLowerCase();
-    const path = match[2];
-    // Skip SPA catch-all and non-API routes
-    if (path.includes('*') || !path.startsWith('/api/')) continue;
-    // Convert Express :param notation to OpenAPI {param} notation
-    const openApiPath = path.replace(/:(\w+)/g, '{$1}');
-    routes.push({ method, path: openApiPath });
+  for (const layer of stack) {
+    if (layer.route) {
+      const path = layer.route.path;
+      if (typeof path !== 'string' || path.includes('*') || !path.startsWith('/api/')) continue;
+      for (const method of Object.keys(layer.route.methods)) {
+        routes.push({ method, path: path.replace(/:(\w+)/g, '{$1}') });
+      }
+    } else if (layer.handle?.stack) {
+      routes.push(...extractRoutes(layer.handle.stack));
+    }
   }
   return routes;
 }
 
 describe('OpenAPI spec plausibility', () => {
-  it('every route registered in server.js is documented in the OpenAPI spec', () => {
-    const content = readFileSync(serverJsPath, 'utf-8');
-    const routes = extractServerRoutes(content);
+  it('every route registered in the production app is documented in the OpenAPI spec', () => {
+    const routes = extractRoutes(app.router.stack);
 
     // Sanity-check: the parser must find a reasonable number of routes
     expect(routes.length).toBeGreaterThan(20);

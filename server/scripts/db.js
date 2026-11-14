@@ -2,6 +2,7 @@ import sqlite3 from 'sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,6 +43,27 @@ let dbReadyPromises = {};
 const openedDatabaseFiles = new Map();
 let restartScheduled = false;
 let restartExitScheduled = false;
+const connectionQueues = new WeakMap();
+const transactionContext = new AsyncLocalStorage();
+
+function runExclusively(db, action) {
+  const previous = connectionQueues.get(db) || Promise.resolve();
+  let release;
+  const current = new Promise((resolve) => {
+    release = resolve;
+  });
+  connectionQueues.set(db, current);
+  return previous.then(action).finally(() => {
+    if (connectionQueues.get(db) === current) connectionQueues.delete(db);
+    release();
+  });
+}
+
+function runOnConnection(db, action) {
+  const context = transactionContext.getStore();
+  if (context?.db === db && context.active) return action();
+  return runExclusively(db, action);
+}
 
 function getFileIdentity(filePath) {
   if (filePath === ':memory:') return null;
@@ -147,45 +169,84 @@ async function getReadyDatabase(name = 'choreography') {
   return db;
 }
 export function runQuery(query, params = [], dbName = 'choreography') {
-  return getReadyDatabase(dbName).then(
-    (db) =>
-      new Promise((resolve, reject) => {
-        db.run(query, params, function (err) {
-          if (err) {
-            restartIfDatabaseWasReplaced(err, dbName);
-            reject(err);
-          } else resolve({ id: this.lastID, changes: this.changes });
-        });
-      }),
+  return getReadyDatabase(dbName).then((db) =>
+    runOnConnection(
+      db,
+      () =>
+        new Promise((resolve, reject) => {
+          db.run(query, params, function (err) {
+            if (err) {
+              restartIfDatabaseWasReplaced(err, dbName);
+              reject(err);
+            } else resolve({ id: this.lastID, changes: this.changes });
+          });
+        }),
+    ),
   );
 }
 
 export function getQuery(query, params = [], dbName = 'choreography') {
-  return getReadyDatabase(dbName).then(
-    (db) =>
-      new Promise((resolve, reject) => {
-        db.get(query, params, (err, row) => {
-          if (err) {
-            restartIfDatabaseWasReplaced(err, dbName);
-            reject(err);
-          } else resolve(row);
-        });
-      }),
+  return getReadyDatabase(dbName).then((db) =>
+    runOnConnection(
+      db,
+      () =>
+        new Promise((resolve, reject) => {
+          db.get(query, params, (err, row) => {
+            if (err) {
+              restartIfDatabaseWasReplaced(err, dbName);
+              reject(err);
+            } else resolve(row);
+          });
+        }),
+    ),
   );
 }
 
 export function allQuery(query, params = [], dbName = 'choreography') {
-  return getReadyDatabase(dbName).then(
-    (db) =>
-      new Promise((resolve, reject) => {
-        db.all(query, params, (err, rows) => {
-          if (err) {
-            restartIfDatabaseWasReplaced(err, dbName);
-            reject(err);
-          } else resolve(rows || []);
-        });
-      }),
+  return getReadyDatabase(dbName).then((db) =>
+    runOnConnection(
+      db,
+      () =>
+        new Promise((resolve, reject) => {
+          db.all(query, params, (err, rows) => {
+            if (err) {
+              restartIfDatabaseWasReplaced(err, dbName);
+              reject(err);
+            } else resolve(rows || []);
+          });
+        }),
+    ),
   );
+}
+
+export async function withTransaction(dbName, action) {
+  const db = await getReadyDatabase(dbName);
+  const current = transactionContext.getStore();
+  if (current?.db === db && current.active) {
+    throw new Error('Nested transactions on the same connection are not supported');
+  }
+  return runExclusively(db, () => {
+    const context = { db, active: true };
+    return transactionContext.run(context, async () => {
+      try {
+        await runQuery('BEGIN IMMEDIATE TRANSACTION', [], dbName);
+        try {
+          const result = await action();
+          await runQuery('COMMIT', [], dbName);
+          return result;
+        } catch (error) {
+          try {
+            await runQuery('ROLLBACK', [], dbName);
+          } catch (rollbackError) {
+            process.stderr.write(`[db] Transaction rollback failed: ${String(rollbackError)}\n`);
+          }
+          throw error;
+        }
+      } finally {
+        context.active = false;
+      }
+    });
+  });
 }
 
 export function setDatabaseConnection(name, db) {

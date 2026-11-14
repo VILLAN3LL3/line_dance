@@ -62,6 +62,30 @@ describe('automatic session repetitions', () => {
     );
   }
 
+  it('keeps concurrent choreography assignments and their repetitions separate', async () => {
+    const slots = await createSlots();
+    const responses = await Promise.all(
+      [41, 42].map((danceId) =>
+        request(app)
+          .post('/api/session-choreographies')
+          .send({ session_id: slots[0].id, choreography_id: danceId }),
+      ),
+    );
+    expect(responses.map((response) => response.status)).toEqual([201, 201]);
+    const rows = await assignments(slots);
+    expect(rows.map((items) => items.length)).toEqual([2, 2, 2, 0]);
+    for (const response of responses) {
+      for (const repetition of [rows[1], rows[2]]) {
+        expect(repetition).toContainEqual(
+          expect.objectContaining({
+            choreography_id: response.body.choreography_id,
+            repeat_source_id: response.body.id,
+          }),
+        );
+      }
+    }
+  });
+
   it('adds exactly two numbered repetitions without affecting other courses', async () => {
     const slots = await createSlots();
     const { course } = await createGroupAndCourse('Other Course');
@@ -493,6 +517,37 @@ describe('GET /api/sessions', () => {
 });
 
 describe('POST /api/sessions/reorder-contents', () => {
+  it('serializes simultaneous swaps without losing comments or dance assignments', async () => {
+    const { course } = await createGroupAndCourse();
+    const sessions = [];
+    for (const [index, comment] of ['First', 'Second'].entries()) {
+      const response = await request(app)
+        .post('/api/sessions')
+        .send({
+          dance_course_id: course.id,
+          session_date: `2025-01-${10 + index}`,
+          comment,
+        });
+      sessions.push(response.body);
+    }
+    const assignment = await request(app).post('/api/session-choreographies').send({
+      session_id: sessions[0].id,
+      choreography_id: 42,
+    });
+    const responses = await Promise.all(
+      sessions.map(() =>
+        request(app).post(`/api/sessions/${sessions[0].id}/swap/${sessions[1].id}`),
+      ),
+    );
+    expect(responses.map((response) => response.status)).toEqual([200, 200]);
+    const after = await request(app).get(`/api/sessions?dance_course_id=${course.id}`);
+    expect(after.body.map((session) => session.comment)).toEqual(['First', 'Second']);
+    const dances = await request(app).get(
+      `/api/session-choreographies?session_id=${sessions[0].id}`,
+    );
+    expect(dances.body).toEqual([assignment.body]);
+  });
+
   it('moves descriptions and all dances while retaining dates, IDs and excluded sessions', async () => {
     const { course } = await createGroupAndCourse();
     const sessions = [];
