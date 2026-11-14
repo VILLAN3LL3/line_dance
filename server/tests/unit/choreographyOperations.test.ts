@@ -10,7 +10,12 @@ import {
   formatSearchResults,
   normalizeDuplicateQuery,
   parsePagination,
-} from '../../features/choreographies/read-operations.js';
+} from '../../features/choreographies/read-operations.ts';
+import {
+  prepareDuplicateQuery,
+  preparePagination,
+  prepareSearchQuery,
+} from '../../features/choreographies/read-validation.ts';
 import {
   expandStepFigureNames,
   normalizeMatchMode,
@@ -140,5 +145,31 @@ describe('choreography search operations', () => {
     expect(normalizeNumericQueryParam(['bad', '3suffix', 'invalid'])).toBe(3);
     expect(normalizeSearchText('  “Dance   Song”  ')).toBe('Dance Song');
     expect(() => normalizeUniqueTextQueryParam({ item: { toString: null } })).toThrow(TypeError);
+  });
+});
+
+describe('choreography read input preparation', () => {
+  it('preserves pagination coercion and duplicate-query error precedence', () => {
+    expect(preparePagination({ page: ['2', '3'], limit: '4suffix' })).toEqual({
+      page: 2,
+      limit: 4,
+      offset: 4,
+    });
+    const invalidId = { toString: null };
+    expect(prepareDuplicateQuery({ exclude_id: invalidId })).toEqual({ value: null });
+    expect(() =>
+      prepareDuplicateQuery({
+        name: 'Dance',
+        level: 'Beginner',
+        authors: 'Alice',
+        exclude_id: invalidId,
+      }),
+    ).toThrow(TypeError);
+  });
+
+  it('retains nested search query values and ignores unrelated parameters', () => {
+    expect(prepareSearchQuery({ level: { first: 'Beginner' }, unused: 'ignored' })).toEqual({
+      level: { first: 'Beginner' },
+    });
   });
 });

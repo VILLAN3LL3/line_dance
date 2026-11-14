@@ -1,18 +1,24 @@
-import {
-  combineChoreography,
-  formatPage,
-  formatSearchResults,
-  normalizeDuplicateQuery,
-  parsePagination,
-} from './read-operations.js';
+import { combineChoreography, formatPage, formatSearchResults } from './read-operations.ts';
+import type { Page, Pagination } from './read-operations.ts';
+import type { ChoreographyReadId, DuplicateInput, SearchQuery } from './read-validation.ts';
 import {
   expandStepFigureNames,
   normalizeMatchMode,
   normalizeUniqueTextQueryParam,
 } from './search-operations.ts';
-import * as repository from './read-repository.js';
+import * as repository from './read-repository.ts';
+import type { ChoreographyRow, DuplicateRow, InformationRow } from './read-repository.ts';
 
-async function enrichChoreography(choreography) {
+export type Choreography = ChoreographyRow & {
+  authors: string[];
+  tags: string[];
+  step_figures: string[];
+  choreography_information: InformationRow[];
+  rating: number | null;
+};
+export type DuplicateChoreography = DuplicateRow & { authors: string[] };
+
+async function enrichChoreography(choreography: ChoreographyRow): Promise<Choreography> {
   const authors = await repository.findAuthors(choreography.id);
   const tags = await repository.findTags(choreography.id);
   const figures = await repository.findStepFigures(choreography.id);
@@ -21,21 +27,24 @@ async function enrichChoreography(choreography) {
   return combineChoreography(choreography, authors, tags, figures, information, rating);
 }
 
-export async function listChoreographies(query) {
-  const pagination = parsePagination(query);
+export async function listChoreographies(pagination: Pagination): Promise<Page<Choreography>> {
   const rows = await repository.listChoreographies(pagination.limit, pagination.offset);
   const data = await Promise.all(rows.map(enrichChoreography));
   const count = await repository.countChoreographies();
+  if (!count) throw new Error('Choreography count not found');
   return formatPage(data, pagination, count.count);
 }
 
-export async function getChoreography(id) {
+export async function getChoreography(
+  id: ChoreographyReadId,
+): Promise<{ value: Choreography } | { error: 'not_found' }> {
   const row = await repository.findChoreography(id);
   return row ? { value: await enrichChoreography(row) } : { error: 'not_found' };
 }
 
-export async function checkDuplicates(query) {
-  const criteria = normalizeDuplicateQuery(query);
+export async function checkDuplicates({
+  value: criteria,
+}: DuplicateInput): Promise<DuplicateChoreography[]> {
   if (!criteria) return [];
   const rows = await repository.findDuplicates(criteria);
   return Promise.all(
@@ -46,7 +55,7 @@ export async function checkDuplicates(query) {
   );
 }
 
-export async function searchChoreographies(query) {
+export async function searchChoreographies(query: SearchQuery): Promise<Page<Choreography>> {
   const requested = normalizeUniqueTextQueryParam(query.step_figures);
   const relations = requested.length ? await repository.listFigureRelations() : [];
   const mode = normalizeMatchMode(query.step_figures_match_mode);

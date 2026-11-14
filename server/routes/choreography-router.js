@@ -2,13 +2,19 @@ import { Router } from 'express';
 import {
   createChoreography,
   validateChoreography,
-  getChoreographies,
-  getChoreographyById,
   updateChoreography,
   deleteChoreography,
-  checkDuplicateChoreographies,
 } from './choreographies.js';
-import { searchChoreographies } from './choreography-search.js';
+import {
+  getChoreographies,
+  getChoreographyById,
+  checkDuplicateChoreographies,
+  searchChoreographies,
+  prepareList,
+  prepareDuplicates,
+  prepareSearch,
+  prepareReadId,
+} from './choreography-reads.ts';
 import {
   getLevels,
   prepareLevelInput,
@@ -47,11 +53,11 @@ export function createChoreographyRouter() {
   const router = Router();
   router.post('/api/choreographies', createChoreography);
   router.post('/api/choreographies/validate', validateChoreography);
-  router.get('/api/choreographies', getChoreographies);
-  router.get('/api/choreographies/search', searchChoreographies);
+  router.get('/api/choreographies', prepareList, getChoreographies);
+  router.get('/api/choreographies/search', prepareSearch, searchChoreographies);
   router.get('/api/choreographies/max-count', getMaxChoreographyCount);
-  router.get('/api/choreographies/duplicates', checkDuplicateChoreographies);
-  router.get('/api/choreographies/:id', getChoreographyById);
+  router.get('/api/choreographies/duplicates', prepareDuplicates, checkDuplicateChoreographies);
+  router.get('/api/choreographies/:id', prepareReadId, getChoreographyById);
   router.put('/api/choreographies/:id', updateChoreography);
   router.delete('/api/choreographies/:id', deleteChoreography);
   router.put('/api/choreographies/:id/rating', prepareRating, rateChoreography);

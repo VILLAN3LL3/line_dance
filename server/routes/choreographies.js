@@ -1,4 +1,3 @@
-import * as choreographyReads from '../features/choreographies/read-flow.js';
 import * as choreographyWrites from '../features/choreographies/write-flow.js';
 import { captureError } from '../utils/choreographyRouteErrors.js';
 
@@ -38,38 +37,6 @@ export async function createChoreography(req, res) {
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to create choreography' });
-  }
-}
-
-export async function checkDuplicateChoreographies(req, res) {
-  try {
-    return res.json(await choreographyReads.checkDuplicates(req.query));
-  } catch (error) {
-    captureError(error);
-    return res.status(500).json({ error: 'Failed to check duplicates' });
-  }
-}
-
-export async function getChoreographies(req, res) {
-  try {
-    res.json(await choreographyReads.listChoreographies(req.query));
-  } catch (error) {
-    captureError(error);
-    res.status(500).json({ error: 'Failed to fetch choreographies' });
-  }
-}
-
-export async function getChoreographyById(req, res) {
-  try {
-    const result = await choreographyReads.getChoreography(req.params.id);
-    if (result.error === 'not_found') {
-      return res.status(404).json({ error: 'Choreography not found' });
-    }
-    if (result.error) throw new Error(`Unknown choreography error: ${result.error}`);
-    res.json(result.value);
-  } catch (error) {
-    captureError(error);
-    res.status(500).json({ error: 'Failed to fetch choreography' });
   }
 }
 

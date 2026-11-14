@@ -75,6 +75,15 @@ describe('GET /api/choreographies', () => {
     expect(res.body.pagination.total).toBe(5);
     expect(res.body.pagination.totalPages).toBe(3);
   });
+
+  it('preserves numeric-prefix and repeated-query pagination', async () => {
+    await createChoreo({ name: 'Dance A' });
+    await createChoreo({ name: 'Dance B' });
+    const res = await request(app).get('/api/choreographies?page=2suffix&page=3&limit=1suffix');
+    expect(res.status).toBe(200);
+    expect(res.body.pagination).toEqual({ page: 2, limit: 1, total: 2, totalPages: 2 });
+    expect(res.body.data.map((item) => item.name)).toEqual(['Dance B']);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -292,6 +301,28 @@ describe('GET /api/choreographies/:id', () => {
   it('returns 404 for a non-existent id', async () => {
     const res = await request(app).get('/api/choreographies/99999');
     expect(res.status).toBe(404);
+  });
+
+  it('does not parse an integer prefix from the requested id', async () => {
+    const created = await createChoreo();
+    const res = await request(app).get(`/api/choreographies/${created.id}suffix`);
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Choreography not found' });
+  });
+
+  it('preserves non-numeric values stored in numeric-affinity columns', async () => {
+    const created = await createChoreo({
+      count: 'variable',
+      wall_count: 'many',
+      creation_year: 'unknown',
+    });
+    const res = await request(app).get(`/api/choreographies/${created.id}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      count: 'variable',
+      wall_count: 'many',
+      creation_year: 'unknown',
+    });
   });
 });
 
