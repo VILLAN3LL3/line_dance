@@ -2,6 +2,9 @@
 
 ## Skill-Driven Workflow
 
+For every backend change, including small fixes, invoke `/backend-architecture` and follow its
+responsibility boundaries and testing rules alongside the workflow below.
+
 For **any new feature, refactor, or substantial code change request**, automatically follow this workflow:
 
 ### 1. Plan Phase (Always)

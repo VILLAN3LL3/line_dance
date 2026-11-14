@@ -119,6 +119,9 @@ Unit tests cover operations; integration tests exercise flows with SQLite or the
 API tests verify HTTP contracts. ESLint enforces import restrictions and prevents direct network
 requests in route handlers and pure operations.
 
+For backend changes, follow the [backend architecture skill](.github/skills/backend-architecture/SKILL.md)
+for responsibility boundaries, transaction handling, and testing.
+
 The database helper `withTransaction()` serializes transactions and queries per SQLite connection.
 Choreography writes (including cleanup), group/base-figure changes, trainer writes, course creation
 and updates, rating updates, level creation, saved-filter and step-figure writes, session creation,
