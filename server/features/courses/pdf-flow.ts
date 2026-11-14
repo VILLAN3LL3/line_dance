@@ -1,8 +1,19 @@
 import QRCode from 'qrcode';
-import { getCoursePdfFileName, getCoursePdfLinks, getTrainerVCard } from './pdf-operations.js';
-import { findCourseForPdf, listSessionsForPdf } from './pdf-repository.js';
+import { getCoursePdfFileName, getCoursePdfLinks, getTrainerVCard } from './pdf-operations.ts';
+import type { CoursePdf, CoursePdfId, CoursePdfLink } from './pdf-operations.ts';
+import { findCourseForPdf, listSessionsForPdf } from './pdf-repository.ts';
 
-export async function prepareCoursePdf(id) {
+export type CoursePdfDocument = {
+  course: CoursePdf;
+  sessions: { session_date: string }[];
+  linksWithQr: (CoursePdfLink & { qr: Buffer })[];
+  trainerQr: Buffer | null;
+  fileName: string;
+};
+
+export async function prepareCoursePdf(
+  id: CoursePdfId,
+): Promise<{ error: 'course_not_found' } | { value: CoursePdfDocument }> {
   const course = await findCourseForPdf(id);
   if (!course) return { error: 'course_not_found' };
 

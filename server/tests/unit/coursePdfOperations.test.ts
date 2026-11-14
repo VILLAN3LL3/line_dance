@@ -3,7 +3,8 @@ import {
   getCoursePdfFileName,
   getCoursePdfLinks,
   getTrainerVCard,
-} from '../../features/courses/pdf-operations.js';
+  prepareCoursePdfId,
+} from '../../features/courses/pdf-operations.ts';
 
 describe('course PDF operations', () => {
   it('creates safe filenames using the course id and semester', () => {
@@ -27,7 +28,14 @@ describe('course PDF operations', () => {
   });
 
   it('escapes trainer contact details in a vCard or omits it without a trainer', () => {
-    expect(getTrainerVCard({ trainer_id: null })).toBeNull();
+    expect(
+      getTrainerVCard({
+        trainer_id: null,
+        trainer_name: null,
+        trainer_phone: null,
+        trainer_email: null,
+      }),
+    ).toBeNull();
     expect(
       getTrainerVCard({
         trainer_id: 1,
@@ -36,5 +44,11 @@ describe('course PDF operations', () => {
         trainer_email: 'jane@example.com',
       }),
     ).toContain(String.raw`FN:Jane\; Doe`);
+  });
+
+  it('keeps the ID as an unmodified string for the database lookup', () => {
+    expect(prepareCoursePdfId({ id: '12suffix' })).toBe('12suffix');
+    expect(prepareCoursePdfId({ id: '001' })).toBe('001');
+    expect(() => prepareCoursePdfId({ id: 12 })).toThrow();
   });
 });

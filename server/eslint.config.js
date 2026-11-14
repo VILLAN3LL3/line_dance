@@ -38,7 +38,6 @@ export default [
     files: [
       'routes/dance-courses.js',
       'routes/dance-groups.js',
-      'routes/course-pdf.js',
       'routes/sessions.js',
       'routes/choreographies.js',
       'routes/choreography-search.js',

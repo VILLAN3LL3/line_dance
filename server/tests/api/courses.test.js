@@ -433,4 +433,14 @@ describe('GET /api/dance-courses/:id/export-pdf', () => {
     expect(res.status).toBe(404);
     expect(res.body.error).toMatch(/not found/i);
   });
+
+  it('does not parse an integer prefix from a malformed course ID', async () => {
+    const group = await createGroup('PDF ID Group');
+    const course = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.id, name: 'PDF ID Course' });
+    const res = await request(app).get(`/api/dance-courses/${course.body.id}suffix/export-pdf`);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Dance course not found');
+  });
 });

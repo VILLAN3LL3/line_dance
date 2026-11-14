@@ -23,7 +23,7 @@ import {
   updateDanceCourse,
   deleteDanceCourse,
 } from './dance-courses.js';
-import { exportDanceCoursePdf } from './course-pdf.js';
+import { preparePdfId, exportDanceCoursePdf } from './course-pdf.ts';
 import {
   getLearnedChoreographies,
   getStepFigureSuggestions,
@@ -68,7 +68,7 @@ export function createDanceGroupsRouter() {
   router.post('/api/dance-courses', createDanceCourse);
   router.put('/api/dance-courses/:id', updateDanceCourse);
   router.delete('/api/dance-courses/:id', deleteDanceCourse);
-  router.get('/api/dance-courses/:id/export-pdf', exportDanceCoursePdf);
+  router.get('/api/dance-courses/:id/export-pdf', preparePdfId, exportDanceCoursePdf);
   router.get('/api/sessions', getSessions);
   router.post('/api/sessions', createSession);
   router.post('/api/sessions/reorder-contents', reorderSessionContents);

@@ -3,7 +3,8 @@ import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import { getQuery, runQuery } from '../../scripts/db.ts';
 import * as groups from '../../features/groups/flow.js';
 import * as courses from '../../features/courses/flow.js';
-import { prepareCoursePdf } from '../../features/courses/pdf-flow.js';
+import { prepareCoursePdf } from '../../features/courses/pdf-flow.ts';
+import { prepareCoursePdfId } from '../../features/courses/pdf-operations.ts';
 import * as trainers from '../../features/trainers/flow.ts';
 import { validateTrainer } from '../../features/trainers/validation.ts';
 import type { TrainerInput } from '../../features/trainers/validation.ts';
@@ -83,8 +84,8 @@ describe('group, course and trainer flows', () => {
       [course.value.id, '2026-02-01', course.value.id, '2026-01-01'],
       'danceGroups',
     );
-    const result = await prepareCoursePdf(course.value.id);
-    if (!result.value) throw new Error('Course PDF preparation failed');
+    const result = await prepareCoursePdf(prepareCoursePdfId({ id: String(course.value.id) }));
+    if ('error' in result) throw new Error('Course PDF preparation failed');
     expect(result.value.sessions).toMatchObject([
       { session_date: '2026-01-01' },
       { session_date: '2026-02-01' },
@@ -92,7 +93,21 @@ describe('group, course and trainer flows', () => {
     expect(result.value.linksWithQr[0].qr.subarray(0, 8)).toEqual(
       Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
     );
-    expect(await prepareCoursePdf(999)).toEqual({ error: 'course_not_found' });
+    expect(await prepareCoursePdf(prepareCoursePdfId({ id: '999' }))).toEqual({
+      error: 'course_not_found',
+    });
+  });
+  it('propagates QR generation failures without returning a partial document', async () => {
+    const group = await groups.createGroup({ name: 'Group' });
+    const course = await courses.createCourse({ dance_group_id: group.value.id, name: 'Course' });
+    await runQuery(
+      'UPDATE dance_courses SET youtube_playlist_url = ? WHERE id = ?',
+      ['https://example.com/' + 'a'.repeat(5000), course.value.id],
+      'danceGroups',
+    );
+    await expect(
+      prepareCoursePdf(prepareCoursePdfId({ id: String(course.value.id) })),
+    ).rejects.toThrow();
   });
 });
 
