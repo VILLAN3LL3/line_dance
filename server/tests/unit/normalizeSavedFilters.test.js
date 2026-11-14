@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeSavedFilters } from '../../routes/saved-filters.js';
+import { normalizeSavedFilters } from '../../features/saved-filters/operations.js';
 
 describe('normalizeSavedFilters', () => {
   // ---------------------------------------------------------------------------

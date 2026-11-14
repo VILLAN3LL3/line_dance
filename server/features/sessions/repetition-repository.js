@@ -1,4 +1,4 @@
-import { getQuery, runQuery, withTransaction } from '../scripts/db.js';
+import { runQuery } from '../../scripts/db.js';
 
 const dbName = 'danceGroups';
 
@@ -29,28 +29,4 @@ export async function distributeRepetitions(courseId, sourceId = null) {
     [courseId, sourceId, sourceId],
     dbName,
   );
-}
-
-export async function addSessionChoreography(sessionId, choreographyId) {
-  return withTransaction(dbName, async () => {
-    const session = await getQuery(
-      'SELECT id, dance_course_id FROM sessions WHERE id = ?',
-      [sessionId],
-      dbName,
-    );
-    if (!session) return null;
-
-    const result = await runQuery(
-      `INSERT INTO session_choreographies (session_id, choreography_id, is_new, auto_repeat)
-       VALUES (?, ?, 1, 1)`,
-      [sessionId, choreographyId],
-      dbName,
-    );
-    await distributeRepetitions(session.dance_course_id, result.id);
-    return getQuery(
-      'SELECT *, 0 AS repetition_number FROM session_choreographies WHERE id = ?',
-      [result.id],
-      dbName,
-    );
-  });
 }

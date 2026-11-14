@@ -29,6 +29,11 @@ export default [
       'routes/dance-groups.js',
       'routes/course-pdf.js',
       'routes/choreography-ratings.js',
+      'routes/choreography-metadata.js',
+      'routes/sessions.js',
+      'routes/step-figure-suggestions.js',
+      'routes/saved-filters.js',
+      'routes/step-figures.js',
     ],
     rules: {
       'no-restricted-imports': ['error', { patterns: ['**/scripts/db.js', 'sqlite3'] }],

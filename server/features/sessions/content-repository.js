@@ -1,4 +1,4 @@
-import { allQuery, runQuery } from '../scripts/db.js';
+import { allQuery, runQuery } from '../../scripts/db.js';
 
 const dbName = 'danceGroups';
 
@@ -11,19 +11,22 @@ export async function getSessionsForRearrangement(sessionIds) {
   );
 }
 
-export async function takeSessionChoreographies(sessionIds) {
+export function listSessionChoreographies(sessionIds) {
   const placeholders = sessionIds.map(() => '?').join(',');
-  const choreographies = await allQuery(
+  return allQuery(
     `SELECT * FROM session_choreographies WHERE session_id IN (${placeholders})`,
     sessionIds,
     dbName,
   );
-  await runQuery(
+}
+
+export function deleteSessionChoreographies(sessionIds) {
+  const placeholders = sessionIds.map(() => '?').join(',');
+  return runQuery(
     `DELETE FROM session_choreographies WHERE session_id IN (${placeholders})`,
     sessionIds,
     dbName,
   );
-  return choreographies;
 }
 
 export async function moveSessionComments(sessions, targets) {
