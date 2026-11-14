@@ -1,4 +1,5 @@
-import { hasTrainerId, validateCourseUpdate, validateNewCourse } from './validation.js';
+import { hasTrainerId, validateCourseUpdate } from './validation.ts';
+import type { CourseInput, NewCourse } from './validation.ts';
 import {
   deleteCourse as deleteCourseRecord,
   findCourse,
@@ -9,15 +10,24 @@ import {
   listCourses,
   saveCourse,
   withCourseTransaction,
-} from './repository.js';
+} from './repository.ts';
+import type { Course } from './repository.ts';
 
-export function getCourses(groupId) {
+type CourseError =
+  | 'group_required'
+  | 'course_identity_required'
+  | 'group_not_found'
+  | 'trainer_not_found'
+  | 'course_not_found'
+  | 'duplicate_course';
+export type CourseResult = { error: CourseError } | { value: Course | undefined };
+
+export async function getCourses(groupId: CourseInput['dance_group_id']): Promise<Course[]> {
   return listCourses(groupId);
 }
 
-export async function createCourse(input) {
-  const validation = validateNewCourse(input);
-  if (validation.error) return validation;
+export async function createCourse({ input, validation }: NewCourse): Promise<CourseResult> {
+  if ('error' in validation) return validation;
 
   return withCourseTransaction(async () => {
     if (!(await findGroup(input.dance_group_id))) return { error: 'group_not_found' };
@@ -25,12 +35,12 @@ export async function createCourse(input) {
       return { error: 'trainer_not_found' };
     }
     const result = await insertCourse(validation.value);
-    if (result.error) return result;
+    if ('error' in result) return result;
     return { value: await findCourse(result.id) };
   });
 }
 
-export async function updateCourse(id, input) {
+export async function updateCourse(id: string | number, input: CourseInput): Promise<CourseResult> {
   const { trainer_id } = input;
   return withCourseTransaction(async () => {
     const existing = await findCourseIdentity(id);
@@ -39,12 +49,14 @@ export async function updateCourse(id, input) {
       return { error: 'trainer_not_found' };
     }
     const validation = validateCourseUpdate(input, existing);
-    if (validation.error) return validation;
+    if ('error' in validation) return validation;
     await saveCourse(id, validation.value);
     return { value: await findCourse(id) };
   });
 }
 
-export async function deleteCourse(id) {
+export async function deleteCourse(
+  id: string | number,
+): Promise<{ value: true } | { error: 'course_not_found' }> {
   return (await deleteCourseRecord(id)) ? { value: true } : { error: 'course_not_found' };
 }

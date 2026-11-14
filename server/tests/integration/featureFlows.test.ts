@@ -8,7 +8,9 @@ import {
   validateGroupName,
 } from '../../features/groups/validation.ts';
 import type { Group } from '../../features/groups/repository.ts';
-import * as courses from '../../features/courses/flow.js';
+import * as courses from '../../features/courses/flow.ts';
+import { prepareCourseInput, prepareNewCourse } from '../../features/courses/validation.ts';
+import type { Course } from '../../features/courses/repository.ts';
 import { prepareCoursePdf } from '../../features/courses/pdf-flow.ts';
 import { prepareCoursePdfId } from '../../features/courses/pdf-operations.ts';
 import * as trainers from '../../features/trainers/flow.ts';
@@ -37,6 +39,12 @@ async function createTestGroup(name: string): Promise<Group> {
   return result.value;
 }
 
+async function createTestCourse(input: unknown): Promise<Course> {
+  const result = await courses.createCourse(prepareNewCourse(input));
+  if ('error' in result || !result.value) throw new Error('Course creation failed');
+  return result.value;
+}
+
 describe('group, course and trainer flows', () => {
   it('creates defaults, assigns a trainer, and clears assignments when deleting the trainer', async () => {
     await runQuery("INSERT INTO step_figures (name) VALUES ('Kick')");
@@ -44,7 +52,7 @@ describe('group, course and trainer flows', () => {
     const trainer = await trainers.createTrainer(validTrainer());
     if (!('value' in trainer) || !trainer.value) throw new Error('Trainer creation failed');
 
-    const course = await courses.createCourse({
+    const course = await createTestCourse({
       dance_group_id: group.id,
       name: 'Course',
       trainer_id: trainer.value.id,
@@ -55,7 +63,7 @@ describe('group, course and trainer flows', () => {
     ).toMatchObject({
       value: [{ name: 'Kick' }],
     });
-    expect(course.value.trainer_id).toBe(trainer.value.id);
+    expect(course.trainer_id).toBe(trainer.value.id);
     expect(await trainers.deleteTrainer(trainer.value.id)).toEqual({ value: true });
     expect(await courses.getCourses(group.id)).toMatchObject([{ trainer_id: null }]);
   });
@@ -82,7 +90,9 @@ describe('group, course and trainer flows', () => {
       error: 'not_found',
     });
 
-    expect(await courses.createCourse({ dance_group_id: 999, name: 'Course' })).toEqual({
+    expect(
+      await courses.createCourse(prepareNewCourse({ dance_group_id: 999, name: 'Course' })),
+    ).toEqual({
       error: 'group_not_found',
     });
     expect(await groups.getGroup(prepareGroupId({ id: '999' }))).toEqual({
@@ -90,19 +100,39 @@ describe('group, course and trainer flows', () => {
     });
   });
 
+  it('preserves the stored course when an update fails', async () => {
+    const group = await createTestGroup('Group');
+    const course = await createTestCourse({ dance_group_id: group.id, name: 'Original' });
+    await runQuery(
+      "CREATE TEMP TRIGGER reject_course_update AFTER UPDATE ON dance_courses BEGIN SELECT RAISE(ABORT, 'Course update failed'); END",
+      [],
+      'danceGroups',
+    );
+    try {
+      await expect(
+        courses.updateCourse(course.id, prepareCourseInput({ name: 'Changed' })),
+      ).rejects.toThrow('Course update failed');
+      expect(await courses.getCourses(group.id)).toMatchObject([
+        { id: course.id, name: 'Original' },
+      ]);
+    } finally {
+      await runQuery('DROP TRIGGER reject_course_update', [], 'danceGroups');
+    }
+  });
+
   it('prepares PDF data and QR codes from persisted course and session data', async () => {
     const group = await createTestGroup('Group');
-    const course = await courses.createCourse({
+    const course = await createTestCourse({
       dance_group_id: group.id,
       name: 'Course',
       youtube_playlist_url: 'https://example.com/video',
     });
     await runQuery(
       'INSERT INTO sessions (dance_course_id, session_date) VALUES (?, ?), (?, ?)',
-      [course.value.id, '2026-02-01', course.value.id, '2026-01-01'],
+      [course.id, '2026-02-01', course.id, '2026-01-01'],
       'danceGroups',
     );
-    const result = await prepareCoursePdf(prepareCoursePdfId({ id: String(course.value.id) }));
+    const result = await prepareCoursePdf(prepareCoursePdfId({ id: String(course.id) }));
     if ('error' in result) throw new Error('Course PDF preparation failed');
     expect(result.value.sessions).toMatchObject([
       { session_date: '2026-01-01' },
@@ -117,15 +147,13 @@ describe('group, course and trainer flows', () => {
   });
   it('propagates QR generation failures without returning a partial document', async () => {
     const group = await createTestGroup('Group');
-    const course = await courses.createCourse({ dance_group_id: group.id, name: 'Course' });
+    const course = await createTestCourse({ dance_group_id: group.id, name: 'Course' });
     await runQuery(
       'UPDATE dance_courses SET youtube_playlist_url = ? WHERE id = ?',
-      ['https://example.com/' + 'a'.repeat(5000), course.value.id],
+      ['https://example.com/' + 'a'.repeat(5000), course.id],
       'danceGroups',
     );
-    await expect(
-      prepareCoursePdf(prepareCoursePdfId({ id: String(course.value.id) })),
-    ).rejects.toThrow();
+    await expect(prepareCoursePdf(prepareCoursePdfId({ id: String(course.id) }))).rejects.toThrow();
   });
 });
 

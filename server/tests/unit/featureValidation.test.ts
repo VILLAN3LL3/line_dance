@@ -3,9 +3,11 @@ import { validateTrainer } from '../../features/trainers/validation.ts';
 import { validateChoreographyId, validateRating } from '../../features/ratings/validation.ts';
 import {
   hasTrainerId,
+  prepareCourseInput,
+  prepareNewCourse,
   validateCourseUpdate,
   validateNewCourse,
-} from '../../features/courses/validation.js';
+} from '../../features/courses/validation.ts';
 import {
   validateBaseFigureGroupId,
   validateBaseFigureIds,
@@ -78,11 +80,17 @@ describe('rating validation', () => {
 
 describe('course validation', () => {
   it('validates required group and identity and normalizes optional fields', () => {
-    expect(validateNewCourse({ name: '' })).toEqual({ error: 'group_required' });
-    expect(validateNewCourse({ dance_group_id: 1, name: ' ' })).toEqual({
+    expect(validateNewCourse(prepareCourseInput({ name: '' }))).toEqual({
+      error: 'group_required',
+    });
+    expect(validateNewCourse(prepareCourseInput({ dance_group_id: 1, name: ' ' }))).toEqual({
       error: 'course_identity_required',
     });
-    expect(validateNewCourse({ dance_group_id: 1, name: ' Course ', trainer_id: '2' })).toEqual({
+    expect(
+      validateNewCourse(
+        prepareCourseInput({ dance_group_id: 1, name: ' Course ', trainer_id: '2' }),
+      ),
+    ).toEqual({
       value: {
         course_id: null,
         name: 'Course',
@@ -99,11 +107,15 @@ describe('course validation', () => {
 
   it('preserves omitted identity fields and rejects clearing both', () => {
     const existing = { course_id: 7, name: 'Original' };
-    expect(validateCourseUpdate({ name: ' New ' }, existing).value).toMatchObject({
-      course_id: 7,
-      name: 'New',
+    expect(validateCourseUpdate(prepareCourseInput({ name: ' New ' }), existing)).toMatchObject({
+      value: {
+        course_id: 7,
+        name: 'New',
+      },
     });
-    expect(validateCourseUpdate({ course_id: null, name: '' }, existing)).toEqual({
+    expect(
+      validateCourseUpdate(prepareCourseInput({ course_id: null, name: '' }), existing),
+    ).toEqual({
       error: 'course_identity_required',
     });
   });
@@ -111,6 +123,16 @@ describe('course validation', () => {
   it('recognizes supplied trainer identifiers', () => {
     expect([null, undefined, ''].map(hasTrainerId)).toEqual([false, false, false]);
     expect([0, '0', 2].map(hasTrainerId)).toEqual([true, true, true]);
+  });
+
+  it('preserves legacy coercion and reports conversion errors before missing-group errors', () => {
+    expect(
+      prepareNewCourse({ dance_group_id: 1, course_id: ['12suffix'] }).validation,
+    ).toMatchObject({ value: { course_id: 12 } });
+    expect(() => prepareNewCourse({ course_id: { toString: null } })).toThrow(TypeError);
+    expect(prepareNewCourse({ dance_group_id: 1, course_id: true }).validation).toMatchObject({
+      value: { course_id: NaN },
+    });
   });
 });
 

@@ -3,7 +3,8 @@ import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import { runQuery } from '../../scripts/db.ts';
 import * as groups from '../../features/groups/flow.ts';
 import { validateGroupName } from '../../features/groups/validation.ts';
-import * as courses from '../../features/courses/flow.js';
+import * as courses from '../../features/courses/flow.ts';
+import { prepareNewCourse } from '../../features/courses/validation.ts';
 import * as sessions from '../../features/sessions/flow.js';
 
 beforeAll(async () => {
@@ -16,7 +17,9 @@ beforeEach(async () => {
 
 async function createCourseSessions() {
   const group = await groups.createGroup(validateGroupName({ name: 'Group' }));
-  const course = await courses.createCourse({ dance_group_id: group.value.id, name: 'Course' });
+  const course = await courses.createCourse(
+    prepareNewCourse({ dance_group_id: group.value.id, name: 'Course' }),
+  );
   const result = [];
   for (const date of ['2026-01-01', '2026-01-08', '2026-01-15', '2026-01-22']) {
     const session = await sessions.createSession({

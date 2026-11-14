@@ -36,7 +36,6 @@ export default [
   },
   {
     files: [
-      'routes/dance-courses.js',
       'routes/sessions.js',
       'routes/choreographies.js',
       'routes/choreography-search.js',

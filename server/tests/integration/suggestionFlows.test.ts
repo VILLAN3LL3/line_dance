@@ -3,7 +3,8 @@ import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import { runQuery } from '../../scripts/db.ts';
 import * as groups from '../../features/groups/flow.ts';
 import { prepareBaseFiguresUpdate, validateGroupName } from '../../features/groups/validation.ts';
-import * as courses from '../../features/courses/flow.js';
+import * as courses from '../../features/courses/flow.ts';
+import { prepareNewCourse } from '../../features/courses/validation.ts';
 import * as sessions from '../../features/sessions/flow.js';
 import * as suggestions from '../../features/suggestions/flow.ts';
 import {
@@ -43,7 +44,10 @@ describe('step figure suggestion flows', () => {
         body: { step_figure_ids: [parent.id] },
       }),
     );
-    const course = await courses.createCourse({ dance_group_id: group.value.id, name: 'Course' });
+    const course = await courses.createCourse(
+      prepareNewCourse({ dance_group_id: group.value.id, name: 'Course' }),
+    );
+    if ('error' in course || !course.value) throw new Error('Course creation failed');
     const session = await sessions.createSession({
       dance_course_id: course.value.id,
       session_date: '2099-01-01',

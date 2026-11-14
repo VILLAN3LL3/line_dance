@@ -197,6 +197,29 @@ describe('POST /api/dance-courses', () => {
     expect(res.body.error).toMatch(/dance group not found/i);
   });
 
+  it('checks required fields before group and trainer existence', async () => {
+    const invalid = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: 99999, trainer_id: 99999 });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body).toEqual({ error: 'Course ID or name is required' });
+
+    const missingGroup = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: 99999, name: 'Course', trainer_id: 99999 });
+    expect(missingGroup.status).toBe(404);
+    expect(missingGroup.body).toEqual({ error: 'Dance group not found' });
+  });
+
+  it('handles JSON numbers beyond the JavaScript finite range as before', async () => {
+    const res = await request(app)
+      .post('/api/dance-courses')
+      .set('Content-Type', 'application/json')
+      .send('{"dance_group_id":1e400,"name":"Course"}');
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Dance group not found' });
+  });
+
   it('returns 404 for a non-existent trainer_id', async () => {
     const group = await createGroup();
     const res = await request(app).post('/api/dance-courses').send({
@@ -344,6 +367,29 @@ describe('PUT /api/dance-courses/:id', () => {
       .send({ name: '', trainer_id: 99999 });
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: 'Trainer not found' });
+  });
+
+  it('checks course and trainer existence before converting the updated identity', async () => {
+    const body = { course_id: { toString: null }, trainer_id: 99999 };
+    const missing = await request(app).put('/api/dance-courses/99999').send(body);
+    expect(missing.status).toBe(404);
+    expect(missing.body).toEqual({ error: 'Dance course not found' });
+
+    const group = await createGroup();
+    const created = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.id, name: 'Course' });
+    const missingTrainer = await request(app)
+      .put(`/api/dance-courses/${created.body.id}`)
+      .send(body);
+    expect(missingTrainer.status).toBe(404);
+    expect(missingTrainer.body).toEqual({ error: 'Trainer not found' });
+
+    const malformedId = await request(app)
+      .put(`/api/dance-courses/${created.body.id}suffix`)
+      .send({ name: 'Changed' });
+    expect(malformedId.status).toBe(404);
+    expect(malformedId.body).toEqual({ error: 'Dance course not found' });
   });
 });
 
