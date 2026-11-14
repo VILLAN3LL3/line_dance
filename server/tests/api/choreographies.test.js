@@ -173,6 +173,27 @@ describe('POST /api/choreographies', () => {
       );
     });
 
+    it('preserves issue ordering including the database-dependent level issue', async () => {
+      const body = {
+        name: '',
+        level: 'Not a real level',
+        step_sheet_link: 'invalid',
+        choreography_information: [{ category: 'Restart', description: '' }],
+      };
+      const expected = [
+        { field: 'step_sheet_link', key: 'invalid_url' },
+        { field: 'choreography_information.0.description', key: 'required' },
+        { field: 'name', key: 'required' },
+        { field: 'level', key: 'invalid_level' },
+      ];
+      const validation = await request(app).post('/api/choreographies/validate').send(body);
+      const create = await request(app).post('/api/choreographies').send(body);
+      expect(validation.status).toBe(400);
+      expect(validation.body.issues).toEqual(expected);
+      expect(create.status).toBe(400);
+      expect(create.body.issues).toEqual(expected);
+    });
+
     it('accepts valid data and ignores a completely empty information row', async () => {
       const response = await request(app)
         .post('/api/choreographies/validate')
@@ -331,6 +352,17 @@ describe('GET /api/choreographies/:id', () => {
 // ---------------------------------------------------------------------------
 
 describe('PUT /api/choreographies/:id', () => {
+  it('returns 404 before reporting missing or invalid input for an unknown choreography', async () => {
+    const missingBody = await request(app).put('/api/choreographies/99999');
+    const invalidBody = await request(app)
+      .put('/api/choreographies/99999')
+      .send({ name: '', level: 'Not a real level', step_sheet_link: 'invalid' });
+    for (const response of [missingBody, invalidBody]) {
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: 'Choreography not found' });
+    }
+  });
+
   it('rolls back changes when cleanup fails', async () => {
     const created = await createChoreo({ name: 'Original', authors: ['Original Author'] });
     await runQuery(

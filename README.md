@@ -127,8 +127,8 @@ checks migrated TypeScript files and tests in strict mode; existing JavaScript i
 The URL checker, trainers, dance groups, courses, sessions, ratings, saved filters, step figures, step-figure
 suggestions, metadata, course PDF generation, shared choreography normalization, and database
 helper are migrated; the remaining backend and tests still require migration.
-Choreography reads, search filters, and their HTTP input preparation are migrated; choreography
-writes and field validation remain in JavaScript.
+Choreography reads and writes, field validation, search filters, and their HTTP input preparation
+are migrated.
 The migrated endpoints validate untrusted input with Zod and pure operations invoked by shared HTTP
 middleware, configured per endpoint with its input source and validator. Flows receive typed
 validation results, with branded types where appropriate. Existing error responses and their precedence are preserved;

@@ -4,7 +4,9 @@ import {
   validateChoreography,
   updateChoreography,
   deleteChoreography,
-} from './choreographies.js';
+  prepareWrite,
+  preparePartialWrite,
+} from './choreographies.ts';
 import {
   getChoreographies,
   getChoreographyById,
@@ -51,14 +53,14 @@ import {
 
 export function createChoreographyRouter() {
   const router = Router();
-  router.post('/api/choreographies', createChoreography);
-  router.post('/api/choreographies/validate', validateChoreography);
+  router.post('/api/choreographies', prepareWrite, createChoreography);
+  router.post('/api/choreographies/validate', prepareWrite, validateChoreography);
   router.get('/api/choreographies', prepareList, getChoreographies);
   router.get('/api/choreographies/search', prepareSearch, searchChoreographies);
   router.get('/api/choreographies/max-count', getMaxChoreographyCount);
   router.get('/api/choreographies/duplicates', prepareDuplicates, checkDuplicateChoreographies);
   router.get('/api/choreographies/:id', prepareReadId, getChoreographyById);
-  router.put('/api/choreographies/:id', updateChoreography);
+  router.put('/api/choreographies/:id', preparePartialWrite, updateChoreography);
   router.delete('/api/choreographies/:id', deleteChoreography);
   router.put('/api/choreographies/:id/rating', prepareRating, rateChoreography);
   router.delete('/api/choreographies/:id/rating', deleteChoreographyRating);

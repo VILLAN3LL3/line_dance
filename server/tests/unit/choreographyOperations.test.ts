@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { getChoreographyFieldIssues } from '../../features/choreographies/validation.js';
+import {
+  preparePartialWriteRequest,
+  prepareWriteRequest,
+} from '../../features/choreographies/validation.ts';
 import {
   normalizeChoreographyInformation,
   prepareChoreography,
-} from '../../features/choreographies/write-operations.js';
+} from '../../features/choreographies/write-operations.ts';
 import {
   combineChoreography,
   formatPage,
@@ -28,19 +31,19 @@ import { buildFilterConditions } from '../../features/choreographies/search-quer
 describe('choreography operations', () => {
   it('collects field issues in their existing order and supports partial updates', () => {
     expect(
-      getChoreographyFieldIssues({
+      prepareWriteRequest({
         name: '',
         level: '',
         step_sheet_link: 'invalid',
         choreography_information: [{ category: '', description: 'text' }],
-      }),
+      }).issues,
     ).toEqual([
       { field: 'step_sheet_link', key: 'invalid_url' },
       { field: 'choreography_information.0.category', key: 'required' },
       { field: 'name', key: 'required' },
       { field: 'level', key: 'required' },
     ]);
-    expect(getChoreographyFieldIssues({}, { partial: true })).toEqual([]);
+    expect(preparePartialWriteRequest({}).issues).toEqual([]);
   });
 
   it('normalizes information and preserves omitted relationships on updates', () => {
@@ -48,7 +51,9 @@ describe('choreography operations', () => {
       normalizeChoreographyInformation([{ category: ' Tag ', description: ' Text ' }]),
     ).toEqual([{ category: 'Tag', description: 'Text' }]);
     expect(normalizeChoreographyInformation('invalid')).toBeNull();
-    expect(prepareChoreography({ name: 'Dance', count: 0 })).toMatchObject({
+    expect(
+      prepareChoreography(prepareWriteRequest({ name: 'Dance', count: 0 }).input),
+    ).toMatchObject({
       name: 'Dance',
       count: null,
       information: undefined,

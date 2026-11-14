@@ -35,7 +35,7 @@ export default [
     },
   },
   {
-    files: ['routes/choreographies.js', 'routes/url-check.ts', 'routes/**/*.ts'],
+    files: ['routes/url-check.ts', 'routes/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

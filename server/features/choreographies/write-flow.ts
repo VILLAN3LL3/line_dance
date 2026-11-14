@@ -1,6 +1,13 @@
-import { getChoreographyFieldIssues } from './validation.js';
-import { prepareChoreography } from './write-operations.js';
-import * as repository from './write-repository.js';
+import type { JsonValue } from '../../utils/json-input.ts';
+import type { ChoreographyIssue, PreparedWriteRequest, WriteRequest } from './validation.ts';
+import { prepareChoreography } from './write-operations.ts';
+import type { Information } from './write-operations.ts';
+import * as repository from './write-repository.ts';
+import type { RelationshipKind } from './write-repository.ts';
+
+type ChoreographyId = string | number;
+type ValidationError = { error: 'validation'; issues: ChoreographyIssue[] };
+type WriteResult<T> = { value: T } | ValidationError | { error: 'not_found' };
 
 const canonicalLevels = [
   'UNKNOWN',
@@ -22,8 +29,11 @@ const canonicalLevels = [
   'HIGH ADVANCED',
 ];
 
-export async function validateChoreography(input, options) {
-  const issues = getChoreographyFieldIssues(input, options);
+export async function validateChoreography({
+  input,
+  issues: fieldIssues,
+}: WriteRequest): Promise<ChoreographyIssue[]> {
+  const issues = [...fieldIssues];
   if (typeof input.level === 'string' && input.level.trim()) {
     if (!(await repository.findLevel(input.level))) {
       issues.push({ field: 'level', key: 'invalid_level' });
@@ -32,7 +42,11 @@ export async function validateChoreography(input, options) {
   return issues;
 }
 
-async function insertRelationships(id, kind, items) {
+async function insertRelationships(
+  id: ChoreographyId,
+  kind: RelationshipKind,
+  items: JsonValue | undefined,
+): Promise<void> {
   if (!items || !Array.isArray(items)) return;
   await items.reduce(
     (previous, item) =>
@@ -45,19 +59,24 @@ async function insertRelationships(id, kind, items) {
   );
 }
 
-async function replaceRelationships(id, kind, items) {
+async function replaceRelationships(
+  id: ChoreographyId,
+  kind: RelationshipKind,
+  items: JsonValue | undefined,
+): Promise<void> {
   if (items === undefined) return;
   await repository.deleteRelationships(kind, id);
   await insertRelationships(id, kind, items);
 }
 
-async function replaceInformation(id, information) {
+async function replaceInformation(id: ChoreographyId, information: Information[]): Promise<void> {
   await repository.deleteInformation(id);
   await information.reduce(
     (previous, item) =>
       previous.then(async () => {
         await repository.ensureInformationCategory(item.category);
         const category = await repository.findInformationCategory(item.category);
+        if (!category) throw new Error('Choreography information category not found');
         await repository.insertInformation(id, category.id, item.description);
       }),
     Promise.resolve(),
@@ -65,7 +84,7 @@ async function replaceInformation(id, information) {
   await repository.deleteUnusedInformationCategories();
 }
 
-async function cleanupOrphanedRecords() {
+async function cleanupOrphanedRecords(): Promise<void> {
   await repository.deleteUnusedAuthors();
   await repository.deleteUnusedTags();
   await repository.deleteOrphanedInformation();
@@ -77,14 +96,18 @@ async function cleanupOrphanedRecords() {
   await repository.deleteOrphanedFigureComponents();
 }
 
-function invalidLevel() {
+function invalidLevel(): ValidationError {
   return { error: 'validation', issues: [{ field: 'level', key: 'invalid_level' }] };
 }
 
-export async function createChoreography(input) {
-  const issues = await validateChoreography(input);
+export async function createChoreography(
+  request: WriteRequest<false>,
+): Promise<WriteResult<number>> {
+  const issues = await validateChoreography(request);
   if (issues.length) return { error: 'validation', issues };
-  const prepared = prepareChoreography(input);
+  const prepared = prepareChoreography(request.input);
+  const information = prepared.information;
+  if (information === null) throw new Error('Invalid choreography information');
   return repository.withChoreographyTransaction(async () => {
     const level = await repository.findLevel(prepared.level);
     if (!level) return invalidLevel();
@@ -92,16 +115,22 @@ export async function createChoreography(input) {
     await insertRelationships(result.id, 'authors', prepared.authors);
     await insertRelationships(result.id, 'figures', prepared.step_figures);
     await insertRelationships(result.id, 'tags', prepared.tags);
-    await replaceInformation(result.id, prepared.information || []);
+    await replaceInformation(result.id, information ?? []);
     return { value: result.id };
   });
 }
 
-export async function updateChoreography(id, input) {
+export async function updateChoreography(
+  id: ChoreographyId,
+  request: PreparedWriteRequest,
+): Promise<WriteResult<true>> {
   if (!(await repository.findChoreography(id))) return { error: 'not_found' };
-  const issues = await validateChoreography(input, { partial: true });
+  if ('exception' in request) throw request.exception;
+  const issues = await validateChoreography(request);
   if (issues.length) return { error: 'validation', issues };
-  const prepared = prepareChoreography(input);
+  const prepared = prepareChoreography(request.input);
+  const information = prepared.information;
+  if (information === null) throw new Error('Invalid choreography information');
   return repository.withChoreographyTransaction(async () => {
     if (!(await repository.findChoreography(id))) return { error: 'not_found' };
     let levelId = null;
@@ -114,13 +143,13 @@ export async function updateChoreography(id, input) {
     await replaceRelationships(id, 'authors', prepared.authors);
     await replaceRelationships(id, 'figures', prepared.step_figures);
     await replaceRelationships(id, 'tags', prepared.tags);
-    if (prepared.information !== undefined) await replaceInformation(id, prepared.information);
+    if (information !== undefined) await replaceInformation(id, information);
     await cleanupOrphanedRecords();
     return { value: true };
   });
 }
 
-export async function deleteChoreography(id) {
+export async function deleteChoreography(id: ChoreographyId): Promise<WriteResult<true>> {
   return repository.withChoreographyTransaction(async () => {
     await repository.deleteInformation(id);
     await repository.deleteRelationships('authors', id);
