@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeSavedFilters } from '../../features/saved-filters/operations.js';
+import { normalizeSavedFilters } from '../../features/saved-filters/operations.ts';
 
 describe('normalizeSavedFilters', () => {
   // ---------------------------------------------------------------------------
@@ -245,5 +245,12 @@ describe('normalizeSavedFilters', () => {
     const result = normalizeSavedFilters({ search: 'Waltz', unknown: 'value', extra: true });
     expect(result).toEqual({ search: 'Waltz' });
     expect(result).not.toHaveProperty('unknown');
+  });
+
+  it('preserves numeric coercion and reports conversion errors', () => {
+    expect(
+      normalizeSavedFilters({ max_level_value: [3], max_count: '12suffix', min_rating: '2.5' }),
+    ).toEqual({ max_level_value: 3, max_count: 12, min_rating: 2 });
+    expect(() => normalizeSavedFilters({ max_count: { toString: null } })).toThrow(TypeError);
   });
 });

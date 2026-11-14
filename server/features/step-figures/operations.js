@@ -1,4 +1,4 @@
-import { normalizeIdArray, normalizeStringField } from '../../utils/choreographyNormalization.js';
+import { normalizeIdArray, normalizeStringField } from '../../utils/choreographyNormalization.ts';
 
 export function validateFigureId(rawId) {
   const id = Number.parseInt(rawId, 10);

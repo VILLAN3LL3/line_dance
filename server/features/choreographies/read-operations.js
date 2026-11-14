@@ -1,4 +1,4 @@
-import { normalizeStringArray } from '../../utils/choreographyNormalization.js';
+import { normalizeStringArray } from '../../utils/choreographyNormalization.ts';
 
 export function parsePagination(query) {
   const page = Number.parseInt(query.page, 10) || 1;

@@ -1,4 +1,4 @@
-import { normalizeNonNegativeInteger } from '../../utils/choreographyNormalization.js';
+import { normalizeNonNegativeInteger } from '../../utils/choreographyNormalization.ts';
 
 export function normalizeQueryParam(param) {
   if (Array.isArray(param)) return param;

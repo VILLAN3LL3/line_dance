@@ -40,4 +40,20 @@ describe('saved filter flows', () => {
     );
     expect((await filters.getConfigurations())[0]).toMatchObject({ name: 'First', filters: {} });
   });
+
+  it('persists compatible filter coercions and rejects conversion failures', async () => {
+    const saved = await filters.saveConfiguration({
+      name: 'Numbers',
+      filters: { max_count: '12suffix', min_rating: [3] },
+    });
+    expect(saved.value.filters).toEqual({ max_count: 12, min_rating: 3 });
+    await expect(
+      filters.updateConfiguration(String(saved.value.id), {
+        filters: { max_count: { toString: null } },
+      }),
+    ).rejects.toThrow(TypeError);
+    expect(await filters.getConfigurations()).toMatchObject([
+      { filters: { max_count: 12, min_rating: 3 } },
+    ]);
+  });
 });

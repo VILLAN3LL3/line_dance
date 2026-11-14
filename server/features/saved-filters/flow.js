@@ -5,7 +5,7 @@ import {
   validateConfigurationId,
   validateConfigurationName,
   validateConfigurationUpdate,
-} from './operations.js';
+} from './operations.ts';
 import * as filters from './repository.js';
 
 function readStoredFilters(value) {

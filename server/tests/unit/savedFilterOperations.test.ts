@@ -4,7 +4,7 @@ import {
   validateConfigurationId,
   validateConfigurationName,
   validateConfigurationUpdate,
-} from '../../features/saved-filters/operations.js';
+} from '../../features/saved-filters/operations.ts';
 
 describe('saved filter operations', () => {
   it('validates configuration IDs and names', () => {

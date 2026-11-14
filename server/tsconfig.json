@@ -11,5 +11,11 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["features/**/*.ts", "routes/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
+  "include": [
+    "features/**/*.ts",
+    "routes/**/*.ts",
+    "scripts/**/*.ts",
+    "tests/**/*.ts",
+    "utils/**/*.ts"
+  ]
 }
