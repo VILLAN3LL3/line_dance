@@ -3,7 +3,7 @@ import request from 'supertest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import app from '../setup/testApp.js';
 import { allQuery, runQuery } from '../../scripts/db.ts';
-import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.js';
+import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.ts';
 
 beforeAll(async () => {
   await setupTestDb();
@@ -21,7 +21,7 @@ describe('dance group migration regressions', () => {
   it('backfills each group maximum without overwriting existing values', async () => {
     await runQuery(
       `INSERT INTO dance_groups (name, max_group_level_value)
-       VALUES ('First', NULL), ('Second', NULL), ('Existing', 123), ('Unknown', NULL)`,
+       VALUES ('First', NULL), ('Second', NULL), ('Existing', 123), ('Unknown', NULL), ('Invalid value', NULL)`,
       [],
       'danceGroups',
     );
@@ -32,10 +32,11 @@ describe('dance group migration regressions', () => {
       'danceGroups',
     );
     try {
+      await runQuery("INSERT INTO levels (name, value) VALUES ('Unscorable', 'not-a-number')");
       await runQuery(
         `INSERT INTO group_levels (dance_group_id, level)
-         VALUES (?, 'BEGINNER'), (?, ' improver '), (?, 'BEGINNER'), (?, 'ADVANCED'), (?, 'not a level')`,
-        [groups[0].id, groups[0].id, groups[1].id, groups[2].id, groups[3].id],
+         VALUES (?, 'BEGINNER'), (?, ' improver '), (?, 'BEGINNER'), (?, 'ADVANCED'), (?, 'not a level'), (?, 'Unscorable')`,
+        [groups[0].id, groups[0].id, groups[1].id, groups[2].id, groups[3].id, groups[4].id],
         'danceGroups',
       );
       await runQuery(
@@ -49,9 +50,10 @@ describe('dance group migration regressions', () => {
         [],
         'danceGroups',
       );
-      expect(rows.map((row) => row.max_group_level_value)).toEqual([70, 30, 123, null]);
+      expect(rows.map((row) => row.max_group_level_value)).toEqual([70, 30, 123, null, null]);
     } finally {
       await runQuery('DROP TABLE group_levels', [], 'danceGroups');
+      await runQuery("DELETE FROM levels WHERE name = 'Unscorable'");
     }
   });
 

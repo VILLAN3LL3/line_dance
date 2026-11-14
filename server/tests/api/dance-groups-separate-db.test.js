@@ -5,7 +5,7 @@ import sqlite3 from 'sqlite3';
 import request from 'supertest';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { runChoreographyMigrations } from '../../migrations/choreography-migrations.js';
-import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.js';
+import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.ts';
 import { allQuery, closeDatabase, runQuery, setDatabaseConnection } from '../../scripts/db.ts';
 import app from '../setup/testApp.js';
 

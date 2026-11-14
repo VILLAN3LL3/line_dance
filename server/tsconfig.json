@@ -14,6 +14,7 @@
   "include": [
     "app.ts",
     "features/**/*.ts",
+    "migrations/**/*.ts",
     "routes/**/*.ts",
     "scripts/**/*.ts",
     "tests/**/*.ts",

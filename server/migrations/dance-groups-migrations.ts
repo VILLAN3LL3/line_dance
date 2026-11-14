@@ -1,5 +1,9 @@
 import { allQuery, getQuery, runQuery, withTransaction } from '../scripts/db.ts';
 
+type Migration = { id: string; up: () => Promise<void> };
+type LevelRow = { name_upper: string | null; value: string | number };
+type GroupLevelRow = { dance_group_id: string | number | null; level: string | null };
+
 const dbName = 'danceGroups';
 
 const learnedChoreographiesViewSql = `
@@ -22,7 +26,7 @@ const learnedChoreographiesViewSql = `
   GROUP BY dg.id, sc.choreography_id
 `;
 
-async function ensureMigrationTable() {
+async function ensureMigrationTable(): Promise<void> {
   await runQuery(
     `CREATE TABLE IF NOT EXISTS schema_migrations (
       id TEXT PRIMARY KEY,
@@ -33,13 +37,21 @@ async function ensureMigrationTable() {
   );
 }
 
-async function hasMigration(id) {
-  const row = await getQuery(`SELECT id FROM schema_migrations WHERE id = ?`, [id], dbName);
+async function hasMigration(id: string): Promise<boolean> {
+  const row = await getQuery<{ id: string }>(
+    `SELECT id FROM schema_migrations WHERE id = ?`,
+    [id],
+    dbName,
+  );
   return Boolean(row);
 }
 
-async function ensureColumnExists(tableName, columnName, columnDefinition) {
-  const columns = await allQuery(`PRAGMA table_info(${tableName})`, [], dbName);
+async function ensureColumnExists(
+  tableName: string,
+  columnName: string,
+  columnDefinition: string,
+): Promise<void> {
+  const columns = await allQuery<{ name: string }>(`PRAGMA table_info(${tableName})`, [], dbName);
   const hasColumn = columns.some((column) => column.name === columnName);
   if (!hasColumn) {
     await runQuery(
@@ -50,13 +62,11 @@ async function ensureColumnExists(tableName, columnName, columnDefinition) {
   }
 }
 
-async function seedDefaultBaseStepFigures() {
-  const figures = await allQuery('SELECT id FROM step_figures WHERE LOWER(name) IN (?, ?, ?, ?)', [
-    'hip bump',
-    'hip sway',
-    'kick',
-    'run',
-  ]);
+async function seedDefaultBaseStepFigures(): Promise<void> {
+  const figures = await allQuery<{ id: number }>(
+    'SELECT id FROM step_figures WHERE LOWER(name) IN (?, ?, ?, ?)',
+    ['hip bump', 'hip sway', 'kick', 'run'],
+  );
   if (figures.length === 0) {
     return;
   }
@@ -69,7 +79,7 @@ async function seedDefaultBaseStepFigures() {
   );
 }
 
-const migrations = [
+const migrations: Migration[] = [
   {
     id: '001_create_dance_groups_core_schema',
     up: async () => {
@@ -180,7 +190,7 @@ const migrations = [
     up: async () => {
       await ensureColumnExists('dance_groups', 'max_group_level_value', 'INTEGER');
 
-      const levelRows = await allQuery(
+      const levelRows = await allQuery<LevelRow>(
         `SELECT UPPER(name) AS name_upper, value
          FROM levels
          WHERE value IS NOT NULL`,
@@ -192,7 +202,7 @@ const migrations = [
         levelRows.map((row) => [String(row.name_upper), Number(row.value)]),
       );
 
-      const groupLevelRows = await allQuery(
+      const groupLevelRows = await allQuery<GroupLevelRow>(
         `SELECT dance_group_id, level
          FROM group_levels
          ORDER BY dance_group_id ASC`,
@@ -200,7 +210,7 @@ const migrations = [
         dbName,
       );
 
-      const maxValueByGroup = new Map();
+      const maxValueByGroup = new Map<number, number>();
 
       for (const row of groupLevelRows) {
         const danceGroupId = Number(row.dance_group_id);
@@ -212,12 +222,12 @@ const migrations = [
         }
 
         const value = levelValueByName.get(levelNameUpper);
-        if (!Number.isFinite(value)) {
+        if (value === undefined || !Number.isFinite(value)) {
           continue;
         }
 
         const currentMax = maxValueByGroup.get(danceGroupId);
-        if (!Number.isFinite(currentMax) || value > currentMax) {
+        if (currentMax === undefined || !Number.isFinite(currentMax) || value > currentMax) {
           maxValueByGroup.set(danceGroupId, value);
         }
       }
@@ -381,7 +391,7 @@ migrations.push(
   },
 );
 
-async function applyMigration(migration) {
+async function applyMigration(migration: Migration): Promise<void> {
   const alreadyApplied = await hasMigration(migration.id);
   if (alreadyApplied) {
     return;
@@ -396,7 +406,7 @@ async function applyMigration(migration) {
   if (applied) console.log(`Applied migration: ${migration.id}`);
 }
 
-export async function runDanceGroupsMigrations() {
+export async function runDanceGroupsMigrations(): Promise<void> {
   await ensureMigrationTable();
   await migrations.reduce(
     (previous, migration) => previous.then(() => applyMigration(migration)),

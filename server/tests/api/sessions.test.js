@@ -3,7 +3,7 @@ import request from 'supertest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.js';
 import app from '../setup/testApp.js';
 import { runQuery } from '../../scripts/db.ts';
-import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.js';
+import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.ts';
 
 beforeAll(async () => {
   await setupTestDb();
