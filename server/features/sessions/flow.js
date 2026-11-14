@@ -1,7 +1,7 @@
-import { rearrangeSessionContents } from './content-flow.js';
-import { serializeAssignment } from './operations.js';
+import { rearrangeSessionContents } from './content-flow.ts';
+import { serializeAssignment } from './operations.ts';
 import * as sessions from './repository.js';
-import { distributeRepetitions } from './repetition-repository.js';
+import { distributeRepetitions } from './repetition-repository.ts';
 import {
   validateAssignment,
   validateNewSession,

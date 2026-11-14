@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { planRearrangement, serializeAssignment } from '../../features/sessions/operations.js';
+import { planRearrangement, serializeAssignment } from '../../features/sessions/operations.ts';
 import {
   validateAssignment,
   validateNewSession,

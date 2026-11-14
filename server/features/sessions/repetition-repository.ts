@@ -1,8 +1,8 @@
 import { runQuery } from '../../scripts/db.ts';
 
-const dbName = 'danceGroups';
+const dbName = 'danceGroups' as const;
 
-export async function clearAutomaticRepetitions(courseId) {
+export async function clearAutomaticRepetitions(courseId: number): Promise<void> {
   await runQuery(
     `DELETE FROM session_choreographies WHERE repeat_source_id IS NOT NULL
      AND session_id IN (SELECT id FROM sessions WHERE dance_course_id = ?)`,
@@ -11,7 +11,10 @@ export async function clearAutomaticRepetitions(courseId) {
   );
 }
 
-export async function distributeRepetitions(courseId, sourceId = null) {
+export async function distributeRepetitions(
+  courseId: number,
+  sourceId: number | null = null,
+): Promise<void> {
   await runQuery(
     `WITH ordered_sessions AS (
        SELECT id, ROW_NUMBER() OVER (ORDER BY session_date, id) AS position

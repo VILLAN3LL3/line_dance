@@ -1,26 +1,41 @@
 import { allQuery, runQuery } from '../../scripts/db.ts';
+import type { WriteResult } from '../../scripts/db.ts';
+import type { RearrangementSession } from './operations.ts';
 
-const dbName = 'danceGroups';
+export type SessionContent = RearrangementSession & { comment: string | null };
+export type SessionChoreography = {
+  id: number;
+  session_id: number;
+  choreography_id: number;
+  created_at: string | null;
+  is_new: number;
+  repeat_source_id: number | null;
+  auto_repeat: number;
+};
 
-export async function getSessionsForRearrangement(sessionIds) {
+const dbName = 'danceGroups' as const;
+
+export async function getSessionsForRearrangement(sessionIds: number[]): Promise<SessionContent[]> {
   const placeholders = sessionIds.map(() => '?').join(',');
-  return allQuery(
+  return allQuery<SessionContent>(
     `SELECT id, dance_course_id, comment FROM sessions WHERE id IN (${placeholders}) ORDER BY session_date, id`,
     sessionIds,
     dbName,
   );
 }
 
-export function listSessionChoreographies(sessionIds) {
+export async function listSessionChoreographies(
+  sessionIds: number[],
+): Promise<SessionChoreography[]> {
   const placeholders = sessionIds.map(() => '?').join(',');
-  return allQuery(
+  return allQuery<SessionChoreography>(
     `SELECT * FROM session_choreographies WHERE session_id IN (${placeholders})`,
     sessionIds,
     dbName,
   );
 }
 
-export function deleteSessionChoreographies(sessionIds) {
+export async function deleteSessionChoreographies(sessionIds: number[]): Promise<WriteResult> {
   const placeholders = sessionIds.map(() => '?').join(',');
   return runQuery(
     `DELETE FROM session_choreographies WHERE session_id IN (${placeholders})`,
@@ -29,7 +44,10 @@ export function deleteSessionChoreographies(sessionIds) {
   );
 }
 
-export async function moveSessionComments(sessions, targets) {
+export async function moveSessionComments(
+  sessions: SessionContent[],
+  targets: Map<number, number>,
+): Promise<void> {
   const sessionIds = sessions.map((session) => session.id);
   const placeholders = sessionIds.map(() => '?').join(',');
   await runQuery(
@@ -39,7 +57,10 @@ export async function moveSessionComments(sessions, targets) {
   );
 }
 
-export async function restoreSessionChoreographies(choreographies, targets) {
+export async function restoreSessionChoreographies(
+  choreographies: SessionChoreography[],
+  targets: Map<number, number>,
+): Promise<void> {
   if (choreographies.length === 0) return;
   await runQuery(
     `INSERT INTO session_choreographies (id, session_id, choreography_id, created_at, is_new, repeat_source_id, auto_repeat) VALUES ${choreographies.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(',')}`,

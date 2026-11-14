@@ -95,4 +95,32 @@ describe('session integration flows', () => {
       error: 'session_not_found',
     });
   });
+
+  it('rolls back comments, assignments and repetitions if restoring contents fails', async () => {
+    const slots = await createCourseSessions();
+    await sessions.addAssignment({ session_id: slots[0].id, choreography_id: 42 });
+    const beforeSessions = await sessions.getSessions(slots[0].dance_course_id);
+    const beforeAssignments = await Promise.all(
+      slots.map(async (slot) => (await sessions.getAssignments(slot.id)).value),
+    );
+    await runQuery(
+      `CREATE TEMP TRIGGER fail_content_restore BEFORE INSERT ON session_choreographies
+       WHEN NEW.repeat_source_id IS NULL BEGIN SELECT RAISE(ABORT, 'Restore failure'); END`,
+      [],
+      'danceGroups',
+    );
+    try {
+      await expect(
+        sessions.reorderContents({ session_ids: [slots[1].id, slots[0].id] }),
+      ).rejects.toThrow('Restore failure');
+      expect(await sessions.getSessions(slots[0].dance_course_id)).toEqual(beforeSessions);
+      expect(
+        await Promise.all(
+          slots.map(async (slot) => (await sessions.getAssignments(slot.id)).value),
+        ),
+      ).toEqual(beforeAssignments);
+    } finally {
+      await runQuery('DROP TRIGGER fail_content_restore', [], 'danceGroups');
+    }
+  });
 });
