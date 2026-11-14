@@ -14,9 +14,11 @@ import {
 import {
   expandStepFigureNames,
   normalizeMatchMode,
+  normalizeNumericQueryParam,
+  normalizeSearchText,
   normalizeUniqueTextQueryParam,
-} from '../../features/choreographies/search-operations.js';
-import { buildFilterConditions } from '../../features/choreographies/search-query.js';
+} from '../../features/choreographies/search-operations.ts';
+import { buildFilterConditions } from '../../features/choreographies/search-query.ts';
 
 describe('choreography operations', () => {
   it('collects field issues in their existing order and supports partial updates', () => {
@@ -129,5 +131,14 @@ describe('choreography search operations', () => {
     expect(result.params).toEqual(['Fun', 3]);
     expect(result.stepFilter.havingParams).toEqual(['Kick', 'Mambo']);
     expect(result.stepFilter.groupBy).toBe(' GROUP BY c.id');
+  });
+
+  it('preserves object query values, numeric prefixes and quoted search normalization', () => {
+    expect(
+      normalizeUniqueTextQueryParam({ first: ' Kick ', second: 'kick', third: 3, empty: null }),
+    ).toEqual(['Kick', '3']);
+    expect(normalizeNumericQueryParam(['bad', '3suffix', 'invalid'])).toBe(3);
+    expect(normalizeSearchText('  “Dance   Song”  ')).toBe('Dance Song');
+    expect(() => normalizeUniqueTextQueryParam({ item: { toString: null } })).toThrow(TypeError);
   });
 });

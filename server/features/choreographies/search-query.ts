@@ -5,9 +5,41 @@ import {
   normalizeQueryParam,
   normalizeSearchText,
   normalizeUniqueTextQueryParam,
-} from './search-operations.js';
+  stringifyQueryValue,
+} from './search-operations.ts';
+import type { QueryValue } from './search-operations.ts';
 
-export function buildFilterConditions(filterObj) {
+export type SearchFilters = {
+  search?: QueryValue;
+  song_artist?: QueryValue;
+  level?: QueryValue;
+  max_level_value?: QueryValue;
+  step_figures?: QueryValue;
+  step_figures_match_mode?: QueryValue;
+  without_step_figures?: QueryValue;
+  required_step_figures?: QueryValue;
+  tags?: QueryValue;
+  excluded_tags?: QueryValue;
+  authors?: QueryValue;
+  min_rating?: QueryValue;
+};
+type QueryParameter = string | number;
+type StepFilter = {
+  joins: string[];
+  conditions: string[];
+  groupBy: string;
+  having: string;
+  havingParams: string[];
+  params: string[];
+};
+type FilterConditions = {
+  conditions: string[];
+  params: QueryParameter[];
+  joins: string[];
+  stepFilter: StepFilter;
+};
+
+export function buildFilterConditions(filterObj: SearchFilters): FilterConditions {
   const {
     search,
     song_artist,
@@ -22,9 +54,9 @@ export function buildFilterConditions(filterObj) {
     authors,
     min_rating,
   } = filterObj;
-  const conditions = [];
-  const params = [];
-  const joins = [];
+  const conditions: string[] = [];
+  const params: QueryParameter[] = [];
+  const joins: string[] = [];
 
   if (search) {
     // Normalize smart/curly apostrophes in both source and query for consistent title matching.
@@ -37,7 +69,7 @@ export function buildFilterConditions(filterObj) {
   if (song_artist) {
     // Search for song or artist (case-insensitive, partial match)
     conditions.push('(LOWER(c.song) LIKE LOWER(?) OR LOWER(c.artist) LIKE LOWER(?))');
-    const searchTerm = `%${song_artist}%`;
+    const searchTerm = `%${stringifyQueryValue(song_artist)}%`;
     params.push(searchTerm, searchTerm);
   }
 
@@ -105,8 +137,12 @@ export function buildFilterConditions(filterObj) {
   return { conditions, params, joins, stepFilter };
 }
 
-function buildStepFiguresFilter(step_figures, step_figures_match_mode, without_step_figures) {
-  const result = {
+function buildStepFiguresFilter(
+  step_figures: QueryValue,
+  step_figures_match_mode: QueryValue,
+  without_step_figures: QueryValue,
+): StepFilter {
+  const result: StepFilter = {
     joins: [],
     conditions: [],
     groupBy: '',
@@ -148,9 +184,12 @@ function buildStepFiguresFilter(step_figures, step_figures_match_mode, without_s
   return result;
 }
 
-function buildLevelFilter(level, max_level_value) {
+function buildLevelFilter(
+  level: QueryValue,
+  max_level_value: QueryValue,
+): { condition: string; params: QueryParameter[] } {
   const levelList = normalizeQueryParam(level)
-    .map((value) => String(value).trim())
+    .map((value) => stringifyQueryValue(value).trim())
     .filter(Boolean);
   const maxLevelValue = normalizeNumericQueryParam(max_level_value);
 
@@ -158,8 +197,8 @@ function buildLevelFilter(level, max_level_value) {
     return { condition: '', params: [] };
   }
 
-  const parts = [];
-  const params = [];
+  const parts: string[] = [];
+  const params: QueryParameter[] = [];
 
   if (levelList.length > 0) {
     const placeholders = levelList.map(() => 'UPPER(?)').join(',');
@@ -178,8 +217,17 @@ function buildLevelFilter(level, max_level_value) {
   };
 }
 
-function buildRelationshipFilter(items, relationshipTable, relationshipPkCol, entityTable) {
-  const result = { joins: [], conditions: [], params: [] };
+function buildRelationshipFilter(
+  items: QueryValue,
+  relationshipTable: string,
+  relationshipPkCol: string,
+  entityTable: string,
+): { joins: string[]; conditions: string[]; params: string[] } {
+  const result: { joins: string[]; conditions: string[]; params: string[] } = {
+    joins: [],
+    conditions: [],
+    params: [],
+  };
   const itemList = normalizeUniqueTextQueryParam(items);
   if (itemList.length > 0) {
     result.joins = [
@@ -194,8 +242,13 @@ function buildRelationshipFilter(items, relationshipTable, relationshipPkCol, en
   return result;
 }
 
-function buildExcludedRelationshipFilter(items, relationshipTable, relationshipPkCol, entityTable) {
-  const result = { conditions: [], params: [] };
+function buildExcludedRelationshipFilter(
+  items: QueryValue,
+  relationshipTable: string,
+  relationshipPkCol: string,
+  entityTable: string,
+): { conditions: string[]; params: string[] } {
+  const result: { conditions: string[]; params: string[] } = { conditions: [], params: [] };
   const itemList = normalizeUniqueTextQueryParam(items);
 
   if (itemList.length > 0) {

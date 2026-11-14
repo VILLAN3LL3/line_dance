@@ -100,4 +100,43 @@ describe('choreography integration flows', () => {
       }),
     ).toMatchObject({ data: [], pagination: { total: 0 } });
   });
+
+  it('combines exact hierarchy matching with ratings, relationships and exclusions', async () => {
+    const first = await figures.createFigure(validateFigure({ name: 'First' }));
+    const second = await figures.createFigure(validateFigure({ name: 'Second' }));
+    await figures.createFigure(
+      validateFigure({ name: 'Combined', component_ids: [first.value.id, second.value.id] }),
+    );
+    const match = await choreography.createChoreography({
+      name: 'Dance match',
+      level: 'BEGINNER',
+      authors: ['Alice'],
+      tags: ['Fun'],
+      step_figures: ['Combined'],
+    });
+    const excluded = await choreography.createChoreography({
+      name: 'Dance excluded',
+      level: 'BEGINNER',
+      authors: ['Alice'],
+      tags: ['Fun', 'Bad'],
+      step_figures: ['Combined'],
+    });
+    await runQuery(
+      'INSERT INTO personal_data.choreography_ratings (choreography_id, rating) VALUES (?, 4), (?, 4)',
+      [match.value, excluded.value],
+    );
+
+    const result = await reads.searchChoreographies({
+      search: 'dance',
+      level: ['BEGINNER'],
+      step_figures: ['First', 'Second'],
+      step_figures_match_mode: 'exact',
+      required_step_figures: ['Combined'],
+      authors: ['Alice'],
+      tags: ['Fun'],
+      excluded_tags: ['Bad'],
+      min_rating: '3',
+    });
+    expect(result.data.map((item) => item.id)).toEqual([match.value]);
+  });
 });

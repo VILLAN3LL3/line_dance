@@ -1,5 +1,5 @@
 import { allQuery, getQuery } from '../../scripts/db.ts';
-import { buildFilterConditions } from './search-query.js';
+import { buildFilterConditions } from './search-query.ts';
 
 export function listChoreographies(limit, offset) {
   return allQuery(

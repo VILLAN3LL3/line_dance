@@ -646,6 +646,15 @@ describe('GET /api/choreographies/search — bracket-notation query parser regre
     expect(res.body.data).toHaveLength(1);
     expect(res.body.data[0].name).toBe('Cha Cha Fun');
   });
+
+  it('combines named bracket-object filters and tag exclusions', async () => {
+    await seedDances();
+    const res = await searchRaw(
+      'level[first]=Beginner&level[second]=Advanced&tags[one]=classic&excluded_tags[one]=slow',
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.data.map((item) => item.name)).toEqual(['Argentine Tango']);
+  });
 });
 
 // ---------------------------------------------------------------------------

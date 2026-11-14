@@ -9,7 +9,7 @@ import {
   expandStepFigureNames,
   normalizeMatchMode,
   normalizeUniqueTextQueryParam,
-} from './search-operations.js';
+} from './search-operations.ts';
 import * as repository from './read-repository.js';
 
 async function enrichChoreography(choreography) {
