@@ -34,9 +34,13 @@ export default [
       'routes/step-figure-suggestions.js',
       'routes/saved-filters.js',
       'routes/step-figures.js',
+      'routes/choreographies.js',
+      'routes/choreography-search.js',
+      'routes/url-check.js',
     ],
     rules: {
       'no-restricted-imports': ['error', { patterns: ['**/scripts/db.js', 'sqlite3'] }],
+      'no-restricted-globals': ['error', { name: 'fetch', message: 'Use an application flow.' }],
     },
   },
   {
@@ -61,9 +65,11 @@ export default [
             '**/routes/**',
             '**/*repository.js',
             '**/*flow.js',
+            '**/*gateway.js',
           ],
         },
       ],
+      'no-restricted-globals': ['error', { name: 'fetch', message: 'Operations must be pure.' }],
     },
   },
 ];

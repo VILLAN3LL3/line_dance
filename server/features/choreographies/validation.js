@@ -1,5 +1,3 @@
-import { getQuery } from '../scripts/db.js';
-
 function getChoreographyLinkIssues(data) {
   const issues = [];
   for (const field of ['step_sheet_link', 'demo_video_url', 'tutorial_video_url']) {
@@ -42,19 +40,13 @@ function getChoreographyInformationIssues(data) {
   return issues;
 }
 
-export async function getChoreographyValidationIssues(data, { partial = false } = {}) {
+export function getChoreographyFieldIssues(data, { partial = false } = {}) {
   const issues = [...getChoreographyLinkIssues(data), ...getChoreographyInformationIssues(data)];
   for (const field of ['name', 'level']) {
     if (partial && data[field] === undefined) continue;
     if (typeof data[field] !== 'string' || !data[field].trim()) {
       issues.push({ field, key: 'required' });
     }
-  }
-  if (typeof data.level === 'string' && data.level.trim()) {
-    const level = await getQuery('SELECT id FROM levels WHERE UPPER(name) = UPPER(?)', [
-      data.level,
-    ]);
-    if (!level) issues.push({ field: 'level', key: 'invalid_level' });
   }
   return issues;
 }

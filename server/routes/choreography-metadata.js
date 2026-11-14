@@ -1,5 +1,5 @@
 import * as metadata from '../features/metadata/flow.js';
-import { captureError } from './choreography-shared.js';
+import { captureError } from '../utils/choreographyRouteErrors.js';
 
 const levelErrors = {
   name_required: [400, 'Level name is required'],

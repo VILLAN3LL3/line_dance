@@ -108,26 +108,23 @@ databases and migrations, starts the listener, and handles shutdown. Production 
 same app and route registrations. Choreography and dance-group HTTP routes are registered in their
 respective router modules under `server/routes/`.
 
-Groups, trainers, courses, sessions, step figures and suggestions, course PDF preparation,
-choreography metadata, ratings, and saved filters are separated by responsibility under
-`server/features/`: pure operations
-have no database or HTTP dependencies; flows coordinate operations, persistence, and transactions; repositories contain
-SQLite queries; and route handlers translate flow results into HTTP responses. The PDF renderer
-writes the prepared document to the HTTP response. Unit tests cover the pure operations, while
-integration tests exercise flows with SQLite and API tests verify HTTP contracts. ESLint enforces
-import restrictions for these migrated areas.
+Backend features live under `server/features/`. Pure operations normalize, validate, and transform
+data without database or HTTP dependencies; flows coordinate operations, persistence, external
+services, and transactions; repositories own SQLite queries; and route handlers translate flow
+results into HTTP responses. The URL checker uses an HTTP gateway, and the PDF renderer writes the
+prepared document to the response. Search SQL is assembled on the repository side, while
+step-figure hierarchy expansion is a pure operation.
 
-The remaining backend is not yet fully separated along these boundaries. Choreography writes use
-`choreography-write.js`; catalog route modules still mix some responsibilities.
-Search condition building and step-figure hierarchy expansion are kept in
-`choreography-search-filters.js`.
+Unit tests cover operations; integration tests exercise flows with SQLite or the HTTP gateway;
+API tests verify HTTP contracts. ESLint enforces import restrictions and prevents direct network
+requests in route handlers and pure operations.
 
 The database helper `withTransaction()` serializes transactions and queries per SQLite connection.
 Choreography writes (including cleanup), group/base-figure changes, trainer writes, course creation
-and updates, rating updates, level creation, saved-filter and step-figure writes, session creation, updates and rearrangement,
-assignment creation, and migrations use transaction boundaries to prevent partial writes or lost
-updates. A failure during choreography cleanup rolls back the operation and returns an error. The
-`personal_data` database is attached to the choreography connection; the separate
+and updates, rating updates, level creation, saved-filter and step-figure writes, session creation,
+updates and rearrangement, assignment creation, and migrations use transaction boundaries to
+prevent partial writes or lost updates. A failure during choreography cleanup rolls back the
+operation and returns an error. The `personal_data` database is attached to the choreography connection; the separate
 dance-groups and choreography connections do not share an atomic transaction. Cross-database reads
 are therefore not a single consistent snapshot.
 

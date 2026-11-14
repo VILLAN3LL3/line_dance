@@ -1,5 +1,5 @@
 import * as ratings from '../features/ratings/flow.js';
-import { captureError } from './choreography-shared.js';
+import { captureError } from '../utils/choreographyRouteErrors.js';
 
 const ratingErrors = {
   invalid_id: [400, 'Invalid choreography id'],
