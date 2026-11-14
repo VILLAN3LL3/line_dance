@@ -428,6 +428,21 @@ describe('GET /api/dance-courses/:id/export-pdf', () => {
     expect(res.body.toString('latin1')).toContain('%%EOF');
   });
 
+  it('renders the placeholder for a single playlist link', async () => {
+    const group = await createGroup('PDF Placeholder Group');
+    const course = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      name: 'PDF Placeholder Course',
+      youtube_playlist_url: 'https://example.com/playlist',
+    });
+
+    const res = await request(app).get(`/api/dance-courses/${course.body.id}/export-pdf`);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.body.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(res.body.toString('latin1')).toContain('%%EOF');
+  });
+
   it('returns 404 for non-existent course id', async () => {
     const res = await request(app).get('/api/dance-courses/99999/export-pdf');
     expect(res.status).toBe(404);

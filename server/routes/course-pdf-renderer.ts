@@ -1,9 +1,24 @@
 import { readFileSync } from 'node:fs';
+import type { Writable } from 'node:stream';
 import PDFDocument from 'pdfkit';
 import SVGtoPDF from 'svg-to-pdfkit';
-import { hslToHex } from '../utils/colorUtils.js';
+import { hslToHex } from '../utils/colorUtils.ts';
+import type { CoursePdfDocument } from '../features/courses/pdf-flow.ts';
+import type { CoursePdf } from '../features/courses/pdf-operations.ts';
 
-function loadOptionalAssetBuffer(relativeAssetPath) {
+type PlaceholderLayout = {
+  linksWithQr: CoursePdfDocument['linksWithQr'];
+  columns: number;
+  leftMargin: number;
+  cardWidth: number;
+  columnGap: number;
+  gridStartY: number;
+  rowHeight: number;
+  cardHeight?: number;
+};
+type PlaceholderColors = { headerBg: string; title: string };
+
+function loadOptionalAssetBuffer(relativeAssetPath: string): Buffer | null {
   try {
     return readFileSync(new URL(relativeAssetPath, import.meta.url));
   } catch {
@@ -11,7 +26,7 @@ function loadOptionalAssetBuffer(relativeAssetPath) {
   }
 }
 
-function loadOptionalAssetText(relativeAssetPath) {
+function loadOptionalAssetText(relativeAssetPath: string): string | null {
   try {
     return readFileSync(new URL(relativeAssetPath, import.meta.url), 'utf8');
   } catch {
@@ -23,7 +38,17 @@ const trainerPhoneIcon = loadOptionalAssetBuffer('../assets/icons8-mobile-phone-
 const trainerEmailIcon = loadOptionalAssetBuffer('../assets/icons8-email-90.png');
 const dancingIconSvg = loadOptionalAssetText('../assets/dancing.svg');
 
-function courseIdToColors(courseId) {
+function courseIdToColors(courseId: number): {
+  headerBg: string;
+  headerBorder: string;
+  title: string;
+  surfaceBg: string;
+  surfaceBorder: string;
+  cardBg: string;
+  cardBorder: string;
+  qrBorder: string;
+  strongBorder: string;
+} {
   const hue = (courseId * 137.508) % 360;
   return {
     headerBg: hslToHex(hue, 75, 95),
@@ -39,7 +64,7 @@ function courseIdToColors(courseId) {
   };
 }
 
-function formatPhoneNumberDin(number) {
+function formatPhoneNumberDin(number: string | null): string {
   const input = String(number ?? '').trim();
   if (!input) {
     return '';
@@ -63,7 +88,10 @@ function formatPhoneNumberDin(number) {
   return formatPhoneSegments(countryPrefix, areaCode, subscriberNumber);
 }
 
-function parseGermanPhoneInput(input, digits) {
+function parseGermanPhoneInput(
+  input: string,
+  digits: string,
+): { countryPrefix: string; nationalNumber: string } {
   const hasPlusPrefix = input.startsWith('+');
   const hasInternationalZeroPrefix = input.startsWith('00');
   const isGermanInternational =
@@ -84,7 +112,7 @@ function parseGermanPhoneInput(input, digits) {
   return { countryPrefix, nationalNumber };
 }
 
-function getAreaCodeLength(countryPrefix, nationalNumber) {
+function getAreaCodeLength(countryPrefix: string, nationalNumber: string): number {
   const mobilePrefixLength = countryPrefix ? 3 : 4;
   const shortAreaPrefixLength = countryPrefix ? 2 : 3;
   const defaultAreaPrefixLength = countryPrefix ? 3 : 4;
@@ -104,7 +132,11 @@ function getAreaCodeLength(countryPrefix, nationalNumber) {
   return defaultAreaPrefixLength;
 }
 
-function formatPhoneSegments(countryPrefix, areaCode, subscriberNumber) {
+function formatPhoneSegments(
+  countryPrefix: string,
+  areaCode: string,
+  subscriberNumber: string,
+): string {
   if (!subscriberNumber) {
     return countryPrefix ? `${countryPrefix} ${areaCode}` : areaCode;
   }
@@ -114,7 +146,11 @@ function formatPhoneSegments(countryPrefix, areaCode, subscriberNumber) {
     : `${areaCode} ${subscriberNumber}`;
 }
 
-function renderDancingPlaceholder(doc, layout, colors) {
+function renderDancingPlaceholder(
+  doc: PDFKit.PDFDocument,
+  layout: PlaceholderLayout,
+  colors: PlaceholderColors,
+): void {
   const {
     linksWithQr,
     columns,
@@ -159,7 +195,11 @@ function renderDancingPlaceholder(doc, layout, colors) {
   });
 }
 
-function buildBalancedTwoLineTitle(doc, rawTitle, maxWidth) {
+function buildBalancedTwoLineTitle(
+  doc: PDFKit.PDFDocument,
+  rawTitle: string,
+  maxWidth: number,
+): string {
   const title = String(rawTitle ?? '').trim();
   const words = title.split(/\s+/).filter(Boolean);
 
@@ -195,7 +235,7 @@ function buildBalancedTwoLineTitle(doc, rawTitle, maxWidth) {
   return `${bestSplit.line1}\n${bestSplit.line2}`;
 }
 
-function getCoursePdfSubtitle(course) {
+function getCoursePdfSubtitle(course: CoursePdf): string {
   return [
     course.name,
     course.course_id !== null ? `Kurs #${course.course_id}` : null,
@@ -205,8 +245,12 @@ function getCoursePdfSubtitle(course) {
     .join(' ');
 }
 
-export function renderCoursePdf(res, { course, sessions, linksWithQr, trainerQr }) {
+export function renderCoursePdf(
+  res: Writable,
+  { course, sessions, linksWithQr, trainerQr }: CoursePdfDocument,
+): void {
   const hasTrainer = Boolean(course.trainer_id);
+  if (hasTrainer && !trainerQr) throw new Error('Trainer QR code is missing');
   const doc = new PDFDocument({ size: 'A4', margin: 50 });
   doc.pipe(res);
 
@@ -241,7 +285,7 @@ export function renderCoursePdf(res, { course, sessions, linksWithQr, trainerQr 
   const titleTextRaw = `${course.dance_group_name ?? 'Dance Group'}`;
   const titleOptions = {
     width: contentWidth,
-    align: 'center',
+    align: 'center' as const,
   };
   doc.fontSize(24);
   const titleText = buildBalancedTwoLineTitle(doc, titleTextRaw, contentWidth);
@@ -322,7 +366,7 @@ export function renderCoursePdf(res, { course, sessions, linksWithQr, trainerQr 
     .roundedRect(leftMargin, trainerBoxY, contentWidth, trainerBoxHeight, 8)
     .fillAndStroke(colors.surfaceBg, colors.surfaceBorder);
 
-  if (hasTrainer) {
+  if (hasTrainer && trainerQr) {
     doc.fillColor(colors.subtitle).fontSize(11);
     const nameText = `${course.trainer_name}`.toUpperCase();
     const phoneText = `${formatPhoneNumberDin(course.trainer_phone)}`;

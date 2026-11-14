@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hslToHex } from '../../utils/colorUtils.js';
+import { hslToHex } from '../../utils/colorUtils.ts';
 
 describe('hslToHex', () => {
   it('converts pure red (0°, 100%, 50%) to #ff0000', () => {

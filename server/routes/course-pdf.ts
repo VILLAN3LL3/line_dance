@@ -5,7 +5,7 @@ import type { CoursePdfId } from '../features/courses/pdf-operations.ts';
 import { prepareInput } from './prepare-input.ts';
 import type { PreparedInput } from './prepare-input.ts';
 import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.js';
-import { renderCoursePdf } from './course-pdf-renderer.js';
+import { renderCoursePdf } from './course-pdf-renderer.ts';
 
 export const preparePdfId = prepareInput((req) => req.params, prepareCoursePdfId);
 
