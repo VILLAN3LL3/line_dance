@@ -10,7 +10,13 @@ import {
   getGroupBaseStepFigures,
   updateGroupBaseStepFigures,
 } from './dance-groups.js';
-import { getTrainers, createTrainer, updateTrainer, deleteTrainer } from './trainers.ts';
+import {
+  getTrainers,
+  prepareTrainer,
+  createTrainer,
+  updateTrainer,
+  deleteTrainer,
+} from './trainers.ts';
 import {
   getDanceCourses,
   createDanceCourse,
@@ -48,8 +54,8 @@ export function createDanceGroupsRouter() {
   router.put('/api/dance-groups/:id', updateDanceGroup);
   router.delete('/api/dance-groups/:id', deleteDanceGroup);
   router.get('/api/trainers', getTrainers);
-  router.post('/api/trainers', createTrainer);
-  router.put('/api/trainers/:id', updateTrainer);
+  router.post('/api/trainers', prepareTrainer, createTrainer);
+  router.put('/api/trainers/:id', prepareTrainer, updateTrainer);
   router.delete('/api/trainers/:id', deleteTrainer);
   router.get('/api/dance-courses', getDanceCourses);
   router.post('/api/dance-courses', createDanceCourse);

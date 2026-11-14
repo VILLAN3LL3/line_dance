@@ -21,16 +21,23 @@ The backend is a modular monolith assembled by `server/app.js`; routes are regis
 `server/routes/` and feature code lives under `server/features/`. Organize code around a feature and
 its responsibilities, not around arbitrary file-size targets:
 
-1. **HTTP adapters** extract request data, call a flow, and translate its results into the existing
-   status codes and response bodies. They handle transport errors using the existing error helpers.
-   Do not put SQL, external requests, business validation, or workflow orchestration in a route.
-2. **Flows (integration functions)** coordinate operations and side effects: validation, repository
+1. **HTTP adapters** extract request data, call a flow, and translate results into the existing
+   status codes and response bodies. Use the shared `prepareInput` middleware to invoke pure
+   validation operations for migrated endpoints; configure each endpoint's input and validator
+   explicitly. Middleware must not duplicate business rules. Adapters handle transport
+   errors using the existing helpers. Do not put SQL, external requests, business validation rules,
+   or workflow orchestration in a route.
+2. **Flows (integration functions)** coordinate operations and side effects: repository
    calls, gateways, branching, and transaction boundaries. They do not depend on Express or return
    HTTP status codes. Pass ordinary data and return explicit application results or errors.
 3. **Operations and validators** express focused, deterministic business rules and transformations.
    They do not access the database, network, filesystem, Express, repositories, flows, or gateways.
    Validation that needs stored data belongs in the flow, using a repository; keep input-only rules
    in pure validators. Do not duplicate backend validation rules in the frontend.
+   For migrated TypeScript features, use Zod schemas to validate untrusted inputs at runtime and
+   derive concrete output types. Pass validated values to flows, using branded types where
+   necessary to enforce the validation boundary. Keep schemas in pure operations, map failures to
+   existing domain errors, and preserve coercion and error precedence when migrating an API.
 4. **Repositories and gateways** encapsulate side effects and infrastructure details. Repositories
    own SQL, including query construction; HTTP gateways own external requests. Use parameters for
    SQL values. Keep domain decisions in operations or flows, not embedded in transport handlers or

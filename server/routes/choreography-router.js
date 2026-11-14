@@ -33,7 +33,11 @@ import {
   updateSavedFilterConfiguration,
   deleteSavedFilterConfiguration,
 } from './saved-filters.js';
-import { rateChoreography, deleteChoreographyRating } from './choreography-ratings.js';
+import {
+  prepareRating,
+  rateChoreography,
+  deleteChoreographyRating,
+} from './choreography-ratings.ts';
 
 export function createChoreographyRouter() {
   const router = Router();
@@ -46,7 +50,7 @@ export function createChoreographyRouter() {
   router.get('/api/choreographies/:id', getChoreographyById);
   router.put('/api/choreographies/:id', updateChoreography);
   router.delete('/api/choreographies/:id', deleteChoreography);
-  router.put('/api/choreographies/:id/rating', rateChoreography);
+  router.put('/api/choreographies/:id/rating', prepareRating, rateChoreography);
   router.delete('/api/choreographies/:id/rating', deleteChoreographyRating);
   router.get('/api/levels', getLevels);
   router.post('/api/levels', addLevel);

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
-import { checkUrl } from '../../routes/url-check.ts';
+import { checkUrl, prepareUrl } from '../../routes/url-check.ts';
 
 // ---------------------------------------------------------------------------
 // Minimal test app
@@ -9,7 +9,7 @@ import { checkUrl } from '../../routes/url-check.ts';
 
 const app = express();
 app.use(express.json());
-app.get('/api/url-check', checkUrl);
+app.get('/api/url-check', prepareUrl, checkUrl);
 
 // ---------------------------------------------------------------------------
 // fetch mock
@@ -30,6 +30,13 @@ describe('GET /api/url-check — input validation', () => {
   it('returns 400 when url param is missing', async () => {
     const res = await request(app).get('/api/url-check');
     expect(res.status).toBe(400);
+  });
+
+  it('rejects repeated url parameters before making a request', async () => {
+    const res = await request(app).get('/api/url-check?url=https://a.test&url=https://b.test');
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Missing url query parameter' });
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it('returns 400 for a non-http(s) URL', async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { validateTrainer } from '../../features/trainers/validation.ts';
-import { validateChoreographyId, validateRating } from '../../features/ratings/validation.js';
+import { validateChoreographyId, validateRating } from '../../features/ratings/validation.ts';
 import {
   hasTrainerId,
   validateCourseUpdate,
@@ -30,20 +30,47 @@ describe('trainer validation', () => {
       value: { name: 'Jane', phone: '1', email: 'a@b.test' },
     });
   });
+
+  it('rejects invalid field types in field order without coercing them', () => {
+    expect(validateTrainer({ name: 7, phone: [], email: null })).toEqual({
+      error: 'name_required',
+    });
+    expect(validateTrainer({ name: 'Jane', phone: 123, email: '' })).toEqual({
+      error: 'phone_required',
+    });
+    expect(validateTrainer({ name: 'Jane', phone: '1', email: ['a@b.test'] })).toEqual({
+      error: 'email_required',
+    });
+    expect(validateTrainer([])).toEqual({ error: 'name_required' });
+    expect(() => validateTrainer(undefined)).toThrow(TypeError);
+  });
 });
 
 describe('rating validation', () => {
   it('parses choreography IDs and rejects non-numeric IDs', () => {
     expect(validateChoreographyId('12')).toEqual({ value: 12 });
+    expect(validateChoreographyId('12suffix')).toEqual({ value: 12 });
     expect(validateChoreographyId('invalid')).toEqual({ error: 'invalid_id' });
   });
 
   it('accepts ratings from zero to five and rejects missing and out-of-range values', () => {
     expect(validateRating({ rating: 0 })).toEqual({ value: 0 });
     expect(validateRating({ rating: '5' })).toEqual({ value: 5 });
+    expect(validateRating({ rating: '2.5' })).toEqual({ value: 2 });
+    expect(validateRating({ rating: [3] })).toEqual({ value: 3 });
+    expect(validateRating(null)).toEqual({ error: 'invalid_rating' });
     expect(validateRating({ rating: 6 })).toEqual({ error: 'invalid_rating' });
     expect(validateRating({ rating: -1 })).toEqual({ error: 'invalid_rating' });
     expect(validateRating({})).toEqual({ error: 'invalid_rating' });
+  });
+
+  it('retains the existing conversion of JSON input and rejects invalid structures', () => {
+    expect(validateRating({ rating: ['3', 'ignored'] })).toEqual({ value: 3 });
+    expect(validateRating({ rating: '4suffix' })).toEqual({ value: 4 });
+    expect(validateRating({ rating: true })).toEqual({ error: 'invalid_rating' });
+    expect(validateRating({ rating: {} })).toEqual({ error: 'invalid_rating' });
+    expect(validateRating([])).toEqual({ error: 'invalid_rating' });
+    expect(() => validateRating({ rating: { toString: null } })).toThrow(TypeError);
   });
 });
 

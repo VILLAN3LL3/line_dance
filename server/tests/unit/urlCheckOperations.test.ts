@@ -8,6 +8,8 @@ import {
 describe('URL check operations', () => {
   it('distinguishes missing, invalid and disallowed URLs', () => {
     expect(validateUrl(' ')).toEqual({ error: 'missing_url' });
+    expect(validateUrl(['https://example.com'])).toEqual({ error: 'missing_url' });
+    expect(validateUrl(42)).toEqual({ error: 'missing_url' });
     expect(validateUrl('not a URL')).toEqual({ error: 'invalid_url' });
     expect(validateUrl('http://localhost/test')).toEqual({ error: 'url_not_allowed' });
     expect(validateUrl('ftp://example.com')).toEqual({ error: 'url_not_allowed' });

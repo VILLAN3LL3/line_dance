@@ -1,6 +1,9 @@
 import type { Request, Response } from 'express';
 import * as trainers from '../features/trainers/flow.ts';
-import type { TrainerInput } from '../features/trainers/validation.ts';
+import { validateTrainer } from '../features/trainers/validation.ts';
+import type { TrainerValidationResult } from '../features/trainers/validation.ts';
+import { prepareInput } from './prepare-input.ts';
+import type { PreparedInput } from './prepare-input.ts';
 import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.js';
 
 type TrainerError =
@@ -20,6 +23,8 @@ function sendTrainerError(res: Response, error: TrainerError): Response {
   return res.status(response[0]).json({ error: response[1] });
 }
 
+export const prepareTrainer = prepareInput((req) => req.body, validateTrainer);
+
 export async function getTrainers(_req: Request, res: Response): Promise<void> {
   try {
     res.json(await trainers.getTrainers());
@@ -30,12 +35,15 @@ export async function getTrainers(_req: Request, res: Response): Promise<void> {
 }
 
 export async function createTrainer(
-  req: Request<object, unknown, TrainerInput>,
-  res: Response,
+  req: Request<object, unknown, unknown>,
+  res: Response<unknown, { input: PreparedInput<TrainerValidationResult> }>,
 ): Promise<Response | void> {
   try {
-    const result = await trainers.createTrainer(req.body);
-    if ('error' in result && result.error) return sendTrainerError(res, result.error);
+    const input = res.locals.input;
+    if ('exception' in input) throw input.exception;
+    if ('error' in input) return sendTrainerError(res, input.error);
+    const result = await trainers.createTrainer(input.value);
+    if ('error' in result) return sendTrainerError(res, result.error);
     res.status(201).json(result.value);
   } catch (error) {
     captureError(error);
@@ -44,12 +52,15 @@ export async function createTrainer(
 }
 
 export async function updateTrainer(
-  req: Request<{ id: string }, unknown, TrainerInput>,
-  res: Response,
+  req: Request<{ id: string }, unknown, unknown>,
+  res: Response<unknown, { input: PreparedInput<TrainerValidationResult> }>,
 ): Promise<Response | void> {
   try {
-    const result = await trainers.updateTrainer(req.params.id, req.body);
-    if ('error' in result && result.error) return sendTrainerError(res, result.error);
+    const input = res.locals.input;
+    if ('exception' in input) throw input.exception;
+    if ('error' in input) return sendTrainerError(res, input.error);
+    const result = await trainers.updateTrainer(req.params.id, input.value);
+    if ('error' in result) return sendTrainerError(res, result.error);
     res.json(result.value);
   } catch (error) {
     captureError(error);

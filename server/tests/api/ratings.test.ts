@@ -15,7 +15,7 @@ beforeEach(async () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function createChoreo(overrides = {}) {
+async function createChoreo(overrides: Record<string, unknown> = {}): Promise<{ id: number }> {
   const res = await request(app)
     .post('/api/choreographies')
     .send({ name: 'Test Dance', level: 'BEGINNER', ...overrides });
@@ -97,6 +97,23 @@ describe('PUT /api/choreographies/:id/rating', () => {
     expect(res.status).toBe(400);
   });
 
+  it('preserves accepted coercions and rejects invalid JSON values', async () => {
+    const { id } = await createChoreo();
+    const decimal = await request(app)
+      .put(`/api/choreographies/${id}/rating`)
+      .send({ rating: '2.5' });
+    expect(decimal.status).toBe(200);
+    expect(decimal.body.rating).toBe(2);
+    const array = await request(app)
+      .put(`/api/choreographies/${id}/rating`)
+      .send({ rating: [3] });
+    expect(array.status).toBe(200);
+    expect(array.body.rating).toBe(3);
+    const invalid = await request(app).put(`/api/choreographies/${id}/rating`).send({ rating: {} });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body).toEqual({ error: 'Rating must be an integer between 0 and 5' });
+  });
+
   it('returns 404 for a non-existent choreography', async () => {
     const res = await request(app).put('/api/choreographies/99999/rating').send({ rating: 3 });
     expect(res.status).toBe(404);
@@ -106,6 +123,40 @@ describe('PUT /api/choreographies/:id/rating', () => {
     const res = await request(app).put('/api/choreographies/99999/rating').send({ rating: 6 });
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: 'Choreography not found' });
+  });
+
+  it('defers rating conversion errors until after ID and existence checks', async () => {
+    const body = { rating: { toString: null } };
+    const invalidId = await request(app).put('/api/choreographies/invalid/rating').send(body);
+    expect(invalidId.status).toBe(400);
+    expect(invalidId.body).toEqual({ error: 'Invalid choreography id' });
+
+    const missing = await request(app).put('/api/choreographies/99999/rating').send(body);
+    expect(missing.status).toBe(404);
+    expect(missing.body).toEqual({ error: 'Choreography not found' });
+
+    const { id } = await createChoreo();
+    const existing = await request(app).put(`/api/choreographies/${id}/rating`).send(body);
+    expect(existing.status).toBe(500);
+    expect(existing.body).toEqual({ error: 'Failed to save rating' });
+  });
+
+  it('preserves error precedence when deeply nested ratings overflow conversion', async () => {
+    const body = `{"rating":${'['.repeat(15000)}3${']'.repeat(15000)}}`;
+    const invalidId = await request(app)
+      .put('/api/choreographies/invalid/rating')
+      .type('json')
+      .send(body);
+    expect(invalidId.status).toBe(400);
+    expect(invalidId.body).toEqual({ error: 'Invalid choreography id' });
+
+    const { id } = await createChoreo();
+    const existing = await request(app)
+      .put(`/api/choreographies/${id}/rating`)
+      .type('json')
+      .send(body);
+    expect(existing.status).toBe(500);
+    expect(existing.body).toEqual({ error: 'Failed to save rating' });
   });
 });
 
@@ -177,7 +228,7 @@ describe('GET /api/choreographies/search — min_rating filter', () => {
 
     const res = await request(app).get('/api/choreographies/search?min_rating=1');
     expect(res.status).toBe(200);
-    expect(res.body.data.map((c) => c.id)).toEqual([a.id]);
+    expect(res.body.data.map((c: { id: number }) => c.id)).toEqual([a.id]);
   });
 
   it('returns all choreographies when min_rating=0', async () => {

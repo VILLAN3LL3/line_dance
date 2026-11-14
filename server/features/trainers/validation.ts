@@ -1,30 +1,27 @@
-export interface TrainerInput {
-  name?: unknown;
-  phone?: unknown;
-  email?: unknown;
-}
+import { z } from 'zod';
 
-export interface TrainerDetails {
-  name: string;
-  phone: string;
-  email: string;
-}
+const requiredText = z.string().trim().min(1);
+const trainerFieldsSchema = z.object({
+  name: requiredText,
+  phone: requiredText,
+  email: requiredText,
+});
+const trainerSchema = trainerFieldsSchema.brand<'TrainerInput'>();
+
+export type TrainerDetails = z.output<typeof trainerFieldsSchema>;
+export type TrainerInput = z.output<typeof trainerSchema>;
 
 export type TrainerValidationResult =
-  { error: 'name_required' | 'phone_required' | 'email_required' } | { value: TrainerDetails };
+  { error: 'name_required' | 'phone_required' | 'email_required' } | { value: TrainerInput };
 
-export function validateTrainer(input: TrainerInput): TrainerValidationResult {
-  const { name, phone, email } = input;
+export function validateTrainer(input: unknown): TrainerValidationResult {
+  if (input === null || input === undefined) throw new TypeError('Trainer input is missing');
+  const result = trainerSchema.safeParse(input);
+  if (result.success) return { value: result.data };
 
-  if (!name || typeof name !== 'string' || !name.trim()) {
-    return { error: 'name_required' };
-  }
-  if (!phone || typeof phone !== 'string' || !phone.trim()) {
-    return { error: 'phone_required' };
-  }
-  if (!email || typeof email !== 'string' || !email.trim()) {
-    return { error: 'email_required' };
-  }
-
-  return { value: { name: name.trim(), phone: phone.trim(), email: email.trim() } };
+  const field = result.error.issues[0]?.path[0];
+  if (field === undefined || field === 'name') return { error: 'name_required' };
+  if (field === 'phone') return { error: 'phone_required' };
+  if (field === 'email') return { error: 'email_required' };
+  throw new Error(`Unexpected trainer validation field: ${String(field)}`);
 }

@@ -9,7 +9,7 @@ import { apiErrorHandler } from './utils/apiErrorHandler.js';
 import { openApiSpec } from './scripts/openapi.js';
 import { createChoreographyRouter } from './routes/choreography-router.js';
 import { createDanceGroupsRouter } from './routes/dance-groups-router.js';
-import { checkUrl } from './routes/url-check.ts';
+import { prepareUrl, checkUrl } from './routes/url-check.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const clientDistPath = path.resolve(__dirname, '../client/dist');
@@ -52,7 +52,7 @@ export function createApp() {
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   });
-  app.get('/api/url-check', urlCheckLimiter, checkUrl);
+  app.get('/api/url-check', urlCheckLimiter, prepareUrl, checkUrl);
 
   app.use(apiErrorHandler);
 

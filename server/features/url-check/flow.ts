@@ -1,18 +1,14 @@
 import { requestUrl } from './http-gateway.ts';
-import { initialProbe, shouldRetryWithGet, validateUrl } from './operations.ts';
-import type { UrlValidationError } from './operations.ts';
+import { initialProbe, shouldRetryWithGet } from './operations.ts';
+import type { AllowedUrl } from './operations.ts';
 
-type UrlCheckResult =
-  { error: UrlValidationError } | { value: { ok: boolean; status: number | null } };
+type UrlCheckResult = { value: { ok: boolean; status: number | null } };
 
-export async function checkUrl(raw: unknown): Promise<UrlCheckResult> {
-  const validation = validateUrl(raw);
-  if ('error' in validation) return validation;
-
+export async function checkUrl(url: AllowedUrl): Promise<UrlCheckResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
   try {
-    const probe = initialProbe(validation.value);
+    const probe = initialProbe(url);
     let response = await requestUrl(probe.url, probe.method, controller.signal);
     if (shouldRetryWithGet(probe, response)) {
       response = await requestUrl(probe.url, 'GET', controller.signal);

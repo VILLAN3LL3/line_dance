@@ -87,6 +87,21 @@ describe('POST /api/trainers', () => {
     expect(res.body.error).toMatch(/phone.*required/i);
   });
 
+  it('rejects a non-string field without coercion', async () => {
+    const res = await request(app)
+      .post('/api/trainers')
+      .send({ ...BASE, phone: 123 });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Phone is required' });
+    expect((await request(app).get('/api/trainers')).body).toEqual([]);
+  });
+
+  it('preserves the error response for a missing request body', async () => {
+    const res = await request(app).post('/api/trainers');
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'Failed to create trainer' });
+  });
+
   it('returns 400 when email is missing', async () => {
     const res = await request(app).post('/api/trainers').send({ name: 'X', phone: '1' });
     expect(res.status).toBe(400);

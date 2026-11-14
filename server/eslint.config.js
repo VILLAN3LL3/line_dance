@@ -39,7 +39,6 @@ export default [
       'routes/dance-courses.js',
       'routes/dance-groups.js',
       'routes/course-pdf.js',
-      'routes/choreography-ratings.js',
       'routes/choreography-metadata.js',
       'routes/sessions.js',
       'routes/step-figure-suggestions.js',
