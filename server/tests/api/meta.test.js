@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import app from '../setup/testApp.js';
-import { openApiSpec } from '../../scripts/openapi.js';
+import { openApiSpec } from '../../scripts/openapi.ts';
 
 // ---------------------------------------------------------------------------
 // Meta/Smoke endpoints
@@ -61,7 +61,7 @@ describe('OpenAPI spec plausibility', () => {
         .map(({ method, path }) => `  ${method.toUpperCase()} ${path}`)
         .join('\n');
       throw new Error(
-        `Routes missing from OpenAPI spec (add them to scripts/openapi.js):\n${lines}`,
+        `Routes missing from OpenAPI spec (add them to scripts/openapi.ts):\n${lines}`,
       );
     }
   });
