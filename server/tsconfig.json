@@ -12,6 +12,7 @@
     "types": ["node"]
   },
   "include": [
+    "app.ts",
     "features/**/*.ts",
     "routes/**/*.ts",
     "scripts/**/*.ts",

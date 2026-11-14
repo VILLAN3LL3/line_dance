@@ -17,7 +17,7 @@ functions unless preserving Promise identity or other observable behavior requir
 
 ## Responsibilities and dependencies
 
-The backend is a modular monolith assembled by `server/app.js`; routes are registered under
+The backend is a modular monolith assembled by `server/app.ts`; routes are registered under
 `server/routes/` and feature code lives under `server/features/`. Organize code around a feature and
 its responsibilities, not around arbitrary file-size targets:
 

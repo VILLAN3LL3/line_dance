@@ -1,4 +1,5 @@
 import express from 'express';
+import type { Express } from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import path from 'node:path';
@@ -14,7 +15,7 @@ import { prepareUrl, checkUrl } from './routes/url-check.ts';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const clientDistPath = path.resolve(__dirname, '../client/dist');
 
-export function createApp() {
+export function createApp(): Express {
   const app = express();
 
   // Don't leak Express version in response headers.

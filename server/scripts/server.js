@@ -1,4 +1,4 @@
-import { createApp } from '../app.js';
+import { createApp } from '../app.ts';
 import { runMigrations } from '../migrations/index.js';
 import { closeDatabase, getDatabase } from './db.ts';
 
