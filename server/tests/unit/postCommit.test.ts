@@ -16,6 +16,8 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const hookPath = fileURLToPath(new URL('../../../.husky/post-commit', import.meta.url));
+const mergeHookPath = fileURLToPath(new URL('../../../.husky/post-merge', import.meta.url));
+const hooksPath = fileURLToPath(new URL('../../../.husky', import.meta.url));
 const pm2Tsconfig = fileURLToPath(new URL('../../tsconfig.pm2.json', import.meta.url));
 const tscPath = fileURLToPath(new URL('../../node_modules/typescript/bin/tsc6', import.meta.url));
 let directory: string;
@@ -73,6 +75,8 @@ beforeEach(() => {
   };
   writeExecutable(join(binDirectory, 'git'), 'printf "%s\\n" "$REPOSITORY_ROOT"');
   symlinkSync(process.execPath, join(binDirectory, 'node'));
+  symlinkSync('/bin/sh', join(binDirectory, 'sh'));
+  symlinkSync('/usr/bin/dirname', join(binDirectory, 'dirname'));
   writeExecutable(
     join(binDirectory, 'npm'),
     ['printf "npm %s\\n" "$*" >> "$COMMAND_LOG"', 'exit "${BUILD_STATUS:-0}"'].join('\n'),
@@ -84,6 +88,70 @@ afterEach(() => {
 });
 
 describe('post-commit deployment', () => {
+  it('does not deploy an uncommitted squash merge', () => {
+    const result = spawnSync('/bin/sh', [mergeHookPath, '1'], {
+      env: environment,
+      encoding: 'utf8',
+    });
+    expect(result.status).toBe(0);
+    expect(existsSync(environment.COMMAND_LOG)).toBe(false);
+  });
+
+  it.each(['fast-forward', 'merge commit'])('deploys once after a real %s pull', (mode) => {
+    rmSync(join(binDirectory, 'git'));
+    installPm2(join(binDirectory, 'pm2'));
+    const env = {
+      ...process.env,
+      ...environment,
+      PATH: `${binDirectory}:${process.env.PATH}`,
+      GIT_CONFIG_GLOBAL: '/dev/null',
+      GIT_CONFIG_NOSYSTEM: '1',
+      GIT_AUTHOR_NAME: 'Test',
+      GIT_AUTHOR_EMAIL: 'test@example.invalid',
+      GIT_COMMITTER_NAME: 'Test',
+      GIT_COMMITTER_EMAIL: 'test@example.invalid',
+    };
+    const git = (...args: string[]): void => {
+      const result = spawnSync('git', args, { cwd: directory, env, encoding: 'utf8' });
+      expect(result.status, result.stdout + result.stderr).toBe(0);
+    };
+    const noHooks = ['-c', 'core.hooksPath=/dev/null'];
+    git('init', '-b', 'main');
+    writeFileSync(join(directory, 'base'), 'base');
+    git(...noHooks, 'add', 'base');
+    git(...noHooks, 'commit', '-m', 'base');
+    git('checkout', '-b', 'feature');
+    if (mode === 'merge commit') {
+      writeFileSync(join(directory, 'feature'), 'feature');
+      git(...noHooks, 'add', 'feature');
+      git(...noHooks, 'commit', '-m', 'feature');
+    }
+    git('checkout', 'main');
+    writeFileSync(join(directory, 'upstream'), 'upstream');
+    git(...noHooks, 'add', 'upstream');
+    git(...noHooks, 'commit', '-m', 'upstream');
+    git('checkout', 'feature');
+
+    git(
+      '-c',
+      `core.hooksPath=${hooksPath}`,
+      '-c',
+      'pull.rebase=false',
+      'pull',
+      '--no-edit',
+      '.',
+      'main',
+    );
+
+    const commands = readFileSync(environment.COMMAND_LOG, 'utf8').trim().split('\n');
+    expect(commands.filter((command) => command === 'npm --prefix server run build')).toHaveLength(
+      1,
+    );
+    expect(
+      commands.filter((command) => command === 'pm2 restart line-dance --update-env'),
+    ).toHaveLength(1);
+  });
+
   it('builds a CommonJS PM2 config that resolves local settings and paths from the repository root', () => {
     const outputDirectory = join(directory, 'server/dist/pm2');
     const build = spawnSync(

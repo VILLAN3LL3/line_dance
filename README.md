@@ -254,11 +254,20 @@ pm2 restart line-dance
 pm2 reload line-dance      # zero-downtime reload
 ```
 
-### Auto-Deploy On Commit
+### Auto-Deploy On Commit And Pull
 
 The PM2 configuration is compiled from `ecosystem.config.cts` by `npm run build:pm2`.
 It reads `.env.pm2` from the repository root and runs the compiled server from that root.
-The `post-commit` hook rebuilds the server, PM2 configuration, and client and restarts PM2 automatically after every `git commit`.
+The `post-commit` hook rebuilds the server, PM2 configuration, and client and restarts PM2 after a commit.
+The `post-merge` hook runs the same deployment once after a successful merge or fast-forward pull.
+Squash merges are deployed after the resulting commit instead.
+To avoid deploying intermediate commits during a pull, configure this repository to use merges:
+
+```bash
+git config --local pull.rebase false
+```
+
+An explicit rebase can still trigger deployment for each replayed commit.
 It resolves PM2 from `PATH` or an existing nvm installation; set `PM2_BINARY` to an absolute executable path to override this lookup.
 Build or restart failures stop deployment without reporting success. An existing process with a
 different entry point must be recreated as described above. The commit itself is already created

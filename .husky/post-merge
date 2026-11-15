@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+set -e
+
+if [ "${1:-0}" = 1 ]; then
+	exit 0
+fi
+
+exec sh "$(dirname "$0")/post-commit"
