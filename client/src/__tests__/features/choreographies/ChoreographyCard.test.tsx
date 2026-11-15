@@ -227,7 +227,10 @@ describe("ChoreographyCard", () => {
       />,
     );
 
-    expect(screen.getByTitle("Demo video for Neon Waltz")).toBeInTheDocument();
+    expect(screen.getByTitle("Demo video for Neon Waltz")).toHaveAttribute(
+      "referrerpolicy",
+      "strict-origin-when-cross-origin",
+    );
     expect(screen.queryByTitle("Tutorial video for Neon Waltz")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /watch demo/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /watch tutorial/i })).not.toBeInTheDocument();

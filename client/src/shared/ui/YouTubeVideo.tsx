@@ -12,7 +12,7 @@ export const YouTubeVideo: React.FC<YouTubeVideoProps> = ({ src, title }) => (
       height="315"
       src={src}
       title={title}
-      frameBorder="0"
+      referrerPolicy="strict-origin-when-cross-origin"
       allow="autoplay; encrypted-media"
       allowFullScreen
     />
