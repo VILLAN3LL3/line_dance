@@ -3,5 +3,6 @@ export const metadataKeys = {
   tags: ["metadata", "tags"] as const,
   authors: ["metadata", "authors"] as const,
   stepFigures: ["metadata", "step-figures"] as const,
+  infoCategories: ["metadata", "info-categories"] as const,
   countryCodes: ["metadata", "country-codes"] as const,
 };

@@ -45,7 +45,7 @@ Guidelines:
 - Naming: Use descriptive PascalCase names (e.g., ChoreographyCard, RatingPill)
 - Props: Keep props shallow; group related props into interfaces
 - Composition: Favor composition over inheritance; use slots/children
-- Hooks: Extract custom hooks for reusable logic (useRating, useSearch, etc.)
+- View models: Put state and orchestration into `use<Feature>ViewModel` hooks, rules into pure `model/` functions (see the `frontend-architecture` skill)
 - Accessibility: Include aria-labels, semantic HTML, keyboard support
 ```
 
@@ -72,16 +72,16 @@ Guidelines:
 #### Modularization
 ```
 File Structure:
-client/src/
-├── components/          # React components
-│   ├── shared/         # Reusable across app
-│   │   └── StarRating.tsx
-│   └── choreographies/  # Feature-specific
-│       └── ChoreographyCard.tsx
-├── hooks/              # Custom React hooks
-│   └── useChoreographyRating.ts
-├── api.ts              # API client functions
-└── types.ts            # Shared TypeScript types
+client/src/                      # see the frontend-architecture skill
+├── features/<feature>/          # one folder per feature (MVVM)
+│   ├── api.ts                   # gateway (the only place talking to the server)
+│   ├── model/                   # pure operations + types
+│   ├── viewmodels/              # use…ViewModel / use…Query hooks (state + orchestration)
+│   ├── views/                   # pages and presentational components
+│   └── index.ts                 # public API of the feature
+├── shared/                      # http client, storage, query defaults, ui building blocks
+├── app/                         # router and app shell
+└── types.ts                     # Shared TypeScript types (re-exported server contracts)
 
 server/
 ├── routes/             # Express route handlers
@@ -152,12 +152,12 @@ Every feature implementation **must** include tests. This is not optional.
 - New filter/query param → test: filters correctly (AND semantics if multiple), case-insensitivity, combined with other filters, empty result case
 - New business logic → test: core algorithm behavior, edge cases (empty set, max limits), cross-entity interactions
 
-**Client-side component changes → add to `client/src/__tests__/components/`:**
+**Client-side changes → add to `client/src/__tests__/features/<feature>/`:**
 - New button/action → test: clicking triggers correct API call (or navigates correctly)
 - New toggle/visibility → test: shows content when active, hides when toggled again
 - New form element → test: submitting calls correct handler with right arguments
 - New loading state → test: shows loading indicator during async operation
-- New API mock function → add it to `vi.mock("../../api")` factory and `beforeEach` default
+- New API mock function → add it to the feature's `vi.mock(".../features/<feature>/api")` factory and `beforeEach` default
 
 **Pattern: one `describe` block per new endpoint or major UI feature, covering:**
 1. Happy path (correct result)
@@ -356,7 +356,7 @@ Before writing code, confirm:
 | UX consistency | Level badge color, star color, padding all different | All use design system variables |
 | Documentation | Undocumented API change | README updated with new endpoint, migration notes |
 | Accessibility | No aria-labels, role="button" on divs | Semantic HTML, aria-labels, keyboard support |
-| Maintainability | Custom hooks scattered | Custom hooks in `hooks/` folder with docs |
+| Maintainability | Logic mixed into components | View model hooks + pure model functions per feature |
 
 ---
 

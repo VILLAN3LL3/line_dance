@@ -5,6 +5,10 @@
 For every backend change, including small fixes, invoke `/backend-architecture` and follow its
 responsibility boundaries and testing rules alongside the workflow below.
 
+For every frontend change under `client/src/`, including small fixes, invoke `/frontend-architecture`
+(feature modules with MVVM: views → view models → model/api) and follow its layer boundaries and
+testing rules alongside the workflow below.
+
 For **any new feature, refactor, or substantial code change request**, automatically follow this workflow:
 
 ### 1. Plan Phase (Always)
@@ -84,11 +88,14 @@ Every feature or bug fix **must** include tests. Do not skip this.
 - New business logic: test core algorithm, edge cases, cross-entity interactions
 - When adding route handlers: register them in `server/tests/setup/testApp.ts`
 
-**Client-side changes** → add to `client/src/__tests__/components/`:
+**Client-side changes** → add to `client/src/__tests__/features/<feature>/`:
+- New pure operation in `model/`: unit test without mocks, including edge cases
+- New/changed view model: `renderHook` test with the feature `api` module mocked (`vi.mock("../../../features/<feature>/api")`) covering happy path, error path and cache invalidation
 - New button/action: test it triggers the correct API call
 - New toggle: test shows content when active, hides when toggled again
 - New form: test submitting calls handler with correct arguments
-- New API function used: add it to `vi.mock("../../api")` factory AND `beforeEach` defaults
+- New API function used: add it to the feature's `vi.mock(".../features/<feature>/api")` factory AND `beforeEach` defaults
+- Render components that use TanStack Query with `renderWithQueryClient` / `createQueryWrapper` from `__tests__/helpers/`
 
 No commits without passing verification.
 

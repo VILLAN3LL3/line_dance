@@ -151,6 +151,25 @@ are therefore not a single consistent snapshot.
 
 ---
 
+## Frontend structure
+
+The client is organized by feature (`client/src/features/<feature>/`) following MVVM, mirroring the
+backend layering: **views** (React components) render props and emit events; **view models**
+(`use…ViewModel` hooks returning `{ state, actions }`) own UI state and orchestrate API calls with
+TanStack Query; pure **model** functions hold the rules (filter handling, sorting, form mapping,
+issue-key texts); `api.ts` per feature is the only gateway to the server. Shared building blocks
+live in `client/src/shared/` (HTTP client, storage and browser gateways, query defaults, UI
+components); `client/src/app/` holds the router and shell. Features: choreographies, choreographers,
+courses (incl. sessions), dance-groups, metadata, saved-filters, step-figures, trainers, url-check.
+
+ESLint enforces the dependency direction (views must not call gateways, models stay pure, `shared`
+does not import features). Validation rules stay on the server; the client only maps the returned
+issue keys to display text. See the
+[frontend architecture skill](.github/skills/frontend-architecture/SKILL.md) for the rules and
+`client/src/features/trainers/` for the reference implementation.
+
+---
+
 ## Scripts
 
 **Server** (`cd server`):
@@ -201,7 +220,8 @@ API integration tests run against in-memory SQLite. Coverage includes:
 
 ### Client (Vitest + Testing Library)
 
-- Course status evaluation utility
+- Pure model functions (search filters, form mapping, course status, sorting, hierarchy)
+- View models (search page, saved filters, save-with-duplicate-check, trainers)
 - Choreography card, table, and search bar components
 - Step figure hierarchy admin
 - Dance group admin and detail (including base step figures merge and dedup logic)

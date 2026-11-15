@@ -7,7 +7,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
-import { AppRouter } from "./components/AppRouter";
+import { AppRouter } from "./app/AppRouter";
 import { createQueryClient } from "./shared/query/queryClient";
 
 const rootElement = document.getElementById("root");

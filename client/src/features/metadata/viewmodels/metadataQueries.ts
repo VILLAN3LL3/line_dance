@@ -1,6 +1,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getAuthors, getCountryCodes, getLevels, getStepFigures, getTags } from "../api";
+import {
+  getAuthors,
+  getChoreographyInfoCategories,
+  getCountryCodes,
+  getLevels,
+  getStepFigures,
+  getTags,
+} from "../api";
 import { metadataKeys } from "../queryKeys";
 
 export function useLevelsQuery() {
@@ -17,6 +24,13 @@ export function useAuthorsQuery() {
 
 export function useStepFiguresQuery() {
   return useQuery({ queryKey: metadataKeys.stepFigures, queryFn: getStepFigures });
+}
+
+export function useInfoCategoriesQuery() {
+  return useQuery({
+    queryKey: metadataKeys.infoCategories,
+    queryFn: getChoreographyInfoCategories,
+  });
 }
 
 /** Imperative loader for one-off needs (e.g. clipboard export); always asks the server. */

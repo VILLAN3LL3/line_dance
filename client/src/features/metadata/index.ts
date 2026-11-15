@@ -1,6 +1,7 @@
 export {
   useAuthorsQuery,
   useCountryCodesLoader,
+  useInfoCategoriesQuery,
   useLevelsQuery,
   useStepFiguresQuery,
   useTagsQuery,

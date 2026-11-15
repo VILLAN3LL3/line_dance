@@ -120,7 +120,7 @@ export default [
         {
           patterns: [
             {
-              group: ["**/features/*/**"],
+              group: ["**/features/*/**", "!**/features/*/pages"],
               message: "Import a feature only through its index.ts.",
             },
           ],

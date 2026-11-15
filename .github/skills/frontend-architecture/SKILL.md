@@ -17,19 +17,22 @@ gateways. The reference implementation is `client/src/features/trainers/`.
 
 ```
 client/src/
-  app/ or components/     # legacy shell/router until migrated; imports features only via index.ts
+  app/                    # router and app shell; imports features via index.ts (or pages.ts)
   features/<feature>/
     api.ts                # gateway: the only place that talks to the server for this feature
     queryKeys.ts          # TanStack Query keys
     model/                # pure operations + types (mappers, normalization, reducers, issue-key texts)
     viewmodels/           # use<Feature>ViewModel / use<Thing>Query: state + orchestration
     views/                # pages (route level) and presentational components
-    index.ts              # public API of the feature
+    index.ts              # public API of the feature (hooks, shared pages/components)
+    pages.ts              # optional: route pages when exporting them from index.ts would create a cycle
   shared/
     http/                 # httpClient (axios), apiErrors helpers
     storage/              # typed localStorage gateway
     query/                # QueryClient defaults
     ui/                   # design-system building blocks
+    browser/              # clipboard, history, window, download gateways
+    utils/                # framework-free helpers shared across features
 ```
 
 ## Responsibilities and dependencies
@@ -49,7 +52,9 @@ client/src/
 4. **Gateways** (`api.ts`, `shared/storage`) encapsulate I/O. Feature code uses `httpClient`
    from `shared/http`; `axios` is only used for error type checks inside `shared/http`.
 5. **Features talk to each other only through `index.ts`.** Outside `features/`, ESLint blocks
-   deeper imports; between features this is a review rule.
+   deeper imports (only `pages.ts` is allowed besides `index.ts`); between features this is a
+   review rule. Avoid import cycles: `dance-groups` uses `courses`, so `courses` reads groups
+   through `dance-groups/index.ts` (hooks only) while the group pages live in `pages.ts`.
 6. `shared/` never imports from features.
 
 Do not duplicate backend validation in the frontend. Map backend issue keys (`{ field, key }`) to
@@ -66,18 +71,22 @@ Reusable queries (e.g. `useTrainersQuery`) are exported through `index.ts`.
 
 ## Conventions
 
-- Files stay below ~300 lines and have a single responsibility; names are intention-revealing
+- Files stay below ~300 lines and have a single responsibility (known exception:
+  `courses/views/CourseDetailSessionsSection.tsx`, a props-only view); names are intention-revealing
   (`use<Feature>ViewModel`, `<Feature>Page`).
 - Keep markup, class names, and accessibility attributes stable when refactoring; e2e tests rely
   on them.
-- Browser APIs (`localStorage`, `history`) are accessed through shared gateways, not in components.
+- Browser APIs (`localStorage`, `history`, `window.open`, clipboard, downloads) are accessed
+  through `shared/storage` and `shared/browser`, not in components.
+- When passing a function reference to `mutationFn`, wrap it in a lambda: TanStack Query adds
+  a context argument that would otherwise leak into the API call.
 - ESLint (`client/eslint.config.ts`) enforces the layer boundaries; extend the rules when adding
   a layer, and still review responsibilities manually.
 
 ## Tests
 
-Tests live in `client/src/__tests__/features/<feature>/` (legacy tests remain in
-`__tests__/components/` until their feature migrates).
+Tests live in `client/src/__tests__/features/<feature>/`; shared code is tested in
+`__tests__/shared/`.
 
 - **model/**: pure unit tests without mocks, including edge cases.
 - **view models**: `renderHook` with `createQueryWrapper()` from `__tests__/helpers/` and the
