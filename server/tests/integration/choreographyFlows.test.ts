@@ -15,6 +15,20 @@ import {
 } from '../../features/choreographies/read-validation.ts';
 import * as figures from '../../features/step-figures/flow.ts';
 import { validateFigure } from '../../features/step-figures/operations.ts';
+import type { HierarchyFigure } from '../../features/step-figures/operations.ts';
+
+async function createFigure(name: string, componentIds: number[] = []): Promise<HierarchyFigure> {
+  const result = await figures.createFigure(validateFigure({ name, component_ids: componentIds }));
+  if ('error' in result || result.value === null) throw new Error('Failed to create test figure');
+  return result.value;
+}
+
+function createdChoreographyId(
+  result: Awaited<ReturnType<typeof choreography.createChoreography>>,
+): number {
+  if ('error' in result) throw new Error(`Failed to create test choreography: ${result.error}`);
+  return result.value;
+}
 
 beforeAll(async () => {
   await setupTestDb();
@@ -29,22 +43,24 @@ beforeEach(async () => {
 
 describe('choreography integration flows', () => {
   it('creates, searches, updates and removes related records', async () => {
-    const created = await choreography.createChoreography(
-      prepareWriteRequest({
-        name: 'Dance',
-        level: 'BEGINNER',
-        authors: ['Jane'],
-        tags: ['Fun'],
-        step_figures: ['Kick'],
-        choreography_information: [{ category: 'Intro', description: ' Start ' }],
-      }),
+    const created = createdChoreographyId(
+      await choreography.createChoreography(
+        prepareWriteRequest({
+          name: 'Dance',
+          level: 'BEGINNER',
+          authors: ['Jane'],
+          tags: ['Fun'],
+          step_figures: ['Kick'],
+          choreography_information: [{ category: 'Intro', description: ' Start ' }],
+        }),
+      ),
     );
     const result = await reads.searchChoreographies(
       prepareSearchQuery({ search: 'dance', tags: ['Fun'] }),
     );
     expect(result.data).toHaveLength(1);
     expect(result.data[0]).toMatchObject({
-      id: created.value,
+      id: created,
       authors: ['Jane'],
       tags: ['Fun'],
       step_figures: ['Kick'],
@@ -54,24 +70,19 @@ describe('choreography integration flows', () => {
       await reads.checkDuplicates(
         prepareDuplicateQuery({ name: 'dance', level: 'BEGINNER', authors: 'jane' }),
       ),
-    ).toMatchObject([{ id: created.value, authors: ['Jane'] }]);
+    ).toMatchObject([{ id: created, authors: ['Jane'] }]);
     expect(
       await choreography.updateChoreography(
-        created.value,
+        created,
         preparePartialWriteRequest({ name: 'Renamed', tags: ['New'] }),
       ),
     ).toEqual({ value: true });
     expect(
-      (await reads.getChoreography(prepareChoreographyReadId({ id: String(created.value) }).value))
-        .value,
-    ).toMatchObject({
-      name: 'Renamed',
-      authors: ['Jane'],
-      tags: ['New'],
-    });
-    expect(await choreography.deleteChoreography(created.value)).toEqual({ value: true });
+      await reads.getChoreography(prepareChoreographyReadId({ id: String(created) }).value),
+    ).toMatchObject({ value: { name: 'Renamed', authors: ['Jane'], tags: ['New'] } });
+    expect(await choreography.deleteChoreography(created)).toEqual({ value: true });
     expect(
-      await reads.getChoreography(prepareChoreographyReadId({ id: String(created.value) }).value),
+      await reads.getChoreography(prepareChoreographyReadId({ id: String(created) }).value),
     ).toEqual({ error: 'not_found' });
   });
 
@@ -105,21 +116,18 @@ describe('choreography integration flows', () => {
   });
 
   it('expands hierarchy for exact searches and filters on attached tags', async () => {
-    const first = await figures.createFigure(validateFigure({ name: 'First' }));
-    const second = await figures.createFigure(validateFigure({ name: 'Second' }));
-    await figures.createFigure(
-      validateFigure({
-        name: 'Combined',
-        component_ids: [first.value.id, second.value.id],
-      }),
-    );
-    const created = await choreography.createChoreography(
-      prepareWriteRequest({
-        name: 'Composite Dance',
-        level: 'BEGINNER',
-        step_figures: ['Combined'],
-        tags: ['Fun'],
-      }),
+    const first = await createFigure('First');
+    const second = await createFigure('Second');
+    await createFigure('Combined', [first.id, second.id]);
+    const created = createdChoreographyId(
+      await choreography.createChoreography(
+        prepareWriteRequest({
+          name: 'Composite Dance',
+          level: 'BEGINNER',
+          step_figures: ['Combined'],
+          tags: ['Fun'],
+        }),
+      ),
     );
     const result = await reads.searchChoreographies(
       prepareSearchQuery({
@@ -128,7 +136,7 @@ describe('choreography integration flows', () => {
         tags: ['Fun'],
       }),
     );
-    expect(result.data.map((item) => item.id)).toEqual([created.value]);
+    expect(result.data.map((item) => item.id)).toEqual([created]);
     expect(
       await reads.searchChoreographies(
         prepareSearchQuery({
@@ -140,32 +148,34 @@ describe('choreography integration flows', () => {
   });
 
   it('combines exact hierarchy matching with ratings, relationships and exclusions', async () => {
-    const first = await figures.createFigure(validateFigure({ name: 'First' }));
-    const second = await figures.createFigure(validateFigure({ name: 'Second' }));
-    await figures.createFigure(
-      validateFigure({ name: 'Combined', component_ids: [first.value.id, second.value.id] }),
+    const first = await createFigure('First');
+    const second = await createFigure('Second');
+    await createFigure('Combined', [first.id, second.id]);
+    const match = createdChoreographyId(
+      await choreography.createChoreography(
+        prepareWriteRequest({
+          name: 'Dance match',
+          level: 'BEGINNER',
+          authors: ['Alice'],
+          tags: ['Fun'],
+          step_figures: ['Combined'],
+        }),
+      ),
     );
-    const match = await choreography.createChoreography(
-      prepareWriteRequest({
-        name: 'Dance match',
-        level: 'BEGINNER',
-        authors: ['Alice'],
-        tags: ['Fun'],
-        step_figures: ['Combined'],
-      }),
-    );
-    const excluded = await choreography.createChoreography(
-      prepareWriteRequest({
-        name: 'Dance excluded',
-        level: 'BEGINNER',
-        authors: ['Alice'],
-        tags: ['Fun', 'Bad'],
-        step_figures: ['Combined'],
-      }),
+    const excluded = createdChoreographyId(
+      await choreography.createChoreography(
+        prepareWriteRequest({
+          name: 'Dance excluded',
+          level: 'BEGINNER',
+          authors: ['Alice'],
+          tags: ['Fun', 'Bad'],
+          step_figures: ['Combined'],
+        }),
+      ),
     );
     await runQuery(
       'INSERT INTO personal_data.choreography_ratings (choreography_id, rating) VALUES (?, 4), (?, 4)',
-      [match.value, excluded.value],
+      [match, excluded],
     );
 
     const result = await reads.searchChoreographies(
@@ -181,6 +191,6 @@ describe('choreography integration flows', () => {
         min_rating: '3',
       }),
     );
-    expect(result.data.map((item) => item.id)).toEqual([match.value]);
+    expect(result.data.map((item) => item.id)).toEqual([match]);
   });
 });
