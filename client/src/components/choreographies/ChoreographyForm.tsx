@@ -11,9 +11,9 @@ import {
   validateChoreography,
 } from "../../api";
 import { ChoreographyFormData, ChoreographyInformation } from "../../types";
-import { getFieldIssues } from "../../utils/apiErrors";
-import type { FieldIssue } from "../../utils/apiErrors";
-import { ActionButton, ActionGroup, LevelBatch } from "../shared/ui";
+import { getFieldIssues } from "../../shared/http/apiErrors";
+import type { FieldIssue } from "../../shared/http/apiErrors";
+import { ActionButton, ActionGroup, LevelBatch } from "../../shared/ui";
 import {
   AdditionalInformationTab,
   BasicInformationTab,

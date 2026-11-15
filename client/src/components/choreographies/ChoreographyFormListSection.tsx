@@ -1,6 +1,6 @@
 import React from "react";
 
-import { AutoCompleteInput, FormField, Tag, TagGroup } from "../shared/ui";
+import { AutoCompleteInput, FormField, Tag, TagGroup } from "../../shared/ui";
 
 interface ChoreographyFormListSectionProps {
   title: string;

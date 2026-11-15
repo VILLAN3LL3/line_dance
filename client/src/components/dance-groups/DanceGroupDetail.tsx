@@ -29,7 +29,7 @@ import {
   StepFigureOption,
   StepFigureSuggestion,
 } from "../../types";
-import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
+import { BackButton, confirmAction, ErrorMessage } from "../../shared/ui";
 import { DanceGroupCoursesSection } from "./DanceGroupCoursesSection";
 import { DanceGroupLearnedSection } from "./DanceGroupLearnedSection";
 import { DanceGroupLevelsSection } from "./DanceGroupLevelsSection";

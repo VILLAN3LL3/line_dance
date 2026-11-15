@@ -1,7 +1,7 @@
 import React from "react";
 
 import { LevelOption } from "../../types";
-import { Section } from "../shared/ui";
+import { Section } from "../../shared/ui";
 
 interface DanceGroupLevelsSectionProps {
   maxGroupLevelValue: number | null;

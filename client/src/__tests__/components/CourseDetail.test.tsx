@@ -1,7 +1,9 @@
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+
+import { renderWithQueryClient as render } from "../helpers/renderWithQueryClient";
 
 import {
   addChoreographyToSession,

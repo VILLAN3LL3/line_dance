@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
-import { ChoreographyCard } from "../choreographies/ChoreographyCard";
-import { ActionButton, EmptyState, LevelBatch, Section } from "../shared/ui";
+import { ChoreographyCard } from "../../features/choreographies";
+import { ActionButton, EmptyState, LevelBatch, Section } from "../../shared/ui";
 
 import type { Choreography, Session, SessionChoreography } from "../../types";
 

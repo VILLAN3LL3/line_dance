@@ -1,7 +1,9 @@
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
+
+import { renderWithQueryClient as render } from "../helpers/renderWithQueryClient";
 
 import {
   checkChoreographyDuplicates,
@@ -16,7 +18,7 @@ import {
 } from "../../api";
 import ChoreographyDetail from "../../components/choreographies/ChoreographyDetail";
 import { GlobalApiErrorNotice } from "../../components/shared/GlobalApiErrorNotice";
-import { reportGlobalApiError } from "../../utils/apiErrors";
+import { reportGlobalApiError } from "../../shared/http/apiErrors";
 
 const mockNavigate = vi.fn();
 

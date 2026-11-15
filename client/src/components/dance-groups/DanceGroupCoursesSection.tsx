@@ -19,7 +19,7 @@ import {
   LoadingState,
   Section,
   StatusBadge,
-} from "../shared/ui";
+} from "../../shared/ui";
 
 interface DanceGroupCoursesSectionProps {
   courses: DanceCourse[];

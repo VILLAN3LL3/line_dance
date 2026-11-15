@@ -1,15 +1,9 @@
 import axios from "axios";
 
 import {
-  Choreography,
-  ChoreographyFormData,
-  ChoreographyWriteResponse,
   DanceCourse,
   DanceGroup,
-  DuplicateChoreography,
   LearnedChoreography,
-  LevelOption,
-  PaginatedResponse,
   SavedFilterConfiguration,
   SearchFilters,
   Session,
@@ -19,154 +13,20 @@ import {
   StepFigureOption,
   StepFigureSuggestion,
 } from "./types";
-import { reportGlobalApiError } from "./utils/apiErrors";
+import { httpClient as api } from "./shared/http/httpClient";
 
-import type { Trainer } from "./types";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-
-const api = axios.create({
-  baseURL: API_URL,
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  (error: unknown) => {
-    reportGlobalApiError(error);
-    return Promise.reject(error);
-  },
-);
-
-const inFlightChoreographySearches = new Map<string, Promise<PaginatedResponse<Choreography>>>();
-
-function buildSearchRequestKey(filters: SearchFilters): string {
-  const entries = Object.entries(filters)
-    .filter(([, value]) => value !== undefined && value !== null)
-    .sort(([left], [right]) => left.localeCompare(right));
-
-  return entries
-    .map(([key, value]) => {
-      if (Array.isArray(value)) {
-        return `${key}=[${value.join(",")}]`;
-      }
-      return `${key}=${String(value)}`;
-    })
-    .join("&");
-}
-
-export async function fetchChoreographies(
-  page: number = 1,
-  limit: number = 20,
-): Promise<PaginatedResponse<Choreography>> {
-  const response = await api.get("/choreographies", {
-    params: { page, limit },
-  });
-  return response.data;
-}
-
-export async function fetchChoreography(id: number): Promise<Choreography> {
-  const response = await api.get(`/choreographies/${id}`);
-  return response.data;
-}
-
-export async function searchChoreographies(
-  filters: SearchFilters,
-): Promise<PaginatedResponse<Choreography>> {
-  const requestKey = buildSearchRequestKey(filters);
-  const existingRequest = inFlightChoreographySearches.get(requestKey);
-  if (existingRequest !== undefined) {
-    return existingRequest;
-  }
-
-  const request = api
-    .get("/choreographies/search", {
-      params: filters,
-    })
-    .then((response) => response.data)
-    .finally(() => {
-      inFlightChoreographySearches.delete(requestKey);
-    });
-
-  inFlightChoreographySearches.set(requestKey, request);
-  return request;
-}
-
-export async function createChoreography(
-  data: ChoreographyFormData,
-): Promise<ChoreographyWriteResponse> {
-  const response = await api.post<ChoreographyWriteResponse>("/choreographies", data);
-  return response.data;
-}
-
-export async function validateChoreography(data: ChoreographyFormData): Promise<void> {
-  await api.post("/choreographies/validate", data);
-}
-
-export async function updateChoreography(
-  id: number,
-  data: Partial<ChoreographyFormData>,
-): Promise<ChoreographyWriteResponse> {
-  const response = await api.put<ChoreographyWriteResponse>(`/choreographies/${id}`, data);
-  return response.data;
-}
-
-export async function deleteChoreography(id: number): Promise<{ message: string }> {
-  const response = await api.delete(`/choreographies/${id}`);
-  return response.data;
-}
-
-export async function checkChoreographyDuplicates(
-  name: string,
-  level: string,
-  authors: string[],
-  excludeId?: number,
-): Promise<DuplicateChoreography[]> {
-  const response = await api.get("/choreographies/duplicates", {
-    params: { name, level, authors, exclude_id: excludeId },
-  });
-  return response.data;
-}
-
-export async function setChoreographyRating(
-  id: number,
-  rating: number,
-): Promise<{ choreography_id: number; rating: number }> {
-  const response = await api.put(`/choreographies/${id}/rating`, { rating });
-  return response.data;
-}
-
-export async function deleteChoreographyRating(id: number): Promise<{ message: string }> {
-  const response = await api.delete(`/choreographies/${id}/rating`);
-  return response.data;
-}
-
-export async function getLevels(): Promise<LevelOption[]> {
-  const response = await api.get("/levels");
-  return response.data;
-}
-
-export async function getTags(): Promise<string[]> {
-  const response = await api.get("/tags");
-  return response.data;
-}
+// Temporary facade: features migrated to `features/<name>/` re-export here until their consumers migrate.
+export * from "./features/trainers/api";
+export * from "./features/choreographies/api";
+export * from "./features/metadata/api";
 
 export async function getChoreographyInfoCategories(): Promise<string[]> {
   const response = await api.get("/choreography-info-categories");
   return response.data;
 }
 
-export async function getAuthors(): Promise<string[]> {
-  const response = await api.get("/authors");
-  return response.data;
-}
-
 export async function getAuthorStats(): Promise<import("./types").AuthorStats[]> {
   const response = await api.get("/authors/stats");
-  return response.data;
-}
-
-export async function getCountryCodes(): Promise<Record<string, string>> {
-  const response = await api.get("/country-codes");
   return response.data;
 }
 
@@ -180,11 +40,6 @@ export async function addLevel(name: string): Promise<{ id: number; name: string
     }
     throw error;
   }
-}
-
-export async function getStepFigures(): Promise<string[]> {
-  const response = await api.get("/step_figures");
-  return response.data;
 }
 
 export async function getStepFiguresWithIds(): Promise<StepFigureOption[]> {
@@ -234,11 +89,6 @@ export async function updateStepFigureDefinition(
 export async function deleteStepFigureDefinition(id: number): Promise<{ message: string }> {
   const response = await api.delete(`/step_figures/${id}`);
   return response.data;
-}
-
-export async function getMaxChoreographyCount(): Promise<number> {
-  const response = await api.get("/choreographies/max-count");
-  return response.data?.max_count || 0;
 }
 
 export async function getSavedFilterConfigurations(): Promise<SavedFilterConfiguration[]> {
@@ -299,33 +149,6 @@ export async function updateDanceGroup(id: number, name: string): Promise<DanceG
 
 export async function deleteDanceGroup(id: number): Promise<{ message: string }> {
   const response = await api.delete(`/dance-groups/${id}`);
-  return response.data;
-}
-
-// Trainers API
-
-export async function getTrainers(): Promise<Trainer[]> {
-  const response = await api.get("/trainers");
-  return response.data;
-}
-
-export async function createTrainer(name: string, phone: string, email: string): Promise<Trainer> {
-  const response = await api.post("/trainers", { name, phone, email });
-  return response.data;
-}
-
-export async function updateTrainer(
-  id: number,
-  name: string,
-  phone: string,
-  email: string,
-): Promise<Trainer> {
-  const response = await api.put(`/trainers/${id}`, { name, phone, email });
-  return response.data;
-}
-
-export async function deleteTrainer(id: number): Promise<{ message: string }> {
-  const response = await api.delete(`/trainers/${id}`);
   return response.data;
 }
 

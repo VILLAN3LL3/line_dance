@@ -17,7 +17,7 @@ import {
   ErrorMessage,
   LoadingState,
   Section,
-} from "../shared/ui";
+} from "../../shared/ui";
 import { ChoreographyFormListSection } from "./ChoreographyFormListSection";
 
 const StepFigureHierarchyAdmin: React.FC = () => {

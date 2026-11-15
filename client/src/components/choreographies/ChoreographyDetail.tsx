@@ -10,10 +10,10 @@ import {
   updateChoreography,
 } from "../../api";
 import { Choreography, ChoreographyFormData, DuplicateChoreography } from "../../types";
-import { getChoreographyUpdateErrorMessage, getFieldIssues } from "../../utils/apiErrors";
+import { getChoreographyUpdateErrorMessage, getFieldIssues } from "../../shared/http/apiErrors";
 import { AppFormView } from "../app/AppFormView";
-import { BackButton, confirmAction, EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
-import { ChoreographyCard } from "./ChoreographyCard";
+import { BackButton, confirmAction, EmptyState, ErrorMessage, LoadingState } from "../../shared/ui";
+import { ChoreographyCard } from "../../features/choreographies";
 import { DuplicateChoreographyWarning } from "./DuplicateChoreographyWarning";
 
 const ChoreographyDetail: React.FC = () => {

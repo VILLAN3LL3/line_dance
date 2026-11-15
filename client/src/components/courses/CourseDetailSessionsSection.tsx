@@ -9,7 +9,7 @@ import {
   LoadingState,
   Section,
   StatusBadge,
-} from "../shared/ui";
+} from "../../shared/ui";
 import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
 import { SessionContentsDragItem, SessionContentsDragList } from "./SessionContentsDrag";
 

@@ -3,7 +3,7 @@ import "../styles/AppRouter.css";
 import React, { useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 
-import { App as ChoreographySearch } from "./app/App";
+import { ChoreographySearchPage } from "../features/choreographies";
 import ChoreographersPage from "./choreographies/ChoreographersPage";
 import ChoreographyCreatePage from "./choreographies/ChoreographyCreatePage";
 import ChoreographyDetail from "./choreographies/ChoreographyDetail";
@@ -12,8 +12,8 @@ import CourseDetail from "./courses/CourseDetail";
 import CourseFormPage from "./courses/CourseFormPage";
 import DanceGroupDetail from "./dance-groups/DanceGroupDetail";
 import { DanceGroupsAdmin } from "./dance-groups/DanceGroupsAdmin";
-import { ExternalLink } from "./shared/ui";
-import TrainersAdmin from "./trainers/TrainersAdmin";
+import { ExternalLink } from "../shared/ui";
+import { TrainersPage } from "../features/trainers";
 import { GlobalApiErrorNotice } from "./shared/GlobalApiErrorNotice";
 
 export const AppRouter: React.FC = () => {
@@ -146,7 +146,7 @@ export const AppRouter: React.FC = () => {
       <main className="router-content">
         <GlobalApiErrorNotice />
         <Routes>
-          <Route path="/" element={<ChoreographySearch />} />
+          <Route path="/" element={<ChoreographySearchPage />} />
           <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
           <Route path="/choreographies/:id" element={<ChoreographyDetail />} />
           <Route path="/choreographers" element={<ChoreographersPage />} />
@@ -160,7 +160,7 @@ export const AppRouter: React.FC = () => {
             element={<CourseFormPage />}
           />
           <Route path="/admin/groups/:groupId/courses/:courseId" element={<CourseDetail />} />
-          <Route path="/trainers" element={<TrainersAdmin />} />
+          <Route path="/trainers" element={<TrainersPage />} />
         </Routes>
       </main>
     </div>

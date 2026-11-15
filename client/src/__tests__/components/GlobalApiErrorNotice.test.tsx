@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GlobalApiErrorNotice } from "../../components/shared/GlobalApiErrorNotice";
-import { DATABASE_RESTARTING_EVENT, reportGlobalApiError } from "../../utils/apiErrors";
+import { DATABASE_RESTARTING_EVENT, reportGlobalApiError } from "../../shared/http/apiErrors";
 
 describe("GlobalApiErrorNotice", () => {
   afterEach(() => {

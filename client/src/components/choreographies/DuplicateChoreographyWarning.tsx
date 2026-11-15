@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 import { DuplicateChoreography } from "../../types";
-import { ActionButton, ActionGroup } from "../shared/ui";
+import { ActionButton, ActionGroup } from "../../shared/ui";
 
 interface DuplicateChoreographyWarningProps {
   duplicates: DuplicateChoreography[];

@@ -11,7 +11,7 @@ import {
   updateDanceCourse,
 } from "../../api";
 import { DanceCourse, DanceGroup, Trainer } from "../../types";
-import { ActionButton, ActionGroup, BackButton, ErrorMessage, FormField } from "../shared/ui";
+import { ActionButton, ActionGroup, BackButton, ErrorMessage, FormField } from "../../shared/ui";
 import { UrlInput } from "../shared/UrlInput";
 
 const CourseFormPage: React.FC = () => {

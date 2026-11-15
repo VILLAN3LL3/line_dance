@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { DATABASE_RESTARTING_EVENT } from "../../utils/apiErrors";
+import { DATABASE_RESTARTING_EVENT } from "../../shared/http/apiErrors";
 
 interface DatabaseRestartingEventDetail {
   message?: string;

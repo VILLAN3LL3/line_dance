@@ -14,7 +14,7 @@ import {
   ErrorMessage,
   FormField,
   LoadingState,
-} from "../shared/ui";
+} from "../../shared/ui";
 
 interface DanceGroupsAdminProps {
   mode?: "list" | "create";

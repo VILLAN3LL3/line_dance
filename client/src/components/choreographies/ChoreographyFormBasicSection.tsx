@@ -1,6 +1,6 @@
 import React from "react";
 
-import { FormField } from "../shared/ui";
+import { FormField } from "../../shared/ui";
 
 interface LevelOption {
   id: number;

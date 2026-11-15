@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ActionButton, FormField } from "../shared/ui";
+import { ActionButton, FormField } from "../../shared/ui";
 import { ChoreographyFormBasicSection } from "./ChoreographyFormBasicSection";
 import { ChoreographyFormLinksSection } from "./ChoreographyFormLinksSection";
 import { ChoreographyFormListSection } from "./ChoreographyFormListSection";

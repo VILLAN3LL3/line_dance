@@ -8,7 +8,7 @@ import {
   StepFigureSuggestion,
 } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
-import { ActionButton, EmptyState, LevelBatch, Section, TagGroup } from "../shared/ui";
+import { ActionButton, EmptyState, LevelBatch, Section, TagGroup } from "../../shared/ui";
 
 interface DanceGroupLearnedSectionProps {
   learnedChoreographies: LearnedChoreography[];

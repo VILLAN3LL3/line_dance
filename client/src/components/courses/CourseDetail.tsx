@@ -27,7 +27,7 @@ import {
   StepFigureSuggestion,
 } from "../../types";
 import { getBerlinTodayIso } from "../../utils/courseStatus";
-import { BackButton, confirmAction, ErrorMessage } from "../shared/ui";
+import { BackButton, confirmAction, ErrorMessage } from "../../shared/ui";
 import CourseDetailSessionsSection from "./CourseDetailSessionsSection";
 
 const CourseDetail: React.FC = () => {

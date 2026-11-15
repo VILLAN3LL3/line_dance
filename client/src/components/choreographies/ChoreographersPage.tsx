@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 
 import { getAuthorStats, getLevels } from "../../api";
 import { AuthorStats, LevelOption } from "../../types";
-import { EmptyState, ErrorMessage, LoadingState } from "../shared/ui";
+import { EmptyState, ErrorMessage, LoadingState } from "../../shared/ui";
 
 type SortField = "name" | "total";
 type SortDir = "asc" | "desc";

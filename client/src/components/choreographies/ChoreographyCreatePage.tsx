@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 import { checkChoreographyDuplicates, createChoreography } from "../../api";
 import { ChoreographyFormData, DuplicateChoreography } from "../../types";
-import { getFieldIssues } from "../../utils/apiErrors";
+import { getFieldIssues } from "../../shared/http/apiErrors";
 import { AppFormView } from "../app/AppFormView";
-import { ErrorMessage } from "../shared/ui";
+import { ErrorMessage } from "../../shared/ui";
 import { DuplicateChoreographyWarning } from "./DuplicateChoreographyWarning";
 
 const ChoreographyCreatePage: React.FC = () => {
