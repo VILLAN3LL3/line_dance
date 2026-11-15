@@ -389,6 +389,27 @@ migrations.push(
       );
     },
   },
+  {
+    id: '015_remove_sessions_without_course',
+    up: async () => {
+      await runQuery(
+        `DELETE FROM session_choreographies WHERE session_id IN (
+          SELECT s.id FROM sessions s
+          LEFT JOIN dance_courses dc ON dc.id = s.dance_course_id
+          WHERE dc.id IS NULL
+        )`,
+        [],
+        dbName,
+      );
+      await runQuery(
+        `DELETE FROM sessions WHERE NOT EXISTS (
+          SELECT 1 FROM dance_courses dc WHERE dc.id = sessions.dance_course_id
+        )`,
+        [],
+        dbName,
+      );
+    },
+  },
 );
 
 async function applyMigration(migration: Migration): Promise<void> {

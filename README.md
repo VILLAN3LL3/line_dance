@@ -49,6 +49,7 @@ __All code was written by GitHub Copilot. Use with caution.__
 ### Sessions & Course Planning
 
 - Create and delete sessions; attach and remove choreographies
+- Deleting a course also deletes its sessions and their choreography assignments. Migration `015_remove_sessions_without_course` removes legacy sessions whose course no longer exists, along with their assignments.
 - Adding a dance marks it as "New" and automatically schedules repetitions in the next two existing sessions of the same course. Existing assignments are preserved without duplicates. Repetitions display their chronological number within the course ("Repeat 1", "Repeat 2", etc.).
 - Removing the original assignment also removes its linked automatic repetitions; removing one repetition leaves the original and other assignments intact. Independently planned assignments are never deleted through this link.
 - Reorder session contents using drag handles (mouse, touch, or keyboard: Space, arrow keys, Space; Escape cancels). Descriptions and independently planned dances move together, while dates and session IDs stay fixed. Both drag-and-drop and the two-session swap atomically rebuild automatic repetitions at the next two course dates after each original assignment. This can update repetitions outside the visible selection.

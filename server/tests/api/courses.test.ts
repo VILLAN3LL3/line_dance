@@ -416,20 +416,42 @@ describe('DELETE /api/dance-courses/:id', () => {
     expect(res.status).toBe(404);
   });
 
-  it('cascades deletion to sessions when course is deleted', async () => {
+  it('deletes the course sessions and their assignments without affecting another course', async () => {
     const group = await createGroup();
     const course = await request(app)
       .post('/api/dance-courses')
       .send({ dance_group_id: group.id, semester: 'WS 2025', name: 'Cascade Course' });
+    const otherCourse = await request(app)
+      .post('/api/dance-courses')
+      .send({ dance_group_id: group.id, semester: 'WS 2025', name: 'Other Course' });
 
-    await request(app)
+    const session = await request(app)
       .post('/api/sessions')
       .send({ dance_course_id: course.body.id, session_date: '2025-01-15' });
+    const otherSession = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: otherCourse.body.id, session_date: '2025-01-15' });
+    await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: session.body.id, choreography_id: 42 })
+      .expect(201);
+    await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: otherSession.body.id, choreography_id: 43 })
+      .expect(201);
 
-    await request(app).delete(`/api/dance-courses/${course.body.id}`);
+    await request(app).delete(`/api/dance-courses/${course.body.id}`).expect(200);
 
-    const sessions = await request(app).get(`/api/sessions?dance_course_id=${course.body.id}`);
-    expect(sessions.body).toHaveLength(0);
+    const sessions = await request(app).get('/api/sessions').expect(200);
+    expect(sessions.body).toEqual([expect.objectContaining({ id: otherSession.body.id })]);
+    const deletedAssignments = await request(app)
+      .get(`/api/session-choreographies?session_id=${session.body.id}`)
+      .expect(200);
+    expect(deletedAssignments.body).toEqual([]);
+    const remainingAssignments = await request(app)
+      .get(`/api/session-choreographies?session_id=${otherSession.body.id}`)
+      .expect(200);
+    expect(remainingAssignments.body).toEqual([expect.objectContaining({ choreography_id: 43 })]);
   });
 });
 

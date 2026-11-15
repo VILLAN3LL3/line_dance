@@ -558,6 +558,71 @@ describe('GET /api/sessions', () => {
   });
 });
 
+describe('orphaned session cleanup migration', () => {
+  it('removes sessions without a course and their assignments while preserving valid data', async () => {
+    const { course } = await createGroupAndCourse();
+    const valid = await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.id, session_date: '2025-01-15' });
+    await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: valid.body.id, choreography_id: 42 })
+      .expect(201);
+
+    await runQuery('PRAGMA foreign_keys = OFF', [], 'danceGroups');
+    let orphanId: number;
+    try {
+      const orphan = await runQuery(
+        "INSERT INTO sessions (dance_course_id, session_date) VALUES (99999, '2025-01-01')",
+        [],
+        'danceGroups',
+      );
+      orphanId = orphan.id;
+      await runQuery(
+        'INSERT INTO session_choreographies (session_id, choreography_id) VALUES (?, 43)',
+        [orphanId],
+        'danceGroups',
+      );
+    } finally {
+      await runQuery('PRAGMA foreign_keys = ON', [], 'danceGroups');
+    }
+
+    await runQuery(
+      "DELETE FROM schema_migrations WHERE id = '015_remove_sessions_without_course'",
+      [],
+      'danceGroups',
+    );
+    await runQuery(
+      `CREATE TEMP TRIGGER fail_orphan_cleanup BEFORE DELETE ON sessions
+       BEGIN SELECT RAISE(ABORT, 'Cleanup failure'); END`,
+      [],
+      'danceGroups',
+    );
+    try {
+      await expect(runDanceGroupsMigrations()).rejects.toThrow('Cleanup failure');
+      const assignments = await request(app)
+        .get(`/api/session-choreographies?session_id=${orphanId}`)
+        .expect(200);
+      expect(assignments.body).toEqual([expect.objectContaining({ choreography_id: 43 })]);
+    } finally {
+      await runQuery('DROP TRIGGER fail_orphan_cleanup', [], 'danceGroups');
+    }
+    await runDanceGroupsMigrations();
+    await runDanceGroupsMigrations();
+
+    const list = await request(app).get('/api/sessions').expect(200);
+    expect(list.body).toEqual([expect.objectContaining({ id: valid.body.id })]);
+    const validAssignments = await request(app)
+      .get(`/api/session-choreographies?session_id=${valid.body.id}`)
+      .expect(200);
+    expect(validAssignments.body).toEqual([expect.objectContaining({ choreography_id: 42 })]);
+    const orphanAssignments = await request(app)
+      .get(`/api/session-choreographies?session_id=${orphanId}`)
+      .expect(200);
+    expect(orphanAssignments.body).toEqual([]);
+  });
+});
+
 describe('POST /api/sessions/reorder-contents', () => {
   it('serializes simultaneous swaps without losing comments or dance assignments', async () => {
     const { course } = await createGroupAndCourse();

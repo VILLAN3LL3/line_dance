@@ -151,7 +151,15 @@ export function getDatabase(name: DatabaseName = 'choreography'): Database {
     db.configure('busyTimeout', 5000);
     dbReadyPromises[name] = Promise.resolve();
 
-    if (name === 'choreography') {
+    if (name === 'danceGroups') {
+      const connection = db;
+      dbReadyPromises[name] = new Promise<void>((resolve, reject) => {
+        connection.run('PRAGMA foreign_keys = ON', (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    } else if (name === 'choreography') {
       const tagsDbPath = databases.tags;
       if (tagsDbPath !== ':memory:') {
         fs.mkdirSync(path.dirname(tagsDbPath), { recursive: true });

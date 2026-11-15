@@ -110,6 +110,26 @@ describe('SQLite transactions', () => {
   });
 });
 
+it('enforces foreign keys on the application-created dance groups connection', async () => {
+  try {
+    await runQuery('CREATE TABLE parent (id INTEGER PRIMARY KEY)', [], 'danceGroups');
+    await runQuery(
+      'CREATE TABLE child (parent_id INTEGER REFERENCES parent(id) ON DELETE CASCADE)',
+      [],
+      'danceGroups',
+    );
+    await expect(runQuery('INSERT INTO child VALUES (1)', [], 'danceGroups')).rejects.toThrow(
+      'FOREIGN KEY constraint failed',
+    );
+    await runQuery('INSERT INTO parent VALUES (1)', [], 'danceGroups');
+    await runQuery('INSERT INTO child VALUES (1)', [], 'danceGroups');
+    await runQuery('DELETE FROM parent WHERE id = 1', [], 'danceGroups');
+    expect(await allQuery('SELECT * FROM child', [], 'danceGroups')).toEqual([]);
+  } finally {
+    await closeDatabase();
+  }
+});
+
 it('rolls back changes to an attached file without affecting the separate groups database', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'line-dance-transactions-'));
   try {
