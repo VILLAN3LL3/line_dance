@@ -106,7 +106,7 @@ What to test:
 Examples:
 ✅ courseStatus.test.ts — Pure function utilities
 ✅ choreographyClipboard.test.ts — Clipboard formatting
-✅ choreographies.test.js — Route handlers, DB queries
+✅ choreographies.test.ts — Route handlers, DB queries
 ```
 
 #### Component Tests (Client)
@@ -166,7 +166,7 @@ Every feature implementation **must** include tests. This is not optional.
 4. Interaction with related features (combined filters, cross-entity effects)
 
 **Use the existing test infrastructure:**
-- Server: `testApp.js` + `testDb.js` — extend when adding new route handlers
+- Server: `testApp.ts` + `testDb.ts` — extend when adding new route handlers
 - Client: Vitest + Testing Library — mock new API functions in `vi.mock` factory
 
 ---

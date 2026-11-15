@@ -1,13 +1,16 @@
-const fs = require('node:fs');
-const path = require('node:path');
+import fs = require('node:fs');
+import path = require('node:path');
+
+const root = path.resolve(__dirname, '../../..');
 
 // Load .env.pm2 for machine-local config (not checked in).
 // Copy .env.pm2.example to .env.pm2 and fill in the values.
-function loadEnvFile() {
-  const envFile = path.join(__dirname, '.env.pm2');
+function loadEnvFile(): Record<string, string> {
+  const envFile = path.join(root, '.env.pm2');
   if (!fs.existsSync(envFile)) return {};
   return Object.fromEntries(
-    fs.readFileSync(envFile, 'utf8')
+    fs
+      .readFileSync(envFile, 'utf8')
       .split('\n')
       .filter((line) => line.trim() && !line.startsWith('#'))
       .map((line) => line.split('=').map((s) => s.trim()))
@@ -23,12 +26,12 @@ if (!localEnv.NODE_BINARY) {
   );
 }
 
-module.exports = {
+export = {
   apps: [
     {
       name: 'line-dance',
       script: './server/dist/scripts/server.js',
-      cwd: __dirname,
+      cwd: root,
       interpreter: localEnv.NODE_BINARY,
       env: {
         NODE_ENV: 'production',

@@ -51,8 +51,8 @@ The course PDF renderer is a transport-specific exception: it writes the prepare
 response; its data preparation remains in the feature flow.
 
 Examples to inspect: `server/routes/trainers.ts` and `server/features/trainers/`,
-`server/features/choreographies/` (including `search-query.js`), and
-`server/features/url-check/`. `server/eslint.config.js` enforces some boundaries, but its route
+`server/features/choreographies/` (including `search-query.ts`), and
+`server/features/url-check/`. `server/eslint.config.ts` enforces some boundaries, but its route
 list and import restrictions are not a complete architectural proof. Extend relevant restrictions
 when adding an adapter or boundary, and review responsibilities manually as well.
 

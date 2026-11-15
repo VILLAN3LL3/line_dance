@@ -3,7 +3,7 @@ import type { ILayer } from 'express-serve-static-core';
 import type { OpenAPIV3 } from 'openapi-types';
 import express from 'express';
 import request from 'supertest';
-import app from '../setup/testApp.js';
+import app from '../setup/testApp.ts';
 import { openApiSpec } from '../../scripts/openapi.ts';
 
 // ---------------------------------------------------------------------------

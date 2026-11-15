@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import type { Response } from 'supertest';
-import { setupTestDb, clearAllTables } from '../setup/testDb.js';
-import app from '../setup/testApp.js';
+import { setupTestDb, clearAllTables } from '../setup/testDb.ts';
+import app from '../setup/testApp.ts';
 
 type AuthorStats = { name: string; total: number; by_level: Record<string, number> };
 

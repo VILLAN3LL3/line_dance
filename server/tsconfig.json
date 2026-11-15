@@ -13,11 +13,13 @@
   },
   "include": [
     "app.ts",
+    "eslint.config.ts",
     "features/**/*.ts",
     "migrations/**/*.ts",
     "routes/**/*.ts",
     "scripts/**/*.ts",
     "tests/**/*.ts",
-    "utils/**/*.ts"
+    "utils/**/*.ts",
+    "vitest.config.ts"
   ]
 }

@@ -122,19 +122,12 @@ requests in route handlers and pure operations.
 For backend changes, follow the [backend architecture skill](.github/skills/backend-architecture/SKILL.md)
 for responsibility boundaries, transaction handling, and testing.
 
-The backend is being migrated incrementally from JavaScript to TypeScript. `npm run typecheck`
-checks migrated TypeScript files and tests in strict mode; existing JavaScript is not yet type-checked.
+The backend and its tests are written in TypeScript. `npm run typecheck`
+checks them in strict mode.
 `npm run build` emits production JavaScript to `server/dist/` and rewrites relative TypeScript
 imports. Production start and migration commands use this build; the development watcher runs
 TypeScript directly. Database paths and PDF assets remain relative to `server/`, not `server/dist/`.
-The URL checker, trainers, dance groups, courses, sessions, ratings, saved filters, step figures, step-figure
-suggestions, metadata, course PDF generation, shared choreography normalization, and database
-helper are migrated; the remaining backend and tests still require migration.
-Choreography reads and writes, field validation, search filters, and their HTTP input preparation
-are migrated, as are the server entry point, Express app, choreography and dance-group routers, and shared API error handling.
-The choreography and dance-group schema migrations and their entry points are also migrated.
-The one-time legacy tag migration script, OpenAPI specification, and country helper are migrated as well.
-The migrated endpoints validate untrusted input with Zod and pure operations invoked by shared HTTP
+Endpoints validate untrusted input with Zod and pure operations invoked by shared HTTP
 middleware, configured per endpoint with its input source and validator. Flows receive typed
 validation results, with branded types where appropriate. Existing error responses and their precedence are preserved;
 rating conversion remains backward-compatible with the existing API.
@@ -158,9 +151,10 @@ are therefore not a single consistent snapshot.
 |---|---|
 | `npm run dev` | Start with Node's built-in watcher; restarts when imported server files change |
 | `npm run build` | Compile the backend to `dist/` |
+| `npm run build:pm2` | Compile the PM2 configuration to `dist/pm2/` |
 | `npm start` | Start the compiled backend without file watching (build first) |
 | `npm run migrate` | Run compiled database migrations (build first) |
-| `npm run typecheck` | Type-check migrated TypeScript code and tests |
+| `npm run typecheck` | Type-check TypeScript code and tests |
 | `npm test` | Run tests |
 | `npm run test:watch` | Tests in watch mode |
 
@@ -224,7 +218,7 @@ Run the app as a persistent local service that auto-starts on login and rebuilds
 
 ```bash
 # 1. Build the server and client
-cd server && npm run build && cd ..
+cd server && npm run build && npm run build:pm2 && cd ..
 cd client && npm run build && cd ..
 
 # 2. Create local PM2 config
@@ -232,7 +226,7 @@ cp .env.pm2.example .env.pm2
 # Edit .env.pm2 and set NODE_BINARY to: $(which node)
 
 # 3. Start with PM2
-pm2 start ecosystem.config.js
+pm2 start server/dist/pm2/ecosystem.config.cjs
 
 # 4. Register as a login item (run once)
 pm2 startup launchd   # copy and run the printed sudo command
@@ -247,7 +241,7 @@ configuration:
 
 ```bash
 pm2 delete line-dance
-pm2 start ecosystem.config.js
+pm2 start server/dist/pm2/ecosystem.config.cjs
 pm2 save
 ```
 
@@ -262,7 +256,9 @@ pm2 reload line-dance      # zero-downtime reload
 
 ### Auto-Deploy On Commit
 
-The `post-commit` hook rebuilds the server and client and restarts PM2 automatically after every `git commit`.
+The PM2 configuration is compiled from `ecosystem.config.cts` by `npm run build:pm2`.
+It reads `.env.pm2` from the repository root and runs the compiled server from that root.
+The `post-commit` hook rebuilds the server, PM2 configuration, and client and restarts PM2 automatically after every `git commit`.
 It resolves PM2 from `PATH` or an existing nvm installation; set `PM2_BINARY` to an absolute executable path to override this lookup.
 Build or restart failures stop deployment without reporting success. An existing process with a
 different entry point must be recreated as described above. The commit itself is already created

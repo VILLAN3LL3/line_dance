@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
-import { setupTestDb, clearAllTables } from '../setup/testDb.js';
-import app from '../setup/testApp.js';
+import type { Response } from 'supertest';
+import { setupTestDb, clearAllTables } from '../setup/testDb.ts';
+import app from '../setup/testApp.ts';
 import { allQuery, runQuery } from '../../scripts/db.ts';
 import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.ts';
 
@@ -25,7 +26,11 @@ describe('dance group migration regressions', () => {
       [],
       'danceGroups',
     );
-    const groups = await allQuery('SELECT id FROM dance_groups ORDER BY id', [], 'danceGroups');
+    const groups = await allQuery<{ id: number }>(
+      'SELECT id FROM dance_groups ORDER BY id',
+      [],
+      'danceGroups',
+    );
     await runQuery(
       'CREATE TABLE group_levels (dance_group_id INTEGER, level TEXT)',
       [],
@@ -45,7 +50,7 @@ describe('dance group migration regressions', () => {
         'danceGroups',
       );
       await runDanceGroupsMigrations();
-      const rows = await allQuery(
+      const rows = await allQuery<{ max_group_level_value: number | null }>(
         'SELECT max_group_level_value FROM dance_groups ORDER BY id',
         [],
         'danceGroups',
@@ -244,7 +249,7 @@ describe('DELETE /api/dance-groups/:id', () => {
 // Step Figure Suggestions
 // ---------------------------------------------------------------------------
 
-async function seedChoreo(name, level, stepFigures) {
+async function seedChoreo(name: string, level: string, stepFigures: string[]): Promise<Response> {
   return request(app)
     .post('/api/choreographies')
     .send({ name, level, count: 32, authors: [], tags: [], step_figures: stepFigures });
@@ -283,7 +288,9 @@ describe('GET /api/dance-groups/:groupId/step-figure-suggestions', () => {
     );
     expect(res.status).toBe(200);
     // 'One Step Dance' has 1 step figure → Basic Step is a valid suggestion
-    expect(res.body.some((s) => s.step_figure === 'Basic Step')).toBe(true);
+    expect(res.body.some((s: { step_figure: string }) => s.step_figure === 'Basic Step')).toBe(
+      true,
+    );
   });
 
   it('suggests step figures that unlock the most choreographies', async () => {
@@ -334,8 +341,12 @@ describe('GET /api/dance-groups/:groupId/step-figure-suggestions', () => {
       `/api/dance-groups/${group.body.id}/step-figure-suggestions`,
     );
     expect(res.status).toBe(200);
-    expect(res.body.every((s) => s.step_figure !== 'Known Step')).toBe(true);
-    expect(res.body.every((s) => s.step_figure !== 'Other Step')).toBe(true);
+    expect(res.body.every((s: { step_figure: string }) => s.step_figure !== 'Known Step')).toBe(
+      true,
+    );
+    expect(res.body.every((s: { step_figure: string }) => s.step_figure !== 'Other Step')).toBe(
+      true,
+    );
   });
 
   it('respects max_level_value filter', async () => {
@@ -356,14 +367,18 @@ describe('GET /api/dance-groups/:groupId/step-figure-suggestions', () => {
     await seedChoreo('Beginner Dance', 'BEGINNER', ['Base Step', 'Easy Move']);
 
     const levelsRes = await request(app).get('/api/levels');
-    const beginnerValue = levelsRes.body.find((l) => l.name === 'BEGINNER')?.value;
+    const beginnerValue = levelsRes.body.find(
+      (l: { name: string }) => l.name === 'BEGINNER',
+    )?.value;
 
     const res = await request(app).get(
       `/api/dance-groups/${group.body.id}/step-figure-suggestions?max_level_value=${beginnerValue}`,
     );
     expect(res.status).toBe(200);
-    expect(res.body.some((s) => s.step_figure === 'Easy Move')).toBe(true);
-    expect(res.body.every((s) => s.step_figure !== 'Advanced Move')).toBe(true);
+    expect(res.body.some((s: { step_figure: string }) => s.step_figure === 'Easy Move')).toBe(true);
+    expect(res.body.every((s: { step_figure: string }) => s.step_figure !== 'Advanced Move')).toBe(
+      true,
+    );
   });
 
   it('limits results to at most 5 suggestions', async () => {
@@ -405,8 +420,10 @@ describe('GET /api/dance-groups/:groupId/step-figure-suggestions', () => {
       `/api/dance-groups/${group.body.id}/step-figure-suggestions`,
     );
     expect(res.status).toBe(200);
-    expect(res.body.every((s) => s.step_figure !== 'VineFigure')).toBe(true);
-    expect(res.body.some((s) => s.step_figure === 'NewFigure')).toBe(true);
+    expect(res.body.every((s: { step_figure: string }) => s.step_figure !== 'VineFigure')).toBe(
+      true,
+    );
+    expect(res.body.some((s: { step_figure: string }) => s.step_figure === 'NewFigure')).toBe(true);
   });
 
   it('treats child components of a known parent figure as already known', async () => {
@@ -432,10 +449,12 @@ describe('GET /api/dance-groups/:groupId/step-figure-suggestions', () => {
     );
     expect(res.status).toBe(200);
     // Child components of the known parent must not be suggested...
-    expect(res.body.every((s) => s.step_figure !== 'Vine')).toBe(true);
-    expect(res.body.every((s) => s.step_figure !== 'Cross')).toBe(true);
+    expect(res.body.every((s: { step_figure: string }) => s.step_figure !== 'Vine')).toBe(true);
+    expect(res.body.every((s: { step_figure: string }) => s.step_figure !== 'Cross')).toBe(true);
     // ...and the genuinely-missing figure is still suggested.
-    expect(res.body.some((s) => s.step_figure === 'BrandNewMove')).toBe(true);
+    expect(res.body.some((s: { step_figure: string }) => s.step_figure === 'BrandNewMove')).toBe(
+      true,
+    );
   });
 
   it('returns 404 for non-existent group', async () => {
@@ -500,7 +519,7 @@ describe('GET /api/dance-groups/:groupId/base-step-figures', () => {
   });
 });
 
-async function seedBaseFigure(name) {
+async function seedBaseFigure(name: string): Promise<{ id: number; name: string }> {
   const res = await request(app).post('/api/step_figures').send({ name });
   return res.body;
 }
@@ -571,7 +590,7 @@ describe('PUT /api/dance-groups/:groupId/base-step-figures', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(2);
-    expect(res.body.map((f) => f.name).sort()).toEqual(['Grapevine', 'Mambo']);
+    expect(res.body.map((f: { name: string }) => f.name).sort()).toEqual(['Grapevine', 'Mambo']);
     expect(res.body[0]).toMatchObject({ id: expect.any(Number), name: expect.any(String) });
   });
 

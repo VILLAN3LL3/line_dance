@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
-import { setupTestDb, clearAllTables } from '../setup/testDb.js';
+import { setupTestDb, clearAllTables } from '../setup/testDb.ts';
 import { runQuery } from '../../scripts/db.ts';
-import app from '../setup/testApp.js';
+import app from '../setup/testApp.ts';
 
 beforeAll(async () => {
   await setupTestDb();

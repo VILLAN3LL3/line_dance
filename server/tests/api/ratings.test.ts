@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
-import { setupChoreographyTestDb, clearChoreographyTables } from '../setup/testChoreographyDb.js';
-import app from '../setup/testChoreographyApp.js';
+import { setupChoreographyTestDb, clearChoreographyTables } from '../setup/testChoreographyDb.ts';
+import app from '../setup/testChoreographyApp.ts';
 
 beforeAll(async () => {
   await setupChoreographyTestDb();

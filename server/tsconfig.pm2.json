@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "allowJs": false,
+    "rewriteRelativeImportExtensions": true,
+    "rootDir": "..",
+    "outDir": "dist/pm2"
+  },
+  "include": ["../ecosystem.config.cts"],
+  "exclude": ["node_modules", "dist"]
+}

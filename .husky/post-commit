@@ -37,7 +37,7 @@ if "$PM2_BINARY" describe line-dance >/dev/null 2>&1; then
 			const processes = JSON.parse(input).filter(item => item.name === "line-dance");
 			const expected = path.resolve("server/dist/scripts/server.js");
 			if (processes.length !== 1 || processes[0].pm2_env?.pm_exec_path !== expected) {
-				console.error("Deploy failed: the existing PM2 process uses a different entry point. Recreate it using ecosystem.config.js before deploying.");
+				console.error("Deploy failed: the existing PM2 process uses a different entry point. Recreate it using server/dist/pm2/ecosystem.config.cjs before deploying.");
 				process.exitCode = 1;
 			}
 		});
@@ -50,6 +50,9 @@ fi
 echo "Building server..."
 npm --prefix server run build
 
+echo "Building PM2 configuration..."
+npm --prefix server run build:pm2
+
 echo "Building client..."
 npm --prefix client run build
 
@@ -57,7 +60,7 @@ echo "Restarting line-dance server..."
 if [ "$REGISTERED" = true ]; then
 	"$PM2_BINARY" restart line-dance --update-env
 else
-	"$PM2_BINARY" start ecosystem.config.js
+	"$PM2_BINARY" start server/dist/pm2/ecosystem.config.cjs
 fi
 
 echo "Deploy complete: http://localhost:3001"

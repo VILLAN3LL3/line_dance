@@ -4,12 +4,18 @@
  * Call setupChoreographyTestDb() in beforeAll and clearChoreographyTables() in beforeEach.
  */
 import sqlite3 from 'sqlite3';
+import type { Database } from 'sqlite3';
 import { setDatabaseConnection } from '../../scripts/db.ts';
+import type { WriteResult } from '../../scripts/db.ts';
 
-let testDb = null;
+let testDb: Database | null = null;
 
-function run(db, sql, params = []) {
-  return new Promise((resolve, reject) => {
+async function run(
+  db: Database,
+  sql: string,
+  params: (string | number)[] = [],
+): Promise<WriteResult> {
+  return new Promise<WriteResult>((resolve, reject) => {
     db.run(sql, params, function (err) {
       if (err) reject(err);
       else resolve({ id: this.lastID, changes: this.changes });
@@ -37,7 +43,7 @@ const DEFAULT_LEVELS = [
   { name: 'HIGH ADVANCED', value: 160 },
 ];
 
-async function seedDefaultLevels(db) {
+async function seedDefaultLevels(db: Database): Promise<void> {
   const placeholders = DEFAULT_LEVELS.map(() => '(?, ?)').join(', ');
   const params = DEFAULT_LEVELS.flatMap(({ name, value }) => [name, value]);
   await run(db, `INSERT OR IGNORE INTO levels (name, value) VALUES ${placeholders}`, params);
@@ -130,16 +136,17 @@ CREATE TABLE IF NOT EXISTS country_code_aliases (
 );
 `;
 
-export async function setupChoreographyTestDb() {
-  testDb = new sqlite3.Database(':memory:');
+export async function setupChoreographyTestDb(): Promise<Database> {
+  const db = new sqlite3.Database(':memory:');
+  testDb = db;
 
   await run(testDb, 'PRAGMA foreign_keys = ON');
 
   // Attach a separate in-memory database for personal data (tags + saved filters)
   await run(testDb, "ATTACH DATABASE ':memory:' AS personal_data");
 
-  await new Promise((resolve, reject) => {
-    testDb.exec(SCHEMA, (err) => {
+  await new Promise<void>((resolve, reject) => {
+    db.exec(SCHEMA, (err) => {
       if (err) reject(err);
       else resolve();
     });
@@ -233,7 +240,8 @@ export async function setupChoreographyTestDb() {
   return testDb;
 }
 
-export async function clearChoreographyTables() {
+export async function clearChoreographyTables(): Promise<void> {
+  if (!testDb) throw new Error('Test database has not been initialized');
   // Delete choreography_tags from personal_data DB first (no cross-DB FK cascade)
   await run(testDb, 'DELETE FROM personal_data.choreography_tags');
   await run(testDb, 'DELETE FROM personal_data.choreography_ratings');

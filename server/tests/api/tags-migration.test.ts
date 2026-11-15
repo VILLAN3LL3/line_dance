@@ -3,7 +3,7 @@ import request from 'supertest';
 import sqlite3 from 'sqlite3';
 import type { Database } from 'sqlite3';
 
-import app from '../setup/testChoreographyApp.js';
+import app from '../setup/testChoreographyApp.ts';
 import { setDatabaseConnection, closeDatabase, allQuery, getQuery } from '../../scripts/db.ts';
 import type { WriteResult } from '../../scripts/db.ts';
 import { runChoreographyMigrations } from '../../migrations/choreography-migrations.ts';

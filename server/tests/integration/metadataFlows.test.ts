@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestDb, clearAllTables } from '../setup/testDb.js';
+import { setupTestDb, clearAllTables } from '../setup/testDb.ts';
 import { runQuery } from '../../scripts/db.ts';
 import * as metadata from '../../features/metadata/flow.ts';
 import { prepareLevel } from '../../features/metadata/operations.ts';

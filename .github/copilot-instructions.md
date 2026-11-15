@@ -82,7 +82,7 @@ Every feature or bug fix **must** include tests. Do not skip this.
 - New endpoint: test happy path + 404/400 error cases
 - New filter/query param: test filtering logic, AND semantics for multiple values, combined with other filters
 - New business logic: test core algorithm, edge cases, cross-entity interactions
-- When adding route handlers: register them in `server/tests/setup/testApp.js`
+- When adding route handlers: register them in `server/tests/setup/testApp.ts`
 
 **Client-side changes** → add to `client/src/__tests__/components/`:
 - New button/action: test it triggers the correct API call

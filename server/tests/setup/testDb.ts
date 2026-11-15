@@ -4,14 +4,20 @@
  * Call setupTestDb() in beforeAll and clearAllTables() in beforeEach.
  */
 import sqlite3 from 'sqlite3';
+import type { Database } from 'sqlite3';
 import { setDatabaseConnection } from '../../scripts/db.ts';
+import type { WriteResult } from '../../scripts/db.ts';
 import { runChoreographyMigrations } from '../../migrations/choreography-migrations.ts';
 import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.ts';
 
-let testDb = null;
+let testDb: Database | null = null;
 
-function run(db, sql, params = []) {
-  return new Promise((resolve, reject) => {
+async function run(
+  db: Database,
+  sql: string,
+  params: (string | number)[] = [],
+): Promise<WriteResult> {
+  return new Promise<WriteResult>((resolve, reject) => {
     db.run(sql, params, function (err) {
       if (err) reject(err);
       else resolve({ id: this.lastID, changes: this.changes });
@@ -19,7 +25,7 @@ function run(db, sql, params = []) {
   });
 }
 
-export async function setupTestDb() {
+export async function setupTestDb(): Promise<Database> {
   testDb = new sqlite3.Database(':memory:');
 
   // Enable foreign key enforcement (OFF by default in SQLite)
@@ -41,7 +47,9 @@ export async function setupTestDb() {
   return testDb;
 }
 
-export async function clearAllTables() {
+export async function clearAllTables(): Promise<void> {
+  if (!testDb) throw new Error('Test database has not been initialized');
+  const db = testDb;
   const tables = [
     'group_base_step_figures',
     'session_choreographies',
@@ -50,20 +58,20 @@ export async function clearAllTables() {
     'trainers',
     'dance_groups',
   ];
-  await tables.reduce(
-    (previous, table) => previous.then(() => run(testDb, `DELETE FROM ${table}`)),
-    Promise.resolve(),
-  );
+  await tables.reduce<Promise<void>>(async (previous, table) => {
+    await previous;
+    await run(db, `DELETE FROM ${table}`);
+  }, Promise.resolve());
   // Clear choreography tables — ordering respects FK constraints.
   // DELETE FROM choreographies cascades to choreography_authors and choreography_step_figures.
-  await run(testDb, 'DELETE FROM choreographies');
-  await run(testDb, 'DELETE FROM step_figure_components');
-  await run(testDb, 'DELETE FROM step_figures');
-  await run(testDb, 'DELETE FROM authors');
+  await run(db, 'DELETE FROM choreographies');
+  await run(db, 'DELETE FROM step_figure_components');
+  await run(db, 'DELETE FROM step_figures');
+  await run(db, 'DELETE FROM authors');
   // Reset autoincrement counters; sqlite_sequence is created on first insert,
   // so this is a no-op until data has been inserted.
   try {
-    await run(testDb, 'DELETE FROM sqlite_sequence');
+    await run(db, 'DELETE FROM sqlite_sequence');
   } catch {
     // sqlite_sequence doesn't exist until the first autoincrement insert
   }

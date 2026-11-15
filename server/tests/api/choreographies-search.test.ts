@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
-import { setupChoreographyTestDb, clearChoreographyTables } from '../setup/testChoreographyDb.js';
-import app from '../setup/testChoreographyApp.js';
+import type { Response } from 'supertest';
+import { setupChoreographyTestDb, clearChoreographyTables } from '../setup/testChoreographyDb.ts';
+import app from '../setup/testChoreographyApp.ts';
 
 beforeAll(async () => {
   await setupChoreographyTestDb();
@@ -15,15 +16,24 @@ beforeEach(async () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function post(body) {
+type SearchResponse = Omit<Response, 'body'> & {
+  body: {
+    data: { id: number; name: string }[];
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  };
+};
+
+async function post(body: object): Promise<Response> {
   return request(app).post('/api/choreographies').send(body);
 }
 
-async function search(params) {
+async function search(
+  params: Record<string, string | number | string[] | Record<number, string> | undefined>,
+): Promise<SearchResponse> {
   return request(app).get('/api/choreographies/search').query(params);
 }
 
-async function createStepFigure(name, componentIds = []) {
+async function createStepFigure(name: string, componentIds: number[] = []): Promise<Response> {
   return request(app).post('/api/step_figures').send({
     name,
     component_ids: componentIds,
@@ -33,18 +43,21 @@ async function createStepFigure(name, componentIds = []) {
 // Sends the query as a raw URL string, bypassing supertest's .query() serialization.
 // This exercises the actual Express query parser with bracket-notation arrays
 // (e.g. level[]=Beginner&level[]=Advanced) exactly as a browser would send them.
-async function searchRaw(queryString) {
+async function searchRaw(queryString: string): Promise<SearchResponse> {
   return request(app).get(`/api/choreographies/search?${queryString}`);
 }
 
-async function getLevelValue(levelName) {
+async function getLevelValue(levelName: string): Promise<number | undefined> {
   const res = await request(app).get('/api/levels');
-  const level = res.body.find((entry) => entry.name.toLowerCase() === levelName.toLowerCase());
+  const level = res.body.find(
+    (entry: { name: string; value: number }) =>
+      entry.name.toLowerCase() === levelName.toLowerCase(),
+  );
   return level?.value;
 }
 
 // Seed helpers
-async function seedDances() {
+async function seedDances(): Promise<{ waltz: object; tango: object; cha_cha: object }> {
   // Returns IDs in order: [waltz, tango, cha_cha]
   const waltz = await post({
     name: 'Waltz in the Rain',

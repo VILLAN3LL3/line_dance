@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
-import { setupChoreographyTestDb, clearChoreographyTables } from '../setup/testChoreographyDb.js';
-import app from '../setup/testChoreographyApp.js';
+import { setupChoreographyTestDb, clearChoreographyTables } from '../setup/testChoreographyDb.ts';
+import app from '../setup/testChoreographyApp.ts';
 import {
   allQuery,
   getDatabase,
@@ -22,7 +22,7 @@ beforeEach(async () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function createChoreo(overrides = {}) {
+async function createChoreo(overrides: object = {}): Promise<{ id: number }> {
   const res = await request(app)
     .post('/api/choreographies')
     .send({
@@ -82,7 +82,7 @@ describe('GET /api/choreographies', () => {
     const res = await request(app).get('/api/choreographies?page=2suffix&page=3&limit=1suffix');
     expect(res.status).toBe(200);
     expect(res.body.pagination).toEqual({ page: 2, limit: 1, total: 2, totalPages: 2 });
-    expect(res.body.data.map((item) => item.name)).toEqual(['Dance B']);
+    expect(res.body.data.map((item: { name: string }) => item.name)).toEqual(['Dance B']);
   });
 });
 
@@ -504,7 +504,7 @@ describe('PUT /api/choreographies/:id', () => {
     let levelNames = [];
     for (let attempt = 0; attempt < 10; attempt += 1) {
       const levels = await request(app).get('/api/levels');
-      levelNames = levels.body.map((l) => l.name);
+      levelNames = levels.body.map((l: { name: string }) => l.name);
       if (!levelNames.includes('TEMP UPDATE LEVEL')) {
         break;
       }
@@ -600,7 +600,7 @@ describe('DELETE /api/choreographies/:id', () => {
 
     // Delete choreography that owns the author
     const firstId = (await request(app).get('/api/choreographies?limit=100')).body.data.find(
-      (c) => c.name === 'With Author',
+      (c: { name: string }) => c.name === 'With Author',
     ).id;
     await request(app).delete(`/api/choreographies/${firstId}`);
 
@@ -631,7 +631,7 @@ describe('DELETE /api/choreographies/:id', () => {
     const tags = await request(app).get('/api/tags');
     const figures = await request(app).get('/api/step_figures');
     const levels = await request(app).get('/api/levels');
-    const levelNames = levels.body.map((l) => l.name);
+    const levelNames = levels.body.map((l: { name: string }) => l.name);
 
     expect(tags.body).toEqual([]);
     expect(figures.body).toEqual(['To Delete Figure']);
@@ -653,7 +653,7 @@ describe('tags storage separation', () => {
          AND name IN ('tags', 'choreography_tags')`,
     );
 
-    const personalTables = await allQuery(
+    const personalTables = await allQuery<{ name: string }>(
       `SELECT name
        FROM personal_data.sqlite_master
        WHERE type = 'table'
@@ -702,8 +702,8 @@ describe('GET /api/levels', () => {
   it('returns canonical default levels sorted by value ascending', async () => {
     const res = await request(app).get('/api/levels');
     expect(res.status).toBe(200);
-    const names = res.body.map((l) => l.name);
-    const values = res.body.map((l) => l.value);
+    const names = res.body.map((l: { name: string }) => l.name);
+    const values = res.body.map((l: { value: number }) => l.value);
     expect(names).toEqual([
       'UNKNOWN',
       'ABSOLUTE BEGINNER',
@@ -749,7 +749,7 @@ describe('POST /api/levels', () => {
     expect(res.body.value).toBe(5);
 
     const levels = await request(app).get('/api/levels');
-    expect(levels.body.map((l) => l.name)).toEqual([
+    expect(levels.body.map((l: { name: string }) => l.name)).toEqual([
       'UNKNOWN',
       'Novice',
       'ABSOLUTE BEGINNER',
@@ -870,7 +870,7 @@ describe('Country codes in authors', () => {
 
     const res = await request(app).get('/api/choreographies');
     expect(res.status).toBe(200);
-    const match = res.body.data.find((c) => c.name === 'Dance With Author Code');
+    const match = res.body.data.find((c: { name: string }) => c.name === 'Dance With Author Code');
     expect(match.authors).toEqual(['German Author (DE)']);
   });
 });

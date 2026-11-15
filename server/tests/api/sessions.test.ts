@@ -1,9 +1,17 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
-import { setupTestDb, clearAllTables } from '../setup/testDb.js';
-import app from '../setup/testApp.js';
+import { setupTestDb, clearAllTables } from '../setup/testDb.ts';
+import app from '../setup/testApp.ts';
 import { runQuery } from '../../scripts/db.ts';
 import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.ts';
+
+type Session = { id: number; session_date: string; comment: string | null };
+type Assignment = {
+  id: number;
+  choreography_id: number;
+  repetition_number: number;
+  auto_repeat: boolean;
+};
 
 beforeAll(async () => {
   await setupTestDb();
@@ -17,7 +25,10 @@ beforeEach(async () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function createGroupAndCourse(groupName = 'Session Test Group') {
+async function createGroupAndCourse(groupName = 'Session Test Group'): Promise<{
+  group: { id: number };
+  course: { id: number };
+}> {
   const group = await request(app).post('/api/dance-groups').send({ name: groupName });
   const course = await request(app).post('/api/dance-courses').send({
     dance_group_id: group.body.id,
@@ -32,7 +43,7 @@ async function createGroupAndCourse(groupName = 'Session Test Group') {
 // ---------------------------------------------------------------------------
 
 describe('automatic session repetitions', () => {
-  async function createSlots() {
+  async function createSlots(): Promise<Session[]> {
     const { course } = await createGroupAndCourse();
     const responses = await Promise.all(
       ['2025-01-01', '2025-01-08', '2025-01-15', '2025-01-22'].map((date) =>
@@ -42,7 +53,7 @@ describe('automatic session repetitions', () => {
     return responses.map((response) => response.body);
   }
 
-  async function addDance(sessionId, danceId = 42) {
+  async function addDance(sessionId: number, danceId = 42): Promise<Assignment> {
     const response = await request(app)
       .post('/api/session-choreographies')
       .send({ session_id: sessionId, choreography_id: danceId });
@@ -50,7 +61,7 @@ describe('automatic session repetitions', () => {
     return response.body;
   }
 
-  async function assignments(slots) {
+  async function assignments(slots: { id: number }[]): Promise<Assignment[][]> {
     return Promise.all(
       slots.map(async (slot) => {
         const response = await request(app).get(
@@ -297,7 +308,10 @@ describe('automatic session repetitions', () => {
 });
 
 describe('planned legacy repetition backfill', () => {
-  async function createDatedSlots(dates, groupName = 'Planned Legacy Group') {
+  async function createDatedSlots(
+    dates: string[],
+    groupName = 'Planned Legacy Group',
+  ): Promise<Session[]> {
     const { course } = await createGroupAndCourse(groupName);
     return Promise.all(
       dates.map(async (date) => {
@@ -310,7 +324,7 @@ describe('planned legacy repetition backfill', () => {
     );
   }
 
-  async function migratePlannedRepetitions() {
+  async function migratePlannedRepetitions(): Promise<void> {
     await runQuery(
       "DELETE FROM schema_migrations WHERE id = '014_backfill_planned_session_repetitions'",
       [],
@@ -319,7 +333,7 @@ describe('planned legacy repetition backfill', () => {
     await runDanceGroupsMigrations();
   }
 
-  async function getAssignments(slot) {
+  async function getAssignments(slot: { id: number }): Promise<Assignment[]> {
     const response = await request(app).get(`/api/session-choreographies?session_id=${slot.id}`);
     expect(response.status).toBe(200);
     return response.body;
@@ -519,7 +533,7 @@ describe('GET /api/sessions', () => {
 describe('POST /api/sessions/reorder-contents', () => {
   it('serializes simultaneous swaps without losing comments or dance assignments', async () => {
     const { course } = await createGroupAndCourse();
-    const sessions = [];
+    const sessions: Session[] = [];
     for (const [index, comment] of ['First', 'Second'].entries()) {
       const response = await request(app)
         .post('/api/sessions')
@@ -541,7 +555,7 @@ describe('POST /api/sessions/reorder-contents', () => {
     );
     expect(responses.map((response) => response.status)).toEqual([200, 200]);
     const after = await request(app).get(`/api/sessions?dance_course_id=${course.id}`);
-    expect(after.body.map((session) => session.comment)).toEqual(['First', 'Second']);
+    expect(after.body.map((session: Session) => session.comment)).toEqual(['First', 'Second']);
     const dances = await request(app).get(
       `/api/session-choreographies?session_id=${sessions[0].id}`,
     );
@@ -550,7 +564,7 @@ describe('POST /api/sessions/reorder-contents', () => {
 
   it('moves descriptions and all dances while retaining dates, IDs and excluded sessions', async () => {
     const { course } = await createGroupAndCourse();
-    const sessions = [];
+    const sessions: Session[] = [];
     for (const [index, comment] of ['Hidden', 'First', 'Second', null].entries()) {
       const created = await request(app)
         .post('/api/sessions')
@@ -574,10 +588,10 @@ describe('POST /api/sessions/reorder-contents', () => {
       });
     expect(response.status).toBe(200);
     const after = await request(app).get(`/api/sessions?dance_course_id=${course.id}`);
-    expect(after.body.map(({ id, session_date }) => ({ id, session_date }))).toEqual(
+    expect(after.body.map(({ id, session_date }: Session) => ({ id, session_date }))).toEqual(
       sessions.map(({ id, session_date }) => ({ id, session_date })),
     );
-    expect(after.body.map((session) => session.comment)).toEqual([
+    expect(after.body.map((session: Session) => session.comment)).toEqual([
       'Hidden',
       null,
       'First',
@@ -586,7 +600,7 @@ describe('POST /api/sessions/reorder-contents', () => {
     const dances = await request(app).get(
       `/api/session-choreographies?session_id=${sessions[2].id}`,
     );
-    expect(dances.body.map((dance) => dance.choreography_id).sort()).toEqual([41, 42]);
+    expect(dances.body.map((dance: Assignment) => dance.choreography_id).sort()).toEqual([41, 42]);
     const emptied = await request(app).get(
       `/api/session-choreographies?session_id=${sessions[1].id}`,
     );
@@ -598,7 +612,7 @@ describe('POST /api/sessions/reorder-contents', () => {
       });
     expect(restored.status).toBe(200);
     const original = await request(app).get(`/api/sessions?dance_course_id=${course.id}`);
-    expect(original.body.map((session) => session.comment)).toEqual([
+    expect(original.body.map((session: Session) => session.comment)).toEqual([
       'Hidden',
       'First',
       'Second',
@@ -608,7 +622,7 @@ describe('POST /api/sessions/reorder-contents', () => {
 
   it('rolls back both descriptions and dance assignments if a write fails', async () => {
     const { course } = await createGroupAndCourse();
-    const sessions = [];
+    const sessions: Session[] = [];
     for (const [index, comment] of ['First', 'Second'].entries()) {
       const response = await request(app)
         .post('/api/sessions')
@@ -636,7 +650,7 @@ describe('POST /api/sessions/reorder-contents', () => {
         });
       expect(response.status).toBe(500);
       const after = await request(app).get(`/api/sessions?dance_course_id=${course.id}`);
-      expect(after.body.map((session) => session.comment)).toEqual(['First', 'Second']);
+      expect(after.body.map((session: Session) => session.comment)).toEqual(['First', 'Second']);
       const dances = await request(app).get(
         `/api/session-choreographies?session_id=${sessions[0].id}`,
       );
@@ -684,7 +698,7 @@ describe('POST /api/sessions/reorder-contents', () => {
       .send({ session_ids: ids.reverse() });
     expect(response.status).toBe(400);
     const sessions = await request(app).get('/api/sessions');
-    expect(sessions.body.map((session) => session.comment).sort()).toEqual(['One', 'Two']);
+    expect(sessions.body.map((session: Session) => session.comment).sort()).toEqual(['One', 'Two']);
   });
 });
 
@@ -834,7 +848,7 @@ describe('DELETE /api/sessions/:id', () => {
 // ---------------------------------------------------------------------------
 
 describe('Session Choreographies API', () => {
-  let session;
+  let session: Session;
 
   beforeEach(async () => {
     const { course } = await createGroupAndCourse('SC Group');
@@ -1121,7 +1135,12 @@ describe('GET /api/learned-choreographies', () => {
 // Session Swap
 // ---------------------------------------------------------------------------
 
-async function createTwoSessionsInSameCourse() {
+async function createTwoSessionsInSameCourse(): Promise<{
+  group: { id: number };
+  course: { id: number };
+  s1: Session;
+  s2: Session;
+}> {
   const { group, course } = await createGroupAndCourse('Swap Group');
   const s1 = await request(app)
     .post('/api/sessions')
@@ -1139,8 +1158,8 @@ describe('POST /api/sessions/:sessionId/swap/:targetSessionId', () => {
     expect(res.status).toBe(200);
 
     const all = await request(app).get('/api/sessions');
-    const updated1 = all.body.find((s) => s.id === s1.id);
-    const updated2 = all.body.find((s) => s.id === s2.id);
+    const updated1 = all.body.find((s: Session) => s.id === s1.id);
+    const updated2 = all.body.find((s: Session) => s.id === s2.id);
     expect(updated1.comment).toBe('Session B');
     expect(updated2.comment).toBe('Session A');
   });
@@ -1305,8 +1324,12 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
       `/api/sessions/${targetSession.body.id}/step-figure-suggestions`,
     );
     expect(res.status).toBe(200);
-    expect(res.body.suggestions.some((s) => s.step_figure === 'Kick')).toBe(true);
-    expect(res.body.suggestions.every((s) => s.step_figure !== 'Grapevine')).toBe(true);
+    expect(
+      res.body.suggestions.some((s: { step_figure: string }) => s.step_figure === 'Kick'),
+    ).toBe(true);
+    expect(
+      res.body.suggestions.every((s: { step_figure: string }) => s.step_figure !== 'Grapevine'),
+    ).toBe(true);
   });
 
   it('returns max_level_value from the group setting', async () => {
@@ -1328,7 +1351,9 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
   it('applies max_level_value to filter out above-level choreographies', async () => {
     const group = await request(app).post('/api/dance-groups').send({ name: 'Filter Level Group' });
     const levelsRes = await request(app).get('/api/levels');
-    const beginnerValue = levelsRes.body.find((l) => l.name === 'BEGINNER')?.value;
+    const beginnerValue = levelsRes.body.find(
+      (l: { name: string }) => l.name === 'BEGINNER',
+    )?.value;
     await request(app)
       .put(`/api/dance-groups/${group.body.id}/max-level`)
       .send({ max_group_level_value: beginnerValue });
@@ -1360,8 +1385,14 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
       });
 
     const res = await request(app).get(`/api/sessions/${session.body.id}/step-figure-suggestions`);
-    expect(res.body.suggestions.every((s) => s.step_figure !== 'AdvancedFigure')).toBe(true);
-    expect(res.body.suggestions.some((s) => s.step_figure === 'BeginnerFigure')).toBe(true);
+    expect(
+      res.body.suggestions.every(
+        (s: { step_figure: string }) => s.step_figure !== 'AdvancedFigure',
+      ),
+    ).toBe(true);
+    expect(
+      res.body.suggestions.some((s: { step_figure: string }) => s.step_figure === 'BeginnerFigure'),
+    ).toBe(true);
   });
 
   it('includes base step figures in known_step_figures', async () => {
@@ -1404,8 +1435,16 @@ describe('GET /api/sessions/:sessionId/step-figure-suggestions', () => {
 
     const res = await request(app).get(`/api/sessions/${session.body.id}/step-figure-suggestions`);
     expect(res.status).toBe(200);
-    expect(res.body.suggestions.every((s) => s.step_figure !== 'SessionBaseFigure')).toBe(true);
-    expect(res.body.suggestions.some((s) => s.step_figure === 'NewSessionFigure')).toBe(true);
+    expect(
+      res.body.suggestions.every(
+        (s: { step_figure: string }) => s.step_figure !== 'SessionBaseFigure',
+      ),
+    ).toBe(true);
+    expect(
+      res.body.suggestions.some(
+        (s: { step_figure: string }) => s.step_figure === 'NewSessionFigure',
+      ),
+    ).toBe(true);
   });
 
   it('returns 404 for non-existent session', async () => {

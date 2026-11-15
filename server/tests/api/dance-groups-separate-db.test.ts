@@ -7,7 +7,7 @@ import { afterAll, beforeAll, expect, it } from 'vitest';
 import { runChoreographyMigrations } from '../../migrations/choreography-migrations.ts';
 import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migrations.ts';
 import { allQuery, closeDatabase, runQuery, setDatabaseConnection } from '../../scripts/db.ts';
-import app from '../setup/testApp.js';
+import app from '../setup/testApp.ts';
 
 let directory: string;
 

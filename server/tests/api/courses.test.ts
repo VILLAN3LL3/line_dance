@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
-import { setupTestDb, clearAllTables } from '../setup/testDb.js';
-import app from '../setup/testApp.js';
+import { setupTestDb, clearAllTables } from '../setup/testDb.ts';
+import app from '../setup/testApp.ts';
 
 beforeAll(async () => {
   await setupTestDb();
@@ -15,12 +15,12 @@ beforeEach(async () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function createGroup(name = 'Test Group') {
+async function createGroup(name = 'Test Group'): Promise<{ id: number }> {
   const res = await request(app).post('/api/dance-groups').send({ name });
   return res.body;
 }
 
-async function createTrainer() {
+async function createTrainer(): Promise<{ id: number }> {
   const res = await request(app)
     .post('/api/trainers')
     .send({ name: 'Test Trainer', phone: '+49100', email: 'trainer@test.com' });
@@ -257,7 +257,9 @@ describe('POST /api/dance-courses', () => {
     expect(deleted.status).toBe(200);
     expect([201, 404]).toContain(created.status);
     const courses = await request(app).get(`/api/dance-courses?dance_group_id=${group.id}`);
-    expect(courses.body.every((course) => course.trainer_id === null)).toBe(true);
+    expect(
+      courses.body.every((course: { trainer_id: number | null }) => course.trainer_id === null),
+    ).toBe(true);
   });
 
   it('returns the existing duplicate course error when the course id is already used', async () => {

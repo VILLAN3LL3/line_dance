@@ -16,6 +16,8 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const hookPath = fileURLToPath(new URL('../../../.husky/post-commit', import.meta.url));
+const pm2Tsconfig = fileURLToPath(new URL('../../tsconfig.pm2.json', import.meta.url));
+const tscPath = fileURLToPath(new URL('../../node_modules/typescript/bin/tsc6', import.meta.url));
 let directory: string;
 let binDirectory: string;
 let environment: {
@@ -82,6 +84,51 @@ afterEach(() => {
 });
 
 describe('post-commit deployment', () => {
+  it('builds a CommonJS PM2 config that resolves local settings and paths from the repository root', () => {
+    const outputDirectory = join(directory, 'server/dist/pm2');
+    const build = spawnSync(
+      process.execPath,
+      [tscPath, '-p', pm2Tsconfig, '--outDir', outputDirectory],
+      {
+        encoding: 'utf8',
+      },
+    );
+    expect(build.status, build.stdout + build.stderr).toBe(0);
+
+    const configPath = join(outputDirectory, 'ecosystem.config.cjs');
+    const loadConfig = (): SpawnSyncReturns<string> =>
+      spawnSync(
+        process.execPath,
+        ['-e', 'console.log(JSON.stringify(require(process.argv[1])))', configPath],
+        {
+          cwd: binDirectory,
+          encoding: 'utf8',
+        },
+      );
+
+    const missingEnv = loadConfig();
+    expect(missingEnv.status).not.toBe(0);
+    expect(missingEnv.stderr).toContain('NODE_BINARY is not set');
+
+    writeFileSync(
+      join(directory, '.env.pm2'),
+      `# Local settings\nNODE_BINARY=${process.execPath}\n`,
+    );
+    const loaded = loadConfig();
+    expect(loaded.status, loaded.stderr).toBe(0);
+    expect(JSON.parse(loaded.stdout)).toMatchObject({
+      apps: [
+        {
+          name: 'line-dance',
+          cwd: directory,
+          script: './server/dist/scripts/server.js',
+          interpreter: process.execPath,
+          env: { NODE_ENV: 'production', PORT: 3001 },
+        },
+      ],
+    });
+  });
+
   it('finds PM2 in another nvm installation and restarts after building', () => {
     const pm2Directory = join(environment.NVM_DIR, 'versions/node/v20.19.4/bin');
     mkdirSync(pm2Directory, { recursive: true });
@@ -94,6 +141,7 @@ describe('post-commit deployment', () => {
       'pm2 describe line-dance',
       'pm2 jlist',
       'npm --prefix server run build',
+      'npm --prefix server run build:pm2',
       'npm --prefix client run build',
       'pm2 restart line-dance --update-env',
       '',
@@ -125,7 +173,7 @@ describe('post-commit deployment', () => {
     const result = runHook({ DESCRIBE_STATUS: '1' });
 
     expect(result.status).toBe(0);
-    expect(result.commands).toContain('pm2 start ecosystem.config.js');
+    expect(result.commands).toContain('pm2 start server/dist/pm2/ecosystem.config.cjs');
   });
 
   it('fails before building when PM2 cannot be found', () => {

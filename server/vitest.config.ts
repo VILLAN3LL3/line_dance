@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['tests/**/*.test.{js,ts}'],
+    include: ['tests/**/*.test.ts'],
     env: {
       CHOREOGRAPHY_DB_PATH: ':memory:',
       DANCE_GROUPS_DB_PATH: ':memory:',
