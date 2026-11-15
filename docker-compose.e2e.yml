@@ -36,7 +36,7 @@ services:
       start_period: 45s
 
   e2e:
-    image: mcr.microsoft.com/playwright:v1.65.0-noble
+    image: mcr.microsoft.com/playwright:v1.65.1-noble
     container_name: line_dance_e2e
     # Share the client's network namespace so the app is served from http://localhost:3000.
     # Browsers only expose crypto.randomUUID (used by the app) in secure contexts, and

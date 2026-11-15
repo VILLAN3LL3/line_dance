@@ -18,6 +18,10 @@ docker-compose -f docker-compose.e2e.yml up --abort-on-container-exit --remove-o
 - **Client container**: Vite dev server with built app
 - **E2E container**: Playwright with Chromium pre-installed
 
+The exact `@playwright/test` version in `client/package.json` and the Playwright image tag in
+`docker-compose.e2e.yml` must match, including patch versions. Renovate groups both updates into
+one pull request; keep them synchronized when updating manually.
+
 ## View test results
 
 Test results are saved to `client/playwright-results/`:
