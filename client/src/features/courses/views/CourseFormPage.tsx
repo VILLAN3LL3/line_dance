@@ -34,23 +34,37 @@ const CourseFormPage: React.FC = () => {
       {state.error && <ErrorMessage message={state.error} />}
 
       <form className="course-form-card" onSubmit={handleSubmit}>
-        <FormField label="Course ID" htmlFor="course-id" className="course-form-field">
+        <FormField
+          label="Course ID"
+          htmlFor="course-id"
+          className="course-form-field"
+          error={state.fieldErrors.courseId}
+        >
           <input
             id="course-id"
             type="number"
             value={values.courseId}
             onChange={(e) => change({ courseId: e.target.value })}
             disabled={isLoading}
+            aria-invalid={state.fieldErrors.courseId ? true : undefined}
+            aria-describedby={state.fieldErrors.courseId ? "course-id-error" : undefined}
           />
         </FormField>
 
-        <FormField label="Course Name" htmlFor="course-name" className="course-form-field">
+        <FormField
+          label="Course Name"
+          htmlFor="course-name"
+          className="course-form-field"
+          error={state.fieldErrors.name}
+        >
           <input
             id="course-name"
             type="text"
             value={values.name}
             onChange={(e) => change({ name: e.target.value })}
             disabled={isLoading}
+            aria-invalid={state.fieldErrors.name ? true : undefined}
+            aria-describedby={state.fieldErrors.name ? "course-name-error" : undefined}
           />
         </FormField>
 

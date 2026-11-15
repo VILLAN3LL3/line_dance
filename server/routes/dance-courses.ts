@@ -13,7 +13,7 @@ import type { PreparedInput } from './prepare-input.ts';
 import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.ts';
 
 type CourseError = Extract<courses.CourseResult, { error: string }>['error'];
-type ErrorResponse = { error: string };
+type ErrorResponse = { error: string; issues?: { field: string; key: string }[] };
 type CourseResponse = DanceCourse | ErrorResponse;
 type DeleteResponse = { message: 'Dance course deleted successfully' } | ErrorResponse;
 type CourseFilter = ReturnType<typeof prepareCourseFilter>;
@@ -50,13 +50,19 @@ const courseErrors: Record<CourseError, [number, string]> = {
   duplicate_name: [400, 'A course without an ID already has this name in this group and semester'],
 };
 
+const courseFieldIssues: Partial<Record<CourseError, { field: string; key: string }[]>> = {
+  duplicate_course: [{ field: 'course_id', key: 'duplicate' }],
+  duplicate_name: [{ field: 'name', key: 'duplicate' }],
+};
+
 function sendCourseError<T>(
   res: Response<T | ErrorResponse>,
   error: CourseError,
 ): Response<T | ErrorResponse> {
   const response = courseErrors[error];
   if (!response) throw new Error(`Unknown course error: ${error}`);
-  return res.status(response[0]).json({ error: response[1] });
+  const issues = courseFieldIssues[error];
+  return res.status(response[0]).json({ error: response[1], ...(issues ? { issues } : {}) });
 }
 
 export const prepareFilter = prepareInput((req) => req.query, prepareCourseFilter);

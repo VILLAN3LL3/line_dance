@@ -61,6 +61,14 @@
   box-shadow: 0 0 0 3px rgba(139, 71, 137, 0.1);
 }
 
+.course-form-field input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.course-form-field input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 2px var(--color-danger);
+}
+
 .course-form-actions {
   grid-column: 1 / -1;
   display: flex;

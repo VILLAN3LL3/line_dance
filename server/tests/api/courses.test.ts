@@ -269,7 +269,10 @@ describe('POST /api/dance-courses', () => {
       .post('/api/dance-courses')
       .send({ dance_group_id: group.id, course_id: 42 });
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: 'This course ID is already in use' });
+    expect(res.body).toEqual({
+      error: 'This course ID is already in use',
+      issues: [{ field: 'course_id', key: 'duplicate' }],
+    });
   });
 
   it('allows different names without IDs in the same group and semester', async () => {
@@ -295,6 +298,7 @@ describe('POST /api/dance-courses', () => {
     const duplicate = await request(app).post('/api/dance-courses').send(payload);
     expect(duplicate.status).toBe(400);
     expect(duplicate.body.error).toMatch(/name.*group and semester/i);
+    expect(duplicate.body.issues).toEqual([{ field: 'name', key: 'duplicate' }]);
     const anotherSemester = await request(app)
       .post('/api/dance-courses')
       .send({
@@ -344,12 +348,14 @@ describe('PUT /api/dance-courses/:id', () => {
     });
     expect(idConflict.status).toBe(400);
     expect(idConflict.body.error).toBe('This course ID is already in use');
+    expect(idConflict.body.issues).toEqual([{ field: 'course_id', key: 'duplicate' }]);
     const nameConflict = await request(app).put(`/api/dance-courses/${other.body.id}`).send({
       semester: 'WS',
       name: 'Named',
     });
     expect(nameConflict.status).toBe(400);
     expect(nameConflict.body.error).toMatch(/name.*group and semester/i);
+    expect(nameConflict.body.issues).toEqual([{ field: 'name', key: 'duplicate' }]);
     expect(first.status).toBe(201);
     expect(named.status).toBe(201);
     const courses = await request(app).get(`/api/dance-courses?dance_group_id=${group.id}`);

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { getApiErrorMessage } from "../../../shared/http/apiErrors";
+import { getApiErrorMessage, getFieldIssues } from "../../../shared/http/apiErrors";
 import { useDanceGroupQuery } from "../../dance-groups";
 import { useTrainersQuery } from "../../trainers";
 import { useUrlCheck } from "../../url-check";
@@ -10,11 +10,13 @@ import { createDanceCourse, updateDanceCourse } from "../api";
 import {
   emptyCourseForm,
   hasCourseIdentifier,
+  mapCourseFieldIssues,
   parseCourseFormRoute,
   toCourseFormValues,
   toCreateCoursePayload,
   toUpdateCoursePayload,
   type CourseFormValues,
+  type CourseFieldErrors,
 } from "../model/course-form";
 import { courseKeys } from "../queryKeys";
 import { useCoursesQuery } from "./useCourseQueries";
@@ -43,6 +45,7 @@ export const useCourseFormViewModel = () => {
   const [draft, setDraft] = useState<CourseFormValues | null>(null);
   const values = draft ?? (existingCourse ? toCourseFormValues(existingCourse) : emptyCourseForm);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<CourseFieldErrors>({});
 
   const saveMutation = useMutation({
     mutationFn: async (formValues: CourseFormValues) => {
@@ -77,6 +80,7 @@ export const useCourseFormViewModel = () => {
   const goBackToGroup = () => void navigate(`/admin/groups/${route.groupId}`);
 
   const submit = async () => {
+    setFieldErrors({});
     if (!hasCourseIdentifier(values)) {
       setActionError("Course ID or name is required");
       return;
@@ -87,11 +91,30 @@ export const useCourseFormViewModel = () => {
       await saveMutation.mutateAsync(values);
       goBackToGroup();
     } catch (err) {
-      setActionError(
-        getApiErrorMessage(err) ?? (err instanceof Error ? err.message : "Failed to save course"),
-      );
-      console.error(err);
+      const issues = getFieldIssues(err);
+      if (issues) {
+        const mapped = mapCourseFieldIssues(issues);
+        setFieldErrors(mapped.fieldErrors);
+        if (mapped.hasUnmappedIssue) {
+          setActionError(getApiErrorMessage(err) ?? "Some fields could not be validated.");
+          console.error(err);
+        }
+      } else {
+        setActionError(getApiErrorMessage(err) ?? "Failed to save course. Please try again.");
+        console.error(err);
+      }
     }
+  };
+
+  const changeValues = (patch: Partial<CourseFormValues>) => {
+    setDraft({ ...values, ...patch });
+    setFieldErrors((previous) => ({
+      ...previous,
+      ...(patch.courseId !== undefined ? { courseId: undefined } : {}),
+      ...(patch.name !== undefined || patch.semester !== undefined || patch.courseId !== undefined
+        ? { name: undefined }
+        : {}),
+    }));
   };
 
   return {
@@ -107,12 +130,13 @@ export const useCourseFormViewModel = () => {
       },
       trainers: trainersQuery.data ?? [],
       values,
+      fieldErrors,
       isLoading,
       routeError: route.error,
       error: actionError ?? loadError,
     },
     actions: {
-      changeValues: (patch: Partial<CourseFormValues>) => setDraft({ ...values, ...patch }),
+      changeValues,
       submit,
       goBackToGroup,
     },

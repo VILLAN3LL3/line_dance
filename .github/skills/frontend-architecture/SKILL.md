@@ -62,6 +62,23 @@ Do not duplicate backend validation in the frontend. Map backend issue keys (`{ 
 display text in `model/`; keep only UX conveniences (e.g. required-field pre-checks) that already
 exist.
 
+## Backend and validation errors
+
+- For form errors attributable to specific inputs, use structured backend `issues` entries with
+  `{ field, key }` rather than matching message text. Keep the existing top-level `error` for API
+  compatibility. Read issues with `getFieldIssues` and map known keys to user-facing text in the
+  feature model; do not duplicate the validation rule in the frontend.
+- Render each mapped issue next to its input with `FormField`, `aria-invalid`, and
+  `aria-describedby`, following the choreography form. Clear stale field errors when the affected
+  input or another input on which the rule depends changes; validate again on save.
+- Show non-field failures and unmapped or malformed issues as a meaningful form-level error.
+  Never silently discard unknown issues, expose raw HTTP status text as the only explanation, or
+  suppress the shared database-restart notification. Log unexpected failures using existing
+  patterns, without exposing internal details to users.
+- Test backend issue shapes, field placement and accessibility, relevant edits and resubmission,
+  and general or unknown-error fallback. Preserve support for forms whose valid input has
+  alternative fields rather than marking all alternatives individually required.
+
 ## Server state
 
 Use TanStack Query for all server state: no hand-written `loading`/`error`/`useEffect` fetching and

@@ -34,6 +34,7 @@ __All code was written by GitHub Copilot. Use with caution.__
 - Create, rename, and delete dance groups
 - Manage dance courses per group with semester, start date, trainer, and playlist links (YouTube, Copperknob, Spotify)
 - A group can have multiple courses per semester. Course IDs are optional and globally unique when provided; courses without IDs must have distinct names within the same group and semester.
+- Duplicate course IDs or names are identified next to the corresponding form field.
 - Course periods run from the first to the last session and may not overlap another course of the same group, even across semesters. The boundary dates are inclusive. Courses without sessions have no known period; conflicts are checked when sessions are added or their dates changed. The separate course start date does not define the period.
 - Course lifecycle statuses: `running`, `planned`, `passed` — default view shows only running courses
 - Configure a max group level per group to cap step figure suggestions
@@ -102,6 +103,8 @@ Raw OpenAPI spec: `http://localhost:3001/api/openapi.json`
 `POST /api/choreographies/validate` validates choreography data without saving. It shares the
 create/update field rules and returns HTTP 400 with `issues` containing `{ field, key }` entries;
 information row fields use paths such as `choreography_information.0.category`.
+Course creation and updates return an `issues` entry for duplicate IDs (`course_id`, `duplicate`)
+or names (`name`, `duplicate`) alongside the existing error message.
 
 ---
 

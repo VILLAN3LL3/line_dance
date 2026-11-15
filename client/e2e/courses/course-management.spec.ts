@@ -304,6 +304,29 @@ test.describe("Course Management", () => {
     await expect(page.getByRole("link", { name: /YouTube/i })).toBeVisible();
   });
 
+  test("shows a duplicate course ID next to the field and allows correction", async ({
+    page,
+    request,
+  }) => {
+    const groupId = await createDanceGroupViaApi(request, `Duplicate Course ${Date.now()}`);
+    const created = await request.post(`${API_BASE}/dance-courses`, {
+      data: { dance_group_id: groupId, course_id: 987654321, semester: "WS2026" },
+    });
+    expect(created.status()).toBe(201);
+    await page.goto(`/admin/groups/${groupId}/courses/new`);
+    const input = page.getByLabel("Course ID");
+    await expect(input).toBeEnabled();
+    await input.fill("987654321");
+    await page.getByRole("button", { name: "Create Course" }).click();
+    await expect(input).toHaveAttribute("aria-invalid", "true");
+    await expect(input).toHaveAccessibleDescription("This course ID is already in use.");
+    await expect(page.locator("#course-id-error")).toBeVisible();
+    await input.fill("987654322");
+    await expect(input).not.toHaveAttribute("aria-invalid", "true");
+    await page.getByRole("button", { name: "Create Course" }).click();
+    await expect(page).toHaveURL(new RegExp(`/admin/groups/${groupId}$`));
+  });
+
   test("direct create/edit routes initialize form state and allow cancel", async ({
     page,
     request,

@@ -13,6 +13,7 @@ import {
 import {
   emptyCourseForm,
   hasCourseIdentifier,
+  mapCourseFieldIssues,
   parseCourseFormRoute,
   toCreateCoursePayload,
   toCourseFormValues,
@@ -76,6 +77,22 @@ describe("course-detail model", () => {
 });
 
 describe("course-form model", () => {
+  it("maps known course field issues and flags unknown ones", () => {
+    expect(
+      mapCourseFieldIssues([
+        { field: "course_id", key: "duplicate" },
+        { field: "name", key: "duplicate" },
+        { field: "semester", key: "unknown" },
+      ]),
+    ).toEqual({
+      fieldErrors: {
+        courseId: "This course ID is already in use.",
+        name: "A course without an ID already has this name in this group and semester.",
+      },
+      hasUnmappedIssue: true,
+    });
+  });
+
   it("validates route params and detects edit mode", () => {
     expect(parseCourseFormRoute("5", undefined)).toMatchObject({ isEditMode: false, error: null });
     expect(parseCourseFormRoute("5", "9")).toMatchObject({ isEditMode: true, courseId: 9 });

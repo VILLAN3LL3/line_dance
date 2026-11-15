@@ -1,4 +1,25 @@
+import type { FieldIssue } from "../../../shared/http/apiErrors";
 import type { DanceCourse } from "../../../types";
+
+export type CourseFieldErrors = Partial<Record<"courseId" | "name", string>>;
+
+export function mapCourseFieldIssues(issues: FieldIssue[]): {
+  fieldErrors: CourseFieldErrors;
+  hasUnmappedIssue: boolean;
+} {
+  const fieldErrors: CourseFieldErrors = {};
+  let hasUnmappedIssue = false;
+  for (const issue of issues) {
+    if (issue.field === "course_id" && issue.key === "duplicate") {
+      fieldErrors.courseId = "This course ID is already in use.";
+    } else if (issue.field === "name" && issue.key === "duplicate") {
+      fieldErrors.name = "A course without an ID already has this name in this group and semester.";
+    } else {
+      hasUnmappedIssue = true;
+    }
+  }
+  return { fieldErrors, hasUnmappedIssue };
+}
 
 export interface CourseFormValues {
   courseId: string;
