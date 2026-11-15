@@ -33,6 +33,8 @@ __All code was written by GitHub Copilot. Use with caution.__
 
 - Create, rename, and delete dance groups
 - Manage dance courses per group with semester, start date, trainer, and playlist links (YouTube, Copperknob, Spotify)
+- A group can have multiple courses per semester. Course IDs are optional and globally unique when provided; courses without IDs must have distinct names within the same group and semester.
+- Course periods run from the first to the last session and may not overlap another course of the same group, even across semesters. The boundary dates are inclusive. Courses without sessions have no known period; conflicts are checked when sessions are added or their dates changed. The separate course start date does not define the period.
 - Course lifecycle statuses: `running`, `planned`, `passed` — default view shows only running courses
 - Configure a max group level per group to cap step figure suggestions
 - **Base step figures**: configure which step figures a group already knows before starting (defaults: Hip Bump, Hip Sway, Kick, Run)
@@ -49,6 +51,7 @@ __All code was written by GitHub Copilot. Use with caution.__
 ### Sessions & Course Planning
 
 - Create and delete sessions; attach and remove choreographies
+- Session dates must be valid calendar dates in `YYYY-MM-DD` format.
 - Deleting a course also deletes its sessions and their choreography assignments. Migration `015_remove_sessions_without_course` removes legacy sessions whose course no longer exists, along with their assignments.
 - Adding a dance marks it as "New" and automatically schedules repetitions in the next two existing sessions of the same course. Existing assignments are preserved without duplicates. Repetitions display their chronological number within the course ("Repeat 1", "Repeat 2", etc.).
 - Removing the original assignment also removes its linked automatic repetitions; removing one repetition leaves the original and other assignments intact. Independently planned assignments are never deleted through this link.

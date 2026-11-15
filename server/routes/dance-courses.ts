@@ -46,7 +46,8 @@ const courseErrors: Record<CourseError, [number, string]> = {
   group_not_found: [404, 'Dance group not found'],
   trainer_not_found: [404, 'Trainer not found'],
   course_not_found: [404, 'Dance course not found'],
-  duplicate_course: [400, 'A course for this group and semester already exists'],
+  duplicate_course: [400, 'This course ID is already in use'],
+  duplicate_name: [400, 'A course without an ID already has this name in this group and semester'],
 };
 
 function sendCourseError<T>(

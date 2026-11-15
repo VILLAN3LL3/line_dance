@@ -47,10 +47,27 @@ export async function findCourse(id: string | number): Promise<Course | undefine
   return getQuery<Course>(`${courseSelect} WHERE dc.id = ?`, [id], dbName);
 }
 
-export async function findCourseIdentity(id: string | number): Promise<CourseIdentity | undefined> {
-  return getQuery<CourseIdentity>(
-    'SELECT id, course_id, name FROM dance_courses WHERE id = ?',
+export async function findCourseIdentity(
+  id: string | number,
+): Promise<(CourseIdentity & { dance_group_id: number }) | undefined> {
+  return getQuery<CourseIdentity & { dance_group_id: number }>(
+    'SELECT id, course_id, name, dance_group_id FROM dance_courses WHERE id = ?',
     [id],
+    dbName,
+  );
+}
+
+export async function findNamedCourse(
+  groupId: CourseInput['dance_group_id'],
+  semester: CourseValues['semester'],
+  name: string | null,
+  excludeId: string | number | null,
+): Promise<{ id: number } | undefined> {
+  return getQuery<{ id: number }>(
+    `SELECT id FROM dance_courses
+     WHERE dance_group_id = ? AND semester = ? AND course_id IS NULL AND name = ?
+       AND (? IS NULL OR id != ?)`,
+    [groupId, semester, name, excludeId, excludeId],
     dbName,
   );
 }
@@ -80,17 +97,11 @@ function courseValues(course: CourseValues): CourseValues[keyof CourseValues][] 
   ];
 }
 
-export async function insertCourse(
-  course: CourseValues,
-): Promise<{ id: number } | { error: 'duplicate_course' }> {
+async function writeCourse(
+  action: () => Promise<WriteResult>,
+): Promise<WriteResult | { error: 'duplicate_course' }> {
   try {
-    const result = await runQuery(
-      `INSERT INTO dance_courses (course_id, name, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id, dance_group_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [...courseValues(course), course.dance_group_id],
-      dbName,
-    );
-    return { id: result.id };
+    return await action();
   } catch (error) {
     if (
       typeof error === 'object' &&
@@ -107,11 +118,29 @@ export async function insertCourse(
   }
 }
 
-export async function saveCourse(id: string | number, course: CourseValues): Promise<WriteResult> {
-  return runQuery(
-    `UPDATE dance_courses SET course_id = ?, name = ?, semester = ?, start_date = ?, youtube_playlist_url = ?, copperknob_list_url = ?, spotify_playlist_url = ?, trainer_id = ? WHERE id = ?`,
-    [...courseValues(course), id],
-    dbName,
+export async function insertCourse(
+  course: CourseValues,
+): Promise<WriteResult | { error: 'duplicate_course' }> {
+  return writeCourse(() =>
+    runQuery(
+      `INSERT INTO dance_courses (course_id, name, semester, start_date, youtube_playlist_url, copperknob_list_url, spotify_playlist_url, trainer_id, dance_group_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [...courseValues(course), course.dance_group_id],
+      dbName,
+    ),
+  );
+}
+
+export async function saveCourse(
+  id: string | number,
+  course: CourseValues,
+): Promise<WriteResult | { error: 'duplicate_course' }> {
+  return writeCourse(() =>
+    runQuery(
+      `UPDATE dance_courses SET course_id = ?, name = ?, semester = ?, start_date = ?, youtube_playlist_url = ?, copperknob_list_url = ?, spotify_playlist_url = ?, trainer_id = ? WHERE id = ?`,
+      [...courseValues(course), id],
+      dbName,
+    ),
   );
 }
 

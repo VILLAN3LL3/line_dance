@@ -262,6 +262,27 @@ describe("CourseDetail", () => {
     });
   });
 
+  it("shows a course overlap returned by the session API", async () => {
+    vi.mocked(createSession).mockRejectedValue(
+      Object.assign(new Error("Request failed with status code 400"), {
+        isAxiosError: true,
+        response: {
+          status: 400,
+          data: { error: "The course dates overlap with another course in this group" },
+        },
+      }),
+    );
+    renderWithRoute();
+    await screen.findByText(/7/);
+    const dateInput = document.querySelector<HTMLInputElement>('.session-form input[type="date"]');
+    if (!dateInput) throw new Error("Session date input was not found");
+    fireEvent.change(dateInput, { target: { value: "2025-02-01" } });
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Session" }));
+    expect(
+      await screen.findByText("The course dates overlap with another course in this group"),
+    ).toBeInTheDocument();
+  });
+
   it("selects a session and adds choreography to that session", async () => {
     renderWithRoute();
 

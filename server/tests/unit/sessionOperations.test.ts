@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { planRearrangement, serializeAssignment } from '../../features/sessions/operations.ts';
+import {
+  hasOverlappingCourse,
+  planRearrangement,
+  serializeAssignment,
+} from '../../features/sessions/operations.ts';
 import {
   validateAssignment,
   validateNewSession,
@@ -24,9 +28,12 @@ describe('session validation operations', () => {
     });
   });
 
-  it('retains the existing truthy input and numeric-prefix conversion rules', () => {
+  it('requires an ISO date and retains the other truthy input and numeric-prefix rules', () => {
     expect(validateNewSession({ dance_course_id: [1], session_date: 42, comment: 0 })).toEqual({
-      value: { dance_course_id: [1], session_date: 42, comment: 0 },
+      error: 'invalid_session_date',
+    });
+    expect(validateSessionUpdate({ session_date: '2026-02-30' })).toEqual({
+      error: 'invalid_session_date',
     });
     expect(validateAssignment({ session_id: 0, choreography_id: 1 })).toEqual({
       error: 'assignment_ids_required',
@@ -56,6 +63,21 @@ describe('session validation operations', () => {
     expect(validateSwap('12', '13')).toEqual({ value: [12, 13] });
     expect(validateSwap('12', '12')).toEqual({ error: 'invalid_swap_ids' });
     expect(validateSwap('invalid', '12')).toEqual({ error: 'invalid_swap_ids' });
+  });
+});
+
+describe('course date ranges', () => {
+  it('detects inclusive overlaps, including enclosing ranges, but permits separate ranges', () => {
+    const dates = [
+      { dance_course_id: 1, session_date: '2026-01-10' },
+      { dance_course_id: 1, session_date: '2026-01-20' },
+      { dance_course_id: 2, session_date: '2026-01-01' },
+    ];
+    expect(hasOverlappingCourse(2, '2026-01-10', dates)).toBe(true);
+    expect(hasOverlappingCourse(2, '2026-01-30', dates)).toBe(true);
+    expect(hasOverlappingCourse(2, '2026-01-09', dates)).toBe(false);
+    expect(hasOverlappingCourse(3, '2026-02-01', dates)).toBe(false);
+    expect(hasOverlappingCourse(1, '2026-01-11', [])).toBe(false);
   });
 });
 

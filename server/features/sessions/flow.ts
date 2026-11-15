@@ -1,5 +1,5 @@
 import { rearrangeSessionContents } from './content-flow.ts';
-import { serializeAssignment } from './operations.ts';
+import { hasOverlappingCourse, serializeAssignment } from './operations.ts';
 import * as sessions from './repository.ts';
 import type { AssignmentRow, Session } from './repository.ts';
 import type { JsonValue } from '../../utils/json-input.ts';
@@ -16,8 +16,10 @@ import type {
 export type SessionError =
   | 'course_and_date_required'
   | 'date_required'
+  | 'invalid_session_date'
   | 'course_not_found'
   | 'session_not_found'
+  | 'course_overlap'
   | 'session_id_required'
   | 'assignment_ids_required'
   | 'duplicate_assignment'
@@ -40,8 +42,11 @@ export async function createSession(
 ): Promise<Result<Session | undefined>> {
   if ('error' in validation) return validation;
   return sessions.withSessionTransaction(async () => {
-    if (!(await sessions.findCourse(validation.value.dance_course_id))) {
-      return { error: 'course_not_found' };
+    const course = await sessions.findCourse(validation.value.dance_course_id);
+    if (!course) return { error: 'course_not_found' };
+    const dates = await sessions.listGroupSessionDates(course.id, null);
+    if (hasOverlappingCourse(course.id, validation.value.session_date, dates)) {
+      return { error: 'course_overlap' };
     }
     const result = await sessions.insertSession(validation.value);
     return { value: await sessions.findSession(result.id) };
@@ -54,7 +59,14 @@ export async function updateSession(
 ): Promise<Result<Session | undefined>> {
   if ('error' in validation) return validation;
   return sessions.withSessionTransaction(async () => {
-    if (!(await sessions.findSession(id))) return { error: 'session_not_found' };
+    const existing = await sessions.findSession(id);
+    if (!existing) return { error: 'session_not_found' };
+    if (existing.session_date !== validation.value.session_date) {
+      const dates = await sessions.listGroupSessionDates(existing.dance_course_id, id);
+      if (hasOverlappingCourse(existing.dance_course_id, validation.value.session_date, dates)) {
+        return { error: 'course_overlap' };
+      }
+    }
     await sessions.saveSession(id, validation.value);
     return { value: await sessions.findSession(id) };
   });

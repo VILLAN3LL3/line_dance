@@ -5,6 +5,7 @@ import {
   findCourse,
   findCourseIdentity,
   findGroup,
+  findNamedCourse,
   findTrainer,
   insertCourse,
   listCourses,
@@ -19,6 +20,7 @@ type CourseError =
   | 'group_not_found'
   | 'trainer_not_found'
   | 'course_not_found'
+  | 'duplicate_name'
   | 'duplicate_course';
 export type CourseResult = { error: CourseError } | { value: Course | undefined };
 
@@ -33,6 +35,17 @@ export async function createCourse({ input, validation }: NewCourse): Promise<Co
     if (!(await findGroup(input.dance_group_id))) return { error: 'group_not_found' };
     if (hasTrainerId(input.trainer_id) && !(await findTrainer(input.trainer_id))) {
       return { error: 'trainer_not_found' };
+    }
+    if (
+      validation.value.course_id === null &&
+      (await findNamedCourse(
+        input.dance_group_id,
+        validation.value.semester,
+        validation.value.name,
+        null,
+      ))
+    ) {
+      return { error: 'duplicate_name' };
     }
     const result = await insertCourse(validation.value);
     if ('error' in result) return result;
@@ -50,7 +63,19 @@ export async function updateCourse(id: string | number, input: CourseInput): Pro
     }
     const validation = validateCourseUpdate(input, existing);
     if ('error' in validation) return validation;
-    await saveCourse(id, validation.value);
+    if (
+      validation.value.course_id === null &&
+      (await findNamedCourse(
+        existing.dance_group_id,
+        validation.value.semester,
+        validation.value.name,
+        id,
+      ))
+    ) {
+      return { error: 'duplicate_name' };
+    }
+    const saved = await saveCourse(id, validation.value);
+    if ('error' in saved) return saved;
     return { value: await findCourse(id) };
   });
 }

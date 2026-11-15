@@ -43,6 +43,20 @@ export async function findCourse(id: JsonValue): Promise<{ id: number } | undefi
   return getQuery<{ id: number }>('SELECT id FROM dance_courses WHERE id = ?', [id], dbName);
 }
 
+export async function listGroupSessionDates(
+  courseId: JsonValue,
+  excludeSessionId: string | number | null,
+): Promise<{ dance_course_id: number; session_date: string }[]> {
+  return allQuery(
+    `SELECT s.dance_course_id, s.session_date FROM sessions s
+     JOIN dance_courses c ON c.id = s.dance_course_id
+     WHERE c.dance_group_id = (SELECT dance_group_id FROM dance_courses WHERE id = ?)
+       AND (? IS NULL OR s.id != ?)`,
+    [courseId, excludeSessionId, excludeSessionId],
+    dbName,
+  );
+}
+
 export async function insertSession({
   dance_course_id,
   session_date,

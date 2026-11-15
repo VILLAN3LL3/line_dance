@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { getApiErrorMessage } from "../../../shared/http/apiErrors";
 import { useDanceGroupQuery } from "../../dance-groups";
 import { useTrainersQuery } from "../../trainers";
 import { useUrlCheck } from "../../url-check";
@@ -86,7 +87,9 @@ export const useCourseFormViewModel = () => {
       await saveMutation.mutateAsync(values);
       goBackToGroup();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to save course");
+      setActionError(
+        getApiErrorMessage(err) ?? (err instanceof Error ? err.message : "Failed to save course"),
+      );
       console.error(err);
     }
   };

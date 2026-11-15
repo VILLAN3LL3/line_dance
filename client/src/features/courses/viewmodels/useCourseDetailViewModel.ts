@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { openInNewTab } from "../../../shared/browser/window";
+import { getApiErrorMessage } from "../../../shared/http/apiErrors";
 import {
   useAllChoreographiesQuery,
   useChoreographyCardViewModel,
@@ -26,7 +27,7 @@ import { useSessionMutations } from "./useSessionMutations";
 import { useSessionSuggestions } from "./useSessionSuggestions";
 
 const messageOr = (err: unknown, fallback: string) =>
-  err instanceof Error ? err.message : fallback;
+  getApiErrorMessage(err) ?? (err instanceof Error ? err.message : fallback);
 
 /** ViewModel for the course detail page: sessions, their choreographies and suggestion helpers. */
 export const useCourseDetailViewModel = () => {

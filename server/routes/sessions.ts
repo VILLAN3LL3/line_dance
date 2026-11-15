@@ -51,8 +51,10 @@ const assignmentResponse = z.looseObject({
 const sessionErrors: Record<sessions.SessionError, [number, string]> = {
   course_and_date_required: [400, 'Dance course ID and session date are required'],
   date_required: [400, 'Session date is required'],
+  invalid_session_date: [400, 'Session date must be a valid date in YYYY-MM-DD format'],
   course_not_found: [404, 'Dance course not found'],
   session_not_found: [404, 'Session not found'],
+  course_overlap: [400, 'The course dates overlap with another course in this group'],
   session_id_required: [400, 'Session ID is required'],
   assignment_ids_required: [400, 'Session ID and choreography ID are required'],
   duplicate_assignment: [400, 'Choreography already added to this session'],

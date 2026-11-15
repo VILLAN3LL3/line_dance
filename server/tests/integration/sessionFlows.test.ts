@@ -52,6 +52,45 @@ async function createCourseSessions(): Promise<Session[]> {
 }
 
 describe('session integration flows', () => {
+  it('checks other course ranges transactionally when creating and changing sessions', async () => {
+    const slots = await createCourseSessions();
+    const original = slots[0];
+    const groupCourses = await courses.getCourses(undefined);
+    const second = requireValue(
+      await courses.createCourse(
+        prepareNewCourse({
+          dance_group_id: groupCourses[0].dance_group_id,
+          name: 'Other course',
+        }),
+      ),
+    );
+    const created = requireValue(
+      await sessions.createSession(
+        validateNewSession({
+          dance_course_id: second.id,
+          session_date: '2026-02-01',
+        }),
+      ),
+    );
+    expect(
+      await sessions.updateSession(
+        created.id,
+        validateSessionUpdate({
+          session_date: original.session_date,
+        }),
+      ),
+    ).toEqual({ error: 'course_overlap' });
+    expect((await sessions.getSessions(second.id))[0].session_date).toBe('2026-02-01');
+    expect(
+      await sessions.createSession(
+        validateNewSession({
+          dance_course_id: second.id,
+          session_date: '2026-01-20',
+        }),
+      ),
+    ).toEqual({ error: 'course_overlap' });
+  });
+
   it('creates repetitions and moves assignments and comments together on reorder', async () => {
     const slots = await createCourseSessions();
     const source = requireValue(

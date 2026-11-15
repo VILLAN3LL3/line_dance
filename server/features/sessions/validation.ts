@@ -3,11 +3,12 @@ import { jsonInput } from '../../utils/json-input.ts';
 import type { JsonValue } from '../../utils/json-input.ts';
 
 const requiredValue = jsonInput.refine(Boolean);
+const sessionDate = z.iso.date();
 const comment = jsonInput.nullish().transform((value) => value ?? null);
 const newSession = z
-  .object({ dance_course_id: requiredValue, session_date: requiredValue, comment })
+  .object({ dance_course_id: requiredValue, session_date: sessionDate, comment })
   .brand<'NewSession'>();
-const sessionUpdate = z.object({ session_date: requiredValue, comment }).brand<'SessionUpdate'>();
+const sessionUpdate = z.object({ session_date: sessionDate, comment }).brand<'SessionUpdate'>();
 const assignment = z
   .object({ session_id: requiredValue, choreography_id: requiredValue })
   .brand<'NewAssignment'>();
@@ -28,8 +29,10 @@ export type NewSession = z.output<typeof newSession>;
 export type SessionUpdate = z.output<typeof sessionUpdate>;
 export type NewAssignment = z.output<typeof assignment>;
 export type SessionId = z.output<typeof sessionId>;
-export type NewSessionResult = { error: 'course_and_date_required' } | { value: NewSession };
-export type SessionUpdateResult = { error: 'date_required' } | { value: SessionUpdate };
+export type NewSessionResult =
+  { error: 'course_and_date_required' | 'invalid_session_date' } | { value: NewSession };
+export type SessionUpdateResult =
+  { error: 'date_required' | 'invalid_session_date' } | { value: SessionUpdate };
 export type AssignmentResult = { error: 'assignment_ids_required' } | { value: NewAssignment };
 export type SessionIdResult = { error: 'session_id_required' } | { value: SessionId };
 export type ReorderResult = { error: 'invalid_reorder_ids' } | { value: number[] };
@@ -41,13 +44,21 @@ function requireBody(input: unknown): unknown {
 }
 
 export function validateNewSession(input: unknown): NewSessionResult {
-  const parsed = newSession.safeParse(requireBody(input));
-  return parsed.success ? { value: parsed.data } : { error: 'course_and_date_required' };
+  const body = requireBody(input);
+  const parsed = newSession.safeParse(body);
+  if (parsed.success) return { value: parsed.data };
+  const required = z
+    .object({ dance_course_id: requiredValue, session_date: requiredValue })
+    .safeParse(body);
+  return { error: required.success ? 'invalid_session_date' : 'course_and_date_required' };
 }
 
 export function validateSessionUpdate(input: unknown): SessionUpdateResult {
-  const parsed = sessionUpdate.safeParse(requireBody(input));
-  return parsed.success ? { value: parsed.data } : { error: 'date_required' };
+  const body = requireBody(input);
+  const parsed = sessionUpdate.safeParse(body);
+  if (parsed.success) return { value: parsed.data };
+  const required = z.object({ session_date: requiredValue }).safeParse(body);
+  return { error: required.success ? 'invalid_session_date' : 'date_required' };
 }
 
 export function validateSessionId(input: unknown): SessionIdResult {

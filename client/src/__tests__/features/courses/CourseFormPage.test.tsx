@@ -104,6 +104,27 @@ describe("CourseFormPage", () => {
     });
   });
 
+  it("shows the server's course conflict message instead of the HTTP status", async () => {
+    vi.mocked(createDanceCourse).mockRejectedValue(
+      Object.assign(new Error("Request failed with status code 400"), {
+        isAxiosError: true,
+        response: { status: 400, data: { error: "This course ID is already in use" } },
+      }),
+    );
+    render(
+      <MemoryRouter initialEntries={["/admin/groups/5/courses/new"]}>
+        <Routes>
+          <Route path="/admin/groups/:groupId/courses/new" element={<CourseFormPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText("Group: Group Five");
+    fireEvent.change(screen.getByLabelText("Course Name"), { target: { value: "New Course" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create Course" }));
+    expect(await screen.findByText("This course ID is already in use")).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
   it("loads existing course in edit mode and submits update", async () => {
     render(
       <MemoryRouter initialEntries={["/admin/groups/5/courses/9/edit"]}>

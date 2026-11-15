@@ -796,6 +796,99 @@ describe('POST /api/sessions/reorder-contents', () => {
 });
 
 describe('POST /api/sessions', () => {
+  it('rejects overlapping course ranges even between semesters, but not between groups', async () => {
+    const { group, course } = await createGroupAndCourse();
+    const second = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'SS 2026',
+      name: 'Second',
+    });
+    const otherGroup = await createGroupAndCourse('Other group');
+    for (const date of ['2026-01-01', '2026-01-31']) {
+      expect(
+        (
+          await request(app).post('/api/sessions').send({
+            dance_course_id: course.id,
+            session_date: date,
+          })
+        ).status,
+      ).toBe(201);
+    }
+    expect(
+      (
+        await request(app).post('/api/sessions').send({
+          dance_course_id: second.body.id,
+          session_date: '2026-02-01',
+        })
+      ).status,
+    ).toBe(201);
+    const conflict = await request(app).post('/api/sessions').send({
+      dance_course_id: second.body.id,
+      session_date: '2026-01-31',
+    });
+    expect(conflict.status).toBe(400);
+    expect(conflict.body.error).toMatch(/overlap/i);
+    expect(
+      (
+        await request(app).post('/api/sessions').send({
+          dance_course_id: otherGroup.course.id,
+          session_date: '2026-01-15',
+        })
+      ).status,
+    ).toBe(201);
+    const saved = await request(app).get(`/api/sessions?dance_course_id=${second.body.id}`);
+    expect(saved.body.map((session: Session) => session.session_date)).toEqual(['2026-02-01']);
+  });
+
+  it('rejects a range that encloses another course even when no session dates coincide', async () => {
+    const { group, course } = await createGroupAndCourse();
+    const second = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'WS 2025',
+      name: 'Second',
+    });
+    await request(app).post('/api/sessions').send({
+      dance_course_id: course.id,
+      session_date: '2026-01-15',
+    });
+    await request(app).post('/api/sessions').send({
+      dance_course_id: second.body.id,
+      session_date: '2026-01-01',
+    });
+    const conflict = await request(app).post('/api/sessions').send({
+      dance_course_id: second.body.id,
+      session_date: '2026-02-01',
+    });
+    expect(conflict.status).toBe(400);
+    expect(conflict.body.error).toMatch(/overlap/i);
+  });
+
+  it('serializes competing sessions on the same day in different courses', async () => {
+    const { group, course } = await createGroupAndCourse();
+    const second = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      name: 'Second',
+    });
+    const results = await Promise.all(
+      [course.id, second.body.id].map((id) =>
+        request(app)
+          .post('/api/sessions')
+          .send({ dance_course_id: id, session_date: '2026-01-01' }),
+      ),
+    );
+    expect(results.map((result) => result.status).sort()).toEqual([201, 400].sort());
+  });
+
+  it('rejects invalid session dates', async () => {
+    const { course } = await createGroupAndCourse();
+    const response = await request(app).post('/api/sessions').send({
+      dance_course_id: course.id,
+      session_date: '2026-02-30',
+    });
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/valid date/i);
+  });
+
   it('creates a session and returns 201', async () => {
     const { course } = await createGroupAndCourse();
     const res = await request(app)
@@ -847,6 +940,30 @@ describe('POST /api/sessions', () => {
 });
 
 describe('PUT /api/sessions/:id', () => {
+  it('rejects an edit that makes the course range overlap and preserves the original date', async () => {
+    const { group, course } = await createGroupAndCourse();
+    const second = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'WS 2025',
+      name: 'Second',
+    });
+    await request(app).post('/api/sessions').send({
+      dance_course_id: course.id,
+      session_date: '2026-01-15',
+    });
+    const created = await request(app).post('/api/sessions').send({
+      dance_course_id: second.body.id,
+      session_date: '2026-02-01',
+    });
+    const conflict = await request(app).put(`/api/sessions/${created.body.id}`).send({
+      session_date: '2026-01-15',
+    });
+    expect(conflict.status).toBe(400);
+    expect(conflict.body.error).toMatch(/overlap/i);
+    const saved = await request(app).get(`/api/sessions?dance_course_id=${second.body.id}`);
+    expect(saved.body[0].session_date).toBe('2026-02-01');
+  });
+
   it('updates the session date', async () => {
     const { course } = await createGroupAndCourse();
     const created = await request(app)

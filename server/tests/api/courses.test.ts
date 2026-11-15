@@ -262,14 +262,56 @@ describe('POST /api/dance-courses', () => {
     ).toBe(true);
   });
 
-  it('returns the existing duplicate course error when the course id is already used', async () => {
+  it('reports the actual conflict when the course id is already used', async () => {
     const group = await createGroup();
     await request(app).post('/api/dance-courses').send({ dance_group_id: group.id, course_id: 42 });
     const res = await request(app)
       .post('/api/dance-courses')
       .send({ dance_group_id: group.id, course_id: 42 });
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: 'A course for this group and semester already exists' });
+    expect(res.body).toEqual({ error: 'This course ID is already in use' });
+  });
+
+  it('allows different names without IDs in the same group and semester', async () => {
+    const group = await createGroup();
+    const first = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'WS 2026',
+      name: 'First',
+    });
+    const second = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'WS 2026',
+      name: 'Second',
+    });
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+  });
+
+  it('rejects matching names without IDs in the same group and semester', async () => {
+    const group = await createGroup();
+    const payload = { dance_group_id: group.id, semester: 'WS 2026', name: 'Course' };
+    expect((await request(app).post('/api/dance-courses').send(payload)).status).toBe(201);
+    const duplicate = await request(app).post('/api/dance-courses').send(payload);
+    expect(duplicate.status).toBe(400);
+    expect(duplicate.body.error).toMatch(/name.*group and semester/i);
+    const anotherSemester = await request(app)
+      .post('/api/dance-courses')
+      .send({
+        ...payload,
+        semester: 'SS 2027',
+      });
+    expect(anotherSemester.status).toBe(201);
+  });
+
+  it('serializes competing creations with the same name and no ID', async () => {
+    const group = await createGroup();
+    const payload = { dance_group_id: group.id, semester: 'WS 2026', name: 'Course' };
+    const results = await Promise.all([
+      request(app).post('/api/dance-courses').send(payload),
+      request(app).post('/api/dance-courses').send(payload),
+    ]);
+    expect(results.map((result) => result.status).sort()).toEqual([201, 400].sort());
   });
 });
 
@@ -278,6 +320,44 @@ describe('POST /api/dance-courses', () => {
 // ---------------------------------------------------------------------------
 
 describe('PUT /api/dance-courses/:id', () => {
+  it('reports ID and name conflicts on updates without changing the course', async () => {
+    const group = await createGroup();
+    const first = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'WS',
+      course_id: 42,
+      name: 'With ID',
+    });
+    const named = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'WS',
+      name: 'Named',
+    });
+    const other = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'WS',
+      name: 'Other',
+    });
+    const idConflict = await request(app).put(`/api/dance-courses/${other.body.id}`).send({
+      semester: 'WS',
+      course_id: 42,
+    });
+    expect(idConflict.status).toBe(400);
+    expect(idConflict.body.error).toBe('This course ID is already in use');
+    const nameConflict = await request(app).put(`/api/dance-courses/${other.body.id}`).send({
+      semester: 'WS',
+      name: 'Named',
+    });
+    expect(nameConflict.status).toBe(400);
+    expect(nameConflict.body.error).toMatch(/name.*group and semester/i);
+    expect(first.status).toBe(201);
+    expect(named.status).toBe(201);
+    const courses = await request(app).get(`/api/dance-courses?dance_group_id=${group.id}`);
+    expect(courses.body.find((course: { id: number }) => course.id === other.body.id).name).toBe(
+      'Other',
+    );
+  });
+
   it('updates semester and start_date', async () => {
     const group = await createGroup();
     const created = await request(app)
@@ -430,7 +510,7 @@ describe('DELETE /api/dance-courses/:id', () => {
       .send({ dance_course_id: course.body.id, session_date: '2025-01-15' });
     const otherSession = await request(app)
       .post('/api/sessions')
-      .send({ dance_course_id: otherCourse.body.id, session_date: '2025-01-15' });
+      .send({ dance_course_id: otherCourse.body.id, session_date: '2025-01-16' });
     await request(app)
       .post('/api/session-choreographies')
       .send({ session_id: session.body.id, choreography_id: 42 })
