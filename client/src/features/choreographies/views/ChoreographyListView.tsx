@@ -1,18 +1,22 @@
 import React from "react";
 
 import { EmptyState, LoadingState } from "../../../shared/ui";
-import type { Choreography, SearchFilters } from "../../../types";
+import type { Choreography } from "../../../types";
+import type { ChoreographyCardViewModel } from "../viewmodels/useChoreographyCardViewModel";
 import type { DisplayMode } from "../model/search-session";
+import type { useChoreographyTableViewModel } from "../viewmodels/useChoreographyTableViewModel";
+import type { SearchBarViewModel } from "../viewmodels/useSearchBarViewModel";
 import { ChoreographyCard } from "./ChoreographyCard";
 import { ChoreographyTable } from "./ChoreographyTable";
 import { SearchBar } from "./search-bar/SearchBar";
 
 interface ChoreographyListViewProps {
   choreographies: Choreography[];
-  currentFilters: SearchFilters;
   displayMode: DisplayMode;
   isLoading: boolean;
-  onSearch: (filters: SearchFilters) => Promise<void>;
+  searchBar: SearchBarViewModel;
+  table: ReturnType<typeof useChoreographyTableViewModel>;
+  cardViewModel: ChoreographyCardViewModel;
   onDisplayModeChange: (mode: DisplayMode) => void;
   onEdit: (id: number) => void;
   onDelete: (id: number) => Promise<void>;
@@ -21,10 +25,11 @@ interface ChoreographyListViewProps {
 
 export const ChoreographyListView: React.FC<ChoreographyListViewProps> = ({
   choreographies,
-  currentFilters,
   displayMode,
   isLoading,
-  onSearch,
+  searchBar,
+  table,
+  cardViewModel,
   onDisplayModeChange,
   onEdit,
   onDelete,
@@ -43,6 +48,7 @@ export const ChoreographyListView: React.FC<ChoreographyListViewProps> = ({
           <ChoreographyCard
             key={choreography.id}
             choreography={choreography}
+            cardViewModel={cardViewModel}
             onEdit={onEdit}
             onDelete={onDelete}
           />
@@ -52,9 +58,10 @@ export const ChoreographyListView: React.FC<ChoreographyListViewProps> = ({
   } else {
     content = (
       <ChoreographyTable
-        choreographies={choreographies}
         onEdit={onEdit}
         onDelete={onDelete}
+        tableState={table.state}
+        onToggleSort={table.actions.toggleSort}
         onSelect={onSelect}
         isLoading={isLoading}
       />
@@ -63,7 +70,7 @@ export const ChoreographyListView: React.FC<ChoreographyListViewProps> = ({
 
   return (
     <div className="list-view">
-      <SearchBar onSearch={onSearch} filters={currentFilters} isLoading={isLoading} />
+      <SearchBar viewModel={searchBar} isLoading={isLoading} />
 
       <div className="view-toggle">
         <button

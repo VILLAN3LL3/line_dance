@@ -20,7 +20,7 @@ const ChoreographyCreatePage: React.FC = () => {
       )}
       <ChoreographyFormView
         title="Add New Choreography"
-        onSubmit={actions.submit}
+        viewModel={state.form}
         isLoading={state.isSaving}
         onCancel={actions.cancel}
       />

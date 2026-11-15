@@ -97,6 +97,65 @@ export default [
     },
   },
   {
+    files: ["src/features/*/views/**/*.{ts,tsx}"],
+    ignores: [
+      "src/features/*/views/**/*Page.tsx",
+      "src/features/dance-groups/views/DanceGroupDetail.tsx",
+      "src/features/dance-groups/views/DanceGroupsAdmin.tsx",
+      "src/features/step-figures/views/StepFigureHierarchyAdmin.tsx",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/viewmodels/**"],
+              allowTypeImports: true,
+              message: "Only page-level views may call view models; child views receive props.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/features/*/api.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "axios",
+              message: "Use shared/http helpers; axios is restricted to shared/http.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/features/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        {
+          name: "window",
+          message: "Use the shared/browser gateway for browser APIs.",
+        },
+      ],
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "globalThis",
+          property: "window",
+          message: "Use the shared/browser gateway for browser APIs.",
+        },
+      ],
+    },
+  },
+  {
     files: ["src/shared/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [

@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { openInNewTab } from "../../../shared/browser/window";
-import { useAllChoreographiesQuery, useDeleteChoreographyMutation } from "../../choreographies";
+import {
+  useAllChoreographiesQuery,
+  useChoreographyCardViewModel,
+  useDeleteChoreographyMutation,
+} from "../../choreographies";
 import {
   filterVisibleSessions,
   formatCourseHeader,
@@ -36,6 +40,7 @@ export const useCourseDetailViewModel = () => {
   const choreographiesQuery = useAllChoreographiesQuery(routeEnabled);
   const mutations = useSessionMutations(route.courseId);
   const deleteChoreography = useDeleteChoreographyMutation();
+  const cardViewModel = useChoreographyCardViewModel();
 
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [showPassedSessions, setShowPassedSessions] = useState(false);
@@ -230,6 +235,7 @@ export const useCourseDetailViewModel = () => {
       sessionChoreographies,
       availableChoreographies,
       getChoreographyOptionLabel,
+      cardViewModel,
     },
     actions: {
       goBack: () => void navigate(`/admin/groups/${route.groupId}`),

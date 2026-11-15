@@ -1,27 +1,18 @@
 import React, { useState } from "react";
 
 import { ActionButton, confirmAction } from "../../../shared/ui";
-import type { SearchFilters } from "../../../types";
 import { savedFilterMessages } from "../model/saved-filter-selection";
-import { useSavedFiltersViewModel } from "../viewmodels/useSavedFiltersViewModel";
+import type { SavedFiltersViewModel } from "../viewmodels/useSavedFiltersViewModel";
 
 interface SavedConfigurationsPanelProps {
-  buildFilters: () => SearchFilters;
-  applyLoadedFilters: (filters: SearchFilters) => Promise<void>;
-  isLoading: boolean;
+  viewModel: SavedFiltersViewModel;
 }
 
 export const SavedConfigurationsPanel: React.FC<SavedConfigurationsPanelProps> = ({
-  buildFilters,
-  applyLoadedFilters,
-  isLoading,
+  viewModel,
 }) => {
   const [showSavedConfigurations, setShowSavedConfigurations] = useState(false);
-  const { state, actions } = useSavedFiltersViewModel({
-    buildFilters,
-    applyLoadedFilters,
-    isLoading,
-  });
+  const { state, actions } = viewModel;
   const {
     configurations,
     selectedConfigurationId,
@@ -63,7 +54,7 @@ export const SavedConfigurationsPanel: React.FC<SavedConfigurationsPanelProps> =
               value={configurationName}
               onChange={(e) => actions.changeName(e.target.value)}
               placeholder="Configuration name..."
-              disabled={isLoading || isSaving}
+              disabled={isBusy}
             />
             <ActionButton onClick={actions.save} variant="primary" disabled={isBusy}>
               {isSaving ? "Saving..." : "Save Current Filters"}
@@ -75,7 +66,7 @@ export const SavedConfigurationsPanel: React.FC<SavedConfigurationsPanelProps> =
               value={selectedConfigurationId}
               onChange={(e) => actions.chooseConfiguration(e.target.value)}
               disabled={
-                isLoading ||
+                isBusy ||
                 isLoadingConfigurations ||
                 isUpdating ||
                 isDeleting ||

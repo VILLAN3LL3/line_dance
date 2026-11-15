@@ -1,5 +1,6 @@
 import React from "react";
 
+import { openInNewTab } from "../../../shared/browser/window";
 import { buildSongSearchUrls } from "../model/song-search";
 import { ActionButton } from "../../../shared/ui";
 
@@ -22,7 +23,7 @@ export const SongSearchButtons: React.FC<SongSearchButtonsProps> = ({
   const { youtubeUrl, spotifyUrl } = buildSongSearchUrls(song, artist);
 
   const handleExternalLink = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
+    openInNewTab(url);
   };
 
   if (compact) {

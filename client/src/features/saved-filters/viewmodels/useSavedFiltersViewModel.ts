@@ -196,3 +196,5 @@ export const useSavedFiltersViewModel = ({
     },
   };
 };
+
+export type SavedFiltersViewModel = ReturnType<typeof useSavedFiltersViewModel>;

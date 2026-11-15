@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 
 import { getMaxChoreographyCount } from "../../../features/choreographies/api";
-import { SearchBar } from "../../../features/choreographies/views/search-bar/SearchBar";
+import { useSearchBarViewModel } from "../../../features/choreographies/viewmodels/useSearchBarViewModel";
+import { SearchBar as SearchBarView } from "../../../features/choreographies/views/search-bar/SearchBar";
 import { getAuthors, getLevels, getStepFigures, getTags } from "../../../features/metadata/api";
 import {
   deleteSavedFilterConfiguration,
@@ -12,6 +13,24 @@ import {
   updateSavedFilterConfiguration,
 } from "../../../features/saved-filters/api";
 import { renderWithQueryClient as render } from "../../helpers/renderWithQueryClient";
+import type { SearchFilters } from "../../../types";
+import type { ComponentProps } from "react";
+
+const SearchBar = ({
+  onSearch,
+  filters = {},
+  ...props
+}: Omit<ComponentProps<typeof SearchBarView>, "viewModel"> & {
+  onSearch: (filters: SearchFilters) => Promise<void>;
+  filters?: SearchFilters;
+}) => {
+  const viewModel = useSearchBarViewModel({
+    filters,
+    onSearch,
+    isLoading: props.isLoading ?? false,
+  });
+  return <SearchBarView {...props} viewModel={viewModel} />;
+};
 
 vi.mock("../../../features/metadata/api", () => ({
   getLevels: vi.fn(),

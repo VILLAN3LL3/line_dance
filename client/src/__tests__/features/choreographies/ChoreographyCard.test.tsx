@@ -2,8 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 
+import {
+  deleteChoreographyRating,
+  setChoreographyRating,
+} from "../../../features/choreographies/api";
 import { buildChoreographyClipboardText } from "../../../features/choreographies/model/choreography-clipboard";
-import { ChoreographyCard } from "../../../features/choreographies/views/ChoreographyCard";
+import { useChoreographyCardViewModel } from "../../../features/choreographies/viewmodels/useChoreographyCardViewModel";
+import { ChoreographyCard as ChoreographyCardView } from "../../../features/choreographies/views/ChoreographyCard";
 import { renderWithQueryClient as render } from "../../helpers/renderWithQueryClient";
 
 vi.mock("../../../features/choreographies/api", () => ({
@@ -15,6 +20,14 @@ vi.mock("../../../features/metadata/api", () => ({
 }));
 
 import type { Choreography } from "../../../types";
+import type { ComponentProps } from "react";
+
+const ChoreographyCard = (
+  props: Omit<ComponentProps<typeof ChoreographyCardView>, "cardViewModel">,
+) => {
+  const cardViewModel = useChoreographyCardViewModel();
+  return <ChoreographyCardView {...props} cardViewModel={cardViewModel} />;
+};
 
 function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
   return {
@@ -262,6 +275,18 @@ describe("ChoreographyCard", () => {
 
     expect(onEdit).toHaveBeenCalledWith(42);
     expect(onDelete).toHaveBeenCalledWith(42);
+  });
+
+  it("updates a choreography rating through the page view model", async () => {
+    render(<ChoreographyCard choreography={makeChoreography()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /open rating editor/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Rate 4 stars" }));
+
+    await waitFor(() => {
+      expect(setChoreographyRating).toHaveBeenCalledWith(42, 4);
+    });
+    expect(deleteChoreographyRating).not.toHaveBeenCalled();
   });
 
   it("shows YouTube and Spotify footer links only when song and artist are filled out", () => {

@@ -102,6 +102,7 @@ const CourseFormPage: React.FC = () => {
             value={values.youtubePlaylistUrl}
             onChange={(e) => change({ youtubePlaylistUrl: e.target.value })}
             disabled={isLoading}
+            viewModel={state.urlChecks.youtube}
           />
         </FormField>
 
@@ -116,6 +117,7 @@ const CourseFormPage: React.FC = () => {
             value={values.copperknobListUrl}
             onChange={(e) => change({ copperknobListUrl: e.target.value })}
             disabled={isLoading}
+            viewModel={state.urlChecks.copperknob}
           />
         </FormField>
 
@@ -130,6 +132,7 @@ const CourseFormPage: React.FC = () => {
             value={values.spotifyPlaylistUrl}
             onChange={(e) => change({ spotifyPlaylistUrl: e.target.value })}
             disabled={isLoading}
+            viewModel={state.urlChecks.spotify}
           />
         </FormField>
 

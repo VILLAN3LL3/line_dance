@@ -30,10 +30,11 @@ export const ChoreographySearchPage: React.FC = () => {
       {view === "list" && (
         <ChoreographyListView
           choreographies={state.choreographies}
-          currentFilters={state.currentFilters}
           displayMode={state.displayMode}
           isLoading={isLoading}
-          onSearch={actions.search}
+          searchBar={state.searchBar}
+          table={state.table}
+          cardViewModel={state.cardViewModel}
           onDisplayModeChange={actions.changeDisplayMode}
           onEdit={actions.editChoreography}
           onDelete={handleDelete}
@@ -44,6 +45,7 @@ export const ChoreographySearchPage: React.FC = () => {
       {view === "detail" && selectedChoreography && (
         <ChoreographyDetailView
           choreography={selectedChoreography}
+          cardViewModel={state.cardViewModel}
           onBack={actions.showList}
           onEdit={actions.editChoreography}
           onDelete={handleDelete}

@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { checkUrl } from "../../../features/url-check/api";
-import { UrlInput } from "../../../features/url-check/views/UrlInput";
+import { useUrlCheck } from "../../../features/url-check/viewmodels/useUrlCheck";
+import { UrlInput as UrlInputView } from "../../../features/url-check/views/UrlInput";
+import type { ComponentProps } from "react";
 
 vi.mock("../../../features/url-check/api", () => ({
   checkUrl: vi.fn(),
@@ -11,10 +13,14 @@ vi.mock("../../../features/url-check/api", () => ({
 
 const mockCheckUrl = checkUrl as Mock;
 
+const UrlInputHarness = (props: Omit<ComponentProps<typeof UrlInputView>, "viewModel">) => (
+  <UrlInputView {...props} viewModel={useUrlCheck()} />
+);
+
 function renderUrlInput(value = "") {
   const onChange = vi.fn();
   render(
-    <UrlInput
+    <UrlInputHarness
       id="test-url"
       name="test_url"
       value={value}
@@ -88,34 +94,22 @@ describe("UrlInput — invalid URL format", () => {
 // ---------------------------------------------------------------------------
 
 describe("UrlInput — reachability check success", () => {
-  it("shows tick mark when checkUrl returns ok", async () => {
+  it.each([
+    ["a regular URL", "https://example.com", "https://example.com"],
+    ["a trimmed URL", "  https://example.com/path  ", "https://example.com/path"],
+    [
+      "a cross-origin URL",
+      "https://www.copperknob.co.uk/stepsheets/example",
+      "https://www.copperknob.co.uk/stepsheets/example",
+    ],
+  ])("shows a tick and checks %s", async (_label, value, expectedUrl) => {
     mockCheckUrl.mockResolvedValueOnce({ ok: true, status: 200 });
-    renderUrlInput("https://example.com");
+    renderUrlInput(value);
 
     fireEvent.blur(getInput());
 
     await waitFor(() => expect(screen.getByLabelText("URL reachable")).toBeInTheDocument());
-    expect(mockCheckUrl).toHaveBeenCalledWith("https://example.com");
-  });
-
-  it("passes the exact trimmed URL to checkUrl", async () => {
-    mockCheckUrl.mockResolvedValueOnce({ ok: true, status: 200 });
-    renderUrlInput("  https://example.com/path  ");
-
-    fireEvent.blur(getInput());
-
-    await waitFor(() => expect(screen.getByLabelText("URL reachable")).toBeInTheDocument());
-    expect(mockCheckUrl).toHaveBeenCalledWith("https://example.com/path");
-  });
-
-  it("shows tick for cross-origin URLs with CORS restrictions (e.g. copperknob)", async () => {
-    mockCheckUrl.mockResolvedValueOnce({ ok: true, status: 200 });
-    renderUrlInput("https://www.copperknob.co.uk/stepsheets/example");
-
-    fireEvent.blur(getInput());
-
-    await waitFor(() => expect(screen.getByLabelText("URL reachable")).toBeInTheDocument());
-    expect(mockCheckUrl).toHaveBeenCalledWith("https://www.copperknob.co.uk/stepsheets/example");
+    expect(mockCheckUrl).toHaveBeenCalledWith(expectedUrl);
   });
 });
 

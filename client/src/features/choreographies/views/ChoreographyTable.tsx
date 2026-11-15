@@ -2,13 +2,22 @@ import "../../../styles/ChoreographyTable.css";
 
 import React from "react";
 
+import { openInNewTab } from "../../../shared/browser/window";
 import { ActionButton, LevelBatch } from "../../../shared/ui";
 import { Choreography } from "../../../types";
-import { getSortIndicator, type SortField } from "../model/choreography-table";
-import { useChoreographyTableViewModel } from "../viewmodels/useChoreographyTableViewModel";
+import { getSortIndicator, type SortDirection, type SortField } from "../model/choreography-table";
+
+interface ChoreographyTableState {
+  sortField: SortField;
+  sortDirection: SortDirection;
+  sortedChoreographies: Choreography[];
+  stepFigureColumns: string[];
+  informationCategories: string[];
+}
 
 interface ChoreographyTableProps {
-  choreographies: Choreography[];
+  tableState: ChoreographyTableState;
+  onToggleSort: (field: SortField) => void;
   onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
   onSelect?: (id: number) => void;
@@ -16,46 +25,48 @@ interface ChoreographyTableProps {
 }
 
 export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
-  choreographies,
+  tableState,
+  onToggleSort,
   onEdit,
   onDelete,
   onSelect,
   isLoading = false,
 }) => {
-  "use no memo";
-
-  const { state, actions } = useChoreographyTableViewModel(choreographies);
-  const { sortField, sortDirection, sortedChoreographies, stepFigureColumns } = state;
-  const toggleSort = actions.toggleSort;
-
+  const {
+    sortField,
+    sortDirection,
+    sortedChoreographies,
+    stepFigureColumns,
+    informationCategories,
+  } = tableState;
   return (
     <div className="choreography-table-wrapper">
       <div className="table-scroll-wrapper">
         <table className="choreography-table">
           <thead>
             <tr>
-              <th className="sortable" onClick={() => toggleSort("name")}>
+              <th className="sortable" onClick={() => onToggleSort("name")}>
                 Name{getSortIndicator(sortField, "name", sortDirection)}
               </th>
-              <th className="sortable" onClick={() => toggleSort("level")}>
+              <th className="sortable" onClick={() => onToggleSort("level")}>
                 Level{getSortIndicator(sortField, "level", sortDirection)}
               </th>
-              <th className="sortable" onClick={() => toggleSort("count")}>
+              <th className="sortable" onClick={() => onToggleSort("count")}>
                 Count{getSortIndicator(sortField, "count", sortDirection)}
               </th>
-              <th className="sortable" onClick={() => toggleSort("wall_count")}>
+              <th className="sortable" onClick={() => onToggleSort("wall_count")}>
                 Walls{getSortIndicator(sortField, "wall_count", sortDirection)}
               </th>
-              <th className="sortable" onClick={() => toggleSort("creation_year")}>
+              <th className="sortable" onClick={() => onToggleSort("creation_year")}>
                 Year{getSortIndicator(sortField, "creation_year", sortDirection)}
               </th>
-              {state.informationCategories.map((category) => {
+              {informationCategories.map((category) => {
                 const field: SortField = `information:${category}`;
                 return (
                   <th
                     key={category}
                     className="figure-column sortable"
-                    onClick={() => toggleSort(field)}
+                    onClick={() => onToggleSort(field)}
                   >
                     {category}
                     {getSortIndicator(sortField, field, sortDirection)}
@@ -87,7 +98,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                   <td>{choreo.count ?? "-"}</td>
                   <td>{choreo.wall_count ?? "-"}</td>
                   <td>{choreo.creation_year ?? "-"}</td>
-                  {state.informationCategories.map((category) => {
+                  {informationCategories.map((category) => {
                     const hasInformation = (choreo.choreography_information || []).some(
                       (information) => information.category === category,
                     );
@@ -112,7 +123,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                       <ActionButton
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(choreo.step_sheet_link, "_blank");
+                          if (choreo.step_sheet_link) openInNewTab(choreo.step_sheet_link);
                         }}
                         variant="secondary"
                         className="btn-small"
@@ -125,7 +136,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                       <ActionButton
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(choreo.demo_video_url, "_blank");
+                          if (choreo.demo_video_url) openInNewTab(choreo.demo_video_url);
                         }}
                         variant="secondary"
                         className="btn-small"
@@ -138,7 +149,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                       <ActionButton
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(choreo.tutorial_video_url || "", "_blank");
+                          openInNewTab(choreo.tutorial_video_url || "");
                         }}
                         variant="secondary"
                         className="btn-small"

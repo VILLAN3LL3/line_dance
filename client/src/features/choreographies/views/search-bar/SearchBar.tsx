@@ -3,29 +3,22 @@ import "../../../../styles/SearchBar.css";
 import React, { useState } from "react";
 
 import { ActionButton } from "../../../../shared/ui";
-import type { SearchFilters } from "../../../../types";
-import { useSearchBarViewModel } from "../../viewmodels/useSearchBarViewModel";
+import type { SearchBarViewModel } from "../../viewmodels/useSearchBarViewModel";
 import { ClearFiltersIcon } from "../ClearFiltersIcon";
 import { SearchBarAdvancedFilters } from "./SearchBarAdvancedFilters";
 
 interface SearchBarProps {
-  onSearch: (filters: SearchFilters) => Promise<void>;
-  filters?: SearchFilters;
+  viewModel: SearchBarViewModel;
   isLoading?: boolean;
 }
-
-const EMPTY_FILTERS: SearchFilters = {};
 
 const inputTypeOf = (e: React.ChangeEvent<HTMLInputElement>) =>
   (e.nativeEvent as InputEvent).inputType;
 
-export const SearchBar: React.FC<SearchBarProps> = ({
-  onSearch,
-  filters = EMPTY_FILTERS,
-  isLoading = false,
-}) => {
+export const SearchBar: React.FC<SearchBarProps> = ({ viewModel, isLoading = false }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const { state, actions } = useSearchBarViewModel({ filters, onSearch });
+  const { state, actions } = viewModel;
+  const savedFilters = { state: state.savedFilters, actions: actions.savedFilters };
   const { values } = state;
 
   const submitOnEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -137,8 +130,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           isLoading={isLoading}
           minRating={values.minRating}
           onMinRatingChange={actions.changeMinRating}
-          buildFilters={actions.buildFilters}
-          applyLoadedFilters={actions.applyLoadedFilters}
+          savedFilters={savedFilters}
         />
       )}
     </div>

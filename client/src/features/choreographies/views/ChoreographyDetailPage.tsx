@@ -48,6 +48,7 @@ const ChoreographyDetailPage: React.FC = () => {
       {state.mode === "view" ? (
         <ChoreographyCard
           choreography={choreography}
+          cardViewModel={state.cardViewModel}
           onEdit={actions.startEdit}
           onDelete={handleDelete}
           videoEmbedMode="all"
@@ -63,8 +64,7 @@ const ChoreographyDetailPage: React.FC = () => {
           )}
           <ChoreographyFormView
             title="Edit Choreography"
-            initialData={choreography}
-            onSubmit={actions.submit}
+            viewModel={state.form}
             isLoading={state.isBusy}
             onCancel={actions.cancelEdit}
           />

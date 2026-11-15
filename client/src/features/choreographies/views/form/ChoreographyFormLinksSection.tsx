@@ -1,13 +1,18 @@
 import React from "react";
 
 import { FormField } from "../../../../shared/ui";
-import { UrlInput } from "../../../url-check";
+import { UrlInput, type UrlCheckViewModel } from "../../../url-check";
 
 interface ChoreographyFormLinksSectionProps {
   step_sheet_link?: string;
   demo_video_url?: string;
   tutorial_video_url?: string;
   errors: { step_sheet_link?: string; demo_video_url?: string; tutorial_video_url?: string };
+  urlChecks: {
+    stepSheet: UrlCheckViewModel;
+    demoVideo: UrlCheckViewModel;
+    tutorialVideo: UrlCheckViewModel;
+  };
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => void;
@@ -18,6 +23,7 @@ export const ChoreographyFormLinksSection: React.FC<ChoreographyFormLinksSection
   demo_video_url,
   tutorial_video_url,
   errors,
+  urlChecks,
   onChange,
 }) => (
   <>
@@ -34,6 +40,7 @@ export const ChoreographyFormLinksSection: React.FC<ChoreographyFormLinksSection
         onChange={onChange}
         placeholder="https://example.com/stepsheet"
         error={errors.step_sheet_link}
+        viewModel={urlChecks.stepSheet}
       />
     </FormField>
 
@@ -50,6 +57,7 @@ export const ChoreographyFormLinksSection: React.FC<ChoreographyFormLinksSection
         onChange={onChange}
         placeholder="https://youtube.com/..."
         error={errors.demo_video_url}
+        viewModel={urlChecks.demoVideo}
       />
     </FormField>
 
@@ -66,6 +74,7 @@ export const ChoreographyFormLinksSection: React.FC<ChoreographyFormLinksSection
         onChange={onChange}
         placeholder="https://youtube.com/..."
         error={errors.tutorial_video_url}
+        viewModel={urlChecks.tutorialVideo}
       />
     </FormField>
   </>

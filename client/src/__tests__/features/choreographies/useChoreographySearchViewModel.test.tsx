@@ -5,7 +5,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { act, renderHook, waitFor } from "@testing-library/react";
 
-import { deleteChoreography, searchChoreographies } from "../../../features/choreographies/api";
+import {
+  deleteChoreography,
+  getMaxChoreographyCount,
+  searchChoreographies,
+} from "../../../features/choreographies/api";
+import { getAuthors, getLevels, getStepFigures, getTags } from "../../../features/metadata/api";
+import { getSavedFilterConfigurations } from "../../../features/saved-filters/api";
 import { useChoreographySearchViewModel } from "../../../features/choreographies/viewmodels/useChoreographySearchViewModel";
 import { createQueryClient } from "../../../shared/query/queryClient";
 
@@ -14,6 +20,16 @@ import type { SearchFilters } from "../../../types";
 vi.mock("../../../features/choreographies/api", () => ({
   searchChoreographies: vi.fn(),
   deleteChoreography: vi.fn(),
+  getMaxChoreographyCount: vi.fn(),
+}));
+vi.mock("../../../features/metadata/api", () => ({
+  getAuthors: vi.fn(),
+  getLevels: vi.fn(),
+  getStepFigures: vi.fn(),
+  getTags: vi.fn(),
+}));
+vi.mock("../../../features/saved-filters/api", () => ({
+  getSavedFilterConfigurations: vi.fn(),
 }));
 
 const mockNavigate = vi.fn();
@@ -44,6 +60,12 @@ describe("useChoreographySearchViewModel", () => {
     localStorage.clear();
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(searchChoreographies).mockResolvedValue(page([choreography]) as never);
+    vi.mocked(getMaxChoreographyCount).mockResolvedValue(0);
+    vi.mocked(getAuthors).mockResolvedValue([]);
+    vi.mocked(getLevels).mockResolvedValue([]);
+    vi.mocked(getStepFigures).mockResolvedValue([]);
+    vi.mocked(getTags).mockResolvedValue([]);
+    vi.mocked(getSavedFilterConfigurations).mockResolvedValue([]);
   });
 
   it("loads all matches with the stored filters and persists them", async () => {

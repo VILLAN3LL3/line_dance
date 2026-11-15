@@ -1,5 +1,6 @@
 import React from "react";
 
+import type { SavedFiltersViewModel } from "../../../saved-filters";
 import { SearchBarLevelFilter } from "./SearchBarLevelFilter";
 import { SearchBarMaxCountFilter } from "./SearchBarMaxCountFilter";
 import { SavedConfigurationsPanel } from "../../../saved-filters";
@@ -8,7 +9,7 @@ import { SearchBarStepFiguresFilter } from "./SearchBarStepFiguresFilter";
 import { SearchBarTagFilter } from "./SearchBarTagFilter";
 import { StarRating } from "../StarRating";
 
-import type { LevelOption, SearchFilters } from "../../../../types";
+import type { LevelOption } from "../../../../types";
 interface SearchBarAdvancedFiltersProps {
   // Level
   levelMode: "selected" | "max";
@@ -62,9 +63,7 @@ interface SearchBarAdvancedFiltersProps {
   // Rating filter
   minRating: number | null;
   onMinRatingChange: (value: number | null) => void;
-  // For saved configurations panel
-  buildFilters: () => SearchFilters;
-  applyLoadedFilters: (filters: SearchFilters) => Promise<void>;
+  savedFilters: SavedFiltersViewModel;
 }
 
 export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> = ({
@@ -113,15 +112,10 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
   isLoading,
   minRating,
   onMinRatingChange,
-  buildFilters,
-  applyLoadedFilters,
+  savedFilters,
 }) => (
   <div className="advanced-filters">
-    <SavedConfigurationsPanel
-      buildFilters={buildFilters}
-      applyLoadedFilters={applyLoadedFilters}
-      isLoading={isLoading}
-    />
+    <SavedConfigurationsPanel viewModel={savedFilters} />
 
     <div className="advanced-filter-columns">
       <div className="advanced-filter-column">

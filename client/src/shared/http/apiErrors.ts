@@ -18,6 +18,21 @@ function isFieldIssue(issue: unknown): issue is FieldIssue {
   );
 }
 
+export function getApiErrorMessage(error: unknown): string | null {
+  if (!axios.isAxiosError(error)) return null;
+  const data: unknown = error.response?.data;
+  if (
+    !data ||
+    typeof data !== "object" ||
+    !("error" in data) ||
+    typeof data.error !== "string" ||
+    !data.error
+  ) {
+    return null;
+  }
+  return data.error;
+}
+
 export function getFieldIssues(error: unknown): FieldIssue[] | null {
   if (!axios.isAxiosError(error) || error.response?.status !== 400) return null;
   const data: unknown = error.response.data;

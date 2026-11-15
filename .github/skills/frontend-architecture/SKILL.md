@@ -41,8 +41,9 @@ client/src/
 
 1. **Views** render props and emit events. No gateway, storage, or `axios` access, no business
    rules. Page components call exactly one view model and compose smaller presentational
-   components. UI-only concerns (e.g. `confirmAction`) stay in the view; the view model executes
-   the confirmed intent.
+   components. Page view models may compose smaller view-model hooks; child views receive only
+   props. UI-only concerns (e.g. `confirmAction`) stay in the view; the view model executes the
+   confirmed intent.
 2. **View models** (`use…ViewModel`) are hooks returning `{ state, actions }`. They own local UI
    state, call the feature `api.ts` through TanStack Query (`useQuery`/`useMutation`), use
    `shared/storage` for persistence, and delegate decisions to `model/`. Router hooks are allowed
@@ -77,11 +78,13 @@ Reusable queries (e.g. `useTrainersQuery`) are exported through `index.ts`.
 - Keep markup, class names, and accessibility attributes stable when refactoring; e2e tests rely
   on them.
 - Browser APIs (`localStorage`, `history`, `window.open`, clipboard, downloads) are accessed
-  through `shared/storage` and `shared/browser`, not in components.
+  through `shared/storage` and `shared/browser`, not in components. This includes window event
+  listeners.
 - When passing a function reference to `mutationFn`, wrap it in a lambda: TanStack Query adds
   a context argument that would otherwise leak into the API call.
 - ESLint (`client/eslint.config.ts`) enforces the layer boundaries; extend the rules when adding
-  a layer, and still review responsibilities manually.
+  a layer, and still review responsibilities manually. It blocks child-view imports of view models,
+  direct window access in features, and Axios imports in feature gateways.
 
 ## Tests
 

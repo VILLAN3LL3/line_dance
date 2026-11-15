@@ -25,17 +25,23 @@ import {
   toggleLevel,
   type SearchBarFilterValues,
 } from "../model/search-filters";
+import { useSavedFiltersViewModel } from "../../saved-filters";
 import { useMaxChoreographyCountQuery } from "./useMaxChoreographyCountQuery";
 
 interface UseSearchBarViewModelOptions {
   filters: SearchFilters;
   onSearch: (filters: SearchFilters) => Promise<void>;
+  isLoading: boolean;
 }
 
 const NO_OPTIONS: string[] = [];
 
 /** ViewModel for the choreography search bar: filter form state, option lists and search intents. */
-export const useSearchBarViewModel = ({ filters, onSearch }: UseSearchBarViewModelOptions) => {
+export const useSearchBarViewModel = ({
+  filters,
+  onSearch,
+  isLoading,
+}: UseSearchBarViewModelOptions) => {
   const levelsQuery = useLevelsQuery();
   const figuresQuery = useStepFiguresQuery();
   const tagsQuery = useTagsQuery();
@@ -53,14 +59,14 @@ export const useSearchBarViewModel = ({ filters, onSearch }: UseSearchBarViewMod
   const authorOptions = authorsQuery.data ?? NO_OPTIONS;
   const maxCountLimit = maxCountQuery.data ?? 0;
 
-  const [rawValues, setValues] = useState<SearchBarFilterValues>(() =>
+  const [rawValues, setRawValues] = useState<SearchBarFilterValues>(() =>
     searchBarValuesFromFilters(filters, 0),
   );
   const [previousFilters, setPreviousFilters] = useState<SearchFilters>(filters);
 
   if (previousFilters !== filters) {
     setPreviousFilters(filters);
-    setValues(searchBarValuesFromFilters(filters, maxCountLimit));
+    setRawValues(searchBarValuesFromFilters(filters, maxCountLimit));
   }
 
   // The max count can only be validated once the server told us how many choreographies exist.
@@ -69,19 +75,19 @@ export const useSearchBarViewModel = ({ filters, onSearch }: UseSearchBarViewMod
     : rawValues;
 
   const update = (patch: Partial<SearchBarFilterValues>) =>
-    setValues((previous) => ({ ...previous, ...patch }));
+    setRawValues((previous) => ({ ...previous, ...patch }));
   const transform = (change: (current: SearchBarFilterValues) => SearchBarFilterValues) =>
-    setValues(change);
+    setRawValues(change);
 
   const buildFilters = (): SearchFilters => buildSearchFilters(values, maxCountLimit);
 
   const applyLoadedFilters = async (loadedFilters: SearchFilters) => {
-    setValues(searchBarValuesFromFilters(loadedFilters, maxCountLimit));
+    setRawValues(searchBarValuesFromFilters(loadedFilters, maxCountLimit));
     await onSearch(loadedFilters);
   };
 
   const clearAllFilters = async () => {
-    setValues(defaultSearchBarFilterValues(maxCountLimit));
+    setRawValues(defaultSearchBarFilterValues(maxCountLimit));
     await onSearch({});
   };
 
@@ -94,6 +100,12 @@ export const useSearchBarViewModel = ({ filters, onSearch }: UseSearchBarViewMod
     const built = buildFilters();
     if (!areFiltersEqual(built, filters)) await onSearch(built);
   };
+
+  const savedFilters = useSavedFiltersViewModel({
+    buildFilters,
+    applyLoadedFilters,
+    isLoading,
+  });
 
   const inputLevel = (value: string, inputType?: string) => {
     update({ inputLevel: value });
@@ -152,6 +164,7 @@ export const useSearchBarViewModel = ({ filters, onSearch }: UseSearchBarViewMod
       figureOptions,
       tagOptions,
       authorOptions,
+      savedFilters: savedFilters.state,
     },
     actions: {
       buildFilters,
@@ -193,6 +206,9 @@ export const useSearchBarViewModel = ({ filters, onSearch }: UseSearchBarViewMod
         transform((current) => addAuthor(current, value ?? current.inputAuthor, authorOptions)),
       toggleAuthor: (author: string) => transform((current) => toggleAuthor(current, author)),
       changeMinRating: (minRating: number | null) => update({ minRating }),
+      savedFilters: savedFilters.actions,
     },
   };
 };
+
+export type SearchBarViewModel = ReturnType<typeof useSearchBarViewModel>;

@@ -2,16 +2,34 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 
-import { ChoreographyTable } from "../../../features/choreographies/views/ChoreographyTable";
+import { useChoreographyTableViewModel } from "../../../features/choreographies/viewmodels/useChoreographyTableViewModel";
+import { ChoreographyTable as ChoreographyTableView } from "../../../features/choreographies/views/ChoreographyTable";
 import { getStepFigures } from "../../../features/metadata/api";
 import { renderWithQueryClient as render } from "../../helpers/renderWithQueryClient";
 
 import type { Choreography } from "../../../types";
+import type { ComponentProps } from "react";
 vi.mock("../../../features/metadata/api", () => ({
   getStepFigures: vi.fn(),
 }));
 
 const mockGetStepFigures = vi.mocked(getStepFigures);
+
+const ChoreographyTable = ({
+  choreographies,
+  ...props
+}: Omit<ComponentProps<typeof ChoreographyTableView>, "tableState" | "onToggleSort"> & {
+  choreographies: Choreography[];
+}) => {
+  const table = useChoreographyTableViewModel(choreographies);
+  return (
+    <ChoreographyTableView
+      {...props}
+      tableState={table.state}
+      onToggleSort={table.actions.toggleSort}
+    />
+  );
+};
 
 function makeChoreo(overrides: Partial<Choreography> = {}): Choreography {
   return {
@@ -171,8 +189,23 @@ describe("ChoreographyTable", () => {
     fireEvent.click(screen.getByTitle("Open Demo Video"));
     fireEvent.click(screen.getByTitle("Open Tutorial Video"));
 
-    expect(openSpy).toHaveBeenNthCalledWith(1, "https://example.com/sheet", "_blank");
-    expect(openSpy).toHaveBeenNthCalledWith(2, "https://example.com/demo", "_blank");
-    expect(openSpy).toHaveBeenNthCalledWith(3, "https://example.com/tutorial", "_blank");
+    expect(openSpy).toHaveBeenNthCalledWith(
+      1,
+      "https://example.com/sheet",
+      "_blank",
+      "noopener,noreferrer",
+    );
+    expect(openSpy).toHaveBeenNthCalledWith(
+      2,
+      "https://example.com/demo",
+      "_blank",
+      "noopener,noreferrer",
+    );
+    expect(openSpy).toHaveBeenNthCalledWith(
+      3,
+      "https://example.com/tutorial",
+      "_blank",
+      "noopener,noreferrer",
+    );
   });
 });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { checkUrl } from "../api";
 import { isValidUrl, type UrlCheckStatus } from "../model/url-check";
@@ -7,9 +7,9 @@ import { isValidUrl, type UrlCheckStatus } from "../model/url-check";
 export const useUrlCheck = () => {
   const [status, setStatus] = useState<UrlCheckStatus>("idle");
 
-  const reset = () => setStatus("idle");
+  const reset = useCallback(() => setStatus("idle"), []);
 
-  const check = async (value: string) => {
+  const check = useCallback(async (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) {
       setStatus("idle");
@@ -27,7 +27,10 @@ export const useUrlCheck = () => {
     } catch {
       setStatus("error");
     }
-  };
+  }, []);
 
-  return { state: { status }, actions: { check, reset } };
+  const actions = useMemo(() => ({ check, reset }), [check, reset]);
+  return { state: { status }, actions };
 };
+
+export type UrlCheckViewModel = ReturnType<typeof useUrlCheck>;

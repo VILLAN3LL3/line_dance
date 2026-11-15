@@ -16,6 +16,9 @@ import {
   type DisplayMode,
 } from "../model/search-session";
 import { choreographyKeys } from "../queryKeys";
+import { useChoreographyCardViewModel } from "./useChoreographyCardViewModel";
+import { useChoreographyTableViewModel } from "./useChoreographyTableViewModel";
+import { useSearchBarViewModel } from "./useSearchBarViewModel";
 
 type View = "list" | "detail";
 
@@ -102,6 +105,14 @@ export const useChoreographySearchViewModel = () => {
     setCurrentFilters(filters);
   };
 
+  const searchBar = useSearchBarViewModel({
+    filters: currentFilters,
+    onSearch: search,
+    isLoading,
+  });
+  const table = useChoreographyTableViewModel(choreographies);
+  const cardViewModel = useChoreographyCardViewModel();
+
   const selectChoreography = (id: number) => {
     const choreography = choreographies.find((item) => item.id === id);
     if (choreography) {
@@ -130,6 +141,9 @@ export const useChoreographySearchViewModel = () => {
       currentFilters,
       isLoading,
       error,
+      searchBar,
+      table,
+      cardViewModel,
     },
     actions: {
       search,

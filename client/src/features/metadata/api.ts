@@ -1,5 +1,4 @@
-import axios from "axios";
-
+import { getApiErrorMessage } from "../../shared/http/apiErrors";
 import { httpClient } from "../../shared/http/httpClient";
 import type { LevelOption } from "../../types";
 
@@ -38,9 +37,8 @@ export async function addLevel(name: string): Promise<{ id: number; name: string
     const response = await httpClient.post("/levels", { name });
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      throw new Error(error.response.data.error);
-    }
+    const message = getApiErrorMessage(error);
+    if (message) throw new Error(message);
     throw error;
   }
 }

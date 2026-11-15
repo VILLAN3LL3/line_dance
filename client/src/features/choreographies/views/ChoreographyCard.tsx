@@ -6,7 +6,7 @@ import { Card, LevelBatch } from "../../../shared/ui";
 import { getYouTubeVideoEmbedUrl } from "../../../shared/utils/youtube";
 import type { Choreography } from "../../../types";
 import { getCountWallSummary } from "../model/choreography-card";
-import { useChoreographyCardViewModel } from "../viewmodels/useChoreographyCardViewModel";
+import type { ChoreographyCardViewModel } from "../viewmodels/useChoreographyCardViewModel";
 import { ChoreographyCardActions } from "./card/ChoreographyCardActions";
 import { ChoreographyCardContent } from "./card/ChoreographyCardContent";
 import { StarRating } from "./StarRating";
@@ -15,6 +15,7 @@ interface ChoreographyCardProps {
   choreography: Choreography;
   onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
+  cardViewModel: ChoreographyCardViewModel;
   videoEmbedMode?: "single" | "all";
 }
 
@@ -22,10 +23,10 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   choreography,
   onEdit,
   onDelete,
+  cardViewModel,
   videoEmbedMode = "single",
 }) => {
   const isDetailMode = videoEmbedMode === "all";
-  const { state, actions: cardActions } = useChoreographyCardViewModel(choreography);
   const countWallSummary = getCountWallSummary(choreography);
   const demoEmbedUrl = getYouTubeVideoEmbedUrl(choreography.demo_video_url);
   const tutorialEmbedUrl = getYouTubeVideoEmbedUrl(choreography.tutorial_video_url);
@@ -45,7 +46,11 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
         <LevelBatch
           level={choreography.level}
           trailingContent={
-            <StarRating rating={state.rating} compact onChange={cardActions.changeRating} />
+            <StarRating
+              rating={cardViewModel.state.ratingFor(choreography)}
+              compact
+              onChange={(rating) => cardViewModel.actions.changeRating(choreography, rating)}
+            />
           }
         />
       </div>
@@ -68,7 +73,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       choreography={choreography}
       onEdit={onEdit}
       onDelete={onDelete}
-      onCopy={cardActions.copyToClipboard}
+      onCopy={() => cardViewModel.actions.copyToClipboard(choreography)}
     />
   );
 

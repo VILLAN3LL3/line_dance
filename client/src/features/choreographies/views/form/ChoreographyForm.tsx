@@ -3,11 +3,10 @@ import "../../../../styles/ChoreographyForm.css";
 import React from "react";
 
 import { ActionButton, ActionGroup, LevelBatch } from "../../../../shared/ui";
-import type { ChoreographyFormData } from "../../../../types";
+import type { ChoreographyFormViewModel } from "../../viewmodels/useChoreographyFormViewModel";
 import { FORM_TABS, type ListField } from "../../model/choreography-form";
-import { useChoreographyFormViewModel } from "../../viewmodels/useChoreographyFormViewModel";
+import { AdditionalInformationTab } from "./ChoreographyFormAdditionalInformationTab";
 import {
-  AdditionalInformationTab,
   BasicInformationTab,
   ChoreographersTab,
   HashTagsTab,
@@ -17,8 +16,7 @@ import {
 
 interface ChoreographyFormProps {
   title?: string;
-  initialData?: ChoreographyFormData;
-  onSubmit: (data: ChoreographyFormData) => Promise<void>;
+  viewModel: ChoreographyFormViewModel;
   isLoading?: boolean;
   onCancel?: () => void;
 }
@@ -29,12 +27,11 @@ type FieldChangeEvent = React.ChangeEvent<
 
 export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   title,
-  initialData,
-  onSubmit,
+  viewModel,
   isLoading = false,
   onCancel,
 }) => {
-  const { state, actions } = useChoreographyFormViewModel({ initialData, onSubmit });
+  const { state, actions } = viewModel;
   const { formData, activeTab, fieldErrors, isValidating } = state;
 
   const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
@@ -130,7 +127,12 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
         {activeTab === "choreographers" && <ChoreographersTab {...listFieldProps("authors")} />}
 
         {activeTab === "links" && (
-          <LinksTab formData={formData} errors={fieldErrors} onChange={handleFieldChange} />
+          <LinksTab
+            formData={formData}
+            errors={fieldErrors}
+            urlChecks={state.urlChecks}
+            onChange={handleFieldChange}
+          />
         )}
 
         {activeTab === "step-figures" && <StepFiguresTab {...listFieldProps("step_figures")} />}

@@ -7,35 +7,49 @@ import { useCountryCodesLoader } from "../../metadata";
 import { deleteChoreographyRating, setChoreographyRating } from "../api";
 import { buildChoreographyClipboardText } from "../model/choreography-clipboard";
 
-/** ViewModel for a choreography card: optimistic rating and the copy-to-clipboard action. */
-export const useChoreographyCardViewModel = (choreography: Choreography) => {
-  const [rating, setRating] = useState<number | null>(choreography.rating);
+/** Page-level card actions: optimistic ratings and the copy-to-clipboard action. */
+export const useChoreographyCardViewModel = () => {
+  const [ratings, setRatings] = useState<Record<number, number | null>>({});
   const loadCountryCodes = useCountryCodesLoader();
   const ratingMutation = useMutation({
-    mutationFn: async (newRating: number | null) => {
-      if (newRating === null) {
-        await deleteChoreographyRating(choreography.id);
+    mutationFn: async ({ id, rating }: { id: number; rating: number | null }) => {
+      if (rating === null) {
+        await deleteChoreographyRating(id);
       } else {
-        await setChoreographyRating(choreography.id, newRating);
+        await setChoreographyRating(id, rating);
       }
     },
   });
 
-  const changeRating = async (newRating: number | null) => {
-    const previous = rating;
-    setRating(newRating);
+  const changeRating = async (choreography: Choreography, newRating: number | null) => {
+    const previous = Object.hasOwn(ratings, choreography.id)
+      ? ratings[choreography.id]
+      : choreography.rating;
+    setRatings((current) => ({ ...current, [choreography.id]: newRating }));
     try {
-      await ratingMutation.mutateAsync(newRating);
+      await ratingMutation.mutateAsync({ id: choreography.id, rating: newRating });
     } catch {
-      setRating(previous);
+      setRatings((current) => ({ ...current, [choreography.id]: previous }));
     }
   };
 
-  const copyToClipboard = async () => {
+  const copyToClipboard = async (choreography: Choreography) => {
     const countryCodes = await loadCountryCodes().catch(() => ({}));
     const text = buildChoreographyClipboardText(choreography, countryCodes);
     await copyTextWithPromptFallback(text, "Copy choreography details:");
   };
 
-  return { state: { rating }, actions: { changeRating, copyToClipboard } };
+  return {
+    state: {
+      ratingFor: (choreography: Choreography) =>
+        Object.hasOwn(ratings, choreography.id) ? ratings[choreography.id] : choreography.rating,
+    },
+    actions: {
+      changeRating: (choreography: Choreography, rating: number | null) =>
+        changeRating(choreography, rating),
+      copyToClipboard,
+    },
+  };
 };
+
+export type ChoreographyCardViewModel = ReturnType<typeof useChoreographyCardViewModel>;

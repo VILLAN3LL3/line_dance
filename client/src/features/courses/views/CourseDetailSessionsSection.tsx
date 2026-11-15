@@ -1,5 +1,6 @@
 import React from "react";
 
+import type { ChoreographyCardViewModel } from "../../choreographies";
 import { getSessionBadgeLabel, getSessionBadgeStatus } from "../model/course-status";
 import {
   ActionButton,
@@ -61,6 +62,7 @@ type CourseDetailSessionsSectionProps = {
   selectableChoreographies: Choreography[];
   sessionChoreographies: SessionChoreography[];
   availableChoreographies: Choreography[];
+  cardViewModel: ChoreographyCardViewModel;
   getChoreographyOptionLabel: (choreography: Choreography) => string;
   onChoreographyInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onAddChoreography: (event: React.SyntheticEvent<HTMLFormElement>) => void;
@@ -75,8 +77,7 @@ function getSuggestLabel(
   sessionId: number,
 ): string {
   if (suggestingForSessionId === sessionId) return "Loading…";
-  if (Object.prototype.hasOwnProperty.call(sessionSuggestions, sessionId))
-    return "Hide Suggestions";
+  if (Object.hasOwn(sessionSuggestions, sessionId)) return "Hide Suggestions";
   return "Suggest";
 }
 
@@ -120,6 +121,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
   selectableChoreographies,
   sessionChoreographies,
   availableChoreographies,
+  cardViewModel,
   getChoreographyOptionLabel,
   onChoreographyInputChange,
   onAddChoreography,
@@ -291,6 +293,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                       selectableChoreographies={selectableChoreographies}
                       sessionChoreographies={sessionChoreographies}
                       availableChoreographies={availableChoreographies}
+                      cardViewModel={cardViewModel}
                       getChoreographyOptionLabel={getChoreographyOptionLabel}
                       onChoreographyInputChange={onChoreographyInputChange}
                       onAddChoreography={onAddChoreography}
@@ -299,7 +302,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                       onDeleteChoreography={onDeleteChoreography}
                     />
                   )}
-                  {Object.prototype.hasOwnProperty.call(sessionSuggestions, session.id) && (
+                  {Object.hasOwn(sessionSuggestions, session.id) && (
                     <div className="session-suggestions-row">
                       {sessionSuggestions[session.id].length === 0 ? (
                         <span className="session-suggestions-empty">

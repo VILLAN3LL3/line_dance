@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import type { ChoreographyFormData } from "../../../types";
 import { createChoreography } from "../api";
 import { choreographyKeys } from "../queryKeys";
+import { useChoreographyFormViewModel } from "./useChoreographyFormViewModel";
 import { useSaveWithDuplicateCheck } from "./useSaveWithDuplicateCheck";
 
 /** ViewModel for the "add choreography" page. */
@@ -19,9 +20,10 @@ export const useChoreographyCreateViewModel = () => {
     },
     failureMessage: () => "Failed to create choreography",
   });
+  const form = useChoreographyFormViewModel({ onSubmit: saveFlow.actions.submit });
 
   return {
-    state: saveFlow.state,
+    state: { ...saveFlow.state, form },
     actions: { ...saveFlow.actions, cancel: () => void navigate("/") },
   };
 };

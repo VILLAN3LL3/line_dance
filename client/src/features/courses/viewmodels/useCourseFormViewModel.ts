@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { useDanceGroupQuery } from "../../dance-groups";
 import { useTrainersQuery } from "../../trainers";
+import { useUrlCheck } from "../../url-check";
 import { createDanceCourse, updateDanceCourse } from "../api";
 import {
   emptyCourseForm,
@@ -28,6 +29,9 @@ export const useCourseFormViewModel = () => {
   const groupQuery = useDanceGroupQuery(route.groupId, enabled);
   const trainersQuery = useTrainersQuery();
   const coursesQuery = useCoursesQuery(route.groupId, enabled);
+  const youtubeUrlCheck = useUrlCheck();
+  const copperknobUrlCheck = useUrlCheck();
+  const spotifyUrlCheck = useUrlCheck();
 
   const existingCourse =
     route.isEditMode && coursesQuery.data
@@ -93,6 +97,11 @@ export const useCourseFormViewModel = () => {
       isEditMode: route.isEditMode,
       group: groupQuery.data ?? null,
       existingCourse,
+      urlChecks: {
+        youtube: youtubeUrlCheck,
+        copperknob: copperknobUrlCheck,
+        spotify: spotifyUrlCheck,
+      },
       trainers: trainersQuery.data ?? [],
       values,
       isLoading,

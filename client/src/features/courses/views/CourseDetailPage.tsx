@@ -82,6 +82,7 @@ const CourseDetailPage: React.FC = () => {
           selectableChoreographies={state.selectableChoreographies}
           sessionChoreographies={state.sessionChoreographies}
           availableChoreographies={state.availableChoreographies}
+          cardViewModel={state.cardViewModel}
           getChoreographyOptionLabel={state.getChoreographyOptionLabel}
           onChoreographyInputChange={(e) => actions.changeChoreographyQuery(e.target.value)}
           onAddChoreography={preventDefaultThen(actions.addChoreography)}

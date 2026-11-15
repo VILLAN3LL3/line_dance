@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { getFieldIssues } from "../../../shared/http/apiErrors";
 import type { ChoreographyFormData } from "../../../types";
@@ -10,6 +10,7 @@ import {
   useTagsQuery,
 } from "../../metadata";
 import { validateChoreography } from "../api";
+import { useUrlCheck } from "../../url-check";
 import {
   addListItem,
   applyFieldChange,
@@ -34,6 +35,7 @@ import { isDatalistInputType } from "../model/search-filters";
 
 interface UseChoreographyFormViewModelOptions {
   initialData?: ChoreographyFormData;
+  initialDataKey?: number;
   onSubmit: (data: ChoreographyFormData) => Promise<void>;
 }
 
@@ -43,6 +45,7 @@ const FORM_CHANGED_MESSAGE = "The form changed during validation. Please save ag
 /** ViewModel for the choreography form: tabbed editing state, reference data and validate-then-save. */
 export const useChoreographyFormViewModel = ({
   initialData,
+  initialDataKey,
   onSubmit,
 }: UseChoreographyFormViewModelOptions) => {
   const [formData, setFormData] = useState<ChoreographyFormData>(() =>
@@ -60,12 +63,48 @@ export const useChoreographyFormViewModel = ({
   const [customCategoryRowIds, setCustomCategoryRowIds] = useState<Set<string>>(() => new Set());
   // Edits made while a validation request is in flight make its result stale.
   const editVersion = useRef(0);
+  const initialDataKeyRef = useRef({
+    key: initialDataKey,
+    isLoaded: initialData !== undefined,
+  });
 
   const levelsQuery = useLevelsQuery();
   const authorsQuery = useAuthorsQuery();
   const tagsQuery = useTagsQuery();
   const figuresQuery = useStepFiguresQuery();
   const categoriesQuery = useInfoCategoriesQuery();
+  const stepSheetUrlCheck = useUrlCheck();
+  const demoVideoUrlCheck = useUrlCheck();
+  const tutorialVideoUrlCheck = useUrlCheck();
+
+  const reset = useCallback(
+    (data?: ChoreographyFormData) => {
+      editVersion.current += 1;
+      setFormData(createInitialFormData(data));
+      setActiveTab("basic-information");
+      setFieldErrors({});
+      setValidationError(null);
+      setIsValidating(false);
+      setInputs({ authors: "", tags: "", step_figures: "" });
+      setCustomCategoryRowIds(new Set());
+      stepSheetUrlCheck.actions.reset();
+      demoVideoUrlCheck.actions.reset();
+      tutorialVideoUrlCheck.actions.reset();
+    },
+    [stepSheetUrlCheck.actions, demoVideoUrlCheck.actions, tutorialVideoUrlCheck.actions],
+  );
+
+  useEffect(() => {
+    const isLoaded = initialData !== undefined;
+    if (
+      initialDataKeyRef.current.key === initialDataKey &&
+      initialDataKeyRef.current.isLoaded === isLoaded
+    ) {
+      return;
+    }
+    initialDataKeyRef.current = { key: initialDataKey, isLoaded };
+    reset(initialData);
+  }, [initialData, initialDataKey, reset]);
 
   const options: Record<ListField, string[]> = {
     authors: authorsQuery.data ?? NO_OPTIONS,
@@ -190,6 +229,11 @@ export const useChoreographyFormViewModel = ({
       informationCategories,
       customCategoryRowIds,
       tabErrors: getTabErrors(fieldErrors),
+      urlChecks: {
+        stepSheet: stepSheetUrlCheck,
+        demoVideo: demoVideoUrlCheck,
+        tutorialVideo: tutorialVideoUrlCheck,
+      },
     },
     actions: {
       selectTab: setActiveTab,
@@ -203,7 +247,10 @@ export const useChoreographyFormViewModel = ({
       changeInformation,
       setCustomCategoryMode,
       removeInformation,
+      reset,
       submit,
     },
   };
 };
+
+export type ChoreographyFormViewModel = ReturnType<typeof useChoreographyFormViewModel>;

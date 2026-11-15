@@ -7,6 +7,8 @@ import { getChoreographyUpdateErrorMessage } from "../../../shared/http/apiError
 import type { ChoreographyFormData } from "../../../types";
 import { fetchChoreography, updateChoreography } from "../api";
 import { choreographyKeys } from "../queryKeys";
+import { useChoreographyCardViewModel } from "./useChoreographyCardViewModel";
+import { useChoreographyFormViewModel } from "./useChoreographyFormViewModel";
 import { useDeleteChoreographyMutation } from "./useChoreographyQueries";
 import { useSaveWithDuplicateCheck } from "./useSaveWithDuplicateCheck";
 
@@ -36,6 +38,7 @@ export const useChoreographyDetailViewModel = () => {
     enabled: hasValidId,
   });
   const deleteMutation = useDeleteChoreographyMutation();
+  const cardViewModel = useChoreographyCardViewModel();
 
   const saveFlow = useSaveWithDuplicateCheck({
     save: async (data: ChoreographyFormData) => {
@@ -45,6 +48,11 @@ export const useChoreographyDetailViewModel = () => {
     },
     failureMessage: getChoreographyUpdateErrorMessage,
     excludeId: choreographyId,
+  });
+  const form = useChoreographyFormViewModel({
+    initialData: choreographyQuery.data,
+    initialDataKey: hasValidId ? choreographyId : undefined,
+    onSubmit: saveFlow.actions.submit,
   });
 
   // Router state would re-open the editor on a browser reload, so consume it once.
@@ -68,6 +76,7 @@ export const useChoreographyDetailViewModel = () => {
   };
 
   const cancelEdit = () => {
+    form.actions.reset(choreographyQuery.data);
     saveFlow.actions.cancelDuplicate();
     setMode("view");
   };
@@ -84,6 +93,8 @@ export const useChoreographyDetailViewModel = () => {
       error: saveFlow.state.error ?? deleteError ?? loadError,
       duplicates: saveFlow.state.duplicates,
       showBackButton: !isEditQueryMode,
+      cardViewModel,
+      form,
     },
     actions: {
       startEdit: () => setMode("edit"),

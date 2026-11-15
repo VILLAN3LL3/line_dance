@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
-import { ChoreographyCard } from "../../choreographies";
+import { addWindowEventListener } from "../../../shared/browser/window";
+import { ChoreographyCard, type ChoreographyCardViewModel } from "../../choreographies";
 import { ActionButton, EmptyState, LevelBatch, Section } from "../../../shared/ui";
 
 import type { Choreography, Session, SessionChoreography } from "../../../types";
@@ -13,6 +14,7 @@ type CourseDetailChoreographiesSectionProps = {
   selectableChoreographies: Choreography[];
   sessionChoreographies: SessionChoreography[];
   availableChoreographies: Choreography[];
+  cardViewModel: ChoreographyCardViewModel;
   getChoreographyOptionLabel: (choreography: Choreography) => string;
   onChoreographyInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onAddChoreography: (event: React.SyntheticEvent<HTMLFormElement>) => void;
@@ -29,6 +31,7 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
   selectableChoreographies,
   sessionChoreographies,
   availableChoreographies,
+  cardViewModel,
   getChoreographyOptionLabel,
   onChoreographyInputChange,
   onAddChoreography,
@@ -60,10 +63,7 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
       }
     };
 
-    globalThis.window.addEventListener("keydown", handleEscape);
-    return () => {
-      globalThis.window.removeEventListener("keydown", handleEscape);
-    };
+    return addWindowEventListener("keydown", handleEscape);
   }, [overlayChoreographyId]);
 
   return (
@@ -175,6 +175,7 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
             </div>
             <ChoreographyCard
               choreography={visibleOverlayChoreography}
+              cardViewModel={cardViewModel}
               onEdit={onEditChoreography}
               onDelete={onDeleteChoreography}
             />

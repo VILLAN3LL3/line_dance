@@ -1,5 +1,7 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 
+import { addWindowEventListener } from "../../../../shared/browser/window";
+
 export const ChoreographerNames: React.FC<{ authors: string[] }> = ({ authors }) => {
   const textRef = useRef<HTMLDivElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -17,8 +19,7 @@ export const ChoreographerNames: React.FC<{ authors: string[] }> = ({ authors })
 
     measureOverflow();
     if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", measureOverflow);
-      return () => window.removeEventListener("resize", measureOverflow);
+      return addWindowEventListener("resize", measureOverflow);
     }
 
     const observer = new ResizeObserver(measureOverflow);

@@ -2,7 +2,7 @@ import "../../../styles/UrlInput.css";
 
 import React from "react";
 
-import { useUrlCheck } from "../viewmodels/useUrlCheck";
+import type { UrlCheckViewModel } from "../viewmodels/useUrlCheck";
 
 interface UrlInputProps {
   id: string;
@@ -12,6 +12,7 @@ interface UrlInputProps {
   placeholder?: string;
   disabled?: boolean;
   error?: string;
+  viewModel: UrlCheckViewModel;
 }
 
 export const UrlInput: React.FC<UrlInputProps> = ({
@@ -22,9 +23,8 @@ export const UrlInput: React.FC<UrlInputProps> = ({
   placeholder,
   disabled,
   error,
+  viewModel,
 }) => {
-  const { state, actions } = useUrlCheck();
-
   return (
     <div className="url-input-wrapper">
       <input
@@ -33,22 +33,22 @@ export const UrlInput: React.FC<UrlInputProps> = ({
         name={name}
         value={value}
         onChange={onChange}
-        onFocus={actions.reset}
-        onBlur={(e) => void actions.check(e.target.value)}
+        onFocus={viewModel.actions.reset}
+        onBlur={(e) => void viewModel.actions.check(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
       />
-      {state.status === "checking" && (
+      {viewModel.state.status === "checking" && (
         <span className="url-status-indicator checking" aria-label="Checking URL" />
       )}
-      {state.status === "ok" && (
+      {viewModel.state.status === "ok" && (
         <span className="url-status-indicator ok" aria-label="URL reachable">
           ✓
         </span>
       )}
-      {state.status === "error" && (
+      {viewModel.state.status === "error" && (
         <span className="url-status-indicator error" aria-label="URL not reachable">
           ✗
         </span>
