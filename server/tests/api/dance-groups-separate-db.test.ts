@@ -9,7 +9,7 @@ import { runDanceGroupsMigrations } from '../../migrations/dance-groups-migratio
 import { allQuery, closeDatabase, runQuery, setDatabaseConnection } from '../../scripts/db.ts';
 import app from '../setup/testApp.js';
 
-let directory;
+let directory: string;
 
 beforeAll(async () => {
   directory = mkdtempSync(join(tmpdir(), 'line-dance-group-flow-'));
@@ -67,7 +67,7 @@ it('creates and updates group figures across separate database files', async () 
 });
 
 it('applies each migration once when migration runners overlap', async () => {
-  const cases = [
+  const cases: ['choreography' | 'danceGroups', string, () => Promise<void>][] = [
     ['choreography', '014_drop_legacy_choreography_information_columns', runChoreographyMigrations],
     ['danceGroups', '014_backfill_planned_session_repetitions', runDanceGroupsMigrations],
   ];

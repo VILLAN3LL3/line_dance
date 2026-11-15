@@ -1,13 +1,19 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import sqlite3 from 'sqlite3';
+import type { Database } from 'sqlite3';
 
 import app from '../setup/testChoreographyApp.js';
 import { setDatabaseConnection, closeDatabase, allQuery, getQuery } from '../../scripts/db.ts';
+import type { WriteResult } from '../../scripts/db.ts';
 import { runChoreographyMigrations } from '../../migrations/choreography-migrations.ts';
 
-function run(db, sql, params = []) {
-  return new Promise((resolve, reject) => {
+async function run(
+  db: Database,
+  sql: string,
+  params: (string | number | null)[] = [],
+): Promise<WriteResult> {
+  return new Promise<WriteResult>((resolve, reject) => {
     db.run(sql, params, function onRun(err) {
       if (err) reject(err);
       else resolve({ id: this.lastID, changes: this.changes });
@@ -15,7 +21,7 @@ function run(db, sql, params = []) {
   });
 }
 
-async function createLegacyChoreographyDatabase() {
+async function createLegacyChoreographyDatabase(): Promise<Database> {
   const db = new sqlite3.Database(':memory:');
 
   await run(db, 'PRAGMA foreign_keys = ON');
@@ -96,7 +102,11 @@ afterEach(async () => {
 describe('Choreography tags migration regression', () => {
   it('rolls back information backfill and its migration marker on failure', async () => {
     const db = await createLegacyChoreographyDatabase();
-    const originalRows = await allQuery(
+    const originalRows = await allQuery<{
+      choreography_id: number;
+      category_id: number;
+      description: string;
+    }>(
       'SELECT choreography_id, category_id, description FROM choreography_information ORDER BY id',
     );
     await run(db, 'ALTER TABLE choreographies ADD COLUMN restart_information TEXT');
@@ -124,7 +134,11 @@ describe('Choreography tags migration regression', () => {
   it('backfills legacy information and removes the obsolete columns', async () => {
     await createLegacyChoreographyDatabase();
 
-    const infoRows = await allQuery(
+    const infoRows = await allQuery<{
+      choreography: string;
+      category: string;
+      description: string;
+    }>(
       `SELECT c.name AS choreography, category.name AS category, info.description
        FROM choreography_information info
        JOIN choreography_info_categories category ON category.id = info.category_id
@@ -160,11 +174,11 @@ describe('Choreography tags migration regression', () => {
       'Styling',
     ]);
 
-    const tagInformationColumn = await getQuery(
+    const tagInformationColumn = await getQuery<{ name: string }>(
       `SELECT name FROM pragma_table_info('choreographies') WHERE name = ?`,
       ['tag_information'],
     );
-    const restartInformationColumn = await getQuery(
+    const restartInformationColumn = await getQuery<{ name: string }>(
       `SELECT name FROM pragma_table_info('choreographies') WHERE name = ?`,
       ['restart_information'],
     );
@@ -183,7 +197,7 @@ describe('Choreography tags migration regression', () => {
     expect(choreosRes.status).toBe(200);
     expect(choreosRes.body.data).toHaveLength(2);
     const migratedChoreography = choreosRes.body.data.find(
-      (choreography) => choreography.name === 'Legacy Tagged Dance',
+      (choreography: { name: string }) => choreography.name === 'Legacy Tagged Dance',
     );
     expect(migratedChoreography.tags).toEqual(['legacy-tag']);
   });
@@ -193,11 +207,15 @@ describe('Choreography tags migration regression', () => {
 
     await runChoreographyMigrations();
 
-    const tagCount = await getQuery('SELECT COUNT(*) as count FROM personal_data.tags');
-    const mappingCount = await getQuery(
+    const tagCount = await getQuery<{ count: number }>(
+      'SELECT COUNT(*) as count FROM personal_data.tags',
+    );
+    const mappingCount = await getQuery<{ count: number }>(
       'SELECT COUNT(*) as count FROM personal_data.choreography_tags',
     );
-    const tagRows = await allQuery('SELECT name FROM personal_data.tags ORDER BY name');
+    const tagRows = await allQuery<{ name: string }>(
+      'SELECT name FROM personal_data.tags ORDER BY name',
+    );
 
     expect(tagCount?.count).toBe(1);
     expect(mappingCount?.count).toBe(1);
