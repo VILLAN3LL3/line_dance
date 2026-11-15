@@ -1,8 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
+  "extends": ["config:recommended"],
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
@@ -11,10 +9,20 @@
   },
   "packageRules": [
     {
+      "groupName": "Playwright npm and Docker",
+      "groupSlug": "playwright-npm-docker",
+      "matchPackageNames": ["@playwright/test", "mcr.microsoft.com/playwright"],
+      "minimumGroupSize": 2,
+      "separateMajorMinor": false
+    },
+    {
+      "matchPackageNames": ["@playwright/test"],
+      "matchManagers": ["npm"],
+      "rangeStrategy": "pin"
+    },
+    {
       "groupName": "emnapi",
-      "matchPackageNames": [
-        "@emnapi/{/,}**"
-      ]
+      "matchPackageNames": ["@emnapi/{/,}**"]
     },
     {
       "matchUpdateTypes": ["minor", "patch"],
