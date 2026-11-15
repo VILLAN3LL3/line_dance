@@ -968,12 +968,25 @@ describe('GET /api/choreographies/duplicates', () => {
     expect(res.body).toEqual([]);
   });
 
-  it('returns empty array when no matching choreography exists', async () => {
-    await createChoreo({ name: 'Unique Dance', level: 'Beginner', authors: ['Alice'] });
-
-    const res = await request(app).get(
-      '/api/choreographies/duplicates?name=Other+Dance&level=Beginner&authors[]=Alice',
-    );
+  it.each([
+    {
+      description: 'returns an empty array when the name does not match',
+      name: 'Unique Dance',
+      query: 'name=Other+Dance&level=Beginner&authors[]=Alice',
+    },
+    {
+      description: 'does not match a different level',
+      name: 'River Dance',
+      query: 'name=River+Dance&level=Intermediate&authors[]=Alice',
+    },
+    {
+      description: 'does not match when no authors overlap',
+      name: 'River Dance',
+      query: 'name=River+Dance&level=Beginner&authors[]=Bob',
+    },
+  ])('$description', async ({ name, query }) => {
+    await createChoreo({ name, level: 'Beginner', authors: ['Alice'] });
+    const res = await request(app).get(`/api/choreographies/duplicates?${query}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
   });
@@ -1004,26 +1017,6 @@ describe('GET /api/choreographies/duplicates', () => {
     );
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(1);
-  });
-
-  it('does not match a different level', async () => {
-    await createChoreo({ name: 'River Dance', level: 'Beginner', authors: ['Alice'] });
-
-    const res = await request(app).get(
-      '/api/choreographies/duplicates?name=River+Dance&level=Intermediate&authors[]=Alice',
-    );
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual([]);
-  });
-
-  it('does not match when no authors overlap', async () => {
-    await createChoreo({ name: 'River Dance', level: 'Beginner', authors: ['Alice'] });
-
-    const res = await request(app).get(
-      '/api/choreographies/duplicates?name=River+Dance&level=Beginner&authors[]=Bob',
-    );
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual([]);
   });
 
   it('excludes the choreography with the given exclude_id', async () => {
