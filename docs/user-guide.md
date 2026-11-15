@@ -1,0 +1,54 @@
+# User Guide
+
+This guide describes the app's catalog, group administration, and course-planning features.
+
+## Choreography Search & Catalog
+
+- Search and filter by name, level, step figures, tags (include/exclude), authors, and max count.
+- Step figure matching modes: `all`, `any`, `exact` — all three are hierarchy-aware.
+- Use `up to max level` instead of selecting individual levels.
+- The toolbar shows the result count after every search.
+- Save, rename, load, update, and delete filter presets.
+- Switch between card and table views; filters and view mode persist in local storage.
+- Choreographer names in cards are limited to two lines, with a fade-out on overflow; click to expand or collapse the full list.
+- Create, edit, and delete choreographies with ratings (0–5).
+- On save, invalid choreography fields show inline validation messages and their tabs are marked; edited fields are checked again on the next save.
+- Add multiple choreography information entries, each with a category and description. Restart, Tag, Ending, Intro, Sequence, and Styling are seeded categories; custom categories can also be entered.
+
+## Choreographers
+
+- A statistics page lists every choreographer with their total choreography count, broken down by level.
+- Filter by name and/or level; sort by name or total count.
+- Click a choreographer name or a level count to open a pre-filtered choreography search in a new tab.
+
+## Dance Group Administration
+
+- Create, rename, and delete dance groups.
+- Manage dance courses per group with semester, start date, trainer, and playlist links (YouTube, Copperknob, Spotify).
+- A group can have multiple courses per semester. Course IDs are optional and globally unique when provided; courses without IDs must have distinct names within the same group and semester.
+- Duplicate course IDs or names are identified next to the corresponding form field.
+- Course periods run from the first to the last session and may not overlap another course of the same group, even across semesters. The boundary dates are inclusive. Courses without sessions have no known period; conflicts are checked when sessions are added or their dates changed. The separate course start date does not define the period.
+- Course lifecycle statuses: `running`, `planned`, `passed` — the default view shows only running courses.
+- Configure a max group level per group to cap step figure suggestions.
+- **Base step figures**: configure which step figures a group already knows before starting (defaults: Hip Bump, Hip Sway, Kick, Run).
+- **Learned step figures**: computed from all sessions danced to date, merged with base step figures.
+- **Step figure suggestions**: ranked list of figures that would unlock the most new choreographies, accounting for both learned and base step figures — available at group level and per session.
+- Swap choreographies between sessions within a course.
+- Export a course PDF (German): session dates, trainer contact with vCard QR code, playlist QR codes.
+
+## Step Figure Hierarchy
+
+- Build composite step figures from ordered component figures.
+- Step figure references are protected from deletion when used in choreographies or other composites.
+
+## Sessions & Course Planning
+
+- Create and delete sessions; attach and remove choreographies.
+- Session dates must be valid calendar dates in `YYYY-MM-DD` format.
+- Deleting a course also deletes its sessions and their choreography assignments.
+- Adding a dance marks it as "New" and automatically schedules repetitions in the next two existing sessions of the same course. Existing assignments are preserved without duplicates. Repetitions display their chronological number within the course ("Repeat 1", "Repeat 2", etc.).
+- Removing the original assignment also removes its linked automatic repetitions; removing one repetition leaves the original and other assignments intact. Independently planned assignments are never deleted through this link.
+- Reorder session contents using drag handles (mouse, touch, or keyboard: Space, arrow keys, Space; Escape cancels). Descriptions and independently planned dances move together, while dates and session IDs stay fixed. Both drag-and-drop and the two-session swap atomically rebuild automatic repetitions at the next two course dates after each original assignment. This can update repetitions outside the visible selection.
+- The learned choreographies table defaults to showing only choreographies danced at least once, with a toggle to show all.
+
+For setup and other documentation, return to the [project overview](../README.md).
