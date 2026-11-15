@@ -55,7 +55,7 @@ describe('choreography operations', () => {
       prepareChoreography(prepareWriteRequest({ name: 'Dance', count: 0 }).input),
     ).toMatchObject({
       name: 'Dance',
-      count: null,
+      count: 0,
       information: undefined,
       authors: undefined,
     });

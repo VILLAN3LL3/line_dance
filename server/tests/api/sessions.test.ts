@@ -42,6 +42,34 @@ async function createGroupAndCourse(groupName = 'Session Test Group'): Promise<{
 // Sessions CRUD
 // ---------------------------------------------------------------------------
 
+describe('shared course and session response contracts', () => {
+  it('omits absent optional course links and preserves a null session semester', async () => {
+    const group = await request(app).post('/api/dance-groups').send({ name: 'Group' });
+    const course = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.body.id,
+      name: 'Course without semester',
+    });
+    expect(course.status).toBe(201);
+    for (const field of [
+      'start_date',
+      'youtube_playlist_url',
+      'copperknob_list_url',
+      'spotify_playlist_url',
+    ]) {
+      expect(course.body).not.toHaveProperty(field);
+    }
+    const session = await request(app).post('/api/sessions').send({
+      dance_course_id: course.body.id,
+      session_date: '2025-01-01',
+    });
+    expect(session.status).toBe(201);
+    expect(session.body.semester).toBeNull();
+    expect(session.body.dance_group_name).toBe('Group');
+    const list = await request(app).get(`/api/sessions?dance_course_id=${course.body.id}`);
+    expect(list.body).toContainEqual(session.body);
+  });
+});
+
 describe('automatic session repetitions', () => {
   async function createSlots(): Promise<Session[]> {
     const { course } = await createGroupAndCourse();

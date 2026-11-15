@@ -308,6 +308,36 @@ describe("ChoreographyCreatePage", () => {
     expect(screen.getByLabelText("Level *")).toHaveAttribute("aria-invalid", "true");
   });
 
+  it("sends decimal input unchanged and displays backend integer issues on each field", async () => {
+    vi.mocked(validateChoreography).mockRejectedValueOnce(
+      validationFailure([
+        { field: "count", key: "invalid_integer" },
+        { field: "wall_count", key: "invalid_integer" },
+        { field: "creation_year", key: "invalid_integer" },
+      ]),
+    );
+    render(
+      <MemoryRouter initialEntries={["/choreographies/new"]}>
+        <Routes>
+          <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByRole("option", { name: "Beginner" });
+    const count = screen.getByLabelText("Count");
+    fireEvent.change(count, { target: { value: "1.5" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+    await screen.findByRole("tab", { name: "Basic Information, validation errors" });
+    expect(validateChoreography).toHaveBeenCalledWith(expect.objectContaining({ count: 1.5 }));
+    for (const label of ["Count", "Wall Count", "Year Created"]) {
+      expect(screen.getByLabelText(label)).toHaveAttribute("aria-invalid", "true");
+      expect(screen.getByLabelText(label)).toHaveAccessibleDescription("Enter a whole number.");
+    }
+    fireEvent.change(count, { target: { value: "0" } });
+    expect(count).toHaveValue(0);
+    expect(count).not.toHaveAttribute("aria-invalid");
+  });
+
   it("marks invalid links and incomplete information rows across tabs and clears errors on correction", async () => {
     vi.mocked(checkChoreographyDuplicates).mockResolvedValue([]);
     vi.mocked(validateChoreography).mockRejectedValueOnce(

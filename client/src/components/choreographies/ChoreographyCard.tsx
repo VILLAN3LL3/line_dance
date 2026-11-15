@@ -43,15 +43,15 @@ interface ChoreographyCardActionsProps {
 }
 
 function getCountWallSummary(choreography: Choreography): { label: string; value: string } | null {
-  if (choreography.count && choreography.wall_count) {
+  if (choreography.count != null && choreography.wall_count != null) {
     return { label: "Count/Wall", value: `${choreography.count} / ${choreography.wall_count}` };
   }
 
-  if (choreography.count) {
+  if (choreography.count != null) {
     return { label: "Count", value: String(choreography.count) };
   }
 
-  if (choreography.wall_count) {
+  if (choreography.wall_count != null) {
     return { label: "Wall", value: String(choreography.wall_count) };
   }
 
@@ -440,7 +440,7 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
     <>
       <h3>
         {choreography.name}
-        {choreography.creation_year ? ` (${choreography.creation_year})` : ""}
+        {choreography.creation_year != null ? ` (${choreography.creation_year})` : ""}
       </h3>
       <div className="card-header-meta">
         <LevelBatch

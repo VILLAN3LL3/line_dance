@@ -76,7 +76,7 @@ describe('choreography integration flows', () => {
         created,
         preparePartialWriteRequest({ name: 'Renamed', tags: ['New'] }),
       ),
-    ).toEqual({ value: true });
+    ).toEqual({ value: created });
     expect(
       await reads.getChoreography(prepareChoreographyReadId({ id: String(created) }).value),
     ).toMatchObject({ value: { name: 'Renamed', authors: ['Jane'], tags: ['New'] } });

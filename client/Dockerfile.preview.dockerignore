@@ -1,0 +1,16 @@
+*
+!client/
+client/*
+!client/package.json
+!client/package-lock.json
+!client/index.html
+!client/vite.config.ts
+!client/tsconfig*.json
+!client/src/
+!client/src/**
+!client/public/
+!client/public/**
+!server/
+server/*
+!server/contracts/
+!server/contracts/**

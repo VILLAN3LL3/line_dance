@@ -13,6 +13,7 @@
   },
   "include": [
     "app.ts",
+    "contracts/**/*.ts",
     "eslint.config.ts",
     "features/**/*.ts",
     "migrations/**/*.ts",

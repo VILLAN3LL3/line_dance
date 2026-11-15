@@ -126,6 +126,42 @@ describe('POST /api/choreographies', () => {
   });
 
   describe('choreography field validation', () => {
+    it('rejects non-integer values for numeric fields on validation, creation and partial update', async () => {
+      const body = { count: 1.5, wall_count: 'many', creation_year: 2020.5 };
+      const issues = [
+        { field: 'count', key: 'invalid_integer' },
+        { field: 'wall_count', key: 'invalid_integer' },
+        { field: 'creation_year', key: 'invalid_integer' },
+      ];
+      const full = { name: 'Dance', level: 'Beginner', ...body };
+      const created = await createChoreo();
+      for (const response of [
+        await request(app).post('/api/choreographies/validate').send(full),
+        await request(app).post('/api/choreographies').send(full),
+        await request(app).put(`/api/choreographies/${created.id}`).send(body),
+      ]) {
+        expect(response.status).toBe(400);
+        expect(response.body.issues).toEqual(issues);
+      }
+      const saved = await request(app).get(`/api/choreographies/${created.id}`);
+      expect(saved.body.count).toBe(32);
+    });
+
+    it('accepts zero and clears optional numeric values', async () => {
+      const response = await request(app).post('/api/choreographies').send({
+        name: 'Zero',
+        level: 'Beginner',
+        count: 0,
+        wall_count: null,
+        creation_year: '',
+      });
+      expect(response.status).toBe(201);
+      const saved = await request(app).get(`/api/choreographies/${response.body.id}`);
+      expect(saved.body.count).toBe(0);
+      expect(saved.body).not.toHaveProperty('wall_count');
+      expect(saved.body).not.toHaveProperty('creation_year');
+    });
+
     it('returns all field issues without creating a choreography', async () => {
       const body = {
         name: '  ',
@@ -331,19 +367,26 @@ describe('GET /api/choreographies/:id', () => {
     expect(res.body).toEqual({ error: 'Choreography not found' });
   });
 
-  it('preserves non-numeric values stored in numeric-affinity columns', async () => {
-    const created = await createChoreo({
-      count: 'variable',
-      wall_count: 'many',
-      creation_year: 'unknown',
-    });
+  it('reports invalid legacy values without silently dropping or changing them', async () => {
+    const created = await createChoreo();
+    await runQuery("UPDATE choreographies SET count = 'variable' WHERE id = ?", [created.id]);
     const res = await request(app).get(`/api/choreographies/${created.id}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({
-      count: 'variable',
-      wall_count: 'many',
-      creation_year: 'unknown',
-    });
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'Failed to fetch choreography' });
+    expect(await allQuery('SELECT count FROM choreographies WHERE id = ?', [created.id])).toEqual([
+      { count: 'variable' },
+    ]);
+    expect(
+      (
+        await request(app).put(`/api/choreographies/${created.id}`).send({
+          name: 'Test Dance',
+          level: 'Beginner',
+          count: 64,
+          wall_count: 4,
+        })
+      ).status,
+    ).toBe(200);
+    expect((await request(app).get(`/api/choreographies/${created.id}`)).body.count).toBe(64);
   });
 });
 
@@ -418,7 +461,7 @@ describe('PUT /api/choreographies/:id', () => {
       .send({ name: 'New Name', level: 'Intermediate', count: 64 });
 
     expect(res.status).toBe(200);
-    expect(res.body.id).toBe(String(created.id));
+    expect(res.body.id).toBe(created.id);
     expect(res.body.message).toMatch(/updated/i);
 
     const updated = await request(app).get(`/api/choreographies/${created.id}`);

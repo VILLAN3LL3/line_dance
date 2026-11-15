@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { Choreography, DuplicateChoreography, PaginatedResponse } from '../contracts/api.ts';
 import * as reads from '../features/choreographies/read-flow.ts';
 import {
   prepareChoreographyReadId,
@@ -18,7 +19,7 @@ import type { PreparedInput } from './prepare-input.ts';
 
 type ErrorResponse = { error: string };
 type Locals<T> = { input: PreparedInput<T> };
-type ChoreographyPage = Awaited<ReturnType<typeof reads.listChoreographies>>;
+type ChoreographyPage = PaginatedResponse<Choreography>;
 
 export const prepareList = prepareInput((req) => req.query, preparePagination);
 export const prepareDuplicates = prepareInput((req) => req.query, prepareDuplicateQuery);
@@ -41,8 +42,8 @@ export async function getChoreographies(
 
 export async function checkDuplicateChoreographies(
   _req: Request,
-  res: Response<reads.DuplicateChoreography[] | ErrorResponse, Locals<DuplicateInput>>,
-): Promise<Response<reads.DuplicateChoreography[] | ErrorResponse>> {
+  res: Response<DuplicateChoreography[] | ErrorResponse, Locals<DuplicateInput>>,
+): Promise<Response<DuplicateChoreography[] | ErrorResponse>> {
   try {
     const input = res.locals.input;
     if ('exception' in input) throw input.exception;
@@ -55,8 +56,8 @@ export async function checkDuplicateChoreographies(
 
 export async function getChoreographyById(
   _req: Request,
-  res: Response<reads.Choreography | ErrorResponse, Locals<{ value: ChoreographyReadId }>>,
-): Promise<Response<reads.Choreography | ErrorResponse> | void> {
+  res: Response<Choreography | ErrorResponse, Locals<{ value: ChoreographyReadId }>>,
+): Promise<Response<Choreography | ErrorResponse> | void> {
   try {
     const input = res.locals.input;
     if ('exception' in input) throw input.exception;

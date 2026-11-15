@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
+import type { Session, SessionChoreography } from '../contracts/api.ts';
 import * as sessions from '../features/sessions/flow.ts';
 import {
   prepareAssignmentSession,
@@ -21,11 +23,30 @@ import { prepareInput } from './prepare-input.ts';
 import type { PreparedInput } from './prepare-input.ts';
 import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.ts';
 
-type Session = Awaited<ReturnType<typeof sessions.getSessions>>[number];
 type ErrorResponse = { error: string };
-type SessionResponse = Session | undefined | ErrorResponse;
+type SessionResponse = Session | ErrorResponse;
 type Locals<T> = { input: PreparedInput<T> };
 type Message = { message: string };
+
+const sessionResponse = z.looseObject({
+  id: z.number(),
+  dance_course_id: z.number(),
+  session_date: z.string(),
+  dance_group_name: z.string(),
+  semester: z.string().nullable(),
+  comment: z.string().nullable(),
+  created_at: z.string(),
+});
+const assignmentResponse = z.looseObject({
+  id: z.number(),
+  session_id: z.number(),
+  choreography_id: z.number(),
+  created_at: z.string(),
+  is_new: z.boolean(),
+  repetition_number: z.number(),
+  repeat_source_id: z.number().nullable(),
+  auto_repeat: z.boolean(),
+});
 
 const sessionErrors: Record<sessions.SessionError, [number, string]> = {
   course_and_date_required: [400, 'Dance course ID and session date are required'],
@@ -65,7 +86,7 @@ export async function getSessions(
   try {
     const input = res.locals.input;
     if ('exception' in input) throw input.exception;
-    res.json(await sessions.getSessions(input.value));
+    res.json((await sessions.getSessions(input.value)).map((row) => sessionResponse.parse(row)));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch sessions' });
@@ -81,7 +102,7 @@ export async function createSession(
     if ('exception' in input) throw input.exception;
     const result = await sessions.createSession(input);
     if ('error' in result) return sendSessionError(res, result.error);
-    res.status(201).json(result.value);
+    res.status(201).json(sessionResponse.parse(result.value));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to create session' });
@@ -97,7 +118,7 @@ export async function updateSession(
     if ('exception' in input) throw input.exception;
     const result = await sessions.updateSession(req.params.id, input);
     if ('error' in result) return sendSessionError(res, result.error);
-    res.json(result.value);
+    res.json(sessionResponse.parse(result.value));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to update session' });
@@ -120,14 +141,14 @@ export async function deleteSession(
 
 export async function getSessionChoreographies(
   _req: Request,
-  res: Response<sessions.Assignment[] | ErrorResponse, Locals<SessionIdResult>>,
-): Promise<Response<sessions.Assignment[] | ErrorResponse> | void> {
+  res: Response<SessionChoreography[] | ErrorResponse, Locals<SessionIdResult>>,
+): Promise<Response<SessionChoreography[] | ErrorResponse> | void> {
   try {
     const input = res.locals.input;
     if ('exception' in input) throw input.exception;
     const result = await sessions.getAssignments(input);
     if ('error' in result) return sendSessionError(res, result.error);
-    res.json(result.value);
+    res.json(result.value.map((row) => assignmentResponse.parse(row)));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch session choreographies' });
@@ -136,14 +157,14 @@ export async function getSessionChoreographies(
 
 export async function addChoreographyToSession(
   _req: Request,
-  res: Response<sessions.Assignment | ErrorResponse, Locals<AssignmentResult>>,
-): Promise<Response<sessions.Assignment | ErrorResponse> | void> {
+  res: Response<SessionChoreography | ErrorResponse, Locals<AssignmentResult>>,
+): Promise<Response<SessionChoreography | ErrorResponse> | void> {
   try {
     const input = res.locals.input;
     if ('exception' in input) throw input.exception;
     const result = await sessions.addAssignment(input);
     if ('error' in result) return sendSessionError(res, result.error);
-    res.status(201).json(result.value);
+    res.status(201).json(assignmentResponse.parse(result.value));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to add choreography to session' });

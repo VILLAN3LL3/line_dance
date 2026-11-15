@@ -15,7 +15,13 @@ type ChoreographyChangeHandler = (
 interface BasicInformationTabProps {
   formData: ChoreographyFormData;
   levels: { id: number; name: string }[];
-  errors: { name?: string; level?: string };
+  errors: {
+    name?: string;
+    level?: string;
+    count?: string;
+    wall_count?: string;
+    creation_year?: string;
+  };
   onChange: ChoreographyChangeHandler;
 }
 

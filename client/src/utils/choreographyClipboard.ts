@@ -24,19 +24,19 @@ export function formatAuthorForClipboard(
 }
 
 function buildTitle(choreography: Choreography): string {
-  return choreography.creation_year
+  return choreography.creation_year != null
     ? `${choreography.name} (${choreography.creation_year})`
     : choreography.name;
 }
 
 function buildCountWall(choreography: Choreography): string | null {
-  if (choreography.count && choreography.wall_count) {
+  if (choreography.count != null && choreography.wall_count != null) {
     return `${choreography.count} / ${choreography.wall_count}`;
   }
-  if (choreography.count) {
+  if (choreography.count != null) {
     return `${choreography.count}`;
   }
-  if (choreography.wall_count) {
+  if (choreography.wall_count != null) {
     return `- / ${choreography.wall_count}`;
   }
   return null;

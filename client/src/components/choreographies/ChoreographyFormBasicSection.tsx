@@ -16,7 +16,13 @@ interface ChoreographyFormBasicSectionProps {
   song?: string;
   artist?: string;
   levels: LevelOption[];
-  errors: { name?: string; level?: string };
+  errors: {
+    name?: string;
+    level?: string;
+    count?: string;
+    wall_count?: string;
+    creation_year?: string;
+  };
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => void;
@@ -74,35 +80,51 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
     </FormField>
 
     <div className="form-row">
-      <FormField label="Count" htmlFor="count" className="form-group">
+      <FormField label="Count" htmlFor="count" className="form-group" error={errors.count}>
         <input
           type="number"
           id="count"
           name="count"
-          value={count || ""}
+          value={count ?? ""}
           onChange={onChange}
+          aria-invalid={errors.count ? true : undefined}
+          aria-describedby={errors.count ? "count-error" : undefined}
           placeholder="e.g., 64"
         />
       </FormField>
 
-      <FormField label="Wall Count" htmlFor="wall_count" className="form-group">
+      <FormField
+        label="Wall Count"
+        htmlFor="wall_count"
+        className="form-group"
+        error={errors.wall_count}
+      >
         <input
           type="number"
           id="wall_count"
           name="wall_count"
-          value={wall_count || ""}
+          value={wall_count ?? ""}
           onChange={onChange}
+          aria-invalid={errors.wall_count ? true : undefined}
+          aria-describedby={errors.wall_count ? "wall_count-error" : undefined}
           placeholder="e.g., 4"
         />
       </FormField>
 
-      <FormField label="Year Created" htmlFor="creation_year" className="form-group">
+      <FormField
+        label="Year Created"
+        htmlFor="creation_year"
+        className="form-group"
+        error={errors.creation_year}
+      >
         <input
           type="number"
           id="creation_year"
           name="creation_year"
-          value={creation_year || ""}
+          value={creation_year ?? ""}
           onChange={onChange}
+          aria-invalid={errors.creation_year ? true : undefined}
+          aria-describedby={errors.creation_year ? "creation_year-error" : undefined}
           placeholder="e.g., 2023"
         />
       </FormField>

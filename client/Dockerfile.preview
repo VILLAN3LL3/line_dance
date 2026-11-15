@@ -1,12 +1,13 @@
 FROM node:26
 
-WORKDIR /app
+WORKDIR /app/client
 
-COPY package*.json ./
+COPY client/package*.json ./
 
 RUN npm ci
 
-COPY . .
+COPY client/ ./
+COPY server/contracts/ /app/server/contracts/
 
 # VITE_* variables are inlined at build time, so the API URL must be set here.
 # The browser runs in the e2e container and reaches the API via the compose network.

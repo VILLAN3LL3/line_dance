@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
+import type { Trainer } from '../contracts/api.ts';
 import * as trainers from '../features/trainers/flow.ts';
 import { validateTrainer } from '../features/trainers/validation.ts';
 import type { TrainerValidationResult } from '../features/trainers/validation.ts';
@@ -9,9 +11,15 @@ import { captureDanceGroupError as captureError } from '../utils/danceGroupRoute
 type TrainerError =
   'name_required' | 'phone_required' | 'email_required' | 'duplicate_email' | 'not_found';
 type ErrorResponse = { error: string };
-type Trainer = Awaited<ReturnType<typeof trainers.getTrainers>>[number];
-type TrainerResponse = Trainer | undefined | ErrorResponse;
+type TrainerResponse = Trainer | ErrorResponse;
 type DeleteResponse = { message: 'Trainer deleted successfully' } | ErrorResponse;
+const trainerResponse = z.looseObject({
+  id: z.number(),
+  name: z.string(),
+  phone: z.string(),
+  email: z.string(),
+  created_at: z.string(),
+});
 
 const trainerErrors: Record<TrainerError, [number, string]> = {
   name_required: [400, 'Name is required'],
@@ -37,7 +45,7 @@ export async function getTrainers(
   res: Response<Trainer[] | ErrorResponse>,
 ): Promise<void> {
   try {
-    res.json(await trainers.getTrainers());
+    res.json((await trainers.getTrainers()).map((trainer) => trainerResponse.parse(trainer)));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch trainers' });
@@ -54,7 +62,7 @@ export async function createTrainer(
     if ('error' in input) return sendTrainerError(res, input.error);
     const result = await trainers.createTrainer(input.value);
     if ('error' in result) return sendTrainerError(res, result.error);
-    res.status(201).json(result.value);
+    res.status(201).json(trainerResponse.parse(result.value));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to create trainer' });
@@ -71,7 +79,7 @@ export async function updateTrainer(
     if ('error' in input) return sendTrainerError(res, input.error);
     const result = await trainers.updateTrainer(req.params.id, input.value);
     if ('error' in result) return sendTrainerError(res, result.error);
-    res.json(result.value);
+    res.json(trainerResponse.parse(result.value));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to update trainer' });

@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { StepFigureDefinition, StepFigureOption } from '../contracts/api.ts';
 import * as figures from '../features/step-figures/flow.ts';
 import type { FigureRequest } from '../features/step-figures/flow.ts';
 import { validateFigure } from '../features/step-figures/operations.ts';
@@ -16,9 +17,9 @@ type FigureError =
   | 'used_by_choreography'
   | 'used_as_component';
 type ErrorResponse = { error: string };
-type Figure = Awaited<ReturnType<typeof figures.getFigures>>[number];
-type HierarchyFigure = Awaited<ReturnType<typeof figures.getHierarchy>>[number];
-type FigureResponse = HierarchyFigure | null | ErrorResponse;
+type Figure = StepFigureOption;
+type HierarchyFigure = StepFigureDefinition;
+type FigureResponse = HierarchyFigure | ErrorResponse;
 type DeleteResponse = { message: 'Step figure deleted successfully' } | ErrorResponse;
 
 const figureErrors: Record<FigureError, [number, string]> = {
@@ -90,6 +91,7 @@ export async function createStepFigure(
   try {
     const result = await figures.createFigure(res.locals.input);
     if ('error' in result) return sendFigureError(res, result.error);
+    if (!result.value) throw new Error('Created step figure not found');
     res.status(201).json(result.value);
   } catch (error) {
     captureError(error);
@@ -104,6 +106,7 @@ export async function updateStepFigure(
   try {
     const result = await figures.updateFigure(req.params.id, res.locals.input);
     if ('error' in result) return sendFigureError(res, result.error);
+    if (!result.value) throw new Error('Updated step figure not found');
     res.json(result.value);
   } catch (error) {
     captureError(error);

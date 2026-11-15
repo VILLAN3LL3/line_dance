@@ -123,8 +123,9 @@ export async function createChoreography(
 export async function updateChoreography(
   id: ChoreographyId,
   request: PreparedWriteRequest,
-): Promise<WriteResult<true>> {
-  if (!(await repository.findChoreography(id))) return { error: 'not_found' };
+): Promise<WriteResult<number>> {
+  const choreography = await repository.findChoreography(id);
+  if (!choreography) return { error: 'not_found' };
   if ('exception' in request) throw request.exception;
   const issues = await validateChoreography(request);
   if (issues.length) return { error: 'validation', issues };
@@ -145,7 +146,7 @@ export async function updateChoreography(
     await replaceRelationships(id, 'tags', prepared.tags);
     if (information !== undefined) await replaceInformation(id, information);
     await cleanupOrphanedRecords();
-    return { value: true };
+    return { value: choreography.id };
   });
 }
 

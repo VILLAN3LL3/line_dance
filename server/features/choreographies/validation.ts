@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { ChoreographyIssue } from '../../contracts/api.ts';
 import { jsonInput } from '../../utils/json-input.ts';
 
 const value = jsonInput.optional();
@@ -23,10 +24,7 @@ const writeInput = z
 export const informationEntry = z.object({ category: z.string(), description: z.string() });
 
 export type ChoreographyWriteInput = z.output<typeof writeInput>;
-export type ChoreographyIssue = {
-  field: string;
-  key: 'invalid_url' | 'invalid_information' | 'required' | 'invalid_level';
-};
+export type { ChoreographyIssue } from '../../contracts/api.ts';
 export type WriteRequest<T extends boolean = boolean> = {
   input: ChoreographyWriteInput;
   issues: ChoreographyIssue[];
@@ -86,6 +84,12 @@ export function getChoreographyFieldIssues(
     if (partial && data[field] === undefined) continue;
     if (typeof data[field] !== 'string' || !data[field].trim()) {
       issues.push({ field, key: 'required' });
+    }
+  }
+  for (const field of ['count', 'wall_count', 'creation_year'] as const) {
+    const value = data[field];
+    if (value !== undefined && value !== null && value !== '' && !Number.isSafeInteger(value)) {
+      issues.push({ field, key: 'invalid_integer' });
     }
   }
   return issues;

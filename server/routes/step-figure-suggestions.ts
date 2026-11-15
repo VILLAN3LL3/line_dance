@@ -1,4 +1,10 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
+import type {
+  LearnedChoreography,
+  SessionStepFigureSuggestionsResult,
+  StepFigureSuggestion,
+} from '../contracts/api.ts';
 import * as suggestions from '../features/suggestions/flow.ts';
 import {
   prepareGroupSuggestion,
@@ -16,11 +22,17 @@ type SuggestionError =
   | 'session_not_found'
   | 'course_not_found';
 type ErrorResponse = { error: string };
-type Learned = Awaited<ReturnType<typeof suggestions.getLearnedChoreographies>>;
-type GroupResult = Awaited<ReturnType<typeof suggestions.getGroupSuggestions>>;
-type SessionResult = Awaited<ReturnType<typeof suggestions.getSessionSuggestions>>;
-type GroupResponse = Extract<GroupResult, { value: object }>['value'] | ErrorResponse;
-type SessionResponse = Extract<SessionResult, { value: object }>['value'] | ErrorResponse;
+type Learned = LearnedChoreography[];
+type GroupResponse = StepFigureSuggestion[] | ErrorResponse;
+type SessionResponse = SessionStepFigureSuggestionsResult | ErrorResponse;
+const learnedResponse = z.looseObject({
+  dance_group_id: z.number(),
+  dance_group_name: z.string(),
+  choreography_id: z.number(),
+  times_danced: z.number(),
+  first_learned_date: z.string(),
+  last_danced_date: z.string(),
+});
 
 const suggestionErrors: Record<SuggestionError, [number, string]> = {
   invalid_group_id: [400, 'Invalid group ID'],
@@ -59,7 +71,11 @@ export async function getLearnedChoreographies(
   try {
     const input = res.locals.input;
     if ('exception' in input) throw input.exception;
-    res.json(await suggestions.getLearnedChoreographies(input.value));
+    res.json(
+      (await suggestions.getLearnedChoreographies(input.value)).map((row) =>
+        learnedResponse.parse(row),
+      ),
+    );
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch learned choreographies' });

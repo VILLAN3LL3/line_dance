@@ -3,6 +3,7 @@ import axios from "axios";
 import {
   Choreography,
   ChoreographyFormData,
+  ChoreographyWriteResponse,
   DanceCourse,
   DanceGroup,
   DuplicateChoreography,
@@ -92,8 +93,8 @@ export async function searchChoreographies(
 
 export async function createChoreography(
   data: ChoreographyFormData,
-): Promise<{ id: number; message: string }> {
-  const response = await api.post("/choreographies", data);
+): Promise<ChoreographyWriteResponse> {
+  const response = await api.post<ChoreographyWriteResponse>("/choreographies", data);
   return response.data;
 }
 
@@ -104,8 +105,8 @@ export async function validateChoreography(data: ChoreographyFormData): Promise<
 export async function updateChoreography(
   id: number,
   data: Partial<ChoreographyFormData>,
-): Promise<{ id: number; message: string }> {
-  const response = await api.put(`/choreographies/${id}`, data);
+): Promise<ChoreographyWriteResponse> {
+  const response = await api.put<ChoreographyWriteResponse>(`/choreographies/${id}`, data);
   return response.data;
 }
 

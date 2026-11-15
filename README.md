@@ -127,6 +127,14 @@ checks them in strict mode.
 `npm run build` emits production JavaScript to `server/dist/` and rewrites relative TypeScript
 imports. Production start and migration commands use this build; the development watcher runs
 TypeScript directly. Database paths and PDF assets remain relative to `server/`, not `server/dist/`.
+Shared client/server API types live in `server/contracts/api.ts` and are re-exported by the
+client. Client preview Docker builds use the repository root as their build context.
+Choreography `count`, `wall_count`, and `creation_year` accept only safe integers or empty
+values. Invalid values already stored in the database cause affected read requests to fail rather
+than being silently discarded; correct those records before relying on catalog reads.
+Optional absent choreography fields and course links are omitted from API responses; a session
+without a semester has `semester: null`. Choreography create and update responses contain a
+numeric `id`.
 Endpoints validate untrusted input with Zod and pure operations invoked by shared HTTP
 middleware, configured per endpoint with its input source and validator. Flows receive typed
 validation results, with branded types where appropriate. Existing error responses and their precedence are preserved;

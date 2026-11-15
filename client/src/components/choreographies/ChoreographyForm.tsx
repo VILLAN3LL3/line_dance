@@ -38,6 +38,9 @@ const FIELD_ISSUE_MESSAGES: Record<string, string> = {
   "name.required": "Enter a choreography name.",
   "level.required": "Select a level.",
   "level.invalid_level": "Select a valid level.",
+  "count.invalid_integer": "Enter a whole number.",
+  "wall_count.invalid_integer": "Enter a whole number.",
+  "creation_year.invalid_integer": "Enter a whole number.",
   "step_sheet_link.invalid_url": "Enter a valid URL.",
   "demo_video_url.invalid_url": "Enter a valid URL.",
   "tutorial_video_url.invalid_url": "Enter a valid URL.",
@@ -134,7 +137,13 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
   const [customCategoryRowIds, setCustomCategoryRowIds] = useState<Set<string>>(() => new Set());
 
   const tabValidationErrors: Record<FormTabId, boolean> = {
-    "basic-information": Boolean(fieldErrors.name || fieldErrors.level),
+    "basic-information": Boolean(
+      fieldErrors.name ||
+      fieldErrors.level ||
+      fieldErrors.count ||
+      fieldErrors.wall_count ||
+      fieldErrors.creation_year,
+    ),
     choreographers: false,
     links: Boolean(
       fieldErrors.step_sheet_link || fieldErrors.demo_video_url || fieldErrors.tutorial_video_url,
@@ -199,7 +208,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
       }));
     } else {
       const isNumericField = name === "count" || name === "wall_count" || name === "creation_year";
-      const parsedValue = isNumericField && value ? Number.parseInt(value, 10) : undefined;
+      const parsedValue = isNumericField && value ? Number(value) : undefined;
       const finalValue = isNumericField ? parsedValue : value;
 
       setFormData((prev) => ({

@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import type { Choreography, DuplicateChoreography } from '../../contracts/api.ts';
 import { combineChoreography, formatPage, formatSearchResults } from './read-operations.ts';
 import type { Page, Pagination } from './read-operations.ts';
 import type { ChoreographyReadId, DuplicateInput, SearchQuery } from './read-validation.ts';
@@ -7,16 +9,44 @@ import {
   normalizeUniqueTextQueryParam,
 } from './search-operations.ts';
 import * as repository from './read-repository.ts';
-import type { ChoreographyRow, DuplicateRow, InformationRow } from './read-repository.ts';
+import type { ChoreographyRow } from './read-repository.ts';
 
-export type Choreography = ChoreographyRow & {
-  authors: string[];
-  tags: string[];
-  step_figures: string[];
-  choreography_information: InformationRow[];
-  rating: number | null;
-};
-export type DuplicateChoreography = DuplicateRow & { authors: string[] };
+export type { Choreography, DuplicateChoreography } from '../../contracts/api.ts';
+
+const optionalText = z
+  .string()
+  .nullish()
+  .transform((value) => value ?? undefined);
+const optionalInteger = z
+  .int()
+  .nullish()
+  .transform((value) => value ?? undefined);
+const choreographyResponse = z.looseObject({
+  id: z.number(),
+  name: z.string(),
+  level: z.string(),
+  step_sheet_link: optionalText,
+  demo_video_url: optionalText,
+  tutorial_video_url: optionalText,
+  count: optionalInteger,
+  wall_count: optionalInteger,
+  creation_year: optionalInteger,
+  song: optionalText,
+  artist: optionalText,
+  created_at: z.string(),
+  updated_at: z.string(),
+  authors: z.array(z.string()),
+  tags: z.array(z.string()),
+  step_figures: z.array(z.string()),
+  choreography_information: z.array(
+    z.object({
+      id: z.number(),
+      category: z.string(),
+      description: z.string(),
+    }),
+  ),
+  rating: z.number().nullable(),
+});
 
 async function enrichChoreography(choreography: ChoreographyRow): Promise<Choreography> {
   const authors = await repository.findAuthors(choreography.id);
@@ -24,7 +54,9 @@ async function enrichChoreography(choreography: ChoreographyRow): Promise<Choreo
   const figures = await repository.findStepFigures(choreography.id);
   const information = await repository.findInformation(choreography.id);
   const rating = await repository.findRating(choreography.id);
-  return combineChoreography(choreography, authors, tags, figures, information, rating);
+  return choreographyResponse.parse(
+    combineChoreography(choreography, authors, tags, figures, information, rating),
+  );
 }
 
 export async function listChoreographies(pagination: Pagination): Promise<Page<Choreography>> {

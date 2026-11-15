@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { ChoreographyWriteResponse } from '../contracts/api.ts';
 import * as choreographyWrites from '../features/choreographies/write-flow.ts';
 import {
   preparePartialWriteRequest,
@@ -10,7 +11,7 @@ import { prepareInput } from './prepare-input.ts';
 import type { PreparedInput } from './prepare-input.ts';
 
 type ErrorResponse = { error: string; issues?: ChoreographyIssue[] };
-type WriteResponse = { id: string | number; message: string } | ErrorResponse;
+type WriteResponse = ChoreographyWriteResponse | ErrorResponse;
 type DeleteResponse = { message: string } | ErrorResponse;
 type Locals<T extends boolean> = { input: PreparedInput<WriteRequest<T>> };
 
@@ -80,7 +81,7 @@ export async function updateChoreography(
       return res.status(404).json({ error: 'Choreography not found' });
     if ('error' in result && result.error === 'validation')
       return sendChoreographyValidationError(res, result.issues);
-    res.json({ id: req.params.id, message: 'Choreography updated successfully' });
+    res.json({ id: result.value, message: 'Choreography updated successfully' });
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to update choreography' });

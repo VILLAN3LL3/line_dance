@@ -136,6 +136,15 @@ describe("ChoreographyCard", () => {
     expect(tutorialAction).toHaveAttribute("rel", "noopener noreferrer");
   });
 
+  it("displays and copies zero-valued numeric fields", () => {
+    const choreography = makeChoreography({ count: 0, wall_count: 0, creation_year: 0 });
+    render(<ChoreographyCard choreography={choreography} />);
+    expect(screen.getByText("Neon Waltz (0)")).toBeInTheDocument();
+    expect(screen.getByText("0 / 0")).toBeInTheDocument();
+    expect(buildChoreographyClipboardText(choreography)).toContain("Count / Wall: 0 / 0");
+    expect(buildChoreographyClipboardText(choreography)).toContain("Neon Waltz (0)");
+  });
+
   it("omits the tutorial footer action when no tutorial URL is available", () => {
     render(<ChoreographyCard choreography={makeChoreography({ tutorial_video_url: undefined })} />);
 

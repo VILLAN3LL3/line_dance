@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
+import type { DanceCourse } from '../contracts/api.ts';
 import * as courses from '../features/courses/flow.ts';
 import {
   prepareCourseFilter,
@@ -11,11 +13,32 @@ import type { PreparedInput } from './prepare-input.ts';
 import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.ts';
 
 type CourseError = Extract<courses.CourseResult, { error: string }>['error'];
-type Course = Awaited<ReturnType<typeof courses.getCourses>>[number];
 type ErrorResponse = { error: string };
-type CourseResponse = Course | undefined | ErrorResponse;
+type CourseResponse = DanceCourse | ErrorResponse;
 type DeleteResponse = { message: 'Dance course deleted successfully' } | ErrorResponse;
 type CourseFilter = ReturnType<typeof prepareCourseFilter>;
+
+const optionalText = z
+  .string()
+  .nullish()
+  .transform((value) => value ?? undefined);
+const courseResponse = z.looseObject({
+  id: z.number(),
+  course_id: z.number().nullable(),
+  name: z.string().nullable(),
+  dance_group_id: z.number(),
+  dance_group_name: z.string(),
+  semester: z.string().nullable(),
+  start_date: optionalText,
+  youtube_playlist_url: optionalText,
+  copperknob_list_url: optionalText,
+  spotify_playlist_url: optionalText,
+  trainer_id: z.number().nullable(),
+  trainer_name: z.string().nullable(),
+  trainer_phone: z.string().nullable(),
+  trainer_email: z.string().nullable(),
+  created_at: z.string(),
+});
 
 const courseErrors: Record<CourseError, [number, string]> = {
   group_required: [400, 'Dance group ID is required'],
@@ -41,12 +64,12 @@ export const prepareUpdate = prepareInput((req) => req.body, prepareCourseInput)
 
 export async function getDanceCourses(
   _req: Request,
-  res: Response<Course[] | ErrorResponse, { input: PreparedInput<CourseFilter> }>,
+  res: Response<DanceCourse[] | ErrorResponse, { input: PreparedInput<CourseFilter> }>,
 ): Promise<void> {
   try {
     const input = res.locals.input;
     if ('exception' in input) throw input.exception;
-    res.json(await courses.getCourses(input.value));
+    res.json((await courses.getCourses(input.value)).map((row) => courseResponse.parse(row)));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch dance courses' });
@@ -62,7 +85,7 @@ export async function createDanceCourse(
     if ('exception' in input) throw input.exception;
     const result = await courses.createCourse(input);
     if ('error' in result) return sendCourseError(res, result.error);
-    res.status(201).json(result.value);
+    res.status(201).json(courseResponse.parse(result.value));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to create dance course' });
@@ -78,7 +101,7 @@ export async function updateDanceCourse(
     if ('exception' in input) throw input.exception;
     const result = await courses.updateCourse(req.params.id, input);
     if ('error' in result) return sendCourseError(res, result.error);
-    res.json(result.value);
+    res.json(courseResponse.parse(result.value));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to update dance course' });

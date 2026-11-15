@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
+import type { AuthorStats, LevelOption } from '../contracts/api.ts';
 import * as metadata from '../features/metadata/flow.ts';
 import { prepareLevel } from '../features/metadata/operations.ts';
 import type { LevelInput } from '../features/metadata/operations.ts';
@@ -8,9 +10,10 @@ import { captureError } from '../utils/choreographyRouteErrors.ts';
 
 type LevelError = 'name_required' | 'duplicate_level' | 'invalid_value';
 type ErrorResponse = { error: string };
-type Level = Awaited<ReturnType<typeof metadata.getLevels>>[number];
-type AddLevel = Extract<Awaited<ReturnType<typeof metadata.addLevel>>, { value: object }>['value'];
-type AuthorStatistics = Awaited<ReturnType<typeof metadata.getAuthorStats>>;
+type Level = LevelOption;
+type AddLevel = LevelOption;
+type AuthorStatistics = AuthorStats[];
+const levelResponse = z.looseObject({ id: z.number(), name: z.string(), value: z.number() });
 
 const levelErrors: Record<LevelError, [number, string]> = {
   name_required: [400, 'Level name is required'],
@@ -34,7 +37,7 @@ export async function getLevels(
   res: Response<Level[] | ErrorResponse>,
 ): Promise<void> {
   try {
-    res.json(await metadata.getLevels());
+    res.json((await metadata.getLevels()).map((level) => levelResponse.parse(level)));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch levels' });

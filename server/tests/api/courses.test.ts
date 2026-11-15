@@ -338,7 +338,7 @@ describe('PUT /api/dance-courses/:id', () => {
       .put(`/api/dance-courses/${created.body.id}`)
       .send({ semester: 'WS 2025', youtube_playlist_url: null });
     expect(res.status).toBe(200);
-    expect(res.body.youtube_playlist_url).toBeNull();
+    expect(res.body).not.toHaveProperty('youtube_playlist_url');
   });
 
   it('returns 404 for non-existent course', async () => {

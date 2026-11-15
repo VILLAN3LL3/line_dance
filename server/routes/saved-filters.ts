@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
+import type { SavedFilterConfiguration as Configuration } from '../contracts/api.ts';
 import * as filters from '../features/saved-filters/flow.ts';
-import type { Configuration, SaveRequest, UpdateRequest } from '../features/saved-filters/flow.ts';
+import type { SaveRequest, UpdateRequest } from '../features/saved-filters/flow.ts';
 import {
   prepareConfigurationSave,
   prepareConfigurationUpdate,

@@ -48,6 +48,15 @@ describe("ChoreographyTable", () => {
     expect(screen.getByTitle("Cha Cha")).toBeInTheDocument();
   });
 
+  it("renders zero-valued numeric fields rather than placeholders", async () => {
+    render(
+      <ChoreographyTable
+        choreographies={[makeChoreo({ count: 0, wall_count: 0, creation_year: 0 })]}
+      />,
+    );
+    expect(await screen.findAllByText("0")).toHaveLength(3);
+  });
+
   it("renders dynamic information category columns with checks only when a category exists", async () => {
     const { container } = render(
       <ChoreographyTable

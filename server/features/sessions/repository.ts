@@ -17,7 +17,7 @@ export type AssignmentRow = SessionChoreography & { repetition_number: number };
 
 const dbName = 'danceGroups' as const;
 const sessionSelect = `SELECT s.id, s.dance_course_id, s.session_date, s.comment, s.created_at,
-  dc.semester, dg.name as dance_group_name
+  NULLIF(dc.semester, '') as semester, dg.name as dance_group_name
   FROM sessions s
   LEFT JOIN dance_courses dc ON s.dance_course_id = dc.id
   LEFT JOIN dance_groups dg ON dc.dance_group_id = dg.id`;

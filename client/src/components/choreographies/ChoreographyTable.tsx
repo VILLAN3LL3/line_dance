@@ -180,9 +180,9 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                   <td className="level-cell">
                     <LevelBatch level={choreo.level} />
                   </td>
-                  <td>{choreo.count || "-"}</td>
-                  <td>{choreo.wall_count || "-"}</td>
-                  <td>{choreo.creation_year || "-"}</td>
+                  <td>{choreo.count ?? "-"}</td>
+                  <td>{choreo.wall_count ?? "-"}</td>
+                  <td>{choreo.creation_year ?? "-"}</td>
                   {allInformationCategories.map((category) => {
                     const hasInformation = (choreo.choreography_information || []).some(
                       (information) => information.category === category,

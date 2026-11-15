@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
+import type { DanceGroup, StepFigureOption } from '../contracts/api.ts';
 import * as groups from '../features/groups/flow.ts';
 import {
   prepareBaseFigureId,
@@ -32,15 +34,18 @@ type GroupError =
   | 'invalid_figure_ids'
   | 'base_group_not_found';
 type ErrorResponse = { error: string };
-type Group = Awaited<ReturnType<typeof groups.getGroups>>[number];
-type Figure = Extract<
-  Awaited<ReturnType<typeof groups.getBaseFigures>>,
-  { value: object }
->['value'][number];
+type Group = DanceGroup;
+type Figure = StepFigureOption;
 type MaxLevel = { max_group_level_value: number | null };
-type GroupResponse = Group | undefined | ErrorResponse;
+type GroupResponse = Group | ErrorResponse;
 type DeleteResponse = { message: 'Dance group deleted successfully' } | ErrorResponse;
 type InputResponse<T, R> = Response<R | ErrorResponse, { input: PreparedInput<T> }>;
+const groupResponse = z.looseObject({
+  id: z.number(),
+  name: z.string(),
+  max_group_level_value: z.number().nullable(),
+  created_at: z.string(),
+});
 
 const groupErrors: Record<GroupError, [number, string]> = {
   name_required: [400, 'Name is required'],
@@ -84,7 +89,7 @@ export async function getDanceGroups(
   res: Response<Group[] | ErrorResponse>,
 ): Promise<void> {
   try {
-    res.json(await groups.getGroups());
+    res.json((await groups.getGroups()).map((group) => groupResponse.parse(group)));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch dance groups' });
@@ -93,13 +98,13 @@ export async function getDanceGroups(
 
 export async function createDanceGroup(
   _req: Request,
-  res: InputResponse<GroupNameResult, Group | undefined>,
+  res: InputResponse<GroupNameResult, Group>,
 ): Promise<Response<GroupResponse> | void> {
   try {
     if ('exception' in res.locals.input) throw res.locals.input.exception;
     const result = await groups.createGroup(res.locals.input);
     if ('error' in result) return sendGroupError(res, result.error);
-    res.status(201).json(result.value);
+    res.status(201).json(groupResponse.parse(result.value));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to create dance group' });
@@ -114,7 +119,7 @@ export async function getDanceGroupById(
     if (typeof res.locals.input !== 'string') throw res.locals.input.exception;
     const result = await groups.getGroup(res.locals.input);
     if ('error' in result) return sendGroupError(res, result.error);
-    res.json(result.value);
+    res.json(groupResponse.parse(result.value));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to fetch dance group' });
@@ -123,13 +128,13 @@ export async function getDanceGroupById(
 
 export async function updateDanceGroup(
   _req: Request,
-  res: InputResponse<GroupUpdate, Group | undefined>,
+  res: InputResponse<GroupUpdate, Group>,
 ): Promise<Response<GroupResponse> | void> {
   try {
     if ('exception' in res.locals.input) throw res.locals.input.exception;
     const result = await groups.updateGroup(res.locals.input);
     if ('error' in result) return sendGroupError(res, result.error);
-    res.json(result.value);
+    res.json(groupResponse.parse(result.value));
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to update dance group' });
