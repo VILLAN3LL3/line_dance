@@ -175,6 +175,7 @@ describe("ChoreographyCard", () => {
           step_figures: [],
           choreography_information: [
             { id: 3, category: "Restart", description: "Restart after wall 2" },
+            { id: 12, category: "Restart", description: "Restart after wall 4" },
             { id: 4, category: "Tag", description: "Tag after chorus" },
             { id: 7, category: "Ending", description: "Finish facing forward" },
             { id: 8, category: "Intro", description: "Start after the first eight" },
@@ -186,8 +187,11 @@ describe("ChoreographyCard", () => {
       />,
     );
 
-    expect(screen.getByText("Restart 🔁")).toBeInTheDocument();
-    expect(screen.getByText("Tag 🌉")).toBeInTheDocument();
+    expect(screen.getByText("Restart 🔁")).toHaveAttribute(
+      "title",
+      "Restart after wall 2\nRestart after wall 4",
+    );
+    expect(screen.getByText("Tag 🌉")).toHaveAttribute("title", "Tag after chorus");
     expect(screen.getByText("Ending 🏁")).toBeInTheDocument();
     expect(screen.getByText("Intro ➡️")).toBeInTheDocument();
     expect(screen.getByText("Sequence 🆎")).toBeInTheDocument();

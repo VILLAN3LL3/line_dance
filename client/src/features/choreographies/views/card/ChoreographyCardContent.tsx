@@ -38,6 +38,12 @@ export const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = (
   const informationCategories = [
     ...new Set((choreography.choreography_information || []).map((item) => item.category)),
   ];
+  const informationDescriptionsByCategory = new Map<string, string[]>();
+  (choreography.choreography_information || []).forEach(({ category, description }) => {
+    const descriptions = informationDescriptionsByCategory.get(category) ?? [];
+    if (description.trim()) descriptions.push(description.trim());
+    informationDescriptionsByCategory.set(category, descriptions);
+  });
   const showStepFigureBadges = !isDetailMode && informationCategories.length > 0;
   const showStepFiguresSection =
     choreography.step_figures.length > 0 || isDetailMode || showStepFigureBadges;
@@ -77,7 +83,10 @@ export const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = (
                     key={category}
                     value={`${category} ${getInformationCategoryIcon(category)}`}
                     className="tag-small"
-                    title={`Has ${category} information`}
+                    title={
+                      informationDescriptionsByCategory.get(category)?.join("\n") ||
+                      `Has ${category} information`
+                    }
                   />
                 ))}
             </TagGroup>
