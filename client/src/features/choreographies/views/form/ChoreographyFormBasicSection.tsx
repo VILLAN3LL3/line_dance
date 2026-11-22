@@ -64,7 +64,12 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
     </FormField>
 
     <div className="form-row">
-      <FormField label="Level *" htmlFor="level" className="form-group" error={errors.level}>
+      <FormField
+        label="Official Level *"
+        htmlFor="level"
+        className="form-group"
+        error={errors.level}
+      >
         <select
           id="level"
           name="level"

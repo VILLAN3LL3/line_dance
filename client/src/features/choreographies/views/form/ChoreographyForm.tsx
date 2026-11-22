@@ -2,9 +2,10 @@ import "../../../../styles/ChoreographyForm.css";
 
 import React from "react";
 
-import { ActionButton, ActionGroup, LevelBatch } from "../../../../shared/ui";
+import { ActionButton, ActionGroup } from "../../../../shared/ui";
 import type { ChoreographyFormViewModel } from "../../viewmodels/useChoreographyFormViewModel";
 import { FORM_TABS, type ListField } from "../../model/choreography-form";
+import { ChoreographyLevelBadge } from "../ChoreographyLevelBadge";
 import { AdditionalInformationTab } from "./ChoreographyFormAdditionalInformationTab";
 import {
   BasicInformationTab,
@@ -74,7 +75,15 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
       {(contextTitle || formData.level.trim()) && (
         <div className="choreography-form-context">
           {contextTitle && <h2>{contextTitle}</h2>}
-          {formData.level.trim() && <LevelBatch level={formData.level} />}
+          {formData.level.trim() && (
+            <ChoreographyLevelBadge
+              choreography={{
+                level: formData.personal_level || formData.level,
+                official_level: formData.level,
+                personal_level: formData.personal_level || null,
+              }}
+            />
+          )}
         </div>
       )}
       <div

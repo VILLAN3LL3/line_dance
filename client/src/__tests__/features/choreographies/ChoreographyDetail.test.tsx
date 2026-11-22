@@ -130,7 +130,9 @@ describe("ChoreographyDetail", () => {
     await screen.findAllByRole("option", { name: "Intermediate" });
     fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
     expect(await screen.findByText("Select a valid level.")).toBeInTheDocument();
-    expect(screen.getByLabelText("Level *")).toHaveAccessibleDescription("Select a valid level.");
+    expect(screen.getByLabelText("Official Level *")).toHaveAccessibleDescription(
+      "Select a valid level.",
+    );
     expect(checkChoreographyDuplicates).not.toHaveBeenCalled();
     expect(updateChoreography).not.toHaveBeenCalled();
   });
@@ -207,7 +209,7 @@ describe("ChoreographyDetail", () => {
     renderDetail("/choreographies/1?edit=1");
     const saveButton = await screen.findByRole("button", { name: "Save Choreography" });
     await screen.findAllByRole("option", { name: "Advanced" });
-    expect(screen.getByLabelText("Level *")).toHaveValue("Intermediate");
+    expect(screen.getByLabelText("Official Level *")).toHaveValue("Intermediate");
 
     fireEvent.submit(saveButton.closest("form")!);
 

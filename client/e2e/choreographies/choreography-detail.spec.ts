@@ -16,7 +16,7 @@ test.describe("Choreography Detail", () => {
     const response = await responsePromise;
     expect(response.status()).toBe(400);
     expect((await response.json()).issues).toContainEqual({ field: "level", key: "required" });
-    const level = page.getByLabel("Level *");
+    const level = page.getByLabel("Official Level *");
     await expect(level).toHaveAttribute("aria-invalid", "true");
     await expect(level).toHaveCSS("border-color", "rgb(198, 61, 47)");
     await expect(page.getByText("Select a level.")).toBeVisible();
