@@ -17,6 +17,7 @@ interface BasicInformationTabProps {
   errors: {
     name?: string;
     level?: string;
+    personal_level?: string;
     count?: string;
     wall_count?: string;
     creation_year?: string;
@@ -34,6 +35,7 @@ export const BasicInformationTab: React.FC<BasicInformationTabProps> = ({
     <ChoreographyFormBasicSection
       name={formData.name}
       level={formData.level}
+      personalLevel={formData.personal_level}
       count={formData.count}
       wall_count={formData.wall_count}
       creation_year={formData.creation_year}

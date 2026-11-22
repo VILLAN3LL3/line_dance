@@ -31,6 +31,22 @@ export async function findChoreography(id: ChoreographyId): Promise<{ id: number
   return getQuery<{ id: number }>('SELECT id FROM choreographies WHERE id = ?', [id]);
 }
 
+export async function savePersonalLevel(id: ChoreographyId, levelId: number): Promise<WriteResult> {
+  return runQuery(
+    `INSERT INTO personal_data.choreography_personal_levels (choreography_id, level_id)
+     VALUES (?, ?)
+     ON CONFLICT(choreography_id) DO UPDATE SET level_id = excluded.level_id`,
+    [id, levelId],
+  );
+}
+
+export async function deletePersonalLevel(id: ChoreographyId): Promise<WriteResult> {
+  return runQuery(
+    'DELETE FROM personal_data.choreography_personal_levels WHERE choreography_id = ?',
+    [id],
+  );
+}
+
 export async function insertChoreography(
   input: PreparedChoreography,
   levelId: number,

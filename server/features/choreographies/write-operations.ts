@@ -3,6 +3,14 @@ import { informationEntry } from './validation.ts';
 import type { ChoreographyWriteInput } from './validation.ts';
 
 export type Information = { category: string; description: string };
+/** `undefined` keeps the stored personal level, `null` removes it, a name sets it. */
+export type PersonalLevelChange = string | null | undefined;
+
+export function normalizePersonalLevel(value: JsonValue | undefined): PersonalLevelChange {
+  if (value === undefined) return undefined;
+  if (typeof value === 'string') return value.trim() || null;
+  return value === null ? null : String(value);
+}
 
 export function normalizeChoreographyInformation(
   value: JsonValue | undefined,
@@ -29,6 +37,7 @@ export function prepareChoreography(input: ChoreographyWriteInput): {
   count: JsonValue;
   wall_count: JsonValue;
   level: JsonValue | undefined;
+  personal_level: PersonalLevelChange;
   creation_year: JsonValue;
   song: JsonValue;
   artist: JsonValue;
@@ -60,6 +69,7 @@ export function prepareChoreography(input: ChoreographyWriteInput): {
     count: count === '' ? null : (count ?? null),
     wall_count: wall_count === '' ? null : (wall_count ?? null),
     level,
+    personal_level: normalizePersonalLevel(input.personal_level),
     creation_year: creation_year === '' ? null : (creation_year ?? null),
     song: song || null,
     artist: artist || null,

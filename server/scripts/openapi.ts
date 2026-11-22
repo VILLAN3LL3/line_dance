@@ -341,59 +341,6 @@ export const openApiSpec = {
         },
       },
     },
-    '/api/choreographies/{id}/personal-level': {
-      put: {
-        tags: ['Choreographies'],
-        summary: 'Set personal level for a choreography',
-        parameters: [{ $ref: '#/components/parameters/IdPath' }],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: { level: { type: 'string' } },
-                required: ['level'],
-              },
-            },
-          },
-        },
-        responses: {
-          200: {
-            description: 'Saved personal level',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    choreography_id: { type: 'integer' },
-                    level: { type: 'string' },
-                  },
-                  required: ['choreography_id', 'level'],
-                },
-              },
-            },
-          },
-          400: { $ref: '#/components/responses/BadRequest' },
-          404: { $ref: '#/components/responses/NotFound' },
-        },
-      },
-      delete: {
-        tags: ['Choreographies'],
-        summary: 'Remove personal level for a choreography',
-        parameters: [{ $ref: '#/components/parameters/IdPath' }],
-        responses: {
-          200: {
-            description: 'Personal level removed',
-            content: {
-              'application/json': {
-                schema: { $ref: '#/components/schemas/MessageResponse' },
-              },
-            },
-          },
-        },
-      },
-    },
     '/api/choreographies/{id}': {
       get: {
         tags: ['Choreographies'],
@@ -1797,7 +1744,13 @@ export const openApiSpec = {
           tutorial_video_url: { type: 'string' },
           count: { type: 'integer' },
           wall_count: { type: 'integer' },
-          level: { type: 'string' },
+          level: { type: 'string', description: 'Official level' },
+          personal_level: {
+            type: 'string',
+            nullable: true,
+            description:
+              'Personal level assessment. Omit to keep it unchanged; null or an empty string removes it.',
+          },
           creation_year: { type: 'integer' },
           choreography_information: {
             type: 'array',

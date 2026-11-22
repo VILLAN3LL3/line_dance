@@ -50,11 +50,12 @@ test.describe("Choreography Detail", () => {
     const name = `E2E Personal Level ${Date.now()}`;
     const choreographyId = await createChoreographyViaApi(request, name);
 
-    await page.goto(`/choreographies/${choreographyId}`);
-    const editor = page.getByLabel("Personal level:");
+    await page.goto(`/choreographies/${choreographyId}?edit=1`);
+    const editor = page.getByLabel("Personal Level");
     await expect(editor.locator("option").first()).toHaveText("Same as official (BEGINNER)");
     await expect(editor.getByRole("option", { name: "ADVANCED", exact: true })).toHaveCount(1);
     await editor.selectOption({ label: "ADVANCED" });
+    await page.getByRole("button", { name: /Save Choreography/i }).click();
     await expect(page.locator(".level-badge", { hasText: "ADVANCED" })).toBeVisible();
 
     await page.goto("/");

@@ -86,7 +86,7 @@ test.describe("Choreography Search", () => {
     await expect(page.getByRole("heading", { name: /Add New Choreography/i })).toBeVisible();
 
     await page.getByLabel(/Choreography Name/i).fill(name);
-    await page.getByLabel(/Level/i).selectOption({ label: "BEGINNER" });
+    await page.getByLabel("Level *").selectOption({ label: "BEGINNER" });
     await page.getByPlaceholder("e.g., 64").fill("32");
     await page.getByPlaceholder("e.g., 4").fill("4");
 
@@ -317,7 +317,7 @@ test.describe("Choreography Search", () => {
     await expect(page.getByRole("heading", { name: /Add New Choreography/i })).toHaveCount(0);
     await expect(page).toHaveURL(/\/choreographies\/new$/);
 
-    await page.getByLabel(/Level/i).selectOption({ label: "BEGINNER" });
+    await page.getByLabel("Level *").selectOption({ label: "BEGINNER" });
     await page.getByRole("button", { name: /Save Choreography/i }).click();
 
     await expect(page.getByRole("heading", { name: /Choreography Search/i })).toBeVisible();

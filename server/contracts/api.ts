@@ -30,6 +30,8 @@ export interface ChoreographyFormData {
   count?: number;
   wall_count?: number;
   level: string;
+  /** Personal level assessment; empty or null means "same as official". */
+  personal_level?: string | null;
   creation_year?: number;
   choreography_information?: ChoreographyInformation[];
   song?: string;

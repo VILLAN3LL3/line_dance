@@ -1,7 +1,7 @@
 import type { JsonValue } from '../../utils/json-input.ts';
 import type { ChoreographyIssue, PreparedWriteRequest, WriteRequest } from './validation.ts';
-import { prepareChoreography } from './write-operations.ts';
-import type { Information } from './write-operations.ts';
+import { normalizePersonalLevel, prepareChoreography } from './write-operations.ts';
+import type { Information, PersonalLevelChange } from './write-operations.ts';
 import * as repository from './write-repository.ts';
 import type { RelationshipKind } from './write-repository.ts';
 
@@ -39,7 +39,25 @@ export async function validateChoreography({
       issues.push({ field: 'level', key: 'invalid_level' });
     }
   }
+  const personalLevel = normalizePersonalLevel(input.personal_level);
+  if (personalLevel && !(await repository.findLevel(personalLevel))) {
+    issues.push({ field: 'personal_level', key: 'invalid_level' });
+  }
   return issues;
+}
+
+async function applyPersonalLevel(
+  id: ChoreographyId,
+  personalLevel: PersonalLevelChange,
+): Promise<void> {
+  if (personalLevel === undefined) return;
+  if (personalLevel === null) {
+    await repository.deletePersonalLevel(id);
+    return;
+  }
+  const level = await repository.findLevel(personalLevel);
+  if (!level) throw new Error('Personal level disappeared during write');
+  await repository.savePersonalLevel(id, level.id);
 }
 
 async function insertRelationships(
@@ -117,6 +135,7 @@ export async function createChoreography(
     await insertRelationships(result.id, 'figures', prepared.step_figures);
     await insertRelationships(result.id, 'tags', prepared.tags);
     await replaceInformation(result.id, information ?? []);
+    await applyPersonalLevel(result.id, prepared.personal_level);
     return { value: result.id };
   });
 }
@@ -146,6 +165,7 @@ export async function updateChoreography(
     await replaceRelationships(id, 'figures', prepared.step_figures);
     await replaceRelationships(id, 'tags', prepared.tags);
     if (information !== undefined) await replaceInformation(id, information);
+    await applyPersonalLevel(id, prepared.personal_level);
     await cleanupOrphanedRecords();
     return { value: choreography.id };
   });

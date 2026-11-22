@@ -41,7 +41,7 @@ rating conversion remains backward-compatible with the existing API.
 
 The database helper `withTransaction()` serializes transactions and queries per SQLite connection.
 Choreography writes (including cleanup), group/base-figure changes, trainer writes, course creation
-and updates, rating and personal level updates, level creation, saved-filter and step-figure writes, session creation,
+and updates, rating updates, level creation, saved-filter and step-figure writes, session creation,
 updates and rearrangement, assignment creation, and migrations use transaction boundaries to
 prevent partial writes or lost updates. A failure during choreography cleanup rolls back the
 operation and returns an error. The `personal_data` database is attached to the choreography connection; the separate
@@ -56,7 +56,10 @@ cleanup removes orphans and keeps levels that a personal level still references)
 return `level` (effective: personal level when set, otherwise the official one), `official_level`
 and `personal_level`. The SQL fragments for the effective level live in
 `server/features/choreographies/level-sql.ts` and are shared by search, step figure suggestions and
-author statistics. Editing a choreography always works on `official_level`.
+author statistics. Editing a choreography always works on `official_level`. `POST` and
+`PUT /api/choreographies` accept `personal_level` and write it in the same transaction as the
+choreography: omitted keeps it, `null` or an empty string removes it, an unknown level is reported
+as the field issue `{ field: "personal_level", key: "invalid_level" }`.
 
 ## Frontend
 

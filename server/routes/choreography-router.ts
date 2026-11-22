@@ -50,11 +50,6 @@ import {
   rateChoreography,
   deleteChoreographyRating,
 } from './choreography-ratings.ts';
-import {
-  preparePersonalLevel,
-  setChoreographyPersonalLevel,
-  deleteChoreographyPersonalLevel,
-} from './choreography-personal-levels.ts';
 
 export function createChoreographyRouter(): Router {
   const router = Router();
@@ -69,12 +64,6 @@ export function createChoreographyRouter(): Router {
   router.delete('/api/choreographies/:id', deleteChoreography);
   router.put('/api/choreographies/:id/rating', prepareRating, rateChoreography);
   router.delete('/api/choreographies/:id/rating', deleteChoreographyRating);
-  router.put(
-    '/api/choreographies/:id/personal-level',
-    preparePersonalLevel,
-    setChoreographyPersonalLevel,
-  );
-  router.delete('/api/choreographies/:id/personal-level', deleteChoreographyPersonalLevel);
   router.get('/api/levels', getLevels);
   router.post('/api/levels', prepareLevelInput, addLevel);
   router.get('/api/tags', getTags);

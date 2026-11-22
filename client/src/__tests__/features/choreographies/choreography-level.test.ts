@@ -28,12 +28,12 @@ describe("hasPersonalLevel", () => {
 });
 
 describe("choreographyToFormData", () => {
-  it("uses the official level and drops the derived level fields", () => {
+  it("uses the official level, keeps the personal level and drops official_level", () => {
     const data = choreographyToFormData(choreography);
 
     expect(data.level).toBe("Beginner");
+    expect(data.personal_level).toBe("Advanced");
     expect(data).not.toHaveProperty("official_level");
-    expect(data).not.toHaveProperty("personal_level");
     expect(data.name).toBe("Dance");
   });
 });

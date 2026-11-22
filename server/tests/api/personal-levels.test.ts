@@ -22,7 +22,11 @@ async function createChoreo(overrides: Record<string, unknown> = {}): Promise<Da
 }
 
 async function setPersonalLevel(id: number, level: unknown): Promise<request.Response> {
-  return request(app).put(`/api/choreographies/${id}/personal-level`).send({ level });
+  // PUT replaces the catalog fields, so the current name has to be sent along.
+  const current = await request(app).get(`/api/choreographies/${id}`);
+  return request(app)
+    .put(`/api/choreographies/${id}`)
+    .send({ name: current.body.name ?? 'Test Dance', personal_level: level });
 }
 
 async function searchNames(params: Record<string, string | number | boolean>): Promise<string[]> {
@@ -58,62 +62,85 @@ describe('choreography levels — official, personal and effective', () => {
   });
 });
 
-describe('PUT /api/choreographies/:id/personal-level', () => {
+describe('personal level in POST /api/choreographies', () => {
   it('saves the personal level with its canonical name', async () => {
-    const { id } = await createChoreo();
-    const res = await setPersonalLevel(id, 'advanced');
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ choreography_id: id, level: 'ADVANCED' });
+    const { id } = await createChoreo({ personal_level: 'advanced' });
+    const res = await request(app).get(`/api/choreographies/${id}`);
+    expect(res.body).toMatchObject({ level: 'ADVANCED', personal_level: 'ADVANCED' });
   });
 
-  it('overwrites an existing personal level', async () => {
+  it('rejects an unknown personal level as a field issue and creates nothing', async () => {
+    const res = await request(app)
+      .post('/api/choreographies')
+      .send({ name: 'Test Dance', level: 'BEGINNER', personal_level: 'Not A Level' });
+    expect(res.status).toBe(400);
+    expect(res.body.issues).toEqual([{ field: 'personal_level', key: 'invalid_level' }]);
+    const list = await request(app).get('/api/choreographies');
+    expect(list.body.data).toHaveLength(0);
+  });
+
+  it('reports the same issue from the validate endpoint', async () => {
+    const res = await request(app)
+      .post('/api/choreographies/validate')
+      .send({ name: 'Test Dance', level: 'BEGINNER', personal_level: 'Not A Level' });
+    expect(res.status).toBe(400);
+    expect(res.body.issues).toContainEqual({ field: 'personal_level', key: 'invalid_level' });
+  });
+});
+
+describe('personal level in PUT /api/choreographies/:id', () => {
+  it('sets and overwrites the personal level', async () => {
     const { id } = await createChoreo();
-    await setPersonalLevel(id, 'ADVANCED');
+    expect((await setPersonalLevel(id, 'ADVANCED')).status).toBe(200);
     await setPersonalLevel(id, 'INTERMEDIATE');
     const res = await request(app).get(`/api/choreographies/${id}`);
     expect(res.body.personal_level).toBe('INTERMEDIATE');
   });
 
+  it('keeps the personal level when the request does not mention it', async () => {
+    const { id } = await createChoreo({ personal_level: 'ADVANCED' });
+    await request(app).put(`/api/choreographies/${id}`).send({ name: 'Renamed' });
+    const res = await request(app).get(`/api/choreographies/${id}`);
+    expect(res.body).toMatchObject({ name: 'Renamed', personal_level: 'ADVANCED' });
+  });
+
+  it.each([[null], ['']])('resets to the official level for %j', async (value) => {
+    const { id } = await createChoreo({ level: 'BEGINNER', personal_level: 'ADVANCED' });
+    expect((await setPersonalLevel(id, value)).status).toBe(200);
+    const res = await request(app).get(`/api/choreographies/${id}`);
+    expect(res.body).toMatchObject({ level: 'BEGINNER', personal_level: null });
+  });
+
+  it('changes the official level without touching the personal level', async () => {
+    const { id } = await createChoreo({ level: 'BEGINNER', personal_level: 'ADVANCED' });
+    await request(app)
+      .put(`/api/choreographies/${id}`)
+      .send({ name: 'Test Dance', level: 'IMPROVER' });
+    const res = await request(app).get(`/api/choreographies/${id}`);
+    expect(res.body).toMatchObject({
+      level: 'ADVANCED',
+      official_level: 'IMPROVER',
+      personal_level: 'ADVANCED',
+    });
+  });
+
+  it.each([['Not A Level'], [42]])(
+    'returns a field issue for the invalid level %j and changes nothing',
+    async (level) => {
+      const { id } = await createChoreo({ personal_level: 'ADVANCED' });
+      const res = await request(app)
+        .put(`/api/choreographies/${id}`)
+        .send({ name: 'Renamed', personal_level: level });
+      expect(res.status).toBe(400);
+      expect(res.body.issues).toEqual([{ field: 'personal_level', key: 'invalid_level' }]);
+      const after = await request(app).get(`/api/choreographies/${id}`);
+      expect(after.body).toMatchObject({ name: 'Test Dance', personal_level: 'ADVANCED' });
+    },
+  );
+
   it('returns 404 for an unknown choreography', async () => {
     const res = await setPersonalLevel(999, 'ADVANCED');
     expect(res.status).toBe(404);
-  });
-
-  it('returns 400 for an invalid choreography id', async () => {
-    const res = await setPersonalLevel(Number.NaN, 'ADVANCED');
-    expect(res.status).toBe(400);
-  });
-
-  it.each([['Not A Level'], [''], [undefined], [42]])(
-    'returns 400 for the invalid level %j',
-    async (level) => {
-      const { id } = await createChoreo();
-      const res = await setPersonalLevel(id, level);
-      expect(res.status).toBe(400);
-      expect(res.body.error).toBe('Level must be an existing level');
-    },
-  );
-});
-
-describe('DELETE /api/choreographies/:id/personal-level', () => {
-  it('resets to the official level', async () => {
-    const { id } = await createChoreo({ level: 'BEGINNER' });
-    await setPersonalLevel(id, 'ADVANCED');
-    const res = await request(app).delete(`/api/choreographies/${id}/personal-level`);
-    expect(res.status).toBe(200);
-    const after = await request(app).get(`/api/choreographies/${id}`);
-    expect(after.body).toMatchObject({ level: 'BEGINNER', personal_level: null });
-  });
-
-  it('succeeds when no personal level exists', async () => {
-    const { id } = await createChoreo();
-    const res = await request(app).delete(`/api/choreographies/${id}/personal-level`);
-    expect(res.status).toBe(200);
-  });
-
-  it('returns 400 for an invalid choreography id', async () => {
-    const res = await request(app).delete('/api/choreographies/abc/personal-level');
-    expect(res.status).toBe(400);
   });
 });
 

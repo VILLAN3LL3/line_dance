@@ -76,7 +76,7 @@ describe("ChoreographyCreatePage", () => {
     );
 
     // Wait for levels to load before interacting with the select
-    await screen.findByRole("option", { name: "Beginner" });
+    await screen.findAllByRole("option", { name: "Beginner" });
 
     fireEvent.change(screen.getByLabelText("Choreography Name *"), {
       target: { value: "River Dance" },
@@ -135,6 +135,49 @@ describe("ChoreographyCreatePage", () => {
     expect(screen.queryByText(/Possible duplicate found/)).not.toBeInTheDocument();
   });
 
+  it("sends the chosen personal level with the create request", async () => {
+    vi.mocked(checkChoreographyDuplicates).mockResolvedValue([]);
+    vi.mocked(getLevels).mockResolvedValue([
+      { id: 1, name: "Beginner", value: 30 },
+      { id: 2, name: "Advanced", value: 150 },
+    ]);
+    render(
+      <MemoryRouter initialEntries={["/choreographies/new"]}>
+        <Routes>
+          <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await screen.findAllByRole("option", { name: "Beginner" });
+
+    fireEvent.change(screen.getByLabelText("Choreography Name *"), {
+      target: { value: "River Dance" },
+    });
+    fireEvent.change(screen.getByLabelText("Level *"), { target: { value: "Beginner" } });
+    fireEvent.change(screen.getByLabelText("Personal Level"), { target: { value: "Advanced" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+
+    await waitFor(() => {
+      expect(createChoreography).toHaveBeenCalledWith(
+        expect.objectContaining({ level: "Beginner", personal_level: "Advanced" }),
+      );
+    });
+  });
+
+  it("shows a backend issue for the personal level next to the field after validation", async () => {
+    vi.mocked(validateChoreography).mockRejectedValueOnce(
+      validationFailure([{ field: "personal_level", key: "invalid_level" }]),
+    );
+
+    await renderAndSubmit();
+
+    expect(await screen.findByText("Select a valid personal level.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Personal Level")).toHaveAccessibleDescription(
+      "Select a valid personal level.",
+    );
+    expect(createChoreography).not.toHaveBeenCalled();
+  });
+
   it("provides six accessible tabs with arrow-key navigation", async () => {
     const { container } = render(
       <MemoryRouter initialEntries={["/choreographies/new"]}>
@@ -144,7 +187,7 @@ describe("ChoreographyCreatePage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByRole("option", { name: "Beginner" });
+    await screen.findAllByRole("option", { name: "Beginner" });
     expect(screen.getByRole("heading", { name: "Add New Choreography" })).toBeInTheDocument();
     expect(container.querySelector(".choreography-form-context")).toHaveTextContent(
       "Add New Choreography",
@@ -190,7 +233,7 @@ describe("ChoreographyCreatePage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByRole("option", { name: "Beginner" });
+    await screen.findAllByRole("option", { name: "Beginner" });
     fireEvent.click(screen.getByRole("tab", { name: "Additional Information" }));
     fireEvent.change(screen.getByLabelText("Category 1"), {
       target: { value: "__create_new_category__" },
@@ -226,7 +269,7 @@ describe("ChoreographyCreatePage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByRole("option", { name: "Beginner" });
+    await screen.findAllByRole("option", { name: "Beginner" });
     const name = screen.getByLabelText("Choreography Name *");
     const level = screen.getByLabelText("Level *");
     expect(name).not.toHaveAttribute("aria-invalid");
@@ -264,7 +307,7 @@ describe("ChoreographyCreatePage", () => {
           </Routes>
         </MemoryRouter>,
       );
-      await screen.findByRole("option", { name: "Beginner" });
+      await screen.findAllByRole("option", { name: "Beginner" });
       fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
       expect(await screen.findByRole("alert")).toHaveTextContent(
         "Failed to validate or save the choreography",
@@ -290,7 +333,7 @@ describe("ChoreographyCreatePage", () => {
         </Routes>
       </MemoryRouter>,
     );
-    await screen.findByRole("option", { name: "Beginner" });
+    await screen.findAllByRole("option", { name: "Beginner" });
     fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
     fireEvent.change(screen.getByLabelText("Choreography Name *"), {
       target: { value: "New name" },
@@ -328,7 +371,7 @@ describe("ChoreographyCreatePage", () => {
         </Routes>
       </MemoryRouter>,
     );
-    await screen.findByRole("option", { name: "Beginner" });
+    await screen.findAllByRole("option", { name: "Beginner" });
     const count = screen.getByLabelText("Count");
     fireEvent.change(count, { target: { value: "1.5" } });
     fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
@@ -360,7 +403,7 @@ describe("ChoreographyCreatePage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByRole("option", { name: "Beginner" });
+    await screen.findAllByRole("option", { name: "Beginner" });
     fireEvent.change(screen.getByLabelText("Choreography Name *"), { target: { value: "Dance" } });
     fireEvent.change(screen.getByLabelText("Level *"), { target: { value: "Beginner" } });
     fireEvent.click(screen.getByRole("tab", { name: "Links" }));
@@ -410,7 +453,7 @@ describe("ChoreographyCreatePage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByRole("option", { name: "Beginner" });
+    await screen.findAllByRole("option", { name: "Beginner" });
     fireEvent.change(screen.getByLabelText("Choreography Name *"), {
       target: { value: "River Dance" },
     });

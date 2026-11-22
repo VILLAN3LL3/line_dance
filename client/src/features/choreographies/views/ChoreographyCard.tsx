@@ -9,7 +9,6 @@ import { getCountWallSummary } from "../model/choreography-card";
 import type { ChoreographyCardViewModel } from "../viewmodels/useChoreographyCardViewModel";
 import { ChoreographyCardActions } from "./card/ChoreographyCardActions";
 import { ChoreographyCardContent } from "./card/ChoreographyCardContent";
-import { PersonalLevelEditor } from "./card/PersonalLevelEditor";
 import { ChoreographyLevelBadge } from "./ChoreographyLevelBadge";
 import { StarRating } from "./StarRating";
 
@@ -67,19 +66,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       demoEmbedUrl={demoEmbedUrl}
       tutorialEmbedUrl={tutorialEmbedUrl}
       onLinkClick={handleContentLinkClick}
-      personalLevelEditor={
-        isDetailMode ? (
-          <PersonalLevelEditor
-            choreographyId={choreography.id}
-            officialLevel={choreography.official_level}
-            personalLevel={choreography.personal_level}
-            levelOptions={cardViewModel.state.levelOptions}
-            isSaving={cardViewModel.state.isSavingPersonalLevel}
-            hasError={cardViewModel.state.personalLevelError}
-            onChange={(level) => cardViewModel.actions.changePersonalLevel(choreography, level)}
-          />
-        ) : undefined
-      }
     />
   );
 

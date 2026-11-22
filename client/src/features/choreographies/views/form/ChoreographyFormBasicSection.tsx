@@ -10,6 +10,7 @@ interface LevelOption {
 interface ChoreographyFormBasicSectionProps {
   name: string;
   level: string;
+  personalLevel?: string | null;
   count?: number;
   wall_count?: number;
   creation_year?: number;
@@ -19,6 +20,7 @@ interface ChoreographyFormBasicSectionProps {
   errors: {
     name?: string;
     level?: string;
+    personal_level?: string;
     count?: string;
     wall_count?: string;
     creation_year?: string;
@@ -31,6 +33,7 @@ interface ChoreographyFormBasicSectionProps {
 export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSectionProps> = ({
   name,
   level,
+  personalLevel,
   count,
   wall_count,
   creation_year,
@@ -71,6 +74,29 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
         aria-describedby={errors.level ? "level-error" : undefined}
       >
         <option value="">Select a level</option>
+        {levels.map((item) => (
+          <option key={item.id} value={item.name}>
+            {item.name}
+          </option>
+        ))}
+      </select>
+    </FormField>
+
+    <FormField
+      label="Personal Level"
+      htmlFor="personal_level"
+      className="form-group"
+      error={errors.personal_level}
+    >
+      <select
+        id="personal_level"
+        name="personal_level"
+        value={personalLevel ?? ""}
+        onChange={onChange}
+        aria-invalid={errors.personal_level ? true : undefined}
+        aria-describedby={errors.personal_level ? "personal_level-error" : undefined}
+      >
+        <option value="">{level ? `Same as official (${level})` : "Same as official"}</option>
         {levels.map((item) => (
           <option key={item.id} value={item.name}>
             {item.name}

@@ -81,19 +81,6 @@ export async function deleteChoreographyRating(id: number): Promise<{ message: s
   return response.data;
 }
 
-export async function setChoreographyPersonalLevel(
-  id: number,
-  level: string,
-): Promise<{ choreography_id: number; level: string }> {
-  const response = await api.put(`/choreographies/${id}/personal-level`, { level });
-  return response.data;
-}
-
-export async function deleteChoreographyPersonalLevel(id: number): Promise<{ message: string }> {
-  const response = await api.delete(`/choreographies/${id}/personal-level`);
-  return response.data;
-}
-
 export async function getMaxChoreographyCount(): Promise<number> {
   const response = await api.get("/choreographies/max-count");
   return response.data?.max_count || 0;

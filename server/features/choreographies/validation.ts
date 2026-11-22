@@ -7,6 +7,7 @@ const writeInput = z
   .object({
     name: value,
     level: value,
+    personal_level: value,
     step_sheet_link: value,
     demo_video_url: value,
     tutorial_video_url: value,

@@ -46,6 +46,11 @@ vi.mock("../../../features/metadata/api", () => ({
   getStepFigures: vi.fn(),
 }));
 
+const TWO_LEVELS = [
+  { id: 2, name: "Intermediate", value: 50 },
+  { id: 3, name: "Advanced", value: 150 },
+];
+
 const BASE_CHOREOGRAPHY = {
   id: 1,
   name: "Neon Waltz",
@@ -109,7 +114,7 @@ describe("ChoreographyDetail", () => {
     const { container } = renderDetail("/choreographies/1?edit=1");
 
     expect(await screen.findByRole("heading", { name: "Neon Waltz" })).toBeInTheDocument();
-    await screen.findByRole("option", { name: "Intermediate" });
+    await screen.findAllByRole("option", { name: "Intermediate" });
 
     expect(container.querySelector(".form-view")).toBeInTheDocument();
     expect(container.querySelector(".form-view .level-badge")).toHaveTextContent("Intermediate");
@@ -122,7 +127,7 @@ describe("ChoreographyDetail", () => {
       response: { status: 400, data: { issues: [{ field: "level", key: "invalid_level" }] } },
     });
     renderDetail("/choreographies/1?edit=1");
-    await screen.findByRole("option", { name: "Intermediate" });
+    await screen.findAllByRole("option", { name: "Intermediate" });
     fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
     expect(await screen.findByText("Select a valid level.")).toBeInTheDocument();
     expect(screen.getByLabelText("Level *")).toHaveAccessibleDescription("Select a valid level.");
@@ -138,7 +143,7 @@ describe("ChoreographyDetail", () => {
 
     const saveButton = await screen.findByRole("button", { name: "Save Choreography" });
     // Wait for form reference data to fully load (same pattern as ChoreographyCreatePage tests)
-    await screen.findByRole("option", { name: "Intermediate" });
+    await screen.findAllByRole("option", { name: "Intermediate" });
     fireEvent.submit(saveButton.closest("form")!);
 
     // Wait for the duplicate check to complete, then flush React's pending state updates
@@ -153,7 +158,7 @@ describe("ChoreographyDetail", () => {
   it("passes the current choreography id as excludeId to the duplicate check", async () => {
     renderDetail("/choreographies/1?edit=1");
     const saveButton = await screen.findByRole("button", { name: "Save Choreography" });
-    await screen.findByRole("option", { name: "Intermediate" });
+    await screen.findAllByRole("option", { name: "Intermediate" });
 
     fireEvent.submit(saveButton.closest("form")!);
 
@@ -173,7 +178,7 @@ describe("ChoreographyDetail", () => {
 
     renderDetail("/choreographies/1?edit=1");
     const saveButton1 = await screen.findByRole("button", { name: "Save Choreography" });
-    await screen.findByRole("option", { name: "Intermediate" });
+    await screen.findAllByRole("option", { name: "Intermediate" });
     fireEvent.submit(saveButton1.closest("form")!);
     await waitFor(() => expect(checkChoreographyDuplicates).toHaveBeenCalled());
     await act(async () => {});
@@ -201,16 +206,98 @@ describe("ChoreographyDetail", () => {
 
     renderDetail("/choreographies/1?edit=1");
     const saveButton = await screen.findByRole("button", { name: "Save Choreography" });
-    await screen.findByRole("option", { name: "Advanced" });
+    await screen.findAllByRole("option", { name: "Advanced" });
     expect(screen.getByLabelText("Level *")).toHaveValue("Intermediate");
 
     fireEvent.submit(saveButton.closest("form")!);
 
     await waitFor(() => expect(updateChoreography).toHaveBeenCalled());
     const [, payload] = vi.mocked(updateChoreography).mock.calls[0];
-    expect(payload).toMatchObject({ level: "Intermediate" });
-    expect(payload).not.toHaveProperty("personal_level");
+    expect(payload).toMatchObject({ level: "Intermediate", personal_level: "Advanced" });
     expect(payload).not.toHaveProperty("official_level");
+  });
+
+  it("shows the stored personal level in the form and sends it unchanged", async () => {
+    vi.mocked(fetchChoreography).mockResolvedValue({
+      ...BASE_CHOREOGRAPHY,
+      level: "Advanced",
+      personal_level: "Advanced",
+    });
+    vi.mocked(getLevels).mockResolvedValue(TWO_LEVELS);
+
+    renderDetail("/choreographies/1?edit=1");
+    const saveButton = await screen.findByRole("button", { name: "Save Choreography" });
+    await screen.findAllByRole("option", { name: "Advanced" });
+    expect(screen.getByLabelText("Personal Level")).toHaveValue("Advanced");
+    expect(
+      screen.getByRole("option", { name: "Same as official (Intermediate)" }),
+    ).toBeInTheDocument();
+
+    fireEvent.submit(saveButton.closest("form")!);
+
+    await waitFor(() => expect(updateChoreography).toHaveBeenCalled());
+    expect(vi.mocked(updateChoreography).mock.calls[0][1]).toMatchObject({
+      personal_level: "Advanced",
+    });
+  });
+
+  it("sends a newly chosen personal level with the update request", async () => {
+    vi.mocked(getLevels).mockResolvedValue(TWO_LEVELS);
+
+    renderDetail("/choreographies/1?edit=1");
+    const saveButton = await screen.findByRole("button", { name: "Save Choreography" });
+    await screen.findAllByRole("option", { name: "Advanced" });
+    fireEvent.change(screen.getByLabelText("Personal Level"), { target: { value: "Advanced" } });
+    fireEvent.submit(saveButton.closest("form")!);
+
+    await waitFor(() => {
+      expect(updateChoreography).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ level: "Intermediate", personal_level: "Advanced" }),
+      );
+    });
+  });
+
+  it("sends an empty personal level when 'Same as official' is chosen", async () => {
+    vi.mocked(fetchChoreography).mockResolvedValue({
+      ...BASE_CHOREOGRAPHY,
+      level: "Advanced",
+      personal_level: "Advanced",
+    });
+    vi.mocked(getLevels).mockResolvedValue(TWO_LEVELS);
+
+    renderDetail("/choreographies/1?edit=1");
+    const saveButton = await screen.findByRole("button", { name: "Save Choreography" });
+    await screen.findAllByRole("option", { name: "Advanced" });
+    fireEvent.change(screen.getByLabelText("Personal Level"), { target: { value: "" } });
+    fireEvent.submit(saveButton.closest("form")!);
+
+    await waitFor(() => {
+      expect(updateChoreography).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ personal_level: "" }),
+      );
+    });
+  });
+
+  it("shows a backend issue for the personal level next to the field", async () => {
+    vi.mocked(validateChoreography).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: { issues: [{ field: "personal_level", key: "invalid_level" }] },
+      },
+    });
+    renderDetail("/choreographies/1?edit=1");
+    await screen.findAllByRole("option", { name: "Intermediate" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+
+    expect(await screen.findByText("Select a valid personal level.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Personal Level")).toHaveAccessibleDescription(
+      "Select a valid personal level.",
+    );
+    expect(updateChoreography).not.toHaveBeenCalled();
   });
 
   it("shows a retry hint when the server is restarting its database", async () => {
@@ -228,7 +315,7 @@ describe("ChoreographyDetail", () => {
 
     renderDetail("/choreographies/1?edit=1");
     const saveButton = await screen.findByRole("button", { name: "Save Choreography" });
-    await screen.findByRole("option", { name: "Intermediate" });
+    await screen.findAllByRole("option", { name: "Intermediate" });
     fireEvent.submit(saveButton.closest("form")!);
 
     expect(
@@ -242,7 +329,7 @@ describe("ChoreographyDetail", () => {
 
     renderDetail("/choreographies/1?edit=1");
     const saveButton2 = await screen.findByRole("button", { name: "Save Choreography" });
-    await screen.findByRole("option", { name: "Intermediate" });
+    await screen.findAllByRole("option", { name: "Intermediate" });
     fireEvent.submit(saveButton2.closest("form")!);
     await waitFor(() => expect(checkChoreographyDuplicates).toHaveBeenCalled());
     await act(async () => {});

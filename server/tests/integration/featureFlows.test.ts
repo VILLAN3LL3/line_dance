@@ -18,8 +18,11 @@ import { validateTrainer } from '../../features/trainers/validation.ts';
 import type { TrainerInput } from '../../features/trainers/validation.ts';
 import * as ratings from '../../features/ratings/flow.ts';
 import { validateRating } from '../../features/ratings/validation.ts';
-import * as personalLevels from '../../features/personal-levels/flow.ts';
-import { validatePersonalLevel } from '../../features/personal-levels/validation.ts';
+import * as choreography from '../../features/choreographies/write-flow.ts';
+import {
+  preparePartialWriteRequest,
+  prepareWriteRequest,
+} from '../../features/choreographies/validation.ts';
 
 beforeAll(async () => {
   await setupTestDb();
@@ -226,67 +229,89 @@ describe('personal level flow', () => {
   const storedLevel = `SELECT l.name FROM personal_data.choreography_personal_levels p
     JOIN levels l ON l.id = p.level_id WHERE p.choreography_id = ?`;
 
-  async function createDance(): Promise<number> {
-    const choreography = await runQuery(
-      "INSERT INTO choreographies (name, level_id) SELECT 'Dance', id FROM levels LIMIT 1",
+  async function createDance(personalLevel?: string | null): Promise<number> {
+    const result = await choreography.createChoreography(
+      prepareWriteRequest({
+        name: 'Dance',
+        level: 'Beginner',
+        ...(personalLevel === undefined ? {} : { personal_level: personalLevel }),
+      }),
     );
-    return choreography.id;
+    if ('error' in result) throw new Error(`Failed to create dance: ${result.error}`);
+    return result.value;
   }
 
+  const update = async (
+    id: number,
+    body: Record<string, unknown>,
+  ): ReturnType<typeof choreography.updateChoreography> =>
+    choreography.updateChoreography(id, preparePartialWriteRequest({ name: 'Dance', ...body }));
+
   it('saves, replaces and removes the personal level in the attached personal database', async () => {
-    const id = await createDance();
-    expect(
-      await personalLevels.setPersonalLevel(
-        String(id),
-        validatePersonalLevel({ level: 'advanced' }),
-      ),
-    ).toEqual({
-      value: { choreography_id: id, level: 'ADVANCED' },
-    });
+    const id = await createDance('advanced');
     expect(await getQuery(storedLevel, [id])).toEqual({ name: 'ADVANCED' });
-    await personalLevels.setPersonalLevel(String(id), validatePersonalLevel({ level: 'Beginner' }));
+    await update(id, { personal_level: 'Beginner' });
     expect(await getQuery(storedLevel, [id])).toEqual({ name: 'BEGINNER' });
-    expect(await personalLevels.removePersonalLevel(String(id))).toEqual({ value: true });
+    await update(id, { personal_level: null });
     expect(await getQuery(storedLevel, [id])).toBeUndefined();
   });
 
-  it('returns domain errors and keeps the existing personal level', async () => {
-    const id = await createDance();
-    await personalLevels.setPersonalLevel(String(id), validatePersonalLevel({ level: 'ADVANCED' }));
-    expect(
-      await personalLevels.setPersonalLevel('abc', validatePersonalLevel({ level: 'ADVANCED' })),
-    ).toEqual({
-      error: 'invalid_id',
-    });
-    expect(
-      await personalLevels.setPersonalLevel('99999', validatePersonalLevel({ level: 'bogus' })),
-    ).toEqual({
-      error: 'not_found',
-    });
-    expect(
-      await personalLevels.setPersonalLevel(String(id), validatePersonalLevel({ level: 'bogus' })),
-    ).toEqual({
-      error: 'invalid_level',
-    });
-    expect(await personalLevels.setPersonalLevel(String(id), validatePersonalLevel({}))).toEqual({
-      error: 'invalid_level',
-    });
+  it('keeps the personal level when the update does not mention it', async () => {
+    const id = await createDance('ADVANCED');
+    await update(id, { name: 'Renamed' });
     expect(await getQuery(storedLevel, [id])).toEqual({ name: 'ADVANCED' });
   });
 
-  it('propagates a failed update and preserves the existing personal level', async () => {
-    const id = await createDance();
-    await personalLevels.setPersonalLevel(String(id), validatePersonalLevel({ level: 'ADVANCED' }));
+  it.each([[''], ['   '], [null]])('treats %j as removing the personal level', async (value) => {
+    const id = await createDance('ADVANCED');
+    await update(id, { personal_level: value });
+    expect(await getQuery(storedLevel, [id])).toBeUndefined();
+  });
+
+  it('reports an unknown personal level as a field issue and writes nothing', async () => {
+    const issue = { field: 'personal_level', key: 'invalid_level' };
+    const created = await choreography.createChoreography(
+      prepareWriteRequest({ name: 'Dance', level: 'Beginner', personal_level: 'bogus' }),
+    );
+    expect(created).toEqual({ error: 'validation', issues: [issue] });
+    expect(await getQuery('SELECT id FROM choreographies')).toBeUndefined();
+
+    const id = await createDance('ADVANCED');
+    expect(await update(id, { name: 'Renamed', personal_level: 'bogus' })).toEqual({
+      error: 'validation',
+      issues: [issue],
+    });
+    expect(await update(id, { personal_level: 42 })).toEqual({
+      error: 'validation',
+      issues: [issue],
+    });
+    expect(await getQuery(storedLevel, [id])).toEqual({ name: 'ADVANCED' });
+    expect(await getQuery('SELECT name FROM choreographies WHERE id = ?', [id])).toEqual({
+      name: 'Dance',
+    });
+  });
+
+  it('rolls the whole update back when saving the personal level fails', async () => {
+    const id = await createDance('ADVANCED');
     await runQuery(
       "CREATE TEMP TRIGGER reject_personal_level_update BEFORE UPDATE ON personal_data.choreography_personal_levels BEGIN SELECT RAISE(ABORT, 'Personal level update failed'); END",
     );
     try {
-      await expect(
-        personalLevels.setPersonalLevel(String(id), validatePersonalLevel({ level: 'BEGINNER' })),
-      ).rejects.toThrow('Personal level update failed');
+      await expect(update(id, { name: 'Renamed', personal_level: 'BEGINNER' })).rejects.toThrow(
+        'Personal level update failed',
+      );
       expect(await getQuery(storedLevel, [id])).toEqual({ name: 'ADVANCED' });
+      expect(await getQuery('SELECT name FROM choreographies WHERE id = ?', [id])).toEqual({
+        name: 'Dance',
+      });
     } finally {
       await runQuery('DROP TRIGGER reject_personal_level_update');
     }
+  });
+
+  it('removes the personal level together with the choreography', async () => {
+    const id = await createDance('ADVANCED');
+    await choreography.deleteChoreography(id);
+    expect(await getQuery(storedLevel, [id])).toBeUndefined();
   });
 });
