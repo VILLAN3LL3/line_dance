@@ -1,5 +1,6 @@
 import { allQuery, getQuery, runQuery, withTransaction } from '../../scripts/db.ts';
 import type { AuthorCount, Country, CountryAlias } from './operations.ts';
+import { effectiveLevelName, personalLevelJoins } from '../choreographies/level-sql.ts';
 
 export type Level = { id: number; name: string; value: number | null };
 
@@ -27,13 +28,14 @@ export async function listAuthors(): Promise<{ name: string }[]> {
 
 export async function listAuthorCounts(): Promise<AuthorCount[]> {
   return allQuery<AuthorCount>(
-    `SELECT a.name AS author_name, l.name AS level_name, COUNT(DISTINCT ca.choreography_id) AS count
+    `SELECT a.name AS author_name, ${effectiveLevelName} AS level_name, COUNT(DISTINCT ca.choreography_id) AS count
      FROM authors a
      JOIN choreography_authors ca ON a.id = ca.author_id
      JOIN choreographies c ON ca.choreography_id = c.id
      LEFT JOIN levels l ON c.level_id = l.id
-     GROUP BY a.id, l.id
-     ORDER BY a.name ASC, l.name ASC`,
+     ${personalLevelJoins}
+     GROUP BY a.id, ${effectiveLevelName}
+     ORDER BY a.name ASC, ${effectiveLevelName} ASC`,
   );
 }
 

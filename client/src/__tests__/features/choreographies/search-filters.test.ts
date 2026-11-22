@@ -36,6 +36,16 @@ describe("search-filters model", () => {
     expect(values.tagMode).toBe("exclude");
   });
 
+  it("round-trips the official level option and omits it by default", () => {
+    expect(
+      buildSearchFilters(defaultSearchBarFilterValues(), 0).use_official_level,
+    ).toBeUndefined();
+    const values = searchBarValuesFromFilters({ use_official_level: true }, 0);
+    expect(values.useOfficialLevel).toBe(true);
+    expect(buildSearchFilters(values, 0).use_official_level).toBe(true);
+    expect(searchBarValuesFromFilters({}, 0).useOfficialLevel).toBe(false);
+  });
+
   it("omits max_count when there are no choreographies and step figures when none are wanted", () => {
     const values = { ...defaultSearchBarFilterValues(0), withoutStepFigures: true };
     const filters = buildSearchFilters(values, 0);

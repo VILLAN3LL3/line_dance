@@ -96,6 +96,8 @@ describe("DanceGroupDetail", () => {
           id: 10,
           name: "Dance X",
           level: "Beginner",
+          official_level: "Beginner",
+          personal_level: null,
           authors: [],
           tags: [],
           step_figures: ["Mambo"],

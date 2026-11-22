@@ -36,6 +36,8 @@ function makeChoreo(overrides: Partial<Choreography> = {}): Choreography {
     id: 1,
     name: "Alpha Dance",
     level: "Beginner",
+    official_level: "Beginner",
+    personal_level: null,
     count: 16,
     wall_count: 2,
     creation_year: 2020,

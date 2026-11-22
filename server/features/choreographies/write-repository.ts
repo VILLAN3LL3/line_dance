@@ -186,8 +186,17 @@ export async function deleteUnusedLevels(canonicalNames: string[]): Promise<Writ
   return runQuery(
     `DELETE FROM levels WHERE id NOT IN (
        SELECT DISTINCT level_id FROM choreographies WHERE level_id IS NOT NULL
+     ) AND id NOT IN (
+       SELECT DISTINCT level_id FROM personal_data.choreography_personal_levels
      ) AND UPPER(name) NOT IN (${canonicalNames.map(() => 'UPPER(?)').join(',')})`,
     canonicalNames,
+  );
+}
+
+export async function deleteOrphanedPersonalLevels(): Promise<WriteResult> {
+  return runQuery(
+    `DELETE FROM personal_data.choreography_personal_levels
+     WHERE choreography_id NOT IN (SELECT id FROM choreographies)`,
   );
 }
 

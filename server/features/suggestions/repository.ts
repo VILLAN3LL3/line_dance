@@ -1,5 +1,6 @@
 import { getQuery, allQuery } from '../../scripts/db.ts';
 import type { Suggestion, prepareLearnedGroupId } from './operations.ts';
+import { effectiveLevelValue, personalLevelJoins } from '../choreographies/level-sql.ts';
 
 type LearnedChoreography = {
   dance_group_id: number;
@@ -124,7 +125,10 @@ export async function findSuggestions(
     namesLower.length === 0
       ? 'SELECT NULL AS name_lower WHERE 1=0'
       : namesLower.map(() => 'SELECT ? AS name_lower').join('\n       UNION\n       ');
-  const levelCondition = maxLevelValue === null ? '' : 'AND (l.value IS NOT NULL AND l.value <= ?)';
+  const levelCondition =
+    maxLevelValue === null
+      ? ''
+      : `AND (${effectiveLevelValue} IS NOT NULL AND ${effectiveLevelValue} <= ?)`;
   const params = maxLevelValue === null ? namesLower : [...namesLower, maxLevelValue];
   return allQuery<Suggestion>(
     `WITH known_figures AS (
@@ -138,6 +142,7 @@ export async function findSuggestions(
        INNER JOIN choreography_step_figures csf ON c.id = csf.choreography_id
        INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
        LEFT JOIN levels l ON c.level_id = l.id
+       ${personalLevelJoins}
        WHERE 1=1 ${levelCondition}
        GROUP BY c.id
        HAVING SUM(CASE WHEN LOWER(sf.name) NOT IN (SELECT name_lower FROM known_figures)

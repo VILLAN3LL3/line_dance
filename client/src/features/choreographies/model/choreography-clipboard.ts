@@ -85,7 +85,7 @@ export function buildChoreographyClipboardText(
   const sections: string[] = [
     title,
     "",
-    `Level: ${choreography.level}`,
+    `Level: ${choreography.official_level}`,
     ...(countWall ? [`Count / Wall: ${countWall}`] : []),
     ...buildMusicSection(choreography),
     ...(formattedAuthors.length > 0

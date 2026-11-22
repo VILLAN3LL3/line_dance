@@ -208,6 +208,19 @@ describe("SearchBar", () => {
     });
   });
 
+  it("filters on the official level when the option is checked", async () => {
+    const onSearch = vi.fn().mockResolvedValue(undefined);
+    render(<SearchBar onSearch={onSearch} filters={{}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /use official level/i }));
+    fireEvent.click(screen.getByRole("button", { name: /apply filters/i }));
+
+    await waitFor(() => {
+      expect(onSearch).toHaveBeenCalledWith(expect.objectContaining({ use_official_level: true }));
+    });
+  });
+
   it("adds tags to the excluded list", async () => {
     const onSearch = vi.fn().mockResolvedValue(undefined);
     render(<SearchBar onSearch={onSearch} filters={{}} />);

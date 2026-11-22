@@ -29,6 +29,7 @@ const filterFieldsSchema = z.object({
   step_figures: stringArray,
   step_figures_match_mode: matchModeSchema.optional().catch(undefined),
   without_step_figures: z.literal(true).optional().catch(undefined),
+  use_official_level: z.literal(true).optional().catch(undefined),
   required_step_figures: stringArray,
   tags: stringArray,
   excluded_tags: stringArray,
@@ -72,6 +73,7 @@ export function normalizeSavedFilters(rawFilters: unknown): SavedFilters {
     normalized.step_figures_match_mode = parsed.step_figures_match_mode;
   }
   if (parsed.without_step_figures) normalized.without_step_figures = true;
+  if (parsed.use_official_level) normalized.use_official_level = true;
   assignNonEmptyArray(normalized, 'required_step_figures', parsed.required_step_figures);
 
   const tags = parsed.tags;

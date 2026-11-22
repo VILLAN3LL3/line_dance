@@ -183,6 +183,13 @@ export const openApiSpec = {
           },
           { name: 'max_level_value', in: 'query', schema: { type: 'integer', minimum: 0 } },
           {
+            name: 'use_official_level',
+            in: 'query',
+            description:
+              'Filter level and max_level_value on the official level instead of the effective level (personal level when set).',
+            schema: { type: 'boolean' },
+          },
+          {
             name: 'step_figures',
             in: 'query',
             schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
@@ -325,6 +332,59 @@ export const openApiSpec = {
         responses: {
           200: {
             description: 'Rating removed',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/MessageResponse' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/choreographies/{id}/personal-level': {
+      put: {
+        tags: ['Choreographies'],
+        summary: 'Set personal level for a choreography',
+        parameters: [{ $ref: '#/components/parameters/IdPath' }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { level: { type: 'string' } },
+                required: ['level'],
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Saved personal level',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    choreography_id: { type: 'integer' },
+                    level: { type: 'string' },
+                  },
+                  required: ['choreography_id', 'level'],
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+      delete: {
+        tags: ['Choreographies'],
+        summary: 'Remove personal level for a choreography',
+        parameters: [{ $ref: '#/components/parameters/IdPath' }],
+        responses: {
+          200: {
+            description: 'Personal level removed',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/MessageResponse' },
@@ -1698,7 +1758,12 @@ export const openApiSpec = {
           tutorial_video_url: { type: 'string' },
           count: { type: 'integer' },
           wall_count: { type: 'integer' },
-          level: { type: 'string' },
+          level: {
+            type: 'string',
+            description: 'Effective level: the personal level when set, otherwise the official one',
+          },
+          official_level: { type: 'string' },
+          personal_level: { type: 'string', nullable: true },
           creation_year: { type: 'integer' },
           choreography_information: {
             type: 'array',
@@ -1782,6 +1847,7 @@ export const openApiSpec = {
           step_figures: { type: 'array', items: { type: 'string' } },
           step_figures_match_mode: { type: 'string', enum: ['all', 'any', 'exact'] },
           without_step_figures: { type: 'boolean' },
+          use_official_level: { type: 'boolean' },
           tags: { type: 'array', items: { type: 'string' } },
           excluded_tags: { type: 'array', items: { type: 'string' } },
           authors: { type: 'array', items: { type: 'string' } },

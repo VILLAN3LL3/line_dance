@@ -102,6 +102,8 @@ describe("CourseDetail", () => {
           id: 101,
           name: "Dance One",
           level: "Beginner",
+          official_level: "Beginner",
+          personal_level: null,
           authors: [],
           tags: [],
           step_figures: [],

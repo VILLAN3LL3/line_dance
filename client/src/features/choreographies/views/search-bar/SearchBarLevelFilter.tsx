@@ -10,12 +10,14 @@ interface SearchBarLevelFilterProps {
   levelOptions: string[];
   maxLevelValue: number | null;
   maxLevelOptions: LevelOption[];
+  useOfficialLevel: boolean;
   isLoading: boolean;
   onLevelModeChange: (mode: "selected" | "max") => void;
   onLevelInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAddLevelFromInput: (value?: string) => void;
   onToggleLevel: (level: string) => void;
   onMaxLevelValueChange: (value: number | null) => void;
+  onUseOfficialLevelChange: (checked: boolean) => void;
 }
 
 export const SearchBarLevelFilter: React.FC<SearchBarLevelFilterProps> = ({
@@ -25,16 +27,29 @@ export const SearchBarLevelFilter: React.FC<SearchBarLevelFilterProps> = ({
   levelOptions,
   maxLevelValue,
   maxLevelOptions,
+  useOfficialLevel,
   isLoading,
   onLevelModeChange,
   onLevelInput,
   onAddLevelFromInput,
   onToggleLevel,
   onMaxLevelValueChange,
+  onUseOfficialLevelChange,
 }) => (
   <div className="filter-group">
     <label htmlFor={levelMode === "selected" ? "level-input" : "max-level-select"}>Level</label>
 
+    <div className="filter-checkbox">
+      <label>
+        <input
+          type="checkbox"
+          checked={useOfficialLevel}
+          onChange={(e) => onUseOfficialLevelChange(e.target.checked)}
+          disabled={isLoading}
+        />{" "}
+        Use official level (ignore personal levels)
+      </label>
+    </div>
     <div className="filter-mode-toggle">
       <span>Mode:</span>
       <div className="match-mode-radios" role="radiogroup" aria-label="Level filter mode">

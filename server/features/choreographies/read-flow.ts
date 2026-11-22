@@ -25,6 +25,8 @@ const choreographyResponse = z.looseObject({
   id: z.number(),
   name: z.string(),
   level: z.string(),
+  official_level: z.string(),
+  personal_level: z.string().nullable(),
   step_sheet_link: optionalText,
   demo_video_url: optionalText,
   tutorial_video_url: optionalText,

@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.ts';
-import { runQuery } from '../../scripts/db.ts';
+import { getQuery, runQuery } from '../../scripts/db.ts';
 import * as groups from '../../features/groups/flow.ts';
 import { prepareBaseFiguresUpdate, validateGroupName } from '../../features/groups/validation.ts';
 import * as courses from '../../features/courses/flow.ts';
@@ -75,6 +75,40 @@ describe('step figure suggestion flows', () => {
         max_level_value: null,
       },
     });
+  });
+
+  it('applies the max level to the effective level of a choreography', async () => {
+    const missing = await runQuery("INSERT INTO step_figures (name) VALUES ('Missing')");
+    const advanced = await runQuery(
+      "INSERT INTO choreographies (name, level_id) SELECT 'Dance', id FROM levels WHERE name = 'ADVANCED'",
+    );
+    await runQuery(
+      'INSERT INTO choreography_step_figures (choreography_id, step_figure_id) VALUES (?, ?)',
+      [advanced.id, missing.id],
+    );
+    const group = await groups.createGroup(validateGroupName({ name: 'Group' }));
+    if ('error' in group || !group.value) throw new Error('Group creation failed');
+    const maxLevel = await getQuery<{ value: number }>(
+      "SELECT value FROM levels WHERE name = 'BEGINNER'",
+    );
+    const request = prepareGroupSuggestion({
+      groupId: String(group.value.id),
+      maxLevel: maxLevel?.value,
+    });
+
+    expect(await suggestions.getGroupSuggestions(request)).toEqual({ value: [] });
+
+    await runQuery(
+      `INSERT INTO personal_data.choreography_personal_levels (choreography_id, level_id)
+       SELECT ?, id FROM levels WHERE name = 'BEGINNER'`,
+      [advanced.id],
+    );
+    expect(await suggestions.getGroupSuggestions(request)).toEqual({
+      value: [{ step_figure: 'Missing', additional_choreographies: 1 }],
+    });
+
+    await runQuery('DELETE FROM personal_data.choreography_personal_levels');
+    expect(await suggestions.getGroupSuggestions(request)).toEqual({ value: [] });
   });
 
   it('returns domain errors for invalid and missing groups or sessions', async () => {

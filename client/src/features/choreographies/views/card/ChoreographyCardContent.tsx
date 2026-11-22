@@ -13,6 +13,7 @@ export interface ChoreographyCardContentProps {
   demoEmbedUrl: string | null;
   tutorialEmbedUrl: string | null;
   onLinkClick: (event: React.MouseEvent<HTMLAnchorElement>) => void;
+  personalLevelEditor?: React.ReactNode;
 }
 
 const InfoSection: React.FC<{ information: ChoreographyInformation }> = ({ information }) => (
@@ -29,6 +30,7 @@ export const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = (
   demoEmbedUrl,
   tutorialEmbedUrl,
   onLinkClick,
+  personalLevelEditor,
 }) => {
   const primaryEmbedUrl = demoEmbedUrl || tutorialEmbedUrl;
   const primaryEmbedLabel = demoEmbedUrl ? "Demo Video:" : "Tutorial Video:";
@@ -60,6 +62,8 @@ export const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = (
           <strong>{countWallSummary.label}:</strong> {countWallSummary.value}
         </p>
       )}
+
+      {personalLevelEditor}
 
       <ChoreographerNames key={choreography.id} authors={choreography.authors} />
 

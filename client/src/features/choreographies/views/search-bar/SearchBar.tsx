@@ -91,6 +91,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ viewModel, isLoading = fal
           levelOptions={state.levelOptions}
           maxLevelValue={values.maxLevelValue}
           maxLevelOptions={state.levelValueOptions}
+          useOfficialLevel={values.useOfficialLevel}
+          onUseOfficialLevelChange={actions.changeUseOfficialLevel}
           onLevelModeChange={actions.changeLevelMode}
           onLevelInput={(e) => actions.inputLevel(e.target.value, inputTypeOf(e))}
           onAddLevelFromInput={actions.addLevelFromInput}

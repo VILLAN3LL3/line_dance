@@ -185,6 +185,13 @@ export async function setupChoreographyTestDb(): Promise<Database> {
     rating INTEGER NOT NULL CHECK (rating >= 0 AND rating <= 5)
   )`,
   );
+  await run(
+    testDb,
+    `CREATE TABLE IF NOT EXISTS personal_data.choreography_personal_levels (
+    choreography_id INTEGER PRIMARY KEY,
+    level_id INTEGER NOT NULL
+  )`,
+  );
 
   await seedDefaultLevels(testDb);
 
@@ -245,6 +252,7 @@ export async function clearChoreographyTables(): Promise<void> {
   // Delete choreography_tags from personal_data DB first (no cross-DB FK cascade)
   await run(testDb, 'DELETE FROM personal_data.choreography_tags');
   await run(testDb, 'DELETE FROM personal_data.choreography_ratings');
+  await run(testDb, 'DELETE FROM personal_data.choreography_personal_levels');
   await run(testDb, 'DELETE FROM choreography_information');
   await run(testDb, 'DELETE FROM choreography_info_categories');
   await run(

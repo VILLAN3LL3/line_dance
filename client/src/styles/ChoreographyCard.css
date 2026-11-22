@@ -554,3 +554,27 @@
 .level-badge .star-interactive:hover {
   color: var(--level-badge-fg, #555555);
 }
+
+.level-personal-marker {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.personal-level-editor {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.personal-level-error {
+  color: var(--color-danger);
+  font-size: 12px;
+}
+
+.level-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}

@@ -144,6 +144,21 @@ describe('normalizeSavedFilters', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // use_official_level
+  // ---------------------------------------------------------------------------
+
+  it('keeps use_official_level when exactly true', () => {
+    expect(normalizeSavedFilters({ use_official_level: true })).toEqual({
+      use_official_level: true,
+    });
+  });
+
+  it('omits use_official_level when false or not a boolean', () => {
+    expect(normalizeSavedFilters({ use_official_level: false })).toEqual({});
+    expect(normalizeSavedFilters({ use_official_level: 'true' })).toEqual({});
+  });
+
+  // ---------------------------------------------------------------------------
   // tags
   // ---------------------------------------------------------------------------
 

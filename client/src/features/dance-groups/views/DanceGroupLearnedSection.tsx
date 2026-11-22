@@ -9,13 +9,14 @@ import {
 } from "../../../types";
 import { openInNewTab } from "../../../shared/browser/window";
 import { getBerlinTodayIso } from "../../courses";
+import { ChoreographyLevelBadge } from "../../choreographies";
 import {
   buildLearnedSearchFilters,
   buildSearchPageUrl,
   buildSuggestionSearchFilters,
   getLearnedStepFigures,
 } from "../model/learned-step-figures";
-import { ActionButton, EmptyState, LevelBatch, Section, TagGroup } from "../../../shared/ui";
+import { ActionButton, EmptyState, Section, TagGroup } from "../../../shared/ui";
 
 interface DanceGroupLearnedSectionProps {
   learnedChoreographies: LearnedChoreography[];
@@ -216,7 +217,11 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
                             {choreography?.name ?? `Unknown (ID: ${learned.choreography_id})`}
                           </td>
                           <td>
-                            {choreography ? <LevelBatch level={choreography.level} /> : "N/A"}
+                            {choreography ? (
+                              <ChoreographyLevelBadge choreography={choreography} />
+                            ) : (
+                              "N/A"
+                            )}
                           </td>
                           <td>{learned.times_danced}</td>
                           <td>{new Date(learned.first_learned_date).toLocaleDateString()}</td>

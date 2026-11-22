@@ -8,6 +8,7 @@ import {
   stringifyQueryValue,
 } from './search-operations.ts';
 import type { QueryValue } from './search-operations.ts';
+import { effectiveLevelName, effectiveLevelValue } from './level-sql.ts';
 
 export type SearchFilters = {
   search?: QueryValue;
@@ -22,6 +23,7 @@ export type SearchFilters = {
   excluded_tags?: QueryValue;
   authors?: QueryValue;
   min_rating?: QueryValue;
+  use_official_level?: QueryValue;
 };
 type QueryParameter = string | number;
 type StepFilter = {
@@ -53,6 +55,7 @@ export function buildFilterConditions(filterObj: SearchFilters): FilterCondition
     excluded_tags,
     authors,
     min_rating,
+    use_official_level,
   } = filterObj;
   const conditions: string[] = [];
   const params: QueryParameter[] = [];
@@ -73,7 +76,11 @@ export function buildFilterConditions(filterObj: SearchFilters): FilterCondition
     params.push(searchTerm, searchTerm);
   }
 
-  const levelFilter = buildLevelFilter(level, max_level_value);
+  const levelFilter = buildLevelFilter(
+    level,
+    max_level_value,
+    use_official_level === 'true' || use_official_level === true,
+  );
   if (levelFilter.condition) {
     conditions.push(levelFilter.condition);
     params.push(...levelFilter.params);
@@ -187,7 +194,11 @@ function buildStepFiguresFilter(
 function buildLevelFilter(
   level: QueryValue,
   max_level_value: QueryValue,
+  useOfficialLevel: boolean,
 ): { condition: string; params: QueryParameter[] } {
+  // `l` is the official level; the effective level also considers the personal level.
+  const levelName = useOfficialLevel ? 'l.name' : effectiveLevelName;
+  const levelValue = useOfficialLevel ? 'l.value' : effectiveLevelValue;
   const levelList = normalizeQueryParam(level)
     .map((value) => stringifyQueryValue(value).trim())
     .filter(Boolean);
@@ -202,12 +213,12 @@ function buildLevelFilter(
 
   if (levelList.length > 0) {
     const placeholders = levelList.map(() => 'UPPER(?)').join(',');
-    parts.push(`UPPER(l.name) IN (${placeholders})`);
+    parts.push(`UPPER(${levelName}) IN (${placeholders})`);
     params.push(...levelList);
   }
 
   if (maxLevelValue !== null) {
-    parts.push('(l.value IS NOT NULL AND l.value <= ?)');
+    parts.push(`(${levelValue} IS NOT NULL AND ${levelValue} <= ?)`);
     params.push(maxLevelValue);
   }
 

@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 
 import {
+  deleteChoreographyPersonalLevel,
   deleteChoreographyRating,
+  setChoreographyPersonalLevel,
   setChoreographyRating,
 } from "../../../features/choreographies/api";
 import { buildChoreographyClipboardText } from "../../../features/choreographies/model/choreography-clipboard";
@@ -14,9 +16,16 @@ import { renderWithQueryClient as render } from "../../helpers/renderWithQueryCl
 vi.mock("../../../features/choreographies/api", () => ({
   deleteChoreographyRating: vi.fn().mockResolvedValue(undefined),
   setChoreographyRating: vi.fn().mockResolvedValue(undefined),
+  deleteChoreographyPersonalLevel: vi.fn().mockResolvedValue(undefined),
+  setChoreographyPersonalLevel: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("../../../features/metadata/api", () => ({
   getCountryCodes: vi.fn().mockResolvedValue({}),
+  getLevels: vi.fn().mockResolvedValue([
+    { id: 1, name: "Beginner", value: 30 },
+    { id: 2, name: "Intermediate", value: 110 },
+    { id: 3, name: "Advanced", value: 150 },
+  ]),
 }));
 
 import type { Choreography } from "../../../types";
@@ -34,6 +43,8 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
     id: 42,
     name: "Neon Waltz",
     level: "Intermediate",
+    official_level: "Intermediate",
+    personal_level: null,
     count: 32,
     wall_count: 4,
     creation_year: 2024,
@@ -318,6 +329,76 @@ describe("ChoreographyCard", () => {
     expect(spotifyLink).toHaveAttribute(
       "href",
       "https://open.spotify.com/search/Alan+Walker+Faded",
+    );
+  });
+
+  it("marks a personal level in the badge and keeps the official level in the title", () => {
+    render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          level: "Advanced",
+          official_level: "Intermediate",
+          personal_level: "Advanced",
+        })}
+      />,
+    );
+
+    const badge = screen.getByText("Advanced").closest(".level-badge");
+    expect(badge).toHaveAttribute("title", "Personal level (official: Intermediate)");
+    expect(screen.getByText(/Personal level, official level Intermediate/)).toBeInTheDocument();
+  });
+
+  it("does not mark the level when no personal level exists", () => {
+    render(<ChoreographyCard choreography={makeChoreography()} />);
+
+    expect(screen.getByText("Intermediate").closest(".level-badge")).not.toHaveAttribute("title");
+    expect(screen.queryByText(/Personal level, official level/)).toBeNull();
+  });
+
+  it("offers the personal level editor only on the detail card", () => {
+    const { unmount } = render(<ChoreographyCard choreography={makeChoreography()} />);
+    expect(screen.queryByLabelText("Personal level:")).toBeNull();
+    unmount();
+
+    render(<ChoreographyCard choreography={makeChoreography()} videoEmbedMode="all" />);
+    expect(screen.getByLabelText("Personal level:")).toHaveValue("");
+    expect(
+      screen.getByRole("option", { name: "Same as official (Intermediate)" }),
+    ).toBeInTheDocument();
+  });
+
+  it("saves a personal level and resets it to the official level", async () => {
+    const { rerender } = render(
+      <ChoreographyCard choreography={makeChoreography()} videoEmbedMode="all" />,
+    );
+    await screen.findByRole("option", { name: "Advanced" });
+
+    fireEvent.change(screen.getByLabelText("Personal level:"), { target: { value: "Advanced" } });
+    await waitFor(() => {
+      expect(setChoreographyPersonalLevel).toHaveBeenCalledWith(42, "Advanced");
+    });
+
+    rerender(
+      <ChoreographyCard
+        choreography={makeChoreography({ level: "Advanced", personal_level: "Advanced" })}
+        videoEmbedMode="all"
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Personal level:"), { target: { value: "" } });
+    await waitFor(() => {
+      expect(deleteChoreographyPersonalLevel).toHaveBeenCalledWith(42);
+    });
+  });
+
+  it("shows an error when the personal level cannot be saved", async () => {
+    vi.mocked(setChoreographyPersonalLevel).mockRejectedValueOnce(new Error("boom"));
+    render(<ChoreographyCard choreography={makeChoreography()} videoEmbedMode="all" />);
+    await screen.findByRole("option", { name: "Advanced" });
+
+    fireEvent.change(screen.getByLabelText("Personal level:"), { target: { value: "Advanced" } });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not save the personal level.",
     );
   });
 

@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 
 import { addWindowEventListener } from "../../../shared/browser/window";
-import { ChoreographyCard, type ChoreographyCardViewModel } from "../../choreographies";
+import {
+  ChoreographyCard,
+  ChoreographyLevelBadge,
+  type ChoreographyCardViewModel,
+} from "../../choreographies";
 import { ActionButton, EmptyState, LevelBatch, Section } from "../../../shared/ui";
 
 import type { Choreography, Session, SessionChoreography } from "../../../types";
@@ -126,7 +130,7 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
                   >
                     <div className="choreo-info">
                       <h4>{choreography.name}</h4>
-                      <LevelBatch level={choreography.level || "UNKNOWN"} />
+                      <ChoreographyLevelBadge choreography={choreography} />
                     </div>
                   </button>
                 ) : (

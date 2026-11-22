@@ -37,6 +37,10 @@ export const DanceGroupLevelsSection: React.FC<DanceGroupLevelsSectionProps> = (
           ))}
         </select>
       </div>
+      <p className="level-hint">
+        Levels are compared using personal level assessments where set, otherwise the official
+        level.
+      </p>
     </Section>
   );
 };

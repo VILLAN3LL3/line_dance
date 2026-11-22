@@ -46,6 +46,30 @@ test.describe("Choreography Detail", () => {
     await expect(page.getByText(updatedName)).toBeVisible();
   });
 
+  test("sets a personal level that the level filter respects", async ({ page, request }) => {
+    const name = `E2E Personal Level ${Date.now()}`;
+    const choreographyId = await createChoreographyViaApi(request, name);
+
+    await page.goto(`/choreographies/${choreographyId}`);
+    const editor = page.getByLabel("Personal level:");
+    await expect(editor.locator("option").first()).toHaveText("Same as official (BEGINNER)");
+    await expect(editor.getByRole("option", { name: "ADVANCED", exact: true })).toHaveCount(1);
+    await editor.selectOption({ label: "ADVANCED" });
+    await expect(page.locator(".level-badge", { hasText: "ADVANCED" })).toBeVisible();
+
+    await page.goto("/");
+    await page.getByPlaceholder(/Search choreographies by name/i).fill(name);
+    await page.getByRole("button", { name: /Advanced Filters/i }).click();
+    await page.getByRole("radio", { name: /Up to max level/i }).check();
+    await page.locator("#max-level-select").selectOption({ label: "BEGINNER" });
+    await page.getByRole("button", { name: /Apply Filters/i }).click();
+    await expect(page.locator(".choreography-card", { hasText: name })).toHaveCount(0);
+
+    await page.getByRole("checkbox", { name: /Use official level/i }).check();
+    await page.getByRole("button", { name: /Apply Filters/i }).click();
+    await expect(page.locator(".choreography-card", { hasText: name })).toBeVisible();
+  });
+
   test("supports delete action", async ({ page, request }) => {
     const name = `E2E Delete ${Date.now()}`;
     const choreographyId = await createChoreographyViaApi(request, name);

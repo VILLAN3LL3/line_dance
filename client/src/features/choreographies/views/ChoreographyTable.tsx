@@ -3,7 +3,8 @@ import "../../../styles/ChoreographyTable.css";
 import React from "react";
 
 import { openInNewTab } from "../../../shared/browser/window";
-import { ActionButton, LevelBatch } from "../../../shared/ui";
+import { ChoreographyLevelBadge } from "./ChoreographyLevelBadge";
+import { ActionButton } from "../../../shared/ui";
 import { Choreography } from "../../../types";
 import { getSortIndicator, type SortDirection, type SortField } from "../model/choreography-table";
 
@@ -93,7 +94,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                     <strong>{choreo.name}</strong>
                   </td>
                   <td className="level-cell">
-                    <LevelBatch level={choreo.level} />
+                    <ChoreographyLevelBadge choreography={choreo} />
                   </td>
                   <td>{choreo.count ?? "-"}</td>
                   <td>{choreo.wall_count ?? "-"}</td>

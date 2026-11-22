@@ -1,4 +1,5 @@
 export { ChoreographyCard } from "./views/ChoreographyCard";
+export { ChoreographyLevelBadge } from "./views/ChoreographyLevelBadge";
 export { ChoreographySearchPage } from "./views/ChoreographySearchPage";
 export {
   useAllChoreographiesQuery,

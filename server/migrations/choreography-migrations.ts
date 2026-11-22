@@ -805,6 +805,20 @@ const migrations: Migration[] = [
       });
     },
   },
+  {
+    id: '015_add_choreography_personal_levels',
+    up: async () => {
+      // No cross-database foreign keys: orphans are removed by the choreography write flow.
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS personal_data.choreography_personal_levels (
+          choreography_id INTEGER PRIMARY KEY,
+          level_id INTEGER NOT NULL
+        )`,
+        [],
+        dbName,
+      );
+    },
+  },
 ];
 
 export async function runChoreographyMigrations(): Promise<void> {

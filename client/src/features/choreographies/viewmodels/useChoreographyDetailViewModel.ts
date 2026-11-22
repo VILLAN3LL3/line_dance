@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { browserHistory } from "../../../shared/browser/history";
 import { getChoreographyUpdateErrorMessage } from "../../../shared/http/apiErrors";
 import type { ChoreographyFormData } from "../../../types";
 import { fetchChoreography, updateChoreography } from "../api";
+import { choreographyToFormData } from "../model/choreography-level";
 import { choreographyKeys } from "../queryKeys";
 import { useChoreographyCardViewModel } from "./useChoreographyCardViewModel";
 import { useChoreographyFormViewModel } from "./useChoreographyFormViewModel";
@@ -49,8 +50,12 @@ export const useChoreographyDetailViewModel = () => {
     failureMessage: getChoreographyUpdateErrorMessage,
     excludeId: choreographyId,
   });
+  const formInitialData = useMemo(
+    () => (choreographyQuery.data ? choreographyToFormData(choreographyQuery.data) : undefined),
+    [choreographyQuery.data],
+  );
   const form = useChoreographyFormViewModel({
-    initialData: choreographyQuery.data,
+    initialData: formInitialData,
     initialDataKey: hasValidId ? choreographyId : undefined,
     onSubmit: saveFlow.actions.submit,
   });
@@ -76,7 +81,7 @@ export const useChoreographyDetailViewModel = () => {
   };
 
   const cancelEdit = () => {
-    form.actions.reset(choreographyQuery.data);
+    form.actions.reset(formInitialData);
     saveFlow.actions.cancelDuplicate();
     setMode("view");
   };

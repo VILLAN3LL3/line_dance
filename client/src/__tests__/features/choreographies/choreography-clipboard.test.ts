@@ -11,6 +11,8 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
     id: 1,
     name: "Bohemian Rhapsody",
     level: "Intermediate",
+    official_level: "Intermediate",
+    personal_level: null,
     count: 64,
     wall_count: 2,
     creation_year: 2025,
@@ -60,6 +62,15 @@ describe("buildChoreographyClipboardText", () => {
     expect(text).toContain("• Classic");
     expect(text).toContain("Links:");
     expect(text).toContain("• Step Sheet: https://example.com/step-sheet");
+  });
+
+  it("shares the official level instead of the effective personal level", () => {
+    const text = buildChoreographyClipboardText(
+      makeChoreography({ level: "Advanced", personal_level: "Advanced" }),
+    );
+
+    expect(text).toContain("Level: Intermediate");
+    expect(text).not.toContain("Advanced");
   });
 
   it("omits optional sections when fields are empty", () => {

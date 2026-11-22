@@ -25,6 +25,7 @@ const searchQuery = z
     excluded_tags: queryValue,
     authors: queryValue,
     min_rating: queryValue,
+    use_official_level: queryValue,
   })
   .brand<'ChoreographySearchQuery'>();
 const idParams = z.object({ id: z.string().brand<'ChoreographyReadId'>() });

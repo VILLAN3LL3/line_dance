@@ -2,13 +2,15 @@ import "../../../styles/ChoreographyCard.css";
 
 import React from "react";
 
-import { Card, LevelBatch } from "../../../shared/ui";
+import { Card } from "../../../shared/ui";
 import { getYouTubeVideoEmbedUrl } from "../../../shared/utils/youtube";
 import type { Choreography } from "../../../types";
 import { getCountWallSummary } from "../model/choreography-card";
 import type { ChoreographyCardViewModel } from "../viewmodels/useChoreographyCardViewModel";
 import { ChoreographyCardActions } from "./card/ChoreographyCardActions";
 import { ChoreographyCardContent } from "./card/ChoreographyCardContent";
+import { PersonalLevelEditor } from "./card/PersonalLevelEditor";
+import { ChoreographyLevelBadge } from "./ChoreographyLevelBadge";
 import { StarRating } from "./StarRating";
 
 interface ChoreographyCardProps {
@@ -43,8 +45,8 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
         {choreography.creation_year != null ? ` (${choreography.creation_year})` : ""}
       </h3>
       <div className="card-header-meta">
-        <LevelBatch
-          level={choreography.level}
+        <ChoreographyLevelBadge
+          choreography={choreography}
           trailingContent={
             <StarRating
               rating={cardViewModel.state.ratingFor(choreography)}
@@ -65,6 +67,19 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       demoEmbedUrl={demoEmbedUrl}
       tutorialEmbedUrl={tutorialEmbedUrl}
       onLinkClick={handleContentLinkClick}
+      personalLevelEditor={
+        isDetailMode ? (
+          <PersonalLevelEditor
+            choreographyId={choreography.id}
+            officialLevel={choreography.official_level}
+            personalLevel={choreography.personal_level}
+            levelOptions={cardViewModel.state.levelOptions}
+            isSaving={cardViewModel.state.isSavingPersonalLevel}
+            hasError={cardViewModel.state.personalLevelError}
+            onChange={(level) => cardViewModel.actions.changePersonalLevel(choreography, level)}
+          />
+        ) : undefined
+      }
     />
   );
 

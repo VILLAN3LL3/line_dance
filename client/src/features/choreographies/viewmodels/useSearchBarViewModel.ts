@@ -182,6 +182,7 @@ export const useSearchBarViewModel = ({
       toggleLevel: (level: string) => transform((current) => toggleLevel(current, level)),
       changeMaxLevelValue: (maxLevelValue: number | null) =>
         update({ levelMode: "max", maxLevelValue }),
+      changeUseOfficialLevel: (useOfficialLevel: boolean) => update({ useOfficialLevel }),
       changeMaxCount: (maxCount: number) => update({ maxCount }),
       inputFigure,
       addFigureFromInput: (value?: string) =>

@@ -18,11 +18,13 @@ interface SearchBarAdvancedFiltersProps {
   levelOptions: string[];
   maxLevelValue: number | null;
   maxLevelOptions: LevelOption[];
+  useOfficialLevel: boolean;
   onLevelModeChange: (mode: "selected" | "max") => void;
   onLevelInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAddLevelFromInput: (value?: string) => void;
   onToggleLevel: (level: string) => void;
   onMaxLevelValueChange: (value: number | null) => void;
+  onUseOfficialLevelChange: (checked: boolean) => void;
   // Max count
   maxCount: number;
   maxCountLimit: number;
@@ -73,11 +75,13 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
   levelOptions,
   maxLevelValue,
   maxLevelOptions,
+  useOfficialLevel,
   onLevelModeChange,
   onLevelInput,
   onAddLevelFromInput,
   onToggleLevel,
   onMaxLevelValueChange,
+  onUseOfficialLevelChange,
   maxCount,
   maxCountLimit,
   onMaxCountChange,
@@ -126,12 +130,14 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
           levelOptions={levelOptions}
           maxLevelValue={maxLevelValue}
           maxLevelOptions={maxLevelOptions}
+          useOfficialLevel={useOfficialLevel}
           isLoading={isLoading}
           onLevelModeChange={onLevelModeChange}
           onLevelInput={onLevelInput}
           onAddLevelFromInput={onAddLevelFromInput}
           onToggleLevel={onToggleLevel}
           onMaxLevelValueChange={onMaxLevelValueChange}
+          onUseOfficialLevelChange={onUseOfficialLevelChange}
         />
 
         <SearchBarStepFiguresFilter

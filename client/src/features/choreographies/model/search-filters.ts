@@ -6,6 +6,7 @@ export interface SearchBarFilterValues {
   levelMode: "selected" | "max";
   selectedLevel: string[];
   maxLevelValue: number | null;
+  useOfficialLevel: boolean;
   maxCount: number;
   selectedFigures: string[];
   stepFiguresMatchMode: "all" | "any" | "exact";
@@ -28,6 +29,7 @@ export const defaultSearchBarFilterValues = (maxCountLimit = 0): SearchBarFilter
   levelMode: "selected",
   selectedLevel: [],
   maxLevelValue: null,
+  useOfficialLevel: false,
   maxCount: maxCountLimit,
   selectedFigures: [],
   stepFiguresMatchMode: "all",
@@ -57,6 +59,7 @@ export const searchBarValuesFromFilters = (
       : "selected",
   selectedLevel: Array.isArray(filters.level) ? filters.level : [],
   maxLevelValue: typeof filters.max_level_value === "number" ? filters.max_level_value : null,
+  useOfficialLevel: filters.use_official_level === true,
   maxCount: filters.max_count ?? maxCountLimit,
   selectedFigures: filters.step_figures || [],
   stepFiguresMatchMode: filters.step_figures_match_mode || "all",
@@ -90,6 +93,7 @@ export const buildSearchFilters = (
       : undefined,
   max_level_value:
     values.levelMode === "max" && values.maxLevelValue !== null ? values.maxLevelValue : undefined,
+  use_official_level: values.useOfficialLevel || undefined,
   max_count: maxCountLimit > 0 ? values.maxCount : undefined,
   step_figures:
     !values.withoutStepFigures && values.selectedFigures.length > 0

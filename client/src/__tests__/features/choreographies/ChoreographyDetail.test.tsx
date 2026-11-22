@@ -50,6 +50,8 @@ const BASE_CHOREOGRAPHY = {
   id: 1,
   name: "Neon Waltz",
   level: "Intermediate",
+  official_level: "Intermediate",
+  personal_level: null,
   count: 32,
   wall_count: 4,
   creation_year: 2024,
@@ -184,6 +186,31 @@ describe("ChoreographyDetail", () => {
         expect.objectContaining({ name: "Neon Waltz" }),
       );
     });
+  });
+
+  it("edits and saves the official level even when a personal level is set", async () => {
+    vi.mocked(fetchChoreography).mockResolvedValue({
+      ...BASE_CHOREOGRAPHY,
+      level: "Advanced",
+      personal_level: "Advanced",
+    });
+    vi.mocked(getLevels).mockResolvedValue([
+      { id: 2, name: "Intermediate", value: 50 },
+      { id: 3, name: "Advanced", value: 150 },
+    ]);
+
+    renderDetail("/choreographies/1?edit=1");
+    const saveButton = await screen.findByRole("button", { name: "Save Choreography" });
+    await screen.findByRole("option", { name: "Advanced" });
+    expect(screen.getByLabelText("Level *")).toHaveValue("Intermediate");
+
+    fireEvent.submit(saveButton.closest("form")!);
+
+    await waitFor(() => expect(updateChoreography).toHaveBeenCalled());
+    const [, payload] = vi.mocked(updateChoreography).mock.calls[0];
+    expect(payload).toMatchObject({ level: "Intermediate" });
+    expect(payload).not.toHaveProperty("personal_level");
+    expect(payload).not.toHaveProperty("official_level");
   });
 
   it("shows a retry hint when the server is restarting its database", async () => {

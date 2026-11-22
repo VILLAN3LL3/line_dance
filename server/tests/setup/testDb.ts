@@ -68,6 +68,7 @@ export async function clearAllTables(): Promise<void> {
   await run(db, 'DELETE FROM step_figure_components');
   await run(db, 'DELETE FROM step_figures');
   await run(db, 'DELETE FROM authors');
+  await run(db, 'DELETE FROM personal_data.choreography_personal_levels');
   // Reset autoincrement counters; sqlite_sequence is created on first insert,
   // so this is a no-op until data has been inserted.
   try {

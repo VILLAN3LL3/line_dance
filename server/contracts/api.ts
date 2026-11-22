@@ -6,7 +6,10 @@ export interface Choreography {
   tutorial_video_url?: string;
   count?: number;
   wall_count?: number;
+  /** Effective level: the personal level when set, otherwise the official one. */
   level: string;
+  official_level: string;
+  personal_level: string | null;
   creation_year?: number;
   choreography_information?: ChoreographyInformation[];
   song?: string;
@@ -76,6 +79,7 @@ export interface SearchFilters {
   excluded_tags?: string[];
   authors?: string[];
   min_rating?: number;
+  use_official_level?: boolean;
   sort_field?: string;
   sort_direction?: 'asc' | 'desc';
   page?: number;

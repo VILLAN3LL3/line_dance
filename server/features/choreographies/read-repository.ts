@@ -4,6 +4,7 @@ import type { SearchFilters } from './search-query.ts';
 import type { FigureRelation } from './search-operations.ts';
 import type { DuplicateCriteria } from './read-operations.ts';
 import type { ChoreographyReadId } from './read-validation.ts';
+import { effectiveLevelValue, levelColumns, personalLevelJoins } from './level-sql.ts';
 
 export type ChoreographyRow = {
   id: number;
@@ -20,6 +21,8 @@ export type ChoreographyRow = {
   song: string | null;
   artist: string | null;
   level: string | null;
+  official_level: string | null;
+  personal_level: string | null;
 };
 export type InformationRow = { id: number; category: string; description: string };
 export type DuplicateRow = { id: number; name: string; level: string };
@@ -29,9 +32,10 @@ export async function listChoreographies(
   offset: number,
 ): Promise<ChoreographyRow[]> {
   return allQuery<ChoreographyRow>(
-    `SELECT c.*, l.name as level FROM choreographies c
+    `SELECT c.*, ${levelColumns} FROM choreographies c
      LEFT JOIN levels l ON c.level_id = l.id
-     ORDER BY LOWER(c.name) ASC, COALESCE(l.value, 2147483647) ASC LIMIT ? OFFSET ?`,
+     ${personalLevelJoins}
+     ORDER BY LOWER(c.name) ASC, COALESCE(${effectiveLevelValue}, 2147483647) ASC LIMIT ? OFFSET ?`,
     [limit, offset],
   );
 }
@@ -40,7 +44,10 @@ export async function findChoreography(
   id: ChoreographyReadId,
 ): Promise<ChoreographyRow | undefined> {
   return getQuery<ChoreographyRow>(
-    'SELECT c.*, l.name as level FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id WHERE c.id = ?',
+    `SELECT c.*, ${levelColumns} FROM choreographies c
+     LEFT JOIN levels l ON c.level_id = l.id
+     ${personalLevelJoins}
+     WHERE c.id = ?`,
     [id],
   );
 }
@@ -131,12 +138,13 @@ export async function listFigureRelations(): Promise<FigureRelation[]> {
 
 export async function searchChoreographies(filters: SearchFilters): Promise<ChoreographyRow[]> {
   const { conditions, params, joins, stepFilter } = buildFilterConditions(filters);
-  let query =
-    'SELECT DISTINCT c.*, l.name as level FROM choreographies c LEFT JOIN levels l ON c.level_id = l.id';
+  let query = `SELECT DISTINCT c.*, ${levelColumns} FROM choreographies c
+     LEFT JOIN levels l ON c.level_id = l.id
+     ${personalLevelJoins}`;
   query += joins.map((join) => ` ${join}`).join('');
   if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
   if (stepFilter.groupBy) query += stepFilter.groupBy;
   if (stepFilter.having) query += stepFilter.having;
-  query += ' ORDER BY LOWER(c.name) ASC, COALESCE(l.value, 2147483647) ASC';
+  query += ` ORDER BY LOWER(c.name) ASC, COALESCE(${effectiveLevelValue}, 2147483647) ASC`;
   return allQuery<ChoreographyRow>(query, [...params, ...stepFilter.havingParams]);
 }
