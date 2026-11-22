@@ -63,47 +63,49 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
       />
     </FormField>
 
-    <FormField label="Level *" htmlFor="level" className="form-group" error={errors.level}>
-      <select
-        id="level"
-        name="level"
-        value={level}
-        onChange={onChange}
-        required
-        aria-invalid={errors.level ? true : undefined}
-        aria-describedby={errors.level ? "level-error" : undefined}
-      >
-        <option value="">Select a level</option>
-        {levels.map((item) => (
-          <option key={item.id} value={item.name}>
-            {item.name}
-          </option>
-        ))}
-      </select>
-    </FormField>
+    <div className="form-row">
+      <FormField label="Level *" htmlFor="level" className="form-group" error={errors.level}>
+        <select
+          id="level"
+          name="level"
+          value={level}
+          onChange={onChange}
+          required
+          aria-invalid={errors.level ? true : undefined}
+          aria-describedby={errors.level ? "level-error" : undefined}
+        >
+          <option value="">Select a level</option>
+          {levels.map((item) => (
+            <option key={item.id} value={item.name}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+      </FormField>
 
-    <FormField
-      label="Personal Level"
-      htmlFor="personal_level"
-      className="form-group"
-      error={errors.personal_level}
-    >
-      <select
-        id="personal_level"
-        name="personal_level"
-        value={personalLevel ?? ""}
-        onChange={onChange}
-        aria-invalid={errors.personal_level ? true : undefined}
-        aria-describedby={errors.personal_level ? "personal_level-error" : undefined}
+      <FormField
+        label="Personal Level"
+        htmlFor="personal_level"
+        className="form-group"
+        error={errors.personal_level}
       >
-        <option value="">{level ? `Same as official (${level})` : "Same as official"}</option>
-        {levels.map((item) => (
-          <option key={item.id} value={item.name}>
-            {item.name}
-          </option>
-        ))}
-      </select>
-    </FormField>
+        <select
+          id="personal_level"
+          name="personal_level"
+          value={personalLevel ?? ""}
+          onChange={onChange}
+          aria-invalid={errors.personal_level ? true : undefined}
+          aria-describedby={errors.personal_level ? "personal_level-error" : undefined}
+        >
+          <option value="">{level ? `Same as official (${level})` : "Same as official"}</option>
+          {levels.map((item) => (
+            <option key={item.id} value={item.name}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+      </FormField>
+    </div>
 
     <div className="form-row">
       <FormField label="Count" htmlFor="count" className="form-group" error={errors.count}>
