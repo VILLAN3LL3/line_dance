@@ -58,6 +58,15 @@ export function createApp(): Express {
 
   // Serve built client static files
   if (existsSync(clientDistPath)) {
+    // Rate limit file system access of the static/SPA handlers (CodeQL js/missing-rate-limiting).
+    // Generous limit: a page load fetches many assets.
+    const staticLimiter = rateLimit({
+      windowMs: 60 * 1000,
+      limit: 300,
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+    app.use(staticLimiter);
     app.use(express.static(clientDistPath));
     // SPA fallback: serve index.html for any non-API route (Express 5 requires named wildcard)
     app.get('/{*path}', (req, res) => {
