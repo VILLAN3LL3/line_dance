@@ -16,3 +16,5 @@ client/playwright-report/
 client/playwright-results/
 test-results/
 client/test-results/
+logs/
+todo
