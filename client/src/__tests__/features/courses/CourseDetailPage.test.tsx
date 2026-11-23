@@ -8,6 +8,7 @@ import { renderWithQueryClient as render } from "../../helpers/renderWithQueryCl
 import { fetchChoreographies } from "../../../features/choreographies/api";
 import {
   addChoreographyToSession,
+  chooseSessionChoreographySong,
   createSession,
   deleteSession,
   getDanceCourses,
@@ -19,6 +20,8 @@ import {
   swapSessions,
 } from "../../../features/courses/api";
 import CourseDetail from "../../../features/courses/views/CourseDetailPage";
+
+import type { Choreography } from "../../../types";
 
 const mockNavigate = vi.fn();
 
@@ -36,6 +39,7 @@ vi.mock("../../../features/choreographies/api", () => ({
 }));
 vi.mock("../../../features/courses/api", () => ({
   addChoreographyToSession: vi.fn(),
+  chooseSessionChoreographySong: vi.fn(),
   createSession: vi.fn(),
   deleteSession: vi.fn(),
   getDanceCourses: vi.fn(),
@@ -108,6 +112,7 @@ describe("CourseDetail", () => {
           tags: [],
           step_figures: [],
           rating: null,
+          choreography_songs: [],
           created_at: "2024-01-01",
           updated_at: "2024-01-01",
         },
@@ -133,6 +138,7 @@ describe("CourseDetail", () => {
       repetition_number: 0,
       repeat_source_id: null,
       auto_repeat: true,
+      song_id: null,
     });
     vi.mocked(deleteSession).mockResolvedValue({ message: "ok" });
     vi.mocked(removeChoreographyFromSession).mockResolvedValue({ message: "ok" });
@@ -171,6 +177,7 @@ describe("CourseDetail", () => {
         repetition_number: number,
         repeat_source_id: isNew ? null : 9,
         auto_repeat: isNew,
+        song_id: null,
       },
     ]);
     renderWithRoute();
@@ -305,6 +312,82 @@ describe("CourseDetail", () => {
     });
   });
 
+  describe("song choice per session", () => {
+    const sessionChoreography = {
+      id: 1,
+      session_id: 12,
+      choreography_id: 101,
+      created_at: "2024-01-01",
+      is_new: true,
+      repetition_number: 0,
+      repeat_source_id: null,
+      auto_repeat: true,
+      song_id: null,
+    };
+
+    async function openSessionWithSongs(
+      songs: Choreography["choreography_songs"],
+      songId: number | null = null,
+    ) {
+      const [dance] = (await vi.mocked(fetchChoreographies)()).data;
+      vi.mocked(fetchChoreographies).mockResolvedValue({
+        data: [{ ...dance, choreography_songs: songs }],
+        pagination: { page: 1, limit: 10000, total: 1, totalPages: 1 },
+      });
+      vi.mocked(getSessionChoreographies).mockResolvedValue([
+        { ...sessionChoreography, song_id: songId },
+      ]);
+      vi.mocked(chooseSessionChoreographySong).mockResolvedValue({
+        ...sessionChoreography,
+        song_id: 2,
+      });
+      renderWithRoute();
+      await screen.findByText(/7/);
+      fireEvent.click(screen.getAllByRole("button", { name: /manage/i })[0]);
+      await screen.findByRole("button", { name: /Open choreography card for Dance One/i });
+    }
+
+    it("offers no song choice for a dance with a single song", async () => {
+      await openSessionWithSongs([{ id: 1, title: "Only", is_favorite: false }]);
+      expect(screen.queryByLabelText("Song for Dance One")).not.toBeInTheDocument();
+    });
+
+    it("defaults to the favorite song and saves a chosen song and a reset", async () => {
+      await openSessionWithSongs([
+        { id: 1, title: "First", artist: "A", is_favorite: false },
+        { id: 2, title: "Second", artist: "B", is_favorite: true },
+      ]);
+
+      const select = await screen.findByLabelText("Song for Dance One");
+      expect(select).toHaveValue("");
+      expect(
+        within(select).getByRole("option", { name: "Default: B - Second" }),
+      ).toBeInTheDocument();
+
+      fireEvent.change(select, { target: { value: "1" } });
+      await waitFor(() => {
+        expect(chooseSessionChoreographySong).toHaveBeenCalledWith(1, 1);
+      });
+
+      fireEvent.change(select, { target: { value: "" } });
+      await waitFor(() => {
+        expect(chooseSessionChoreographySong).toHaveBeenLastCalledWith(1, null);
+      });
+    });
+
+    it("shows the default song when the chosen song no longer exists", async () => {
+      await openSessionWithSongs(
+        [
+          { id: 1, title: "First", is_favorite: false },
+          { id: 2, title: "Second", is_favorite: false },
+        ],
+        99,
+      );
+
+      expect(await screen.findByLabelText("Song for Dance One")).toHaveValue("");
+    });
+  });
+
   it("shows planned sessions by default and can include passed sessions", async () => {
     renderWithRoute();
 
@@ -329,6 +412,7 @@ describe("CourseDetail", () => {
         repetition_number: 0,
         repeat_source_id: null,
         auto_repeat: true,
+        song_id: null,
       },
     ]);
 

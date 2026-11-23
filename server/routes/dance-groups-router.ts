@@ -50,6 +50,7 @@ import {
   getSessionChoreographies,
   addChoreographyToSession,
   removeChoreographyFromSession,
+  updateSessionChoreographySong,
   swapSessions,
   reorderSessionContents,
   prepareFilter as prepareSessionFilter,
@@ -57,6 +58,7 @@ import {
   prepareUpdate as prepareSessionUpdate,
   prepareAssignmentFilter,
   prepareAssignment,
+  prepareAssignmentSong,
   prepareReorder,
   prepareSwapIds,
 } from './sessions.ts';
@@ -101,6 +103,11 @@ export function createDanceGroupsRouter(): Router {
   router.delete('/api/sessions/:id', deleteSession);
   router.get('/api/session-choreographies', prepareAssignmentFilter, getSessionChoreographies);
   router.post('/api/session-choreographies', prepareAssignment, addChoreographyToSession);
+  router.patch(
+    '/api/session-choreographies/:id',
+    prepareAssignmentSong,
+    updateSessionChoreographySong,
+  );
   router.delete('/api/session-choreographies/:id', removeChoreographyFromSession);
   router.post('/api/sessions/:sessionId/swap/:targetSessionId', prepareSwapIds, swapSessions);
   router.get(

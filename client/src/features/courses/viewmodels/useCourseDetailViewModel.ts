@@ -209,6 +209,14 @@ export const useCourseDetailViewModel = () => {
     );
   };
 
+  const chooseSong = async (sessionChoreographyId: number, songId: number | null) => {
+    await run(
+      () => mutations.chooseSong.mutateAsync({ sessionChoreographyId, songId }),
+      "Failed to choose song",
+      false,
+    );
+  };
+
   const deleteChoreographyEverywhere = async (choreographyId: number) => {
     const deleted = await run(
       () => deleteChoreography.mutateAsync(choreographyId),
@@ -252,6 +260,7 @@ export const useCourseDetailViewModel = () => {
       changeChoreographyQuery: picker.actions.changeQuery,
       addChoreography,
       removeChoreography,
+      chooseSong,
       editChoreography: (choreographyId: number) =>
         openInNewTab(`/choreographies/${choreographyId}?edit=1`),
       deleteChoreography: deleteChoreographyEverywhere,

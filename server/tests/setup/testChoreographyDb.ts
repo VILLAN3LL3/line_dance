@@ -66,11 +66,20 @@ CREATE TABLE IF NOT EXISTS choreographies (
   wall_count INTEGER,
   level_id INTEGER NOT NULL,
   creation_year INTEGER,
-  song TEXT,
-  artist TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (level_id) REFERENCES levels(id)
+);
+
+CREATE TABLE IF NOT EXISTS choreography_songs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  choreography_id INTEGER NOT NULL REFERENCES choreographies(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  artist TEXT,
+  youtube_url TEXT,
+  spotify_url TEXT,
+  note TEXT,
+  position INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS choreography_info_categories (
@@ -193,6 +202,14 @@ export async function setupChoreographyTestDb(): Promise<Database> {
   )`,
   );
 
+  await run(
+    testDb,
+    `CREATE TABLE IF NOT EXISTS personal_data.choreography_favorite_songs (
+    choreography_id INTEGER PRIMARY KEY,
+    song_id INTEGER NOT NULL
+  )`,
+  );
+
   await seedDefaultLevels(testDb);
 
   // Populate test countries data (subset of commonly used countries)
@@ -253,6 +270,8 @@ export async function clearChoreographyTables(): Promise<void> {
   await run(testDb, 'DELETE FROM personal_data.choreography_tags');
   await run(testDb, 'DELETE FROM personal_data.choreography_ratings');
   await run(testDb, 'DELETE FROM personal_data.choreography_personal_levels');
+  await run(testDb, 'DELETE FROM personal_data.choreography_favorite_songs');
+  await run(testDb, 'DELETE FROM choreography_songs');
   await run(testDb, 'DELETE FROM choreography_information');
   await run(testDb, 'DELETE FROM choreography_info_categories');
   await run(

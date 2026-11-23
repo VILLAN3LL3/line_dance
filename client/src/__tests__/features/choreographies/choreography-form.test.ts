@@ -142,6 +142,59 @@ describe("choreography-form model", () => {
     expect(submitted.choreography_information).toEqual([{ category: "tag", description: "a" }]);
   });
 
+  it("starts with one empty song row and loads saved songs followed by an empty row", () => {
+    expect(createInitialFormData().choreography_songs).toHaveLength(1);
+    const loaded = createInitialFormData(
+      base({ choreography_songs: [{ id: 4, title: "A", is_favorite: true }] }),
+    );
+    expect(loaded.choreography_songs).toHaveLength(2);
+    expect(loaded.choreography_songs?.[0]).toMatchObject({ id: 4, title: "A", is_favorite: true });
+  });
+
+  it("submits saved song ids but not placeholder ids", () => {
+    const submitted = toSubmittedFormData(
+      base({
+        choreography_songs: [
+          { id: 4, title: "A" },
+          { id: "uuid", title: "B" },
+        ],
+      }),
+    );
+    expect(submitted.choreography_songs).toEqual([{ id: 4, title: "A" }, { title: "B" }]);
+  });
+
+  it("maps song issues to rows by id and the tab error badge", () => {
+    const data = base({
+      choreography_songs: [
+        { id: "row-1", title: "" },
+        { id: 7, title: "B", youtube_url: "nope" },
+      ],
+    });
+    const { fieldErrors, hasUnmappedIssue } = mapFieldIssues(
+      [
+        { field: "choreography_songs.0.title", key: "required" },
+        { field: "choreography_songs.1.youtube_url", key: "invalid_url" },
+        { field: "choreography_songs", key: "invalid_songs" },
+      ],
+      data,
+    );
+    expect(fieldErrors).toEqual({
+      "choreography_songs.row-1.title": "Enter a song title.",
+      "choreography_songs.7.youtube_url": "Enter a valid http(s) link.",
+      choreography_songs: "Check the songs: only one can be the favorite.",
+    });
+    expect(hasUnmappedIssue).toBe(false);
+    expect(getTabErrors(fieldErrors).songs).toBe(true);
+    expect(getTabErrors({ name: "x" }).songs).toBe(false);
+  });
+
+  it("flags song rows that cannot be addressed", () => {
+    expect(
+      mapFieldIssues([{ field: "choreography_songs.5.title", key: "required" }], base())
+        .hasUnmappedIssue,
+    ).toBe(true);
+  });
+
   it("navigates tabs with arrow keys, wrapping around", () => {
     expect(getNextTabIndex("ArrowRight", 5, 6)).toBe(0);
     expect(getNextTabIndex("ArrowLeft", 0, 6)).toBe(5);

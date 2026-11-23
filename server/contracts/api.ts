@@ -12,8 +12,7 @@ export interface Choreography {
   personal_level: string | null;
   creation_year?: number;
   choreography_information?: ChoreographyInformation[];
-  song?: string;
-  artist?: string;
+  choreography_songs: ChoreographySong[];
   authors: string[];
   tags: string[];
   step_figures: string[];
@@ -34,8 +33,8 @@ export interface ChoreographyFormData {
   personal_level?: string | null;
   creation_year?: number;
   choreography_information?: ChoreographyInformation[];
-  song?: string;
-  artist?: string;
+  /** Rows without an `id` are new; at most one row is the favorite. */
+  choreography_songs?: ChoreographySongInput[];
   authors: string[];
   tags: string[];
   step_figures: string[];
@@ -47,6 +46,29 @@ export interface ChoreographyInformation {
   description: string;
 }
 
+export interface ChoreographySong {
+  id: number;
+  title: string;
+  artist?: string;
+  /** Without a stored link the client builds a search link from title and artist. */
+  youtube_url?: string;
+  spotify_url?: string;
+  note?: string;
+  /** Without a favorite the first song is the default. */
+  is_favorite: boolean;
+}
+
+export interface ChoreographySongInput {
+  /** Existing song id, or a client-side placeholder for rows that are not saved yet. */
+  id?: number | string;
+  title: string;
+  artist?: string;
+  youtube_url?: string;
+  spotify_url?: string;
+  note?: string;
+  is_favorite?: boolean;
+}
+
 export interface ChoreographyWriteResponse {
   id: number;
   message: string;
@@ -54,7 +76,13 @@ export interface ChoreographyWriteResponse {
 
 export interface ChoreographyIssue {
   field: string;
-  key: 'invalid_url' | 'invalid_information' | 'required' | 'invalid_level' | 'invalid_integer';
+  key:
+    | 'invalid_url'
+    | 'invalid_information'
+    | 'invalid_songs'
+    | 'required'
+    | 'invalid_level'
+    | 'invalid_integer';
 }
 
 export interface PaginatedResponse<T> {
@@ -173,6 +201,8 @@ export interface SessionChoreography {
   repetition_number: number;
   repeat_source_id: number | null;
   auto_repeat: boolean;
+  /** Chosen song; null means the default song of the choreography. */
+  song_id: number | null;
 }
 
 export interface LearnedChoreography {

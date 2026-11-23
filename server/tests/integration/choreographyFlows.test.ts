@@ -115,6 +115,47 @@ describe('choreography integration flows', () => {
     }
   });
 
+  it('rolls back the choreography and keeps stored songs when a song write fails', async () => {
+    const created = createdChoreographyId(
+      await choreography.createChoreography(
+        prepareWriteRequest({
+          name: 'Dance',
+          level: 'BEGINNER',
+          choreography_songs: [{ title: 'Keep', is_favorite: true }],
+        }),
+      ),
+    );
+    await runQuery(
+      "CREATE TEMP TRIGGER fail_choreography_song BEFORE INSERT ON choreography_songs BEGIN SELECT RAISE(ABORT, 'Song failure'); END",
+    );
+    try {
+      await expect(
+        choreography.createChoreography(
+          prepareWriteRequest({
+            name: 'Other',
+            level: 'BEGINNER',
+            choreography_songs: [{ title: 'New' }],
+          }),
+        ),
+      ).rejects.toThrow('Song failure');
+      await expect(
+        choreography.updateChoreography(
+          created,
+          preparePartialWriteRequest({
+            name: 'Dance',
+            choreography_songs: [{ title: 'Replaced' }],
+          }),
+        ),
+      ).rejects.toThrow('Song failure');
+    } finally {
+      await runQuery('DROP TRIGGER fail_choreography_song');
+    }
+
+    const { data } = await reads.listChoreographies(preparePagination({}));
+    expect(data.map((dance) => dance.name)).toEqual(['Dance']);
+    expect(data[0].choreography_songs).toMatchObject([{ title: 'Keep', is_favorite: true }]);
+  });
+
   it('expands hierarchy for exact searches and filters on attached tags', async () => {
     const first = await createFigure('First');
     const second = await createFigure('Second');

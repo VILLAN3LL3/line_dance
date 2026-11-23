@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { createChoreographyViaApi } from "../helpers/api";
+import { API_BASE, createChoreographyViaApi } from "../helpers/api";
 
 test.describe("Choreography Detail", () => {
   test("shows backend field issues and saves after correcting them", async ({ page }) => {
@@ -69,6 +69,34 @@ test.describe("Choreography Detail", () => {
     await page.getByRole("checkbox", { name: /Use official level/i }).check();
     await page.getByRole("button", { name: /Apply Filters/i }).click();
     await expect(page.locator(".choreography-card", { hasText: name })).toBeVisible();
+  });
+
+  test("saves songs from the songs tab and shows the favorite with its alternatives", async ({
+    page,
+    request,
+  }) => {
+    const name = `E2E Songs ${Date.now()}`;
+    await page.goto("/choreographies/new");
+    await page.getByLabel("Choreography Name *").fill(name);
+    await page.getByLabel("Official Level *").selectOption({ label: "BEGINNER" });
+
+    await page.getByRole("tab", { name: "Songs" }).click();
+    await page.getByLabel("Title 1").fill("Main Song");
+    await page.getByLabel("Artist 1").fill("Main Artist");
+    await expect(page.getByRole("radio")).toHaveCount(0);
+    await page.getByLabel("Title 2").fill("Alternative Song");
+    await page.getByLabel("YouTube link 2 (optional)").fill("https://youtu.be/alternative");
+    await page.getByRole("radio", { name: /Favorite song 2/ }).check();
+    await page.getByRole("button", { name: "Save Choreography" }).click();
+    await expect(page).toHaveURL("/");
+
+    const search = await request.get(`${API_BASE}/choreographies/search`, {
+      params: { search: name },
+    });
+    const [{ id }] = (await search.json()).data;
+    await page.goto(`/choreographies/${id}`);
+    await expect(page.locator(".music-section .song-name").first()).toHaveText("Alternative Song");
+    await expect(page.locator(".alternative-songs")).toContainText("Main Artist - Main Song");
   });
 
   test("supports delete action", async ({ page, request }) => {

@@ -38,7 +38,7 @@
   color: var(--color-text);
   font-size: 13px;
   font-weight: 400;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .song-search-buttons-compact .song-info {
@@ -68,7 +68,9 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
   text-decoration: none;
   white-space: nowrap;
   color: rgb(255, 255, 255);
@@ -107,6 +109,43 @@
   transform: scale(0.95);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .btn-youtube,
+  .btn-spotify {
+    transition: none;
+  }
+
+  .btn-youtube:hover,
+  .btn-youtube:active,
+  .btn-spotify:hover,
+  .btn-spotify:active {
+    transform: none;
+  }
+}
+
 .music-section {
   font-size: 13px;
+}
+
+.song-note {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.alternative-songs {
+  margin-top: 10px;
+}
+
+.alternative-songs ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.alternative-songs .song-search-buttons-compact {
+  margin-top: 4px;
 }

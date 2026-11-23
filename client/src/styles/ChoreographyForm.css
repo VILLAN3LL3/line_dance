@@ -145,6 +145,42 @@ button.choreography-form-tab:focus-visible {
   gap: 16px;
 }
 
+.choreography-song-entry {
+  min-width: 0;
+  margin: 0;
+  padding: 14px 0 4px;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.choreography-song-entry:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.choreography-song-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0 16px;
+}
+
+.choreography-song-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.choreography-song-favorite {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
 .choreography-information-entry {
   padding: 14px 0 4px;
   border-top: 1px solid var(--color-border);

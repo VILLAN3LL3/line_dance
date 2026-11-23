@@ -1,4 +1,6 @@
-import type { Choreography } from "../../../types";
+import type { Choreography, ChoreographySong } from "../../../types";
+import { splitSongs } from "./choreography-songs";
+import { formatSongLabel, resolveSongLinks } from "./song-search";
 
 /**
  * Replace ISO country code suffix in an author name with the full country name.
@@ -42,31 +44,42 @@ function buildCountWall(choreography: Choreography): string | null {
   return null;
 }
 
+function buildLinkLines(song: ChoreographySong, indent: string, searchPrefix: boolean): string[] {
+  const { youtubeUrl, spotifyUrl } = resolveSongLinks(song);
+  const platformLabel = (name: string, storedUrl: string | undefined): string =>
+    searchPrefix && !storedUrl?.trim() ? `${name} Search` : name;
+  return [
+    ...(youtubeUrl
+      ? [`${indent}• ${platformLabel("YouTube", song.youtube_url)}: ${youtubeUrl}`]
+      : []),
+    ...(spotifyUrl
+      ? [`${indent}• ${platformLabel("Spotify", song.spotify_url)}: ${spotifyUrl}`]
+      : []),
+  ];
+}
+
 function buildMusicSection(choreography: Choreography): string[] {
-  if (!choreography.song && !choreography.artist) {
+  const { primary, alternatives } = splitSongs(choreography.choreography_songs);
+  if (!primary) {
     return [];
   }
 
-  const musicLines = ["", "Music:"];
+  const musicLines = ["", "Music:", `• Song: ${primary.title}`];
 
-  if (choreography.song) {
-    musicLines.push(`• Song: ${choreography.song}`);
+  if (primary.artist) {
+    musicLines.push(`• Artist: ${primary.artist}`);
   }
-
-  if (choreography.artist) {
-    musicLines.push(`• Artist: ${choreography.artist}`);
+  if (primary.note?.trim()) {
+    musicLines.push(`• Note: ${primary.note.trim()}`);
   }
+  musicLines.push(...buildLinkLines(primary, "", true));
 
-  if (choreography.song?.trim() && choreography.artist?.trim()) {
-    const encodeSearchQuery = (text: string): string =>
-      encodeURIComponent(text.trim()).replaceAll("%20", "+");
-    const youtubeQuery = `${encodeSearchQuery(choreography.artist)}+${encodeSearchQuery(choreography.song)}`;
-    const spotifyQuery = `${encodeSearchQuery(choreography.artist)}+${encodeSearchQuery(choreography.song)}`;
-
-    musicLines.push(
-      `• YouTube Search: https://www.youtube.com/results?search_query=${youtubeQuery}`,
-      `• Spotify Search: https://open.spotify.com/search/${spotifyQuery}`,
-    );
+  if (alternatives.length > 0) {
+    musicLines.push("", "Alternative songs:");
+    for (const song of alternatives) {
+      const note = song.note?.trim() ? ` (${song.note.trim()})` : "";
+      musicLines.push(`• ${formatSongLabel(song)}${note}`, ...buildLinkLines(song, "  ", false));
+    }
   }
 
   return musicLines;
@@ -104,7 +117,7 @@ export function buildChoreographyClipboardText(
         ]
       : []),
     ...(choreography.tags.length > 0
-      ? ["", "Tags:", ...choreography.tags.map((tag) => `• ${tag}`)]
+      ? ["", "Hash Tags:", ...choreography.tags.map((tag) => `• ${tag}`)]
       : []),
     ...(choreography.step_sheet_link ||
     choreography.demo_video_url ||

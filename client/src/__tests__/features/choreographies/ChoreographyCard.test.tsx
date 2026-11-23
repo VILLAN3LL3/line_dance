@@ -50,6 +50,7 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
       { id: 2, category: "Tag", description: "Has tag" },
     ],
     rating: null,
+    choreography_songs: [],
     created_at: "2024-01-01T00:00:00.000Z",
     updated_at: "2024-01-02T00:00:00.000Z",
     ...overrides,
@@ -204,6 +205,67 @@ describe("ChoreographyCard", () => {
     expect(screen.queryByText("Tag Information")).not.toBeInTheDocument();
   });
 
+  it("shows a single song without alternatives and with search buttons on the detail card", () => {
+    render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          choreography_songs: [
+            { id: 1, title: "Faded", artist: "Alan Walker", is_favorite: false },
+          ],
+        })}
+        videoEmbedMode="all"
+      />,
+    );
+
+    expect(screen.getByText("Faded by Alan Walker")).toBeInTheDocument();
+    expect(screen.queryByText("Alternative songs:")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: 'Open "Alan Walker - Faded" on YouTube' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: 'Open "Alan Walker - Faded" on Spotify' }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the favorite song first and lists alternatives with their notes", () => {
+    render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          choreography_songs: [
+            { id: 1, title: "Remix", artist: "DJ", note: "faster", is_favorite: false },
+            { id: 2, title: "Original", artist: "Queen", is_favorite: true },
+          ],
+        })}
+        videoEmbedMode="all"
+      />,
+    );
+
+    expect(screen.getByText("Original by Queen")).toBeInTheDocument();
+    const alternatives = screen.getByText("Alternative songs:").closest(".alternative-songs");
+    expect(alternatives).toHaveTextContent("DJ - Remix");
+    expect(alternatives).toHaveTextContent("faster");
+    expect(alternatives).not.toHaveTextContent("Original");
+    expect(screen.getByRole("link", { name: /Queen - Original" on YouTube/ })).toBeInTheDocument();
+  });
+
+  it("links to a stored link instead of a search and shows a song that has no artist", () => {
+    render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          choreography_songs: [
+            { id: 1, title: "Solo", youtube_url: "https://youtu.be/abc", is_favorite: false },
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: /on YouTube/i })).toHaveAttribute(
+      "href",
+      "https://youtu.be/abc",
+    );
+    expect(screen.queryByRole("link", { name: /on Spotify/i })).not.toBeInTheDocument();
+  });
+
   it("shows every information category and description on the detail card", () => {
     render(
       <ChoreographyCard
@@ -298,15 +360,25 @@ describe("ChoreographyCard", () => {
     expect(deleteChoreographyRating).not.toHaveBeenCalled();
   });
 
-  it("shows YouTube and Spotify footer links only when song and artist are filled out", () => {
-    const { rerender } = render(<ChoreographyCard choreography={makeChoreography()} />);
+  it("shows YouTube and Spotify footer links only when the song has an artist or stored links", () => {
+    const { rerender } = render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          choreography_songs: [{ id: 1, title: "Faded", is_favorite: false }],
+        })}
+      />,
+    );
 
     expect(screen.queryByRole("link", { name: /on YouTube/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /on Spotify/i })).not.toBeInTheDocument();
 
     rerender(
       <ChoreographyCard
-        choreography={makeChoreography({ song: "Faded", artist: "Alan Walker" })}
+        choreography={makeChoreography({
+          choreography_songs: [
+            { id: 1, title: "Faded", artist: "Alan Walker", is_favorite: false },
+          ],
+        })}
       />,
     );
 

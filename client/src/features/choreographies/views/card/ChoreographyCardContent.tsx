@@ -1,11 +1,11 @@
 import React from "react";
 
 import { ExternalLink, Tag, TagGroup, YouTubeVideo } from "../../../../shared/ui";
-import type { Choreography, ChoreographyInformation } from "../../../../types";
 import { getInformationCategoryIcon } from "../../model/choreography-card";
-import { SongSearchButtons } from "../SongSearchButtons";
+import { ChoreographySongs } from "./ChoreographySongs";
 import { ChoreographerNames } from "./ChoreographerNames";
 
+import type { Choreography, ChoreographyInformation } from "../../../../types";
 export interface ChoreographyCardContentProps {
   choreography: Choreography;
   isDetailMode: boolean;
@@ -63,11 +63,7 @@ export const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = (
 
       <ChoreographerNames key={choreography.id} authors={choreography.authors} />
 
-      {isDetailMode && (choreography.song || choreography.artist) && (
-        <div className="music-section">
-          <SongSearchButtons song={choreography.song} artist={choreography.artist} />
-        </div>
-      )}
+      {isDetailMode && <ChoreographySongs songs={choreography.choreography_songs} />}
 
       {showStepFiguresSection && (
         <div className="step-figures">
@@ -106,7 +102,7 @@ export const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = (
 
       {(choreography.tags.length > 0 || isDetailMode) && (
         <div className="tags">
-          <strong>Tags:</strong>
+          <strong>Hash Tags:</strong>
           {choreography.tags.length > 0 ? (
             <TagGroup className="tag-list">
               {choreography.tags.map((tag) => (

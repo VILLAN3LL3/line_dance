@@ -2,17 +2,17 @@ import { z } from 'zod';
 import { normalizeNonNegativeInteger } from '../../utils/choreographyNormalization.ts';
 import type { JsonValue } from '../../utils/json-input.ts';
 
-export type QueryValue = JsonValue | undefined;
+export type QueryValue = JsonValue;
 export type FigureRelation = { parent_name: string; child_name: string };
 export type MatchMode = 'all' | 'any' | 'exact';
 
 const stringConversion = z.preprocess(String, z.string());
 
-export function stringifyQueryValue(value: QueryValue): string {
+export function stringifyQueryValue(value: QueryValue | undefined): string {
   return stringConversion.parse(value);
 }
 
-export function normalizeQueryParam(param: QueryValue): JsonValue[] {
+export function normalizeQueryParam(param: QueryValue | undefined): JsonValue[] {
   if (Array.isArray(param)) return param;
   if (param && typeof param === 'object') {
     return Object.values(param)
@@ -22,7 +22,7 @@ export function normalizeQueryParam(param: QueryValue): JsonValue[] {
   return param ? [param] : [];
 }
 
-export function normalizeUniqueTextQueryParam(param: QueryValue): string[] {
+export function normalizeUniqueTextQueryParam(param: QueryValue | undefined): string[] {
   const normalizedItems: string[] = [];
   const seen = new Set<string>();
   for (const value of normalizeQueryParam(param)) {
@@ -36,7 +36,7 @@ export function normalizeUniqueTextQueryParam(param: QueryValue): string[] {
   return normalizedItems;
 }
 
-export function normalizeNumericQueryParam(param: QueryValue): number | null {
+export function normalizeNumericQueryParam(param: QueryValue | undefined): number | null {
   const values = normalizeQueryParam(param);
   for (let index = values.length - 1; index >= 0; index -= 1) {
     const parsed = normalizeNonNegativeInteger(values[index]);
@@ -45,14 +45,14 @@ export function normalizeNumericQueryParam(param: QueryValue): number | null {
   return null;
 }
 
-export function normalizeMatchMode(rawMode: QueryValue): MatchMode {
+export function normalizeMatchMode(rawMode: QueryValue | undefined): MatchMode {
   const modeValue = Array.isArray(rawMode) ? rawMode.at(-1) : rawMode;
   if (typeof modeValue !== 'string') return 'all';
   const normalized = modeValue.trim().toLowerCase();
   return normalized === 'any' || normalized === 'exact' ? normalized : 'all';
 }
 
-export function normalizeSearchText(rawText: QueryValue): string {
+export function normalizeSearchText(rawText: QueryValue | undefined): string {
   if (typeof rawText !== 'string') return '';
   const normalized = rawText
     .replaceAll(/[\u2018\u2019]/g, "'")
@@ -67,7 +67,7 @@ export function normalizeSearchText(rawText: QueryValue): string {
 }
 
 export function expandStepFigureNames(
-  stepFigureParam: QueryValue,
+  stepFigureParam: QueryValue | undefined,
   relations: FigureRelation[],
   requireAllChildren: boolean,
 ): string[] {

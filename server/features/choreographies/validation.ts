@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { ChoreographyIssue } from '../../contracts/api.ts';
 import { jsonInput } from '../../utils/json-input.ts';
+import { getSongIssues } from './song-operations.ts';
 
 const value = jsonInput.optional();
 const writeInput = z
@@ -14,8 +15,7 @@ const writeInput = z
     count: value,
     wall_count: value,
     creation_year: value,
-    song: value,
-    artist: value,
+    choreography_songs: value,
     authors: value,
     tags: value,
     step_figures: value,
@@ -80,7 +80,11 @@ export function getChoreographyFieldIssues(
   data: ChoreographyWriteInput,
   { partial = false }: { partial?: boolean } = {},
 ): ChoreographyIssue[] {
-  const issues = [...getChoreographyLinkIssues(data), ...getChoreographyInformationIssues(data)];
+  const issues = [
+    ...getChoreographyLinkIssues(data),
+    ...getChoreographyInformationIssues(data),
+    ...getSongIssues(data.choreography_songs),
+  ];
   for (const field of ['name', 'level'] as const) {
     if (partial && data[field] === undefined) continue;
     if (typeof data[field] !== 'string' || !data[field].trim()) {

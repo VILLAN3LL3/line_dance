@@ -31,6 +31,14 @@ import {
   type FormTabId,
   type ListField,
 } from "../model/choreography-form";
+import {
+  clearSongRowErrors,
+  getSongRowId,
+  removeSongRow,
+  setFavoriteSong,
+  updateSongRow,
+  type SongField,
+} from "../model/choreography-songs";
 import { isDatalistInputType } from "../model/search-filters";
 
 interface UseChoreographyFormViewModelOptions {
@@ -177,6 +185,35 @@ export const useChoreographyFormViewModel = ({
     setFormData((previous) => removeInformationRow(previous, index));
   };
 
+  const changeSong = (index: number, field: SongField, value: string) => {
+    editVersion.current += 1;
+    const rowId = getSongRowId(formData.choreography_songs ?? [], index);
+    setFieldErrors((previous) => clearFieldError(previous, `choreography_songs.${rowId}.${field}`));
+    setFormData((previous) => ({
+      ...previous,
+      choreography_songs: updateSongRow(previous.choreography_songs ?? [], index, field, value),
+    }));
+  };
+
+  const removeSong = (index: number) => {
+    const rowId = getSongRowId(formData.choreography_songs ?? [], index);
+    editVersion.current += 1;
+    setFieldErrors((previous) => clearSongRowErrors(previous, rowId));
+    setFormData((previous) => ({
+      ...previous,
+      choreography_songs: removeSongRow(previous.choreography_songs ?? [], index),
+    }));
+  };
+
+  const chooseFavoriteSong = (index: number) => {
+    editVersion.current += 1;
+    setFieldErrors((previous) => clearFieldError(previous, "choreography_songs"));
+    setFormData((previous) => ({
+      ...previous,
+      choreography_songs: setFavoriteSong(previous.choreography_songs ?? [], index),
+    }));
+  };
+
   const submit = async () => {
     if (isValidating) return;
     const submittedVersion = editVersion.current;
@@ -247,6 +284,9 @@ export const useChoreographyFormViewModel = ({
       changeInformation,
       setCustomCategoryMode,
       removeInformation,
+      changeSong,
+      removeSong,
+      chooseFavoriteSong,
       reset,
       submit,
     },

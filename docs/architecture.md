@@ -61,6 +61,35 @@ author statistics. Editing a choreography always works on `official_level`. `POS
 choreography: omitted keeps it, `null` or an empty string removes it, an unknown level is reported
 as the field issue `{ field: "personal_level", key: "invalid_level" }`.
 
+### Songs per choreography
+
+A choreography has any number of songs in `choreography_songs` (catalog database: title, artist,
+optional `youtube_url`, `spotify_url` and `note`, ordered by `position`). The favorite song is a
+personal choice and lives in `personal_data.choreography_favorite_songs`; without a favorite the
+first song is the default. Neither the favorite nor `session_choreographies.song_id` (dance-groups
+database, `NULL` = default song) has a cross-database foreign key: the choreography write cleanup
+removes orphaned favorites, and a session reference to a deleted song is treated as the default by
+the client.
+
+API responses return `choreography_songs` (`id`, `title`, optional `artist`, `youtube_url`,
+`spotify_url`, `note`, `is_favorite`). `POST` and `PUT /api/choreographies` accept
+`choreography_songs` and write it in the same transaction as the choreography: omitted keeps the
+songs, an array replaces them. Rows with an existing `id` are updated and keep that id (session
+assignments reference it), other rows are inserted, blank rows are ignored, and at most one row
+may set `is_favorite`. Issues are reported as `{ field: "choreography_songs.N.title", key: "required" }`,
+`…youtube_url` / `…spotify_url` with `invalid_url` (only `http(s)` links), and
+`{ field: "choreography_songs", key: "invalid_songs" }`. The `song_artist` search filter matches the
+title or artist of any song. `PATCH /api/session-choreographies/:id` with `{ "song_id": <id> | null }`
+sets the song of a session assignment (and its automatic repetitions); the song must belong to the
+assigned choreography. The legacy `choreographies.song` and `artist` columns were migrated into
+`choreography_songs` (migration `016_create_choreography_songs`) and dropped, so back up the database
+before deploying. Song rules live in `server/features/choreographies/song-operations.ts`
+(pure), `song-repository.ts` (SQL) and `song-flow.ts` (orchestration).
+
+On the client, the pure functions in `features/choreographies/model/choreography-songs.ts` and
+`song-search.ts` handle the form rows, the default and session song and the link resolution: a stored
+link wins, otherwise the YouTube/Spotify button searches for "artist title" (this needs both).
+
 ## Frontend
 
 The client is organized by feature (`client/src/features/<feature>/`) following MVVM, mirroring the

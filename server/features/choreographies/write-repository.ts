@@ -52,8 +52,8 @@ export async function insertChoreography(
   levelId: number,
 ): Promise<WriteResult> {
   return runQuery(
-    `INSERT INTO choreographies (name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level_id, creation_year, song, artist)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO choreographies (name, step_sheet_link, demo_video_url, tutorial_video_url, count, wall_count, level_id, creation_year)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       input.name,
       input.step_sheet_link,
@@ -63,8 +63,6 @@ export async function insertChoreography(
       input.wall_count,
       levelId,
       input.creation_year,
-      input.song,
-      input.artist,
     ],
   );
 }
@@ -82,12 +80,10 @@ export async function updateChoreography(
     input.count,
     input.wall_count,
     input.creation_year,
-    input.song,
-    input.artist,
   ];
   const query = levelId
-    ? `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, level_id = ?, creation_year = ?, song = ?, artist = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
-    : `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, creation_year = ?, song = ?, artist = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+    ? `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, level_id = ?, creation_year = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+    : `UPDATE choreographies SET name = ?, step_sheet_link = ?, demo_video_url = ?, tutorial_video_url = ?, count = ?, wall_count = ?, creation_year = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
   const params = levelId
     ? [...fields.slice(0, 6), levelId, ...fields.slice(6), id]
     : [...fields, id];

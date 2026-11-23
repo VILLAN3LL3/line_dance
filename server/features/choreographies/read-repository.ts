@@ -18,8 +18,6 @@ export type ChoreographyRow = {
   creation_year: number | string | null;
   created_at: string | null;
   updated_at: string | null;
-  song: string | null;
-  artist: string | null;
   level: string | null;
   official_level: string | null;
   personal_level: string | null;

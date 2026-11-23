@@ -133,6 +133,15 @@ export async function addChoreographyToSession(
   return response.data;
 }
 
+/** `null` restores the default song (favorite, otherwise the first song). */
+export async function chooseSessionChoreographySong(
+  id: number,
+  songId: number | null,
+): Promise<SessionChoreography> {
+  const response = await api.patch(`/session-choreographies/${id}`, { song_id: songId });
+  return response.data;
+}
+
 export async function removeChoreographyFromSession(id: number): Promise<{ message: string }> {
   const response = await api.delete(`/session-choreographies/${id}`);
   return response.data;

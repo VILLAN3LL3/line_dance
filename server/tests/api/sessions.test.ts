@@ -1172,6 +1172,115 @@ describe('Session Choreographies API', () => {
   });
 });
 
+describe('PATCH /api/session-choreographies/:id — song choice', () => {
+  type SongRow = { id: number };
+
+  async function createDanceWithSongs(
+    songs: { title: string }[],
+    name = 'Song Dance',
+  ): Promise<{ id: number; songs: SongRow[] }> {
+    const created = await request(app)
+      .post('/api/choreographies')
+      .send({ name, level: 'BEGINNER', choreography_songs: songs });
+    const detail = await request(app).get(`/api/choreographies/${created.body.id}`);
+    return { id: created.body.id, songs: detail.body.choreography_songs };
+  }
+
+  async function setupAssignment(
+    choreographyId: number,
+  ): Promise<{ sessions: Session[]; assignment: Assignment & { song_id: number | null } }> {
+    const { course } = await createGroupAndCourse('Song Group');
+    const sessions: Session[] = [];
+    for (const date of ['2025-01-15', '2025-01-22']) {
+      const res = await request(app)
+        .post('/api/sessions')
+        .send({ dance_course_id: course.id, session_date: date });
+      sessions.push(res.body);
+    }
+    const added = await request(app)
+      .post('/api/session-choreographies')
+      .send({ session_id: sessions[0].id, choreography_id: choreographyId });
+    return { sessions, assignment: added.body };
+  }
+
+  it('uses the default song until a song is chosen', async () => {
+    const dance = await createDanceWithSongs([{ title: 'First' }]);
+    const { assignment } = await setupAssignment(dance.id);
+    expect(assignment.song_id).toBeNull();
+  });
+
+  it('stores the chosen song, also for automatic repetitions, and can reset it', async () => {
+    const dance = await createDanceWithSongs([{ title: 'First' }, { title: 'Second' }]);
+    const { sessions, assignment } = await setupAssignment(dance.id);
+
+    const chosen = await request(app)
+      .patch(`/api/session-choreographies/${assignment.id}`)
+      .send({ song_id: dance.songs[1].id });
+    expect(chosen.status).toBe(200);
+    expect(chosen.body.song_id).toBe(dance.songs[1].id);
+
+    const repetitions = await request(app).get(
+      `/api/session-choreographies?session_id=${sessions[1].id}`,
+    );
+    expect(repetitions.body).toHaveLength(1);
+    expect(repetitions.body[0].song_id).toBe(dance.songs[1].id);
+
+    const reset = await request(app)
+      .patch(`/api/session-choreographies/${assignment.id}`)
+      .send({ song_id: null });
+    expect(reset.status).toBe(200);
+    expect(reset.body.song_id).toBeNull();
+    const resetRepetitions = await request(app).get(
+      `/api/session-choreographies?session_id=${sessions[1].id}`,
+    );
+    expect(resetRepetitions.body[0].song_id).toBeNull();
+  });
+
+  it('keeps the chosen song when session contents are reordered', async () => {
+    const dance = await createDanceWithSongs([{ title: 'First' }, { title: 'Second' }]);
+    const { sessions, assignment } = await setupAssignment(dance.id);
+    await request(app)
+      .patch(`/api/session-choreographies/${assignment.id}`)
+      .send({ song_id: dance.songs[1].id });
+
+    const swapped = await request(app).post(
+      `/api/sessions/${sessions[0].id}/swap/${sessions[1].id}`,
+    );
+    expect(swapped.status).toBe(200);
+
+    const moved = await request(app).get(
+      `/api/session-choreographies?session_id=${sessions[1].id}`,
+    );
+    expect(moved.body.find((item: { is_new: boolean }) => item.is_new).song_id).toBe(
+      dance.songs[1].id,
+    );
+  });
+
+  it('rejects a song of another choreography', async () => {
+    const dance = await createDanceWithSongs([{ title: 'First' }]);
+    const other = await createDanceWithSongs([{ title: 'Other' }], 'Other Dance');
+    const { assignment } = await setupAssignment(dance.id);
+    const res = await request(app)
+      .patch(`/api/session-choreographies/${assignment.id}`)
+      .send({ song_id: other.songs[0].id });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/song/i);
+  });
+
+  it('returns 400 for an invalid body and 404 for an unknown assignment', async () => {
+    const dance = await createDanceWithSongs([{ title: 'First' }]);
+    const { assignment } = await setupAssignment(dance.id);
+    const invalid = await request(app)
+      .patch(`/api/session-choreographies/${assignment.id}`)
+      .send({ song_id: 'abc' });
+    expect(invalid.status).toBe(400);
+    const missing = await request(app)
+      .patch('/api/session-choreographies/99999')
+      .send({ song_id: null });
+    expect(missing.status).toBe(404);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Learned Choreographies view
 // ---------------------------------------------------------------------------

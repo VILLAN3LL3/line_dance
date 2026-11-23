@@ -1359,6 +1359,37 @@ export const openApiSpec = {
       },
     },
     '/api/session-choreographies/{id}': {
+      patch: {
+        tags: ['Session Choreographies'],
+        summary: 'Choose the song for a choreography in a session',
+        description:
+          'Sets the song for this assignment and for its automatic repetitions. A null song_id restores the default song. The song must belong to the assigned choreography.',
+        parameters: [{ $ref: '#/components/parameters/IdPath' }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { song_id: { type: 'integer', nullable: true } },
+                required: ['song_id'],
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Updated assignment',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/SessionChoreography' },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
       delete: {
         tags: ['Session Choreographies'],
         summary: 'Remove choreography from session',
@@ -1665,6 +1696,7 @@ export const openApiSpec = {
                     'invalid_level',
                     'invalid_url',
                     'invalid_information',
+                    'invalid_songs',
                     'invalid_integer',
                   ],
                 },
@@ -1716,8 +1748,10 @@ export const openApiSpec = {
             type: 'array',
             items: { $ref: '#/components/schemas/ChoreographyInformation' },
           },
-          song: { type: 'string' },
-          artist: { type: 'string' },
+          choreography_songs: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/ChoreographySong' },
+          },
           authors: { type: 'array', items: { type: 'string' } },
           tags: { type: 'array', items: { type: 'string' } },
           step_figures: { type: 'array', items: { type: 'string' } },
@@ -1725,6 +1759,23 @@ export const openApiSpec = {
           created_at: { type: 'string' },
           updated_at: { type: 'string' },
         },
+      },
+      ChoreographySong: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          title: { type: 'string' },
+          artist: { type: 'string' },
+          youtube_url: { type: 'string', description: 'Optional; otherwise a search link is used' },
+          spotify_url: { type: 'string', description: 'Optional; otherwise a search link is used' },
+          note: { type: 'string' },
+          is_favorite: {
+            type: 'boolean',
+            description:
+              'Favorite song, stored in personal data. Without a favorite the first song is the default.',
+          },
+        },
+        required: ['id', 'title', 'is_favorite'],
       },
       ChoreographyInformation: {
         type: 'object',
@@ -1763,8 +1814,24 @@ export const openApiSpec = {
               required: ['category', 'description'],
             },
           },
-          song: { type: 'string' },
-          artist: { type: 'string' },
+          choreography_songs: {
+            type: 'array',
+            description:
+              'Songs of the choreography. Omit to keep them unchanged; an array replaces them. Rows with an existing id keep that id, at most one row may set is_favorite, and blank rows are ignored. Links must be http(s) URLs.',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                title: { type: 'string' },
+                artist: { type: 'string' },
+                youtube_url: { type: 'string' },
+                spotify_url: { type: 'string' },
+                note: { type: 'string' },
+                is_favorite: { type: 'boolean' },
+              },
+              required: ['title'],
+            },
+          },
           authors: { type: 'array', items: { type: 'string' } },
           tags: { type: 'array', items: { type: 'string' } },
           step_figures: { type: 'array', items: { type: 'string' } },
@@ -1952,6 +2019,12 @@ export const openApiSpec = {
           },
           repeat_source_id: { type: 'integer', nullable: true },
           auto_repeat: { type: 'boolean', description: 'Source generates automatic repetitions' },
+          song_id: {
+            type: 'integer',
+            nullable: true,
+            description:
+              'Chosen song of the choreography; null means the default song (favorite, otherwise the first song)',
+          },
         },
       },
       LearnedChoreography: {

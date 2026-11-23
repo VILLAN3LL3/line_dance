@@ -7,12 +7,14 @@ import {
   prepareSessionFilter,
   prepareSwap,
   validateAssignment,
+  validateAssignmentSong,
   validateNewSession,
   validateReorder,
   validateSessionUpdate,
 } from '../features/sessions/validation.ts';
 import type {
   AssignmentResult,
+  AssignmentSongResult,
   NewSessionResult,
   ReorderResult,
   SessionIdResult,
@@ -46,6 +48,7 @@ const assignmentResponse = z.looseObject({
   repetition_number: z.number(),
   repeat_source_id: z.number().nullable(),
   auto_repeat: z.boolean(),
+  song_id: z.number().nullable(),
 });
 
 const sessionErrors: Record<sessions.SessionError, [number, string]> = {
@@ -59,6 +62,7 @@ const sessionErrors: Record<sessions.SessionError, [number, string]> = {
   assignment_ids_required: [400, 'Session ID and choreography ID are required'],
   duplicate_assignment: [400, 'Choreography already added to this session'],
   assignment_not_found: [404, 'Session choreography not found'],
+  invalid_song: [400, 'Song must be a song of the assigned choreography or null'],
   invalid_reorder_ids: [400, 'Provide at least two unique session IDs'],
   invalid_swap_ids: [400, 'Invalid session IDs'],
   different_course: [400, 'Sessions must belong to the same course'],
@@ -78,6 +82,7 @@ export const prepareNew = prepareInput((req) => req.body, validateNewSession);
 export const prepareUpdate = prepareInput((req) => req.body, validateSessionUpdate);
 export const prepareAssignmentFilter = prepareInput((req) => req.query, prepareAssignmentSession);
 export const prepareAssignment = prepareInput((req) => req.body, validateAssignment);
+export const prepareAssignmentSong = prepareInput((req) => req.body, validateAssignmentSong);
 export const prepareReorder = prepareInput((req) => req.body, validateReorder);
 export const prepareSwapIds = prepareInput((req) => req.params, prepareSwap);
 
@@ -170,6 +175,22 @@ export async function addChoreographyToSession(
   } catch (error) {
     captureError(error);
     res.status(500).json({ error: 'Failed to add choreography to session' });
+  }
+}
+
+export async function updateSessionChoreographySong(
+  req: Pick<Request<{ id: string }>, 'params'>,
+  res: Response<SessionChoreography | ErrorResponse, Locals<AssignmentSongResult>>,
+): Promise<Response<SessionChoreography | ErrorResponse> | void> {
+  try {
+    const input = res.locals.input;
+    if ('exception' in input) throw input.exception;
+    const result = await sessions.setAssignmentSong(req.params.id, input);
+    if ('error' in result) return sendSessionError(res, result.error);
+    res.json(assignmentResponse.parse(result.value));
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to update session choreography song' });
   }
 }
 

@@ -1,11 +1,13 @@
 import type { FieldIssue } from "../../../shared/http/apiErrors";
 import type { ChoreographyFormData, ChoreographyInformation } from "../../../types";
+import { createInitialSongs, toSubmittedSongs } from "./choreography-songs";
 import { findOptionIgnoreCase, includesIgnoreCase } from "./search-filters";
 
 export const FORM_TABS = [
   { id: "basic-information", label: "Basic Information" },
   { id: "choreographers", label: "Choreographers" },
   { id: "links", label: "Links" },
+  { id: "songs", label: "Songs" },
   { id: "step-figures", label: "Step Figures" },
   { id: "additional-information", label: "Additional Information" },
   { id: "hash-tags", label: "Hash Tags" },
@@ -28,26 +30,34 @@ const FIELD_ISSUE_MESSAGES: Record<string, string> = {
   "tutorial_video_url.invalid_url": "Enter a valid URL.",
   "category.required": "Choose or enter a category.",
   "description.required": "Enter a description.",
+  "title.required": "Enter a song title.",
+  "youtube_url.invalid_url": "Enter a valid http(s) link.",
+  "spotify_url.invalid_url": "Enter a valid http(s) link.",
+  "choreography_songs.invalid_songs": "Check the songs: only one can be the favorite.",
 };
 
-const INFORMATION_ISSUE_FIELD = /^choreography_information\.(\d+)\.(category|description)$/;
+const ROW_ISSUE_FIELD =
+  /^(choreography_information|choreography_songs)\.(\d+)\.(category|description|title|youtube_url|spotify_url)$/;
 
-/** Maps backend issue keys to display text; information rows are addressed by their row id. */
+/** Maps backend issue keys to display text; list rows are addressed by their row id. */
 export function mapFieldIssues(issues: FieldIssue[], formData: ChoreographyFormData) {
   const fieldErrors: FieldErrors = {};
   let hasUnmappedIssue = false;
   for (const issue of issues) {
-    const match = INFORMATION_ISSUE_FIELD.exec(issue.field);
+    const match = ROW_ISSUE_FIELD.exec(issue.field);
     let field = issue.field;
     let messageField = issue.field;
     if (match) {
-      const row = formData.choreography_information?.[Number(match[1])];
+      const [, list, index, rowField] = match;
+      const row = (formData[list as "choreography_information" | "choreography_songs"] ?? [])[
+        Number(index)
+      ];
       if (row?.id === undefined) {
         hasUnmappedIssue = true;
         continue;
       }
-      field = `choreography_information.${row.id}.${match[2]}`;
-      messageField = match[2];
+      field = `${list}.${row.id}.${rowField}`;
+      messageField = rowField;
     }
     const message = FIELD_ISSUE_MESSAGES[`${messageField}.${issue.key}`];
     if (message) fieldErrors[field] = message;
@@ -82,6 +92,7 @@ export function createInitialFormData(initialData?: ChoreographyFormData): Chore
       tags: [],
       step_figures: [],
       choreography_information: [createEmptyChoreographyInformation()],
+      choreography_songs: createInitialSongs(),
     };
   }
   return {
@@ -92,6 +103,7 @@ export function createInitialFormData(initialData?: ChoreographyFormData): Chore
         id: item.id ?? crypto.randomUUID(),
       })),
     ),
+    choreography_songs: createInitialSongs(initialData.choreography_songs),
   };
 }
 
@@ -190,6 +202,7 @@ export const toSubmittedFormData = (formData: ChoreographyFormData): Choreograph
   choreography_information: (formData.choreography_information || []).map(
     ({ category, description }) => ({ category, description }),
   ),
+  choreography_songs: toSubmittedSongs(formData.choreography_songs || []),
 });
 
 export function getTabErrors(fieldErrors: FieldErrors): Record<FormTabId, boolean> {
@@ -206,6 +219,7 @@ export function getTabErrors(fieldErrors: FieldErrors): Record<FormTabId, boolea
     links: Boolean(
       fieldErrors.step_sheet_link || fieldErrors.demo_video_url || fieldErrors.tutorial_video_url,
     ),
+    songs: Object.keys(fieldErrors).some((field) => field.startsWith("choreography_songs")),
     "step-figures": false,
     "additional-information": Object.keys(fieldErrors).some((field) =>
       field.startsWith("choreography_information."),

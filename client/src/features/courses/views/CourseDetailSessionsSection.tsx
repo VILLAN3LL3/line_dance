@@ -68,6 +68,7 @@ type CourseDetailSessionsSectionProps = {
   onAddChoreography: (event: React.SyntheticEvent<HTMLFormElement>) => void;
   onRemoveChoreography: (choreographyId: number) => void;
   onEditChoreography: (choreographyId: number) => void;
+  onChooseSong: (sessionChoreographyId: number, songId: number | null) => void;
   onDeleteChoreography: (choreographyId: number) => void;
 };
 
@@ -127,6 +128,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
   onAddChoreography,
   onRemoveChoreography,
   onEditChoreography,
+  onChooseSong,
   onDeleteChoreography,
 }) => {
   let sessionsContent: React.ReactNode;
@@ -299,6 +301,7 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
                       onAddChoreography={onAddChoreography}
                       onRemoveChoreography={onRemoveChoreography}
                       onEditChoreography={onEditChoreography}
+                      onChooseSong={onChooseSong}
                       onDeleteChoreography={onDeleteChoreography}
                     />
                   )}

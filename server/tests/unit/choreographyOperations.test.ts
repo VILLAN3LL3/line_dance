@@ -95,6 +95,7 @@ describe('choreography operations', () => {
         [{ name: 'Tag' }],
         [{ name: 'Kick' }],
         [{ category: 'Intro', description: 'Text' }],
+        [{ title: 'Song' }],
         { rating: 0 },
       ),
     ).toEqual({
@@ -103,6 +104,7 @@ describe('choreography operations', () => {
       tags: ['Tag'],
       step_figures: ['Kick'],
       choreography_information: [{ category: 'Intro', description: 'Text' }],
+      choreography_songs: [{ title: 'Song' }],
       rating: 0,
     });
   });

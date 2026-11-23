@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
   addChoreographyToSession,
+  chooseSessionChoreographySong,
   createSession,
   deleteSession,
   removeChoreographyFromSession,
@@ -52,6 +53,13 @@ export function useSessionMutations(courseId: number) {
     onSuccess: (_data, input) => refreshSessionChoreographies(input.sessionId),
   });
 
+  const chooseSong = useMutation({
+    mutationFn: (input: { sessionChoreographyId: number; songId: number | null }) =>
+      chooseSessionChoreographySong(input.sessionChoreographyId, input.songId),
+    // The choice is also applied to the automatic repetitions in other sessions.
+    onSuccess: refreshCourse,
+  });
+
   const isPending = [
     create,
     update,
@@ -60,6 +68,7 @@ export function useSessionMutations(courseId: number) {
     reorder,
     addChoreography,
     removeChoreography,
+    chooseSong,
   ].some((mutation) => mutation.isPending);
 
   return {
@@ -70,6 +79,7 @@ export function useSessionMutations(courseId: number) {
     reorder,
     addChoreography,
     removeChoreography,
+    chooseSong,
     isPending,
     refreshCourse,
   };

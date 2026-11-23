@@ -7,6 +7,7 @@ import {
   type ChoreographyCardViewModel,
 } from "../../choreographies";
 import { ActionButton, EmptyState, LevelBatch, Section } from "../../../shared/ui";
+import { SessionSongSelect } from "./SessionSongSelect";
 
 import type { Choreography, Session, SessionChoreography } from "../../../types";
 
@@ -24,6 +25,7 @@ type CourseDetailChoreographiesSectionProps = {
   onAddChoreography: (event: React.SyntheticEvent<HTMLFormElement>) => void;
   onRemoveChoreography: (choreographyId: number) => void;
   onEditChoreography: (choreographyId: number) => void;
+  onChooseSong: (sessionChoreographyId: number, songId: number | null) => void;
   onDeleteChoreography: (choreographyId: number) => void;
 };
 
@@ -41,6 +43,7 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
   onAddChoreography,
   onRemoveChoreography,
   onEditChoreography,
+  onChooseSong,
   onDeleteChoreography,
 }) => {
   const [overlayChoreographyId, setOverlayChoreographyId] = useState<number | null>(null);
@@ -151,6 +154,15 @@ const CourseDetailChoreographiesSection: React.FC<CourseDetailChoreographiesSect
                     ? "New"
                     : `Repeat ${sessionChoreography.repetition_number}`}
                 </span>
+                {choreography && (
+                  <SessionSongSelect
+                    choreographyName={choreography.name}
+                    songs={choreography.choreography_songs}
+                    songId={sessionChoreography.song_id}
+                    disabled={isLoading}
+                    onChange={(songId) => onChooseSong(sessionChoreography.id, songId)}
+                  />
+                )}
                 <ActionButton
                   onClick={() => onRemoveChoreography(sessionChoreography.choreography_id)}
                   variant="delete"

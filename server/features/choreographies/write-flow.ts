@@ -2,6 +2,9 @@ import type { JsonValue } from '../../utils/json-input.ts';
 import type { ChoreographyIssue, PreparedWriteRequest, WriteRequest } from './validation.ts';
 import { normalizePersonalLevel, prepareChoreography } from './write-operations.ts';
 import type { Information, PersonalLevelChange } from './write-operations.ts';
+import type { SongChanges } from './song-operations.ts';
+import { replaceSongs } from './song-flow.ts';
+import * as songRepository from './song-repository.ts';
 import * as repository from './write-repository.ts';
 import type { RelationshipKind } from './write-repository.ts';
 
@@ -60,6 +63,11 @@ async function applyPersonalLevel(
   await repository.savePersonalLevel(id, level.id);
 }
 
+async function applySongs(id: ChoreographyId, songs: SongChanges): Promise<void> {
+  if (songs === null) throw new Error('Invalid choreography songs');
+  if (songs !== undefined) await replaceSongs(id, songs);
+}
+
 async function insertRelationships(
   id: ChoreographyId,
   kind: RelationshipKind,
@@ -108,6 +116,7 @@ async function cleanupOrphanedRecords(): Promise<void> {
   await repository.deleteOrphanedInformation();
   await repository.deleteUnusedInformationCategories();
   await repository.deleteOrphanedPersonalLevels();
+  await songRepository.deleteOrphanedFavoriteSongs();
   await repository.deleteUnusedLevels(canonicalLevels);
   await repository.deleteOrphanedRelationships('authors');
   await repository.deleteOrphanedRelationships('tags');
@@ -135,6 +144,7 @@ export async function createChoreography(
     await insertRelationships(result.id, 'figures', prepared.step_figures);
     await insertRelationships(result.id, 'tags', prepared.tags);
     await replaceInformation(result.id, information ?? []);
+    await applySongs(result.id, prepared.songs);
     await applyPersonalLevel(result.id, prepared.personal_level);
     return { value: result.id };
   });
@@ -165,6 +175,7 @@ export async function updateChoreography(
     await replaceRelationships(id, 'figures', prepared.step_figures);
     await replaceRelationships(id, 'tags', prepared.tags);
     if (information !== undefined) await replaceInformation(id, information);
+    await applySongs(id, prepared.songs);
     await applyPersonalLevel(id, prepared.personal_level);
     await cleanupOrphanedRecords();
     return { value: choreography.id };
@@ -174,6 +185,7 @@ export async function updateChoreography(
 export async function deleteChoreography(id: ChoreographyId): Promise<WriteResult<true>> {
   return repository.withChoreographyTransaction(async () => {
     await repository.deleteInformation(id);
+    await songRepository.deleteAllSongs(id);
     await repository.deleteRelationships('authors', id);
     await repository.deleteRelationships('tags', id);
     await repository.deleteRelationships('figures', id);

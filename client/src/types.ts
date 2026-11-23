@@ -4,6 +4,8 @@ export type {
   ChoreographyFormData,
   ChoreographyInformation,
   ChoreographyIssue,
+  ChoreographySong,
+  ChoreographySongInput,
   ChoreographyWriteResponse,
   DanceCourse,
   DanceGroup,

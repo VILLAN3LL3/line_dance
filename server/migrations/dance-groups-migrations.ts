@@ -410,6 +410,13 @@ migrations.push(
       );
     },
   },
+  {
+    id: '016_add_session_choreography_song',
+    up: async () => {
+      // Loose reference to choreography_songs in the catalog database; NULL means "default song".
+      await runQuery('ALTER TABLE session_choreographies ADD COLUMN song_id INTEGER', [], dbName);
+    },
+  },
 );
 
 async function applyMigration(migration: Migration): Promise<void> {

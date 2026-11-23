@@ -1,4 +1,6 @@
 import type { JsonValue } from '../../utils/json-input.ts';
+import { normalizeSongs } from './song-operations.ts';
+import type { SongChanges } from './song-operations.ts';
 import { informationEntry } from './validation.ts';
 import type { ChoreographyWriteInput } from './validation.ts';
 
@@ -9,7 +11,7 @@ export type PersonalLevelChange = string | null | undefined;
 export function normalizePersonalLevel(value: JsonValue | undefined): PersonalLevelChange {
   if (value === undefined) return undefined;
   if (typeof value === 'string') return value.trim() || null;
-  return value === null ? null : String(value);
+  return value === null ? null : JSON.stringify(value);
 }
 
 export function normalizeChoreographyInformation(
@@ -39,8 +41,7 @@ export function prepareChoreography(input: ChoreographyWriteInput): {
   level: JsonValue | undefined;
   personal_level: PersonalLevelChange;
   creation_year: JsonValue;
-  song: JsonValue;
-  artist: JsonValue;
+  songs: SongChanges;
   authors: JsonValue | undefined;
   tags: JsonValue | undefined;
   step_figures: JsonValue | undefined;
@@ -55,8 +56,6 @@ export function prepareChoreography(input: ChoreographyWriteInput): {
     wall_count,
     level,
     creation_year,
-    song,
-    artist,
     authors,
     tags,
     step_figures,
@@ -71,8 +70,7 @@ export function prepareChoreography(input: ChoreographyWriteInput): {
     level,
     personal_level: normalizePersonalLevel(input.personal_level),
     creation_year: creation_year === '' ? null : (creation_year ?? null),
-    song: song || null,
-    artist: artist || null,
+    songs: normalizeSongs(input.choreography_songs),
     authors,
     tags,
     step_figures,

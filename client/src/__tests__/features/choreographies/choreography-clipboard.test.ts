@@ -19,8 +19,9 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
     step_sheet_link: "https://example.com/step-sheet",
     demo_video_url: "https://example.com/demo",
     tutorial_video_url: "https://example.com/tutorial",
-    song: "Bohemian Rhapsody",
-    artist: "Queen",
+    choreography_songs: [
+      { id: 1, title: "Bohemian Rhapsody", artist: "Queen", is_favorite: false },
+    ],
     authors: ["Alice", "Bob"],
     tags: ["Classic", "Showcase"],
     step_figures: ["Vine", "Rock Step"],
@@ -64,6 +65,44 @@ describe("buildChoreographyClipboardText", () => {
     expect(text).toContain("• Step Sheet: https://example.com/step-sheet");
   });
 
+  it("lists the favorite first, then alternatives with notes and stored links", () => {
+    const text = buildChoreographyClipboardText(
+      makeChoreography({
+        choreography_songs: [
+          { id: 1, title: "Remix", artist: "DJ", note: "faster", is_favorite: false },
+          {
+            id: 2,
+            title: "Original",
+            artist: "Queen",
+            youtube_url: "https://youtu.be/1",
+            is_favorite: true,
+          },
+        ],
+      }),
+    );
+
+    expect(text).toContain("Music:\n• Song: Original\n• Artist: Queen");
+    expect(text).toContain("• YouTube: https://youtu.be/1");
+    expect(text).toContain("• Spotify Search: https://open.spotify.com/search/Queen+Original");
+    expect(text).toContain("Alternative songs:\n• DJ - Remix (faster)");
+    expect(text).toContain("  • YouTube: https://www.youtube.com/results?search_query=DJ+Remix");
+  });
+
+  it("shares a song with a stored link but without an artist", () => {
+    const text = buildChoreographyClipboardText(
+      makeChoreography({
+        choreography_songs: [
+          { id: 1, title: "Solo", spotify_url: "https://open.spotify.com/x", is_favorite: false },
+        ],
+      }),
+    );
+
+    expect(text).toContain("• Song: Solo");
+    expect(text).not.toContain("• Artist:");
+    expect(text).toContain("• Spotify: https://open.spotify.com/x");
+    expect(text).not.toContain("YouTube");
+  });
+
   it("shares the official level instead of the effective personal level", () => {
     const text = buildChoreographyClipboardText(
       makeChoreography({ level: "Advanced", personal_level: "Advanced" }),
@@ -86,8 +125,7 @@ describe("buildChoreographyClipboardText", () => {
         step_sheet_link: undefined,
         demo_video_url: undefined,
         tutorial_video_url: undefined,
-        song: undefined,
-        artist: undefined,
+        choreography_songs: [],
       }),
     );
 

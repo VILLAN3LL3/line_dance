@@ -1,6 +1,7 @@
-import { normalizeStringArray } from '../../utils/choreographyNormalization.ts';
+import { normalizeStringArray } from "../../utils/choreographyNormalization.ts";
+import { stringifyQueryValue } from "./search-operations.ts";
+
 import type { JsonValue } from '../../utils/json-input.ts';
-import { stringifyQueryValue } from './search-operations.ts';
 import type { QueryValue } from './search-operations.ts';
 
 export type Pagination = { page: number; limit: number; offset: number };
@@ -48,18 +49,20 @@ export function normalizeDuplicateQuery(query: DuplicateQuery): DuplicateCriteri
   return { name: query.name, level: query.level, excludeId, authors };
 }
 
-export function combineChoreography<T extends object, I extends object>(
+export function combineChoreography<T extends object, I extends object, S extends object>(
   row: T,
   authors: { name: string }[],
   tags: { name: string }[],
   figures: { name: string }[],
   information: I[],
+  songs: S[],
   rating: { rating: number } | undefined,
 ): T & {
   authors: string[];
   tags: string[];
   step_figures: string[];
   choreography_information: I[];
+  choreography_songs: S[];
   rating: number | null;
 } {
   return {
@@ -68,6 +71,7 @@ export function combineChoreography<T extends object, I extends object>(
     tags: tags.map((tag) => tag.name),
     step_figures: figures.map((figure) => figure.name),
     choreography_information: information,
+    choreography_songs: songs,
     rating: rating ? rating.rating : null,
   };
 }

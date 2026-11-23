@@ -819,6 +819,61 @@ const migrations: Migration[] = [
       );
     },
   },
+  {
+    id: '016_create_choreography_songs',
+    up: async () => {
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS choreography_songs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          choreography_id INTEGER NOT NULL REFERENCES choreographies(id) ON DELETE CASCADE,
+          title TEXT NOT NULL,
+          artist TEXT,
+          youtube_url TEXT,
+          spotify_url TEXT,
+          note TEXT,
+          position INTEGER NOT NULL DEFAULT 0
+        )`,
+        [],
+        dbName,
+      );
+      await runQuery(
+        'CREATE INDEX IF NOT EXISTS choreography_songs_choreography ON choreography_songs (choreography_id)',
+        [],
+        dbName,
+      );
+      // No cross-database foreign key: orphans are removed by the choreography write flow.
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS personal_data.choreography_favorite_songs (
+          choreography_id INTEGER PRIMARY KEY,
+          song_id INTEGER NOT NULL
+        )`,
+        [],
+        dbName,
+      );
+
+      const legacyColumns = await allQuery<NamedRow>(
+        `SELECT name FROM pragma_table_info('choreographies') WHERE name IN ('song', 'artist')`,
+        [],
+        dbName,
+      );
+      if (legacyColumns.length !== 2) return;
+
+      // Without a song title the artist becomes the title, so no information is lost.
+      await runQuery(
+        `INSERT INTO choreography_songs (choreography_id, title, artist)
+         SELECT id,
+           COALESCE(NULLIF(TRIM(song), ''), TRIM(artist)),
+           CASE WHEN TRIM(COALESCE(song, '')) = '' THEN NULL ELSE NULLIF(TRIM(artist), '') END
+         FROM choreographies
+         WHERE TRIM(COALESCE(song, '')) <> '' OR TRIM(COALESCE(artist, '')) <> ''`,
+        [],
+        dbName,
+      );
+      await runSequential(['song', 'artist'], async (column) => {
+        await runQuery(`ALTER TABLE choreographies DROP COLUMN ${column}`, [], dbName);
+      });
+    },
+  },
 ];
 
 export async function runChoreographyMigrations(): Promise<void> {

@@ -7,6 +7,7 @@ import type { ChoreographyFormViewModel } from "../../viewmodels/useChoreography
 import { FORM_TABS, type ListField } from "../../model/choreography-form";
 import { ChoreographyLevelBadge } from "../ChoreographyLevelBadge";
 import { AdditionalInformationTab } from "./ChoreographyFormAdditionalInformationTab";
+import { SongsTab } from "./ChoreographyFormSongsTab";
 import {
   BasicInformationTab,
   ChoreographersTab,
@@ -141,6 +142,16 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
             errors={fieldErrors}
             urlChecks={state.urlChecks}
             onChange={handleFieldChange}
+          />
+        )}
+
+        {activeTab === "songs" && (
+          <SongsTab
+            songs={formData.choreography_songs ?? []}
+            errors={fieldErrors}
+            onChange={actions.changeSong}
+            onFavorite={actions.chooseFavoriteSong}
+            onRemove={actions.removeSong}
           />
         )}
 

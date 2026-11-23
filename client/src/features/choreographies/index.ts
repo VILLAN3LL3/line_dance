@@ -10,3 +10,5 @@ export type { ChoreographyCardViewModel } from "./viewmodels/useChoreographyCard
 export { default as ChoreographyCreatePage } from "./views/ChoreographyCreatePage";
 export { default as ChoreographyDetailPage } from "./views/ChoreographyDetailPage";
 export { ChoreographyFormListSection } from "./views/form/ChoreographyFormListSection";
+export { getDefaultSong } from "./model/choreography-songs";
+export { formatSongLabel } from "./model/song-search";

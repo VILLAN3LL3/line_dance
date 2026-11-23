@@ -233,7 +233,7 @@ describe("ChoreographyCreatePage", () => {
     );
 
     const basicTab = screen.getByRole("tab", { name: "Basic Information" });
-    expect(screen.getAllByRole("tab")).toHaveLength(6);
+    expect(screen.getAllByRole("tab")).toHaveLength(7);
     expect(basicTab).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByRole("heading", { name: "Basic Information" })).not.toBeInTheDocument();
 
@@ -521,6 +521,125 @@ describe("ChoreographyCreatePage", () => {
           ],
         }),
       );
+    });
+  });
+
+  describe("songs tab", () => {
+    async function openSongsTab() {
+      vi.mocked(checkChoreographyDuplicates).mockResolvedValue([]);
+      render(
+        <MemoryRouter initialEntries={["/choreographies/new"]}>
+          <Routes>
+            <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
+          </Routes>
+        </MemoryRouter>,
+      );
+      await screen.findAllByRole("option", { name: "Beginner" });
+      fireEvent.change(screen.getByLabelText("Choreography Name *"), {
+        target: { value: "River Dance" },
+      });
+      fireEvent.change(screen.getByLabelText("Official Level *"), {
+        target: { value: "Beginner" },
+      });
+      fireEvent.click(screen.getByRole("tab", { name: "Songs" }));
+    }
+
+    it("adds an empty row as soon as a song is entered and offers a favorite only for several songs", async () => {
+      await openSongsTab();
+
+      expect(screen.getByLabelText("Title 1")).toBeInTheDocument();
+      expect(screen.queryByLabelText("Title 2")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Remove song/ })).not.toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText("Title 1"), { target: { value: "Main Song" } });
+      expect(screen.getByLabelText("Title 2")).toBeInTheDocument();
+      expect(screen.queryByLabelText(/^Favorite/)).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Remove song 1" })).toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText("Title 2"), { target: { value: "Alternative" } });
+      expect(screen.getByLabelText("Title 3")).toBeInTheDocument();
+      const [first, second] = screen.getAllByRole("radio");
+      expect(first).toBeChecked();
+      fireEvent.click(second);
+      expect(second).toBeChecked();
+      expect(first).not.toBeChecked();
+    });
+
+    it("saves songs with links, the favorite and without placeholder ids", async () => {
+      vi.mocked(checkChoreographyDuplicates).mockResolvedValue([]);
+      await openSongsTab();
+
+      fireEvent.change(screen.getByLabelText("Title 1"), { target: { value: "Main Song" } });
+      fireEvent.change(screen.getByLabelText("Artist 1"), { target: { value: "Artist" } });
+      fireEvent.change(screen.getByLabelText("YouTube link 1 (optional)"), {
+        target: { value: "https://youtu.be/1" },
+      });
+      fireEvent.change(screen.getByLabelText("Title 2"), { target: { value: "Alternative" } });
+      fireEvent.click(screen.getAllByRole("radio")[1]);
+      fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+
+      await waitFor(() => {
+        expect(createChoreography).toHaveBeenCalledOnce();
+      });
+      const songs = vi.mocked(createChoreography).mock.calls[0][0].choreography_songs;
+      expect(songs?.slice(0, 2)).toEqual([
+        {
+          title: "Main Song",
+          artist: "Artist",
+          youtube_url: "https://youtu.be/1",
+          spotify_url: "",
+          note: "",
+          is_favorite: false,
+        },
+        {
+          title: "Alternative",
+          artist: "",
+          youtube_url: "",
+          spotify_url: "",
+          note: "",
+          is_favorite: true,
+        },
+      ]);
+    });
+
+    it("removes a song and keeps a trailing empty row", async () => {
+      await openSongsTab();
+      fireEvent.change(screen.getByLabelText("Title 1"), { target: { value: "A" } });
+      fireEvent.change(screen.getByLabelText("Title 2"), { target: { value: "B" } });
+      fireEvent.click(screen.getByRole("button", { name: "Remove song 1" }));
+
+      expect(screen.getByLabelText("Title 1")).toHaveValue("B");
+      expect(screen.getByLabelText("Title 2")).toHaveValue("");
+      expect(screen.queryByLabelText("Title 3")).not.toBeInTheDocument();
+    });
+
+    it("shows backend issues next to the song fields and clears them on correction", async () => {
+      vi.mocked(validateChoreography).mockRejectedValueOnce(
+        validationFailure([
+          { field: "choreography_songs.0.title", key: "required" },
+          { field: "choreography_songs.0.youtube_url", key: "invalid_url" },
+        ]),
+      );
+      await openSongsTab();
+      fireEvent.change(screen.getByLabelText("Artist 1"), { target: { value: "Artist" } });
+      fireEvent.change(screen.getByLabelText("YouTube link 1 (optional)"), {
+        target: { value: "nope" },
+      });
+      fireEvent.click(screen.getByRole("tab", { name: "Basic Information" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+
+      fireEvent.click(await screen.findByRole("tab", { name: "Songs, validation errors" }));
+      const title = screen.getByLabelText("Title 1");
+      const link = screen.getByLabelText("YouTube link 1 (optional)");
+      expect(title).toHaveAttribute("aria-invalid", "true");
+      expect(title).toHaveAccessibleDescription("Enter a song title.");
+      expect(link).toHaveAttribute("aria-invalid", "true");
+      expect(link).toHaveAccessibleDescription("Enter a valid http(s) link.");
+      expect(createChoreography).not.toHaveBeenCalled();
+
+      fireEvent.change(title, { target: { value: "Song" } });
+      expect(title).not.toHaveAttribute("aria-invalid");
+      expect(link).toHaveAttribute("aria-invalid", "true");
     });
   });
 });

@@ -84,7 +84,7 @@ API integration tests run against in-memory SQLite. Coverage includes:
 - Base step figures CRUD and default seeding
 - Step figure suggestions (group-level and session-level) including base figure exclusion
 - Max group level management
-- Choreography CRUD, ratings, personal levels, duplicate detection
+- Choreography CRUD, ratings, personal levels, songs (favorite, per-session song choice), duplicate detection
 - Author statistics (totals and per-level breakdowns)
 - Search filters: `all`/`any`/`exact`, `max_level_value`, `use_official_level`, `excluded_tags`, `max_count`, hierarchy-aware matching
 - Step figure hierarchy CRUD and validation (cycles, delete protection)

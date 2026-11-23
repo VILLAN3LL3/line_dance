@@ -12,6 +12,9 @@ const sessionUpdate = z.object({ session_date: sessionDate, comment }).brand<'Se
 const assignment = z
   .object({ session_id: requiredValue, choreography_id: requiredValue })
   .brand<'NewAssignment'>();
+const assignmentSong = z
+  .object({ song_id: z.number().int().positive().nullable() })
+  .brand<'AssignmentSong'>();
 const sessionId = requiredValue.brand<'SessionId'>();
 const query = z.object({
   dance_course_id: jsonInput.optional(),
@@ -29,11 +32,13 @@ export type NewSession = z.output<typeof newSession>;
 export type SessionUpdate = z.output<typeof sessionUpdate>;
 export type NewAssignment = z.output<typeof assignment>;
 export type SessionId = z.output<typeof sessionId>;
+export type AssignmentSong = z.output<typeof assignmentSong>;
 export type NewSessionResult =
   { error: 'course_and_date_required' | 'invalid_session_date' } | { value: NewSession };
 export type SessionUpdateResult =
   { error: 'date_required' | 'invalid_session_date' } | { value: SessionUpdate };
 export type AssignmentResult = { error: 'assignment_ids_required' } | { value: NewAssignment };
+export type AssignmentSongResult = { error: 'invalid_song' } | { value: AssignmentSong };
 export type SessionIdResult = { error: 'session_id_required' } | { value: SessionId };
 export type ReorderResult = { error: 'invalid_reorder_ids' } | { value: number[] };
 export type SwapResult = { error: 'invalid_swap_ids' } | { value: [number, number] };
@@ -69,6 +74,11 @@ export function validateSessionId(input: unknown): SessionIdResult {
 export function validateAssignment(input: unknown): AssignmentResult {
   const parsed = assignment.safeParse(requireBody(input));
   return parsed.success ? { value: parsed.data } : { error: 'assignment_ids_required' };
+}
+
+export function validateAssignmentSong(input: unknown): AssignmentSongResult {
+  const parsed = assignmentSong.safeParse(requireBody(input));
+  return parsed.success ? { value: parsed.data } : { error: 'invalid_song' };
 }
 
 export function validateReorder(input: unknown): ReorderResult {

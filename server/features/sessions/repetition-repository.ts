@@ -21,8 +21,8 @@ export async function distributeRepetitions(
        FROM sessions WHERE dance_course_id = ?
      )
      INSERT OR IGNORE INTO session_choreographies
-       (session_id, choreography_id, is_new, repeat_source_id, auto_repeat)
-     SELECT target.id, source.choreography_id, 0, source.id, 0
+       (session_id, choreography_id, is_new, repeat_source_id, auto_repeat, song_id)
+     SELECT target.id, source.choreography_id, 0, source.id, 0, source.song_id
      FROM session_choreographies source
      JOIN ordered_sessions origin ON origin.id = source.session_id
      JOIN ordered_sessions target ON target.position BETWEEN origin.position + 1 AND origin.position + 2

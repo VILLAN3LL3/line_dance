@@ -4,8 +4,10 @@ import * as sessions from './repository.ts';
 import type { AssignmentRow, Session } from './repository.ts';
 import type { JsonValue } from '../../utils/json-input.ts';
 import { distributeRepetitions } from './repetition-repository.ts';
+import { findSong } from '../choreographies/song-repository.ts';
 import type {
   AssignmentResult,
+  AssignmentSongResult,
   NewSessionResult,
   ReorderResult,
   SessionIdResult,
@@ -24,6 +26,7 @@ export type SessionError =
   | 'assignment_ids_required'
   | 'duplicate_assignment'
   | 'assignment_not_found'
+  | 'invalid_song'
   | 'invalid_reorder_ids'
   | 'invalid_swap_ids'
   | 'different_course';
@@ -95,6 +98,24 @@ export async function addAssignment(validation: AssignmentResult): Promise<Resul
     if (!saved) throw new Error('Inserted session choreography not found');
     return { value: serializeAssignment(saved) };
   });
+}
+
+export async function setAssignmentSong(
+  id: string | number,
+  validation: AssignmentSongResult,
+): Promise<Result<Assignment>> {
+  if ('error' in validation) return validation;
+  const assignment = await sessions.findAssignment(Number(id));
+  if (!assignment) return { error: 'assignment_not_found' };
+  const { song_id } = validation.value;
+  // Songs live in the catalog database, so the song is checked against the assigned dance.
+  if (song_id !== null && !(await findSong(assignment.choreography_id, song_id))) {
+    return { error: 'invalid_song' };
+  }
+  await sessions.updateAssignmentSong(assignment.id, song_id);
+  const saved = await sessions.findAssignment(assignment.id);
+  if (!saved) throw new Error('Updated session choreography not found');
+  return { value: serializeAssignment(saved) };
 }
 
 export async function removeAssignment(id: string | number): Promise<Result<true>> {

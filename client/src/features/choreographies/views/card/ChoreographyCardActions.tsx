@@ -2,7 +2,8 @@ import React from "react";
 
 import { ActionButton } from "../../../../shared/ui";
 import type { Choreography } from "../../../../types";
-import { buildSongSearchUrls } from "../../model/song-search";
+import { getDefaultSong } from "../../model/choreography-songs";
+import { formatSongLabel, resolveSongLinks } from "../../model/song-search";
 
 interface ChoreographyCardActionsProps {
   choreography: Choreography;
@@ -17,9 +18,9 @@ export const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = (
   onDelete,
   onCopy,
 }) => {
-  const song = choreography.song?.trim();
-  const artist = choreography.artist?.trim();
-  const songSearchUrls = song && artist ? buildSongSearchUrls(song, artist) : null;
+  const defaultSong = getDefaultSong(choreography.choreography_songs);
+  const songLabel = defaultSong ? formatSongLabel(defaultSong) : "";
+  const songLinks = defaultSong ? resolveSongLinks(defaultSong) : null;
 
   return (
     <>
@@ -51,31 +52,31 @@ export const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = (
         </a>
       )}
 
-      {songSearchUrls && (
-        <>
-          <a
-            href={songSearchUrls.youtubeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(event) => event.stopPropagation()}
-            className="btn-secondary btn-small youtube-action"
-            aria-label={`Search for "${artist} - ${song}" on YouTube`}
-            title={`Search on YouTube: ${artist} - ${song}`}
-          >
-            ▶️
-          </a>
-          <a
-            href={songSearchUrls.spotifyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(event) => event.stopPropagation()}
-            className="btn-secondary btn-small spotify-action"
-            aria-label={`Search for "${artist} - ${song}" on Spotify`}
-            title={`Search on Spotify: ${artist} - ${song}`}
-          >
-            🎵
-          </a>
-        </>
+      {songLinks?.youtubeUrl && (
+        <a
+          href={songLinks.youtubeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => event.stopPropagation()}
+          className="btn-secondary btn-small youtube-action"
+          aria-label={`Open "${songLabel}" on YouTube`}
+          title={`Open on YouTube: ${songLabel}`}
+        >
+          ▶️
+        </a>
+      )}
+      {songLinks?.spotifyUrl && (
+        <a
+          href={songLinks.spotifyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => event.stopPropagation()}
+          className="btn-secondary btn-small spotify-action"
+          aria-label={`Open "${songLabel}" on Spotify`}
+          title={`Open on Spotify: ${songLabel}`}
+        >
+          🎵
+        </a>
       )}
 
       <button

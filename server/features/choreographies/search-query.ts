@@ -70,8 +70,12 @@ export function buildFilterConditions(filterObj: SearchFilters): FilterCondition
   }
 
   if (song_artist) {
-    // Search for song or artist (case-insensitive, partial match)
-    conditions.push('(LOWER(c.song) LIKE LOWER(?) OR LOWER(c.artist) LIKE LOWER(?))');
+    // Search for the title or artist of any song (case-insensitive, partial match)
+    conditions.push(`EXISTS (
+      SELECT 1 FROM choreography_songs song
+      WHERE song.choreography_id = c.id
+        AND (LOWER(song.title) LIKE LOWER(?) OR LOWER(song.artist) LIKE LOWER(?))
+    )`);
     const searchTerm = `%${stringifyQueryValue(song_artist)}%`;
     params.push(searchTerm, searchTerm);
   }
@@ -145,9 +149,9 @@ export function buildFilterConditions(filterObj: SearchFilters): FilterCondition
 }
 
 function buildStepFiguresFilter(
-  step_figures: QueryValue,
-  step_figures_match_mode: QueryValue,
-  without_step_figures: QueryValue,
+  step_figures: QueryValue | undefined,
+  step_figures_match_mode: QueryValue | undefined,
+  without_step_figures: QueryValue | undefined,
 ): StepFilter {
   const result: StepFilter = {
     joins: [],
@@ -192,8 +196,8 @@ function buildStepFiguresFilter(
 }
 
 function buildLevelFilter(
-  level: QueryValue,
-  max_level_value: QueryValue,
+  level: QueryValue | undefined,
+  max_level_value: QueryValue | undefined,
   useOfficialLevel: boolean,
 ): { condition: string; params: QueryParameter[] } {
   // `l` is the official level; the effective level also considers the personal level.
@@ -229,7 +233,7 @@ function buildLevelFilter(
 }
 
 function buildRelationshipFilter(
-  items: QueryValue,
+  items: QueryValue | undefined,
   relationshipTable: string,
   relationshipPkCol: string,
   entityTable: string,
@@ -254,7 +258,7 @@ function buildRelationshipFilter(
 }
 
 function buildExcludedRelationshipFilter(
-  items: QueryValue,
+  items: QueryValue | undefined,
   relationshipTable: string,
   relationshipPkCol: string,
   entityTable: string,

@@ -11,6 +11,7 @@ export type SessionChoreography = {
   is_new: number;
   repeat_source_id: number | null;
   auto_repeat: number;
+  song_id: number | null;
 };
 
 const dbName = 'danceGroups' as const;
@@ -63,7 +64,7 @@ export async function restoreSessionChoreographies(
 ): Promise<void> {
   if (choreographies.length === 0) return;
   await runQuery(
-    `INSERT INTO session_choreographies (id, session_id, choreography_id, created_at, is_new, repeat_source_id, auto_repeat) VALUES ${choreographies.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(',')}`,
+    `INSERT INTO session_choreographies (id, session_id, choreography_id, created_at, is_new, repeat_source_id, auto_repeat, song_id) VALUES ${choreographies.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(',')}`,
     choreographies.flatMap((choreography) => [
       choreography.id,
       targets.get(choreography.session_id),
@@ -72,6 +73,7 @@ export async function restoreSessionChoreographies(
       choreography.is_new,
       choreography.repeat_source_id,
       choreography.auto_repeat,
+      choreography.song_id,
     ]),
     dbName,
   );

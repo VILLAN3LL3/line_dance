@@ -91,6 +91,9 @@ const CourseDetailPage: React.FC = () => {
             actions.removeChoreography,
           )}
           onEditChoreography={actions.editChoreography}
+          onChooseSong={(sessionChoreographyId, songId) =>
+            void actions.chooseSong(sessionChoreographyId, songId)
+          }
           onDeleteChoreography={confirmThen(
             "Are you sure you want to delete this choreography?",
             actions.deleteChoreography,

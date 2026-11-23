@@ -10,6 +10,7 @@ import {
 } from './search-operations.ts';
 import * as repository from './read-repository.ts';
 import type { ChoreographyRow } from './read-repository.ts';
+import { listSongs } from './song-repository.ts';
 
 export type { Choreography, DuplicateChoreography } from '../../contracts/api.ts';
 
@@ -33,8 +34,6 @@ const choreographyResponse = z.looseObject({
   count: optionalInteger,
   wall_count: optionalInteger,
   creation_year: optionalInteger,
-  song: optionalText,
-  artist: optionalText,
   created_at: z.string(),
   updated_at: z.string(),
   authors: z.array(z.string()),
@@ -47,6 +46,17 @@ const choreographyResponse = z.looseObject({
       description: z.string(),
     }),
   ),
+  choreography_songs: z.array(
+    z.object({
+      id: z.number(),
+      title: z.string(),
+      artist: optionalText,
+      youtube_url: optionalText,
+      spotify_url: optionalText,
+      note: optionalText,
+      is_favorite: z.boolean(),
+    }),
+  ),
   rating: z.number().nullable(),
 });
 
@@ -55,9 +65,13 @@ async function enrichChoreography(choreography: ChoreographyRow): Promise<Choreo
   const tags = await repository.findTags(choreography.id);
   const figures = await repository.findStepFigures(choreography.id);
   const information = await repository.findInformation(choreography.id);
+  const songs = (await listSongs(choreography.id)).map((song) => ({
+    ...song,
+    is_favorite: Boolean(song.is_favorite),
+  }));
   const rating = await repository.findRating(choreography.id);
   return choreographyResponse.parse(
-    combineChoreography(choreography, authors, tags, figures, information, rating),
+    combineChoreography(choreography, authors, tags, figures, information, songs, rating),
   );
 }
 

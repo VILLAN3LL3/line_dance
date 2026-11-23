@@ -143,6 +143,14 @@ export async function insertAssignment(
   }
 }
 
+export async function updateAssignmentSong(id: number, songId: number | null): Promise<void> {
+  await runQuery(
+    'UPDATE session_choreographies SET song_id = ? WHERE id = ? OR repeat_source_id = ?',
+    [songId, id, id],
+    dbName,
+  );
+}
+
 export async function deleteAssignment(id: JsonValue): Promise<boolean> {
   const result = await runQuery(
     'DELETE FROM session_choreographies WHERE id = ? OR repeat_source_id = ?',
