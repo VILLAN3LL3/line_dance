@@ -1,5 +1,5 @@
-import { normalizeStringArray } from "../../utils/choreographyNormalization.ts";
-import { stringifyQueryValue } from "./search-operations.ts";
+import { normalizeStringArray } from '../../utils/choreographyNormalization.ts';
+import { stringifyQueryValue } from './search-operations.ts';
 
 import type { JsonValue } from '../../utils/json-input.ts';
 import type { QueryValue } from './search-operations.ts';
