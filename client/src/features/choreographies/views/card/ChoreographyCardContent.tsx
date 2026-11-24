@@ -103,13 +103,11 @@ export const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = (
       {(choreography.tags.length > 0 || isDetailMode) && (
         <div className="tags">
           <strong>Hash Tags:</strong>
-          {choreography.tags.length > 0 ? (
-            <TagGroup className="tag-list">
-              {choreography.tags.map((tag) => (
-                <Tag key={tag} value={tag} className="tag-small" />
-              ))}
-            </TagGroup>
-          ) : null}
+          <TagGroup className="tag-list">
+            {choreography.tags.map((tag) => (
+              <Tag key={tag} value={tag} className="tag-small" />
+            ))}
+          </TagGroup>
         </div>
       )}
 
