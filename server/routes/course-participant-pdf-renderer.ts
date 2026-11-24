@@ -118,7 +118,7 @@ function renderDance(layout: Layout, dance: ParticipantPdfDance): void {
 
   const slotsX = left + width - cardPadding - 2 * qrSlotWidth;
   const qrY = top + (height - qrSize - qrCaptionHeight) / 2;
-  if (dance.stepSheet) renderLinkQr(layout, dance.stepSheet, 'Copperknob', slotsX, qrY);
+  if (dance.stepSheet) renderLinkQr(layout, dance.stepSheet, 'Step Sheet', slotsX, qrY);
   if (dance.demoVideo) {
     renderLinkQr(layout, dance.demoVideo, 'Demo-Video', slotsX + qrSlotWidth, qrY);
   }
