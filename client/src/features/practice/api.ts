@@ -1,5 +1,11 @@
 import { httpClient } from "../../shared/http/httpClient";
-import type { PracticeLogEntry, PracticeLogRequest, PracticeSummary } from "../../types";
+import type {
+  PracticeBaselineRequest,
+  PracticeIntervalTier,
+  PracticeLogEntry,
+  PracticeLogRequest,
+  PracticeSummary,
+} from "../../types";
 
 export async function fetchPracticeSuggestions(): Promise<PracticeSummary[]> {
   const response = await httpClient.get("/practice/suggestions");
@@ -20,5 +26,17 @@ export async function logPractice(
 
 export async function deletePracticeEntry(id: number): Promise<{ message: string }> {
   const response = await httpClient.delete(`/practice-log/${id}`);
+  return response.data;
+}
+
+export async function fetchPracticeIntervals(): Promise<PracticeIntervalTier[]> {
+  const response = await httpClient.get("/practice/intervals");
+  return response.data.tiers;
+}
+
+export async function setPracticeBaseline(
+  request: PracticeBaselineRequest,
+): Promise<{ updated: number; step: number }> {
+  const response = await httpClient.post("/practice/baseline", request);
   return response.data;
 }

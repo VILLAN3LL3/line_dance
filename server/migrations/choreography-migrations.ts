@@ -984,6 +984,22 @@ const migrations: Migration[] = [
       );
     },
   },
+  {
+    id: '020_add_practice_log_step',
+    up: async () => {
+      // An entry with a step puts the dance on that interval step instead of recording a practice.
+      await runQuery(
+        'ALTER TABLE personal_data.choreography_practice_log ADD COLUMN step INTEGER',
+        [],
+        dbName,
+      );
+      await runQuery(
+        'ALTER TABLE personal_data.choreography_practice_log ADD COLUMN due_on TEXT',
+        [],
+        dbName,
+      );
+    },
+  },
 ];
 
 export async function runChoreographyMigrations(): Promise<void> {

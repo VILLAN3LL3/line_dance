@@ -3,16 +3,17 @@ import React from "react";
 import { CONFIDENCE_OPTIONS } from "../model/practice-log";
 import { describeSubmit } from "../model/quick-log";
 import type { QuickLogViewModel } from "../viewmodels/useQuickLogViewModel";
+import { QuickLogDanceList } from "./QuickLogDanceList";
 
 interface QuickLogPanelProps {
   viewModel: QuickLogViewModel;
 }
 
-/** Quick capture of one practice day for several dances. */
+/** Quick capture for several dances: log a practice day, or put dances on an interval step once. */
 export const QuickLogPanel: React.FC<QuickLogPanelProps> = ({ viewModel }) => {
   const { state, actions } = viewModel;
   const { form } = state;
-  const count = form.selected.length;
+  const isBaseline = form.mode === "baseline";
 
   return (
     <section className="practice-quick-log" aria-label="Log practice">
@@ -25,10 +26,8 @@ export const QuickLogPanel: React.FC<QuickLogPanelProps> = ({ viewModel }) => {
       >
         ➕ Log practice
       </button>
-      {state.savedCount !== null && (
-        <output className="practice-saved">
-          Logged {state.savedCount === 1 ? "1 dance" : `${state.savedCount} dances`}
-        </output>
+      {state.savedMessage !== null && (
+        <output className="practice-saved">{state.savedMessage}</output>
       )}
 
       {form.open && (
@@ -44,67 +43,106 @@ export const QuickLogPanel: React.FC<QuickLogPanelProps> = ({ viewModel }) => {
             <p>No learned dances yet.</p>
           ) : (
             <>
-              <div className="form-group">
-                <label htmlFor="practice-quick-log-search">Find a dance</label>
-                <input
-                  id="practice-quick-log-search"
-                  type="search"
-                  value={form.query}
-                  onChange={(event) => actions.setQuery(event.target.value)}
-                />
-              </div>
-              <fieldset className="practice-dance-list">
-                <legend>Dances you practiced</legend>
-                {state.dances.map((dance) => (
-                  <label key={dance.id} className="practice-dance-option">
+              <fieldset className="practice-mode">
+                <legend>What do you want to do?</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="practice-quick-log-mode"
+                    checked={!isBaseline}
+                    onChange={() => actions.setMode("practice")}
+                  />
+                  <span>I practiced these dances</span>
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="practice-quick-log-mode"
+                    checked={isBaseline}
+                    onChange={() => actions.setMode("baseline")}
+                  />
+                  <span>Set an interval step (once, for dances I learned long ago)</span>
+                </label>
+              </fieldset>
+
+              <QuickLogDanceList
+                viewModel={viewModel}
+                legend={isBaseline ? "Dances to set" : "Dances you practiced"}
+              />
+
+              {isBaseline ? (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="practice-quick-log-step">Interval step</label>
+                    <select
+                      id="practice-quick-log-step"
+                      value={form.step}
+                      onChange={(event) => actions.setStep(Number(event.target.value))}
+                    >
+                      {state.stepOptions.map((option) => (
+                        <option key={option.step} value={option.step}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <label className="practice-dance-option">
                     <input
                       type="checkbox"
-                      checked={form.selected.includes(dance.id)}
-                      onChange={() => actions.toggleDance(dance.id)}
+                      checked={form.spread}
+                      onChange={(event) => actions.setSpread(event.target.checked)}
                     />
-                    {dance.name}
+                    <span>Spread the due dates over the interval</span>
                   </label>
-                ))}
-                {state.dances.length === 0 && <p>No dance matches your search.</p>}
-              </fieldset>
-              <div className="practice-quick-log-fields">
-                <div className="form-group">
-                  <label htmlFor="practice-quick-log-date">Practiced on</label>
-                  <input
-                    id="practice-quick-log-date"
-                    type="date"
-                    value={form.practicedOn}
-                    max={state.maxDate}
-                    onChange={(event) => actions.setDate(event.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="practice-quick-log-confidence">How did it go?</label>
-                  <select
-                    id="practice-quick-log-confidence"
-                    value={form.confidence}
-                    onChange={(event) =>
-                      actions.setConfidence(event.target.value as "sure" | "unsure")
-                    }
-                  >
-                    {CONFIDENCE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.emoji} {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="form-group">
-                <label htmlFor="practice-quick-log-note">Note</label>
-                <textarea
-                  id="practice-quick-log-note"
-                  rows={2}
-                  maxLength={500}
-                  value={form.note}
-                  onChange={(event) => actions.setNote(event.target.value)}
-                />
-              </div>
+                  <p className="practice-hint">
+                    The dances count as practiced up to this step starting today. This does not add
+                    a practice; your next practice continues from this step. Higher levels come back
+                    sooner.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="practice-quick-log-fields">
+                    <div className="form-group">
+                      <label htmlFor="practice-quick-log-date">Practiced on</label>
+                      <input
+                        id="practice-quick-log-date"
+                        type="date"
+                        value={form.practicedOn}
+                        max={state.maxDate}
+                        onChange={(event) => actions.setDate(event.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="practice-quick-log-confidence">How did it go?</label>
+                      <select
+                        id="practice-quick-log-confidence"
+                        value={form.confidence}
+                        onChange={(event) =>
+                          actions.setConfidence(event.target.value as "sure" | "unsure")
+                        }
+                      >
+                        {CONFIDENCE_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.emoji} {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="practice-quick-log-note">Note</label>
+                    <textarea
+                      id="practice-quick-log-note"
+                      rows={2}
+                      maxLength={500}
+                      value={form.note}
+                      onChange={(event) => actions.setNote(event.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+
               {state.error && (
                 <p className="form-field-error" role="alert">
                   {state.error}
@@ -113,9 +151,11 @@ export const QuickLogPanel: React.FC<QuickLogPanelProps> = ({ viewModel }) => {
               <button
                 type="submit"
                 className="btn-primary"
-                disabled={count === 0 || !form.practicedOn || state.isSaving}
+                disabled={
+                  form.selected.length === 0 || state.isSaving || (!isBaseline && !form.practicedOn)
+                }
               >
-                {describeSubmit(count)}
+                {describeSubmit(form.mode, form.selected.length)}
               </button>
             </>
           )}

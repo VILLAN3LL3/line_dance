@@ -6,7 +6,9 @@ import { searchChoreographies } from "../../../features/choreographies/api";
 import {
   deletePracticeEntry,
   fetchPracticeLog,
+  fetchPracticeIntervals,
   fetchPracticeSuggestions,
+  setPracticeBaseline,
   logPractice,
 } from "../../../features/practice/api";
 import { usePracticeDeckViewModel } from "../../../features/practice/viewmodels/usePracticeDeckViewModel";
@@ -18,6 +20,8 @@ import { makeDance, makeSummary } from "./testData";
 vi.mock("../../../features/choreographies/api", () => ({ searchChoreographies: vi.fn() }));
 vi.mock("../../../features/practice/api", () => ({
   fetchPracticeSuggestions: vi.fn(),
+  fetchPracticeIntervals: vi.fn(),
+  setPracticeBaseline: vi.fn(),
   fetchPracticeLog: vi.fn(),
   logPractice: vi.fn(),
   deletePracticeEntry: vi.fn(),
@@ -36,6 +40,10 @@ beforeEach(() => {
     makeSummary(1, { is_due: false, next_due_on: "2999-01-01", practice_count: 1 }),
   ]);
   vi.mocked(fetchPracticeLog).mockResolvedValue([]);
+  vi.mocked(fetchPracticeIntervals).mockResolvedValue([
+    { name: "Beginner", max_level_value: null, interval_days: [1, 3, 7] },
+  ]);
+  vi.mocked(setPracticeBaseline).mockResolvedValue({ updated: 2, step: 3 });
   vi.mocked(logPractice).mockResolvedValue({ logged: 1, practiced_on: "2026-11-24" });
   vi.mocked(deletePracticeEntry).mockResolvedValue({ message: "ok" });
 });
@@ -122,7 +130,7 @@ describe("useQuickLogViewModel", () => {
       practiced_on: "2026-11-20",
       confidence: "sure",
     });
-    expect(result.current.state.savedCount).toBe(2);
+    expect(result.current.state.savedMessage).toBe("Logged 2 dances");
     expect(result.current.state.form.selected).toEqual([]);
   });
 
@@ -152,6 +160,57 @@ describe("useQuickLogViewModel", () => {
   });
 });
 
+describe("useQuickLogViewModel baseline mode", () => {
+  it("offers the steps and puts the selected dances on a step", async () => {
+    const { wrapper } = createQueryWrapper();
+    const { result } = renderHook(() => useQuickLogViewModel(), { wrapper });
+    await waitFor(() => expect(result.current.state.stepOptions).toHaveLength(3));
+
+    act(() => {
+      result.current.actions.setMode("baseline");
+      result.current.actions.setStep(3);
+      result.current.actions.setSpread(false);
+      result.current.actions.selectShown();
+    });
+    await act(() => result.current.actions.submit());
+
+    expect(setPracticeBaseline).toHaveBeenCalledWith({
+      choreography_ids: [1, 2],
+      step: 3,
+      spread: false,
+    });
+    expect(logPractice).not.toHaveBeenCalled();
+    expect(result.current.state.savedMessage).toBe("Set 2 dances to step 3");
+    expect(result.current.state.form.selected).toEqual([]);
+  });
+
+  it("selects only the dances shown by the search", async () => {
+    const { wrapper } = createQueryWrapper();
+    const { result } = renderHook(() => useQuickLogViewModel(), { wrapper });
+    await waitFor(() => expect(result.current.state.hasLearnedDances).toBe(true));
+
+    act(() => result.current.actions.setQuery("alp"));
+    act(() => result.current.actions.selectShown());
+    expect(result.current.state.form.selected).toEqual([1]);
+  });
+
+  it("keeps the selection and reports a failed step change", async () => {
+    vi.mocked(setPracticeBaseline).mockRejectedValue(new Error("nope"));
+    const { wrapper } = createQueryWrapper();
+    const { result } = renderHook(() => useQuickLogViewModel(), { wrapper });
+    await waitFor(() => expect(result.current.state.hasLearnedDances).toBe(true));
+
+    act(() => {
+      result.current.actions.setMode("baseline");
+      result.current.actions.toggleDance(1);
+    });
+    await act(() => result.current.actions.submit());
+
+    await waitFor(() => expect(result.current.state.error).toBe("Failed to set the interval step"));
+    expect(result.current.state.form.selected).toEqual([1]);
+  });
+});
+
 describe("usePracticeLogViewModel", () => {
   const entry = {
     id: 5,
@@ -162,6 +221,8 @@ describe("usePracticeLogViewModel", () => {
     note: null,
     song_id: null,
     song_title: null,
+    step: null,
+    due_on: null,
   };
 
   it("groups the log by day and deletes an entry", async () => {

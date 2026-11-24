@@ -1,9 +1,17 @@
 import type { Request, Response } from 'express';
 import * as practice from '../features/practice/flow.ts';
-import type { LogListRequest, LogPracticeRequest } from '../features/practice/flow.ts';
+import type {
+  BaselineRequest,
+  LogListRequest,
+  LogPracticeRequest,
+} from '../features/practice/flow.ts';
 import type { PracticeSummary } from '../features/practice/operations.ts';
 import type { PracticeLogEntry } from '../features/practice/repository.ts';
-import { validateLogList, validateLogPractice } from '../features/practice/validation.ts';
+import {
+  validateBaseline,
+  validateLogList,
+  validateLogPractice,
+} from '../features/practice/validation.ts';
 import { prepareInput } from './prepare-input.ts';
 import { captureError } from '../utils/choreographyRouteErrors.ts';
 
@@ -15,6 +23,9 @@ const practiceErrors: Record<string, [number, string]> = {
   invalid_confidence: [400, 'confidence must be "sure" or "unsure"'],
   invalid_song: [400, 'song_id must belong to the practiced choreography'],
   invalid_note: [400, 'note must be at most 500 characters'],
+  invalid_step: [400, 'step must be an integer between 1 and 14'],
+  invalid_spread: [400, 'spread must be a boolean'],
+  not_learned: [400, 'Only learned dances can be set to an interval step'],
   invalid_limit: [400, 'limit must be an integer between 1 and 500'],
   invalid_id: [400, 'Invalid practice entry id'],
   future_date: [400, 'practiced_on must not be in the future'],
@@ -31,6 +42,7 @@ function sendPracticeError<T>(
 }
 
 export const preparePracticeLog = prepareInput((req) => req.body, validateLogPractice);
+export const preparePracticeBaseline = prepareInput((req) => req.body, validateBaseline);
 export const preparePracticeList = prepareInput((req) => req.query, validateLogList);
 
 export async function logPractice(
@@ -88,4 +100,25 @@ export async function getPracticeSuggestions(
     captureError(error);
     res.status(500).json({ error: 'Failed to load practice suggestions' });
   }
+}
+
+export async function setPracticeBaseline(
+  _req: Request,
+  res: Response<{ updated: number; step: number } | ErrorResponse, { input: BaselineRequest }>,
+): Promise<Response | void> {
+  try {
+    const result = await practice.setPracticeBaseline(res.locals.input);
+    if ('error' in result) return sendPracticeError(res, result.error);
+    res.status(201).json(result.value);
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to set the interval step' });
+  }
+}
+
+export function getIntervalTiers(
+  _req: Request,
+  res: Response<{ tiers: ReturnType<typeof practice.getIntervalTiers> }>,
+): void {
+  res.json({ tiers: practice.getIntervalTiers() });
 }

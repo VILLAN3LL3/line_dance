@@ -5,11 +5,14 @@ import {
   formatLocalDate,
   intervalDaysForLevel,
   isFutureDate,
+  planBaseline,
+  REVIEW_STEP_COUNT,
   reviewIntervalDays,
   summarizePractice,
 } from '../../features/practice/operations.ts';
 import type { PracticeRow } from '../../features/practice/operations.ts';
 import {
+  validateBaseline,
   validateEntryId,
   validateLogList,
   validateLogPractice,
@@ -30,6 +33,8 @@ function entry(
     practiced_on: practicedOn,
     confidence,
     note: null,
+    step: null,
+    due_on: null,
     level_value: levelValue,
   };
 }
@@ -41,6 +46,8 @@ function never(choreographyId: number): PracticeRow {
     practiced_on: null,
     confidence: null,
     note: null,
+    step: null,
+    due_on: null,
     level_value: 30,
   };
 }
@@ -171,6 +178,134 @@ describe('summarizePractice', () => {
       { ...entry(1, 2, '2026-11-02'), note: 'new' },
     ];
     expect(summarizePractice(rows, today)[0].last_note).toBe('new');
+  });
+});
+
+function baseline(
+  choreographyId: number,
+  id: number,
+  practicedOn: string,
+  step: number,
+  dueOn: string,
+  levelValue = 30,
+): PracticeRow {
+  return {
+    ...entry(choreographyId, id, practicedOn, 'sure', levelValue),
+    step,
+    due_on: dueOn,
+  };
+}
+
+describe('interval step baseline', () => {
+  it('is due on its date, is no practice and continues from the step', () => {
+    const [summary] = summarizePractice([baseline(1, 1, '2026-11-20', 8, '2026-12-20')], today);
+    expect(summary).toMatchObject({
+      last_practiced_on: null,
+      last_note: null,
+      practice_count: 0,
+      next_due_on: '2026-12-20',
+      is_due: false,
+      days_overdue: -26,
+    });
+  });
+
+  it('counts the next sure practice as the step after the baseline', () => {
+    const rows = [baseline(1, 1, '2026-11-01', 8, '2026-12-01'), entry(1, 2, '2026-11-24')];
+    const [summary] = summarizePractice(rows, today);
+    expect(summary).toMatchObject({ practice_count: 1, last_practiced_on: '2026-11-24' });
+    // Step 9 of the beginner ladder is 45 days.
+    expect(summary.next_due_on).toBe('2027-01-08');
+  });
+
+  it('starts again after an unsure practice following the baseline', () => {
+    const rows = [
+      baseline(1, 1, '2026-11-01', 8, '2026-12-01'),
+      entry(1, 2, '2026-11-24', 'unsure'),
+    ];
+    expect(summarizePractice(rows, today)[0].next_due_on).toBe('2026-11-25');
+  });
+
+  it('lets a later baseline replace the history', () => {
+    const rows = [
+      entry(1, 1, '2026-01-01'),
+      entry(1, 2, '2026-01-02'),
+      baseline(1, 3, '2026-11-24', 3, '2026-11-28'),
+    ];
+    expect(summarizePractice(rows, today)[0]).toMatchObject({
+      practice_count: 2,
+      next_due_on: '2026-11-28',
+    });
+  });
+
+  it('ranks a baseline relative to its own interval', () => {
+    const rows = [
+      baseline(1, 1, '2026-11-14', 8, '2026-12-14'), // 10 of 30 days
+      baseline(2, 2, '2026-11-14', 5, '2026-11-24'), // due today: 10 of 10 days
+    ];
+    expect(summarizePractice(rows, today).map((summary) => summary.choreography_id)).toEqual([
+      2, 1,
+    ]);
+  });
+});
+
+describe('planBaseline', () => {
+  const dances = (count: number, levelValue = 30): { id: number; level_value: number }[] =>
+    Array.from({ length: count }, (_, index) => ({ id: index + 1, level_value: levelValue }));
+
+  it('makes every dance due after the full interval without spreading', () => {
+    expect(planBaseline(dances(3), 8, false, today).map((plan) => plan.due_on)).toEqual([
+      '2026-12-24',
+      '2026-12-24',
+      '2026-12-24',
+    ]);
+  });
+
+  it('spreads the due dates evenly over the interval', () => {
+    const due = planBaseline(dances(30), 8, true, today).map((plan) => plan.due_on);
+    expect(due[0]).toBe('2026-11-25');
+    expect(due.at(-1)).toBe('2026-12-24');
+    expect(new Set(due).size).toBe(30);
+  });
+
+  it('keeps all dates within the interval and uses the level of each dance', () => {
+    const plan = planBaseline(
+      [
+        { id: 2, level_value: 150 },
+        { id: 1, level_value: 30 },
+      ],
+      8,
+      false,
+      today,
+    );
+    expect(plan).toEqual([
+      { choreography_id: 1, due_on: '2026-12-24' },
+      { choreography_id: 2, due_on: '2026-12-09' },
+    ]);
+    expect(planBaseline(dances(1), 1, true, today)[0].due_on).toBe('2026-11-25');
+  });
+
+  it('accepts only the steps of the ladder', () => {
+    expect(validateBaseline({ choreography_ids: [1], step: 1 })).toEqual({
+      value: { choreography_ids: [1], step: 1, spread: true },
+    });
+    expect(
+      validateBaseline({ choreography_ids: [1, 1], step: REVIEW_STEP_COUNT, spread: false }),
+    ).toEqual({
+      value: { choreography_ids: [1], step: REVIEW_STEP_COUNT, spread: false },
+    });
+    expect(validateBaseline({ choreography_ids: [1], step: 0 })).toEqual({ error: 'invalid_step' });
+    expect(validateBaseline({ choreography_ids: [1], step: REVIEW_STEP_COUNT + 1 })).toEqual({
+      error: 'invalid_step',
+    });
+    expect(validateBaseline({ choreography_ids: [1], step: '3' })).toEqual({
+      error: 'invalid_step',
+    });
+    expect(validateBaseline({ choreography_ids: [1], step: 3, spread: 'yes' })).toEqual({
+      error: 'invalid_spread',
+    });
+    expect(validateBaseline({ choreography_ids: [], step: 3 })).toEqual({
+      error: 'invalid_choreography_ids',
+    });
   });
 });
 

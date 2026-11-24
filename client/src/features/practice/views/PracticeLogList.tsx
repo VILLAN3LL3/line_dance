@@ -2,14 +2,17 @@ import React from "react";
 
 import { EmptyState, ErrorMessage, LoadingState } from "../../../shared/ui";
 import { CONFIDENCE_OPTIONS } from "../model/practice-log";
+import type { PracticeLogEntry } from "../../../types";
 import type { PracticeLogViewModel } from "../viewmodels/usePracticeLogViewModel";
 
 interface PracticeLogListProps {
   viewModel: PracticeLogViewModel;
 }
 
-const emojiFor = (confidence: string): string =>
-  CONFIDENCE_OPTIONS.find((option) => option.value === confidence)?.emoji ?? "";
+const emojiFor = (entry: PracticeLogEntry): string =>
+  entry.step !== null
+    ? "⏱️"
+    : (CONFIDENCE_OPTIONS.find((option) => option.value === entry.confidence)?.emoji ?? "");
 
 export const PracticeLogList: React.FC<PracticeLogListProps> = ({ viewModel }) => {
   const { state, actions } = viewModel;
@@ -32,9 +35,15 @@ export const PracticeLogList: React.FC<PracticeLogListProps> = ({ viewModel }) =
           <ul>
             {day.entries.map((entry) => (
               <li key={entry.id} className="practice-log-entry">
-                <span aria-hidden="true">{emojiFor(entry.confidence)}</span>
+                <span aria-hidden="true">{emojiFor(entry)}</span>
                 <span className="practice-log-entry-text">
                   <strong>{entry.choreography_name}</strong>
+                  {entry.step !== null && (
+                    <span>
+                      {" "}
+                      · set to step {entry.step}, due {entry.due_on}
+                    </span>
+                  )}
                   {entry.song_title && <span> · {entry.song_title}</span>}
                   {entry.note && <span className="practice-log-note"> — {entry.note}</span>}
                 </span>

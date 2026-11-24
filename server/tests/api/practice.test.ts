@@ -180,3 +180,99 @@ describe('level dependent intervals', () => {
     expect(await dueDateAfterThreeSurePractices(id)).toBe('2020-01-05');
   });
 });
+
+describe('POST /api/practice/baseline', () => {
+  async function learnedDance(name: string): Promise<number> {
+    const id = await createChoreo(name);
+    await learn(id);
+    return id;
+  }
+
+  it('sets dances to an interval step with spread due dates', async () => {
+    const ids = await Promise.all(['A', 'B', 'C', 'D'].map(learnedDance));
+    const res = await request(app)
+      .post('/api/practice/baseline')
+      .send({ choreography_ids: ids, step: 8 });
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ updated: 4, step: 8 });
+
+    const suggestions = (await request(app).get('/api/practice/suggestions')).body;
+    expect(suggestions).toHaveLength(4);
+    expect(suggestions.every((s: { is_due: boolean }) => !s.is_due)).toBe(true);
+    const dueDates = suggestions.map((s: { next_due_on: string }) => s.next_due_on);
+    expect(new Set(dueDates).size).toBeGreaterThan(1);
+  });
+
+  it('continues from the step with the next practice', async () => {
+    const id = await learnedDance('A');
+    await request(app)
+      .post('/api/practice/baseline')
+      .send({ choreography_ids: [id], step: 8, spread: false });
+    await request(app)
+      .post('/api/practice-log')
+      .send({ choreography_ids: [id] });
+    const [summary] = (await request(app).get('/api/practice/suggestions')).body;
+    // Step 9 of the beginner ladder: 45 days.
+    const expected = new Date();
+    expected.setDate(expected.getDate() + 45);
+    const pad = (value: number): string => String(value).padStart(2, '0');
+    expect(summary.practice_count).toBe(1);
+    expect(summary.next_due_on).toBe(
+      `${expected.getFullYear()}-${pad(expected.getMonth() + 1)}-${pad(expected.getDate())}`,
+    );
+  });
+
+  it('shows the baseline in the log', async () => {
+    const id = await learnedDance('A');
+    await request(app)
+      .post('/api/practice/baseline')
+      .send({ choreography_ids: [id], step: 3 });
+    const log = (await request(app).get('/api/practice-log')).body;
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({ step: 3, choreography_name: 'A' });
+    expect(log[0].due_on).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it.each([
+    [{ choreography_ids: [1] }, 'step'],
+    [{ choreography_ids: [1], step: 0 }, 'step'],
+    [{ choreography_ids: [1], step: 15 }, 'step'],
+    [{ choreography_ids: [1], step: 3, spread: 'x' }, 'spread'],
+    [{ step: 3 }, 'choreography_ids'],
+  ])('returns 400 for %j', async (body, hint) => {
+    const res = await request(app).post('/api/practice/baseline').send(body);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain(hint);
+  });
+
+  it('returns 404 for an unknown dance and 400 for a dance that is not learned', async () => {
+    const wish = await createChoreo('Wish');
+    expect(
+      (
+        await request(app)
+          .post('/api/practice/baseline')
+          .send({ choreography_ids: [9999], step: 3 })
+      ).status,
+    ).toBe(404);
+    const res = await request(app)
+      .post('/api/practice/baseline')
+      .send({ choreography_ids: [wish], step: 3 });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('learned');
+  });
+});
+
+describe('GET /api/practice/intervals', () => {
+  it('returns the interval ladder of every level tier', async () => {
+    const res = await request(app).get('/api/practice/intervals');
+    expect(res.status).toBe(200);
+    expect(res.body.tiers.map((tier: { name: string }) => tier.name)).toEqual([
+      'Beginner',
+      'Improver',
+      'Intermediate',
+      'Advanced',
+    ]);
+    expect(res.body.tiers[0].interval_days.at(-1)).toBe(182);
+    expect(res.body.tiers.at(-1).max_level_value).toBeNull();
+  });
+});

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { practiceConfidences } from './operations.ts';
+import { REVIEW_STEP_COUNT, practiceConfidences } from './operations.ts';
 import type { PracticeConfidence } from './operations.ts';
 
 export type PracticeInputError =
@@ -8,11 +8,14 @@ export type PracticeInputError =
   | 'invalid_confidence'
   | 'invalid_song'
   | 'invalid_note'
+  | 'invalid_step'
+  | 'invalid_spread'
   | 'invalid_limit';
 
 export const MAX_BATCH_SIZE = 100;
 export const DEFAULT_LOG_LIMIT = 100;
 export const MAX_LOG_LIMIT = 500;
+export const MAX_BASELINE_SIZE = 1000;
 
 const calendarDate = z
   .string()
@@ -40,6 +43,12 @@ const logSchema = z
     path: ['song_id'],
   });
 
+const baselineSchema = z.object({
+  choreography_ids: z.array(positiveId).min(1).max(MAX_BASELINE_SIZE),
+  step: z.number().int().min(1).max(REVIEW_STEP_COUNT),
+  spread: z.boolean().default(true),
+});
+
 const limitSchema = z.preprocess(
   (value) => (value === undefined ? DEFAULT_LOG_LIMIT : Number(value)),
   z.number().int().min(1).max(MAX_LOG_LIMIT),
@@ -62,6 +71,8 @@ const issueErrors: Record<string, PracticeInputError> = {
   confidence: 'invalid_confidence',
   song_id: 'invalid_song',
   note: 'invalid_note',
+  step: 'invalid_step',
+  spread: 'invalid_spread',
 };
 
 export function validateLogPractice(input: unknown): LogPracticeValidationResult {
@@ -93,4 +104,17 @@ export function validateEntryId(rawId: string): { error: 'invalid_id' } | { valu
   return /^\d+$/.test(rawId) && Number(rawId) > 0
     ? { value: Number(rawId) }
     : { error: 'invalid_id' };
+}
+
+export type BaselineInput = { choreography_ids: number[]; step: number; spread: boolean };
+export type BaselineValidationResult = { error: PracticeInputError } | { value: BaselineInput };
+
+export function validateBaseline(input: unknown): BaselineValidationResult {
+  const result = baselineSchema.safeParse(input);
+  if (!result.success) {
+    const field = String(result.error.issues[0]?.path[0] ?? 'choreography_ids');
+    return { error: issueErrors[field] ?? 'invalid_choreography_ids' };
+  }
+  const { choreography_ids, step, spread } = result.data;
+  return { value: { choreography_ids: [...new Set(choreography_ids)], step, spread } };
 }

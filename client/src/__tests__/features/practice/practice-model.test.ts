@@ -16,7 +16,13 @@ import {
   groupLogByDay,
   toggleSelection,
 } from "../../../features/practice/model/practice-log";
-import { createQuickLogState, quickLogReducer } from "../../../features/practice/model/quick-log";
+import { buildStepOptions } from "../../../features/practice/model/practice-steps";
+import {
+  createQuickLogState,
+  describeSaved,
+  describeSubmit,
+  quickLogReducer,
+} from "../../../features/practice/model/quick-log";
 import type { PracticeLogEntry } from "../../../types";
 import { makeDance, makeSummary } from "./testData";
 
@@ -141,6 +147,8 @@ describe("practice log model", () => {
       note: null,
       song_id: null,
       song_title: null,
+      step: null,
+      due_on: null,
     });
     const days = groupLogByDay([
       entry(1, "2026-11-02"),
@@ -163,6 +171,8 @@ describe("practice log model", () => {
       note: null,
       song_id: null,
       song_title: null,
+      step: null,
+      due_on: null,
     });
     const entries = [entry(1, "Cowboy Boogie"), entry(2, "Waltz")];
     expect(filterLogByName(entries, "WALTZ").map((e) => e.id)).toEqual([2]);
@@ -197,5 +207,59 @@ describe("quickLogReducer", () => {
       ...createQuickLogState("2026-11-25"),
       open: true,
     });
+  });
+});
+
+describe("buildStepOptions", () => {
+  it("describes each step with the range of days over all level tiers", () => {
+    const options = buildStepOptions([
+      { name: "Beginner", max_level_value: 40, interval_days: [1, 4, 182] },
+      { name: "Advanced", max_level_value: null, interval_days: [1, 2, 182] },
+    ]);
+    expect(options).toEqual([
+      { step: 1, label: "Step 1 · due again after 1 day" },
+      { step: 2, label: "Step 2 · due again after 2–4 days" },
+      { step: 3, label: "Step 3 · due again after 182 days" },
+    ]);
+    expect(buildStepOptions([])).toEqual([]);
+  });
+});
+
+describe("quick log baseline mode", () => {
+  it("selects all shown dances without duplicates and clears the selection", () => {
+    let state = createQuickLogState("2026-11-24");
+    state = quickLogReducer(state, { type: "toggle-dance", id: 2 });
+    state = quickLogReducer(state, { type: "select-all", ids: [1, 2, 3] });
+    expect(state.selected).toEqual([2, 1, 3]);
+    expect(quickLogReducer(state, { type: "clear-selection" }).selected).toEqual([]);
+  });
+
+  it("keeps mode, step and spread after saving", () => {
+    let state = createQuickLogState("2026-11-24");
+    state = quickLogReducer(state, { type: "set-mode", mode: "baseline" });
+    state = quickLogReducer(state, { type: "set-step", step: 9 });
+    state = quickLogReducer(state, { type: "set-spread", spread: false });
+    state = quickLogReducer(state, { type: "toggle-dance", id: 1 });
+    expect(quickLogReducer(state, { type: "saved", today: "2026-11-25" })).toMatchObject({
+      mode: "baseline",
+      step: 9,
+      spread: false,
+      selected: [],
+    });
+  });
+
+  it("describes the submit button and the saved message per mode", () => {
+    expect([0, 1, 3].map((count) => describeSubmit("practice", count))).toEqual([
+      "Log practice",
+      "Log 1 dance",
+      "Log 3 dances",
+    ]);
+    expect([0, 1, 3].map((count) => describeSubmit("baseline", count))).toEqual([
+      "Set interval step",
+      "Set step for 1 dance",
+      "Set step for 3 dances",
+    ]);
+    expect(describeSaved("practice", 2, 6)).toBe("Logged 2 dances");
+    expect(describeSaved("baseline", 1, 8)).toBe("Set 1 dance to step 8");
   });
 });

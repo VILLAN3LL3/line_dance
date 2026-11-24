@@ -193,6 +193,17 @@ repeats for good: a learned dance stays in the box and comes back at least every
 | Intermediate (up to 120) | 1, 2, 3, 4, 6, 9, 13, 19, 28, 42, 62, 95, 140, then 182 |
 | Advanced (above 120) | 1, 1, 2, 3, 5, 7, 10, 15, 22, 33, 50, 80, 125, then 182 |
 
+**Interval step baseline:** dances learned long before the box existed can be put on a step once
+(`POST /api/practice/baseline` with `{ choreography_ids[], step, spread? }`, 1–1000 learned dances, all
+or nothing, `step` 1–14; `400` for an invalid step or a dance that is not learned, `404` for an unknown
+dance). It adds a log entry with `step` and `due_on` (migration `020_add_practice_log_step`) dated
+today. Such an entry is no practice: it is not counted, does not become "last practiced" and shows as
+"set to step N" in the log. The next practice continues from the step, a later baseline replaces the
+history. The due date is the full interval of the step for the level of the dance; with `spread`
+(default) the due dates are spread evenly over that interval, so a whole library does not come back on
+the same day. `GET /api/practice/intervals` returns the ladder of every level tier for the step
+labels in the client.
+
 Entries are ordered by their date, not by when they were entered. A learned dance without entries is
 due immediately. The order is the time since the last practice relative to its interval; never
 practiced dances come first. Change `REVIEW_INTERVAL_TIERS` to tune it.
@@ -201,5 +212,5 @@ On the client, `client/src/features/practice/` adds the tabs "Practice" and "Pra
 Personal page. The Practice tab is the flash card box: each due dance is a `FlipCard`
 (`shared/ui/FlipCard.tsx`, generic front/back component) with the unchanged `ChoreographyCard` on the
 front and `PracticeCardBack` on the back (music, restarts and tags, last practice, count, next due
-date, date, note, "Sure" and "Unsure"). "Log practice" is the quick capture for several dances.
+date, date, note, "Sure" and "Unsure"). "Log practice" is the quick capture for several dances; its second mode sets dances on an interval step.
 Dances that are not due yet are folded away behind a button.

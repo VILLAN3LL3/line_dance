@@ -10,8 +10,10 @@ import {
 import {
   deletePracticeEntry,
   fetchPracticeLog,
+  fetchPracticeIntervals,
   fetchPracticeSuggestions,
   logPractice,
+  setPracticeBaseline,
 } from "../../../features/practice/api";
 import PersonalPage from "../../../features/personal/views/PersonalPage";
 import { renderWithQueryClient as render } from "../../helpers/renderWithQueryClient";
@@ -27,6 +29,8 @@ vi.mock("../../../features/choreographies/api", () => ({
 }));
 vi.mock("../../../features/practice/api", () => ({
   fetchPracticeSuggestions: vi.fn(),
+  fetchPracticeIntervals: vi.fn(),
+  setPracticeBaseline: vi.fn(),
   fetchPracticeLog: vi.fn(),
   logPractice: vi.fn(),
   deletePracticeEntry: vi.fn(),
@@ -75,6 +79,11 @@ describe("PersonalPage", () => {
     vi.clearAllMocks();
     vi.mocked(fetchPracticeSuggestions).mockResolvedValue([]);
     vi.mocked(fetchPracticeLog).mockResolvedValue([]);
+    vi.mocked(fetchPracticeIntervals).mockResolvedValue([
+      { name: "Beginner", max_level_value: 40, interval_days: [1, 3, 7, 14, 30, 60, 182] },
+      { name: "Advanced", max_level_value: null, interval_days: [1, 1, 3, 5, 10, 20, 182] },
+    ]);
+    vi.mocked(setPracticeBaseline).mockResolvedValue({ updated: 2, step: 5 });
     vi.mocked(logPractice).mockResolvedValue({ logged: 1, practiced_on: "2026-11-24" });
     vi.mocked(deletePracticeEntry).mockResolvedValue({ message: "ok" });
   });
@@ -274,6 +283,43 @@ describe("PersonalPage", () => {
       expect(await screen.findByText("Logged 2 dances")).toBeInTheDocument();
     });
 
+    it("puts several learned dances on an interval step once", async () => {
+      mockLists(
+        [],
+        [
+          makeChoreography(2, "Known Dance", "learned"),
+          makeChoreography(3, "Other Dance", "learned"),
+        ],
+      );
+      vi.mocked(fetchPracticeSuggestions).mockResolvedValue([summary(2), summary(3)]);
+      render(<PersonalPage />);
+      fireEvent.click(await screen.findByRole("tab", { name: /Practice \(2\)/ }));
+
+      fireEvent.click(screen.getByRole("button", { name: /Log practice/ }));
+      fireEvent.click(screen.getByRole("radio", { name: /Set an interval step/ }));
+      expect(
+        screen.queryByLabelText("Practiced on", { selector: "#practice-quick-log-date" }),
+      ).toBeNull();
+
+      fireEvent.click(screen.getByRole("button", { name: "Select all shown (2)" }));
+      await screen.findByRole("option", { name: "Step 5 · due again after 10–30 days" });
+      fireEvent.change(screen.getByLabelText("Interval step"), { target: { value: "5" } });
+      fireEvent.click(
+        screen.getByRole("checkbox", { name: "Spread the due dates over the interval" }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Set step for 2 dances" }));
+
+      await waitFor(() => {
+        expect(setPracticeBaseline).toHaveBeenCalledWith({
+          choreography_ids: [2, 3],
+          step: 5,
+          spread: false,
+        });
+      });
+      expect(logPractice).not.toHaveBeenCalled();
+      expect(await screen.findByText("Set 2 dances to step 5")).toBeInTheDocument();
+    });
+
     it("explains an empty practice box", async () => {
       mockLists([], []);
       render(<PersonalPage />);
@@ -294,6 +340,8 @@ describe("PersonalPage", () => {
           note: "turn",
           song_id: null,
           song_title: null,
+          step: null,
+          due_on: null,
         },
       ]);
       render(<PersonalPage />);
@@ -378,6 +426,8 @@ describe("PersonalPage", () => {
         note: null,
         song_id: null,
         song_title: null,
+        step: null,
+        due_on: null,
       });
       vi.mocked(fetchPracticeLog).mockResolvedValue([entry(1, "Cowboy Boogie"), entry(2, "Waltz")]);
       render(<PersonalPage />);

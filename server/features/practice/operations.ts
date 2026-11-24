@@ -46,6 +46,9 @@ export type PracticeRow = {
   practiced_on: string | null;
   confidence: PracticeConfidence | null;
   note: string | null;
+  /** Set for an entry that sets the interval step instead of recording a practice. */
+  step: number | null;
+  due_on: string | null;
   /** Value of the effective level (personal level when set). */
   level_value: number;
 };
@@ -66,6 +69,8 @@ type PracticeEntry = {
   practiced_on: string;
   confidence: PracticeConfidence;
   note: string | null;
+  step: number | null;
+  due_on: string | null;
 };
 
 export function formatLocalDate(date: Date): string {
@@ -83,6 +88,10 @@ function fromDayNumber(dayNumber: number): string {
   return new Date(dayNumber * DAY_MS).toISOString().slice(0, 10);
 }
 
+export function addDays(isoDate: string, days: number): string {
+  return fromDayNumber(toDayNumber(isoDate) + days);
+}
+
 export function isFutureDate(isoDate: string, today: string): boolean {
   return toDayNumber(isoDate) > toDayNumber(today);
 }
@@ -94,62 +103,81 @@ export function intervalDaysForLevel(levelValue: number): readonly number[] {
   return tier.intervalDays;
 }
 
+/** Number of steps of the interval ladder; the last one repeats. */
+export const REVIEW_STEP_COUNT = REVIEW_INTERVAL_TIERS[0].intervalDays.length;
+
+/** Days until the next review after `streak` consecutive "sure" practices (0 starts again). */
+export function intervalAtStreak(streak: number, levelValue: number): number {
+  const intervals = intervalDaysForLevel(levelValue);
+  return intervals[Math.min(Math.max(streak - 1, 0), intervals.length - 1)];
+}
+
+/** An entry that sets the step restarts the count there; "unsure" starts again. */
+function streakOf(entries: readonly Pick<PracticeEntry, 'confidence' | 'step'>[]): number {
+  return entries.reduce((streak, entry) => {
+    if (entry.step !== null) return entry.step;
+    return entry.confidence === 'sure' ? streak + 1 : 0;
+  }, 0);
+}
+
 /** "Unsure" starts the sequence again, every "sure" practice moves one step up the intervals. */
 export function reviewIntervalDays(
   confidences: readonly PracticeConfidence[],
   levelValue: number,
 ): number {
-  const intervals = intervalDaysForLevel(levelValue);
-  const streak = confidences.reduce((count, value) => (value === 'sure' ? count + 1 : 0), 0);
-  return intervals[Math.min(Math.max(streak - 1, 0), intervals.length - 1)];
+  const entries = confidences.map((confidence) => ({ confidence, step: null }));
+  return intervalAtStreak(streakOf(entries), levelValue);
 }
 
 function compareEntries(a: PracticeEntry, b: PracticeEntry): number {
   return a.practiced_on.localeCompare(b.practiced_on) || a.id - b.id;
 }
 
+type RankedSummary = { summary: PracticeSummary; urgency: number };
+
 function summarizeDance(
   choreographyId: number,
   entries: PracticeEntry[],
   levelValue: number,
   today: string,
-): PracticeSummary {
+): RankedSummary {
   const ordered = [...entries].sort(compareEntries);
   const last = ordered.at(-1);
   if (!last) {
     return {
-      choreography_id: choreographyId,
-      last_practiced_on: null,
-      last_note: null,
-      practice_count: 0,
-      next_due_on: null,
-      is_due: true,
-      days_overdue: null,
+      urgency: Infinity,
+      summary: {
+        choreography_id: choreographyId,
+        last_practiced_on: null,
+        last_note: null,
+        practice_count: 0,
+        next_due_on: null,
+        is_due: true,
+        days_overdue: null,
+      },
     };
   }
-  const interval = reviewIntervalDays(
-    ordered.map((entry) => entry.confidence),
-    levelValue,
-  );
-  const dueDay = toDayNumber(last.practiced_on) + interval;
+  // Entries that only set the step are no practice: they neither count nor become "last practiced".
+  const practices = ordered.filter((entry) => entry.step === null);
+  const lastPractice = practices.at(-1);
+  const referenceDay = toDayNumber(last.practiced_on);
+  const dueDay =
+    last.due_on === null
+      ? referenceDay + intervalAtStreak(streakOf(ordered), levelValue)
+      : toDayNumber(last.due_on);
   const overdue = toDayNumber(today) - dueDay;
   return {
-    choreography_id: choreographyId,
-    last_practiced_on: last.practiced_on,
-    last_note: last.note,
-    practice_count: ordered.length,
-    next_due_on: fromDayNumber(dueDay),
-    is_due: overdue >= 0,
-    days_overdue: overdue,
+    urgency: (toDayNumber(today) - referenceDay) / Math.max(dueDay - referenceDay, 1),
+    summary: {
+      choreography_id: choreographyId,
+      last_practiced_on: lastPractice?.practiced_on ?? null,
+      last_note: lastPractice?.note ?? null,
+      practice_count: practices.length,
+      next_due_on: fromDayNumber(dueDay),
+      is_due: overdue >= 0,
+      days_overdue: overdue,
+    },
   };
-}
-
-/** Ratio of the time since the last practice to the interval; never practiced dances come first. */
-function urgency(summary: PracticeSummary, today: string): number {
-  if (summary.last_practiced_on === null || summary.next_due_on === null) return Infinity;
-  const elapsed = toDayNumber(today) - toDayNumber(summary.last_practiced_on);
-  const interval = toDayNumber(summary.next_due_on) - toDayNumber(summary.last_practiced_on);
-  return elapsed / interval;
 }
 
 /** Groups the rows per dance and sorts them with the most urgent dance first. */
@@ -160,23 +188,57 @@ export function summarizePractice(rows: readonly PracticeRow[], today: string): 
       levelValue: row.level_value,
       entries: [],
     };
-    const { entries } = dance;
     if (row.entry_id !== null && row.practiced_on !== null && row.confidence !== null) {
-      entries.push({
+      dance.entries.push({
         id: row.entry_id,
         practiced_on: row.practiced_on,
         confidence: row.confidence,
         note: row.note,
+        step: row.step,
+        due_on: row.due_on,
       });
     }
     entriesByDance.set(row.choreography_id, dance);
   });
   return [...entriesByDance]
     .map(([id, { levelValue, entries }]) => summarizeDance(id, entries, levelValue, today))
-    .map((summary) => ({ summary, urgency: urgency(summary, today) }))
     .sort((a, b) => {
       if (a.urgency !== b.urgency) return b.urgency > a.urgency ? 1 : -1;
       return a.summary.choreography_id - b.summary.choreography_id;
     })
     .map(({ summary }) => summary);
+}
+
+export type BaselinePlan = { choreography_id: number; due_on: string };
+
+/**
+ * Due dates for dances that are put on an interval step once. Without `spread` every dance is due
+ * after the full interval of the step; with it the due dates are spread evenly over that interval,
+ * so a whole library does not come back on the same day.
+ */
+export function planBaseline(
+  dances: readonly { id: number; level_value: number }[],
+  step: number,
+  spread: boolean,
+  today: string,
+): BaselinePlan[] {
+  const ordered = [...dances].sort((a, b) => a.id - b.id);
+  return ordered.map((dance, index) => {
+    const interval = intervalAtStreak(step, dance.level_value);
+    const delay = spread ? 1 + Math.floor((index * interval) / ordered.length) : interval;
+    return { choreography_id: dance.id, due_on: addDays(today, delay) };
+  });
+}
+
+/** The interval ladder of every level tier, so clients can describe the steps without a copy. */
+export function describeIntervalTiers(): {
+  name: string;
+  max_level_value: number | null;
+  interval_days: readonly number[];
+}[] {
+  return REVIEW_INTERVAL_TIERS.map((tier) => ({
+    name: tier.name,
+    max_level_value: Number.isFinite(tier.maxLevelValue) ? tier.maxLevelValue : null,
+    interval_days: tier.intervalDays,
+  }));
 }

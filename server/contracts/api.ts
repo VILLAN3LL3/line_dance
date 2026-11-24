@@ -285,6 +285,9 @@ export interface PracticeLogEntry {
   note: string | null;
   song_id: number | null;
   song_title: string | null;
+  /** Set when the entry put the dance on an interval step instead of recording a practice. */
+  step: number | null;
+  due_on: string | null;
 }
 
 export interface PracticeLogRequest {
@@ -295,4 +298,19 @@ export interface PracticeLogRequest {
   /** Only valid with exactly one dance. */
   song_id?: number | null;
   note?: string | null;
+}
+
+export interface PracticeBaselineRequest {
+  choreography_ids: number[];
+  /** 1-based step of the interval ladder, see `PracticeIntervalTier`. */
+  step: number;
+  /** Spread the due dates over the interval of the step; defaults to true. */
+  spread?: boolean;
+}
+
+export interface PracticeIntervalTier {
+  name: string;
+  /** Highest level value of the tier; `null` for the last tier. */
+  max_level_value: number | null;
+  interval_days: number[];
 }

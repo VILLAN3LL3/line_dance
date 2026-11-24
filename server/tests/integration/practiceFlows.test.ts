@@ -6,8 +6,13 @@ import {
   listPracticeLog,
   logPractice,
   removePracticeEntry,
+  setPracticeBaseline,
 } from '../../features/practice/flow.ts';
-import { validateLogList, validateLogPractice } from '../../features/practice/validation.ts';
+import {
+  validateBaseline,
+  validateLogList,
+  validateLogPractice,
+} from '../../features/practice/validation.ts';
 import { formatLocalDate } from '../../features/practice/operations.ts';
 
 async function createChoreography(name: string): Promise<number> {
@@ -121,5 +126,74 @@ describe('practice flow', () => {
     const suggestions = await getPracticeSuggestions();
     expect(suggestions.map((s) => s.choreography_id)).toEqual([fresh, practiced]);
     expect(suggestions[1]).toMatchObject({ practice_count: 1, is_due: false });
+  });
+});
+
+describe('practice baseline flow', () => {
+  async function learned(name: string): Promise<number> {
+    const id = await createChoreography(name);
+    await runQuery(
+      "INSERT INTO personal_data.choreography_learning_status (choreography_id, status) VALUES (?, 'learned')",
+      [id],
+    );
+    return id;
+  }
+
+  it('puts learned dances on a step and keeps them out of the due list', async () => {
+    const a = await learned('A');
+    const b = await learned('B');
+    const result = await setPracticeBaseline(
+      validateBaseline({ choreography_ids: [a, b], step: 8, spread: false }),
+    );
+    expect(result).toEqual({ value: { updated: 2, step: 8 } });
+    const suggestions = await getPracticeSuggestions();
+    expect(suggestions).toHaveLength(2);
+    suggestions.forEach((summary) =>
+      expect(summary).toMatchObject({ is_due: false, practice_count: 0, last_practiced_on: null }),
+    );
+  });
+
+  it('rejects unknown and not learned dances and stores nothing', async () => {
+    const a = await learned('A');
+    const wish = await createChoreography('Wish');
+    expect(
+      await setPracticeBaseline(validateBaseline({ choreography_ids: [a, 9999], step: 3 })),
+    ).toEqual({ error: 'not_found' });
+    expect(
+      await setPracticeBaseline(validateBaseline({ choreography_ids: [a, wish], step: 3 })),
+    ).toEqual({ error: 'not_learned' });
+    expect(
+      await setPracticeBaseline(validateBaseline({ choreography_ids: [a], step: 99 })),
+    ).toEqual({
+      error: 'invalid_step',
+    });
+    expect(await entryCount()).toBe(0);
+  });
+
+  it('rolls back all entries when one write fails', async () => {
+    const a = await learned('A');
+    const b = await learned('B');
+    await runQuery(
+      `CREATE TRIGGER personal_data.fail_baseline BEFORE INSERT ON choreography_practice_log
+       WHEN NEW.choreography_id = ${b} BEGIN SELECT RAISE(ABORT, 'boom'); END`,
+    );
+    try {
+      await expect(
+        setPracticeBaseline(validateBaseline({ choreography_ids: [a, b], step: 3 })),
+      ).rejects.toThrow('boom');
+      expect(await entryCount()).toBe(0);
+    } finally {
+      await runQuery('DROP TRIGGER personal_data.fail_baseline');
+    }
+  });
+
+  it('lists the baseline entry in the log with its step and due date', async () => {
+    const a = await learned('A');
+    await setPracticeBaseline(validateBaseline({ choreography_ids: [a], step: 5, spread: false }));
+    const result = await listPracticeLog(validateLogList({}));
+    expect(result).toMatchObject({ value: [{ choreography_id: a, step: 5 }] });
+    expect(result).toMatchObject({
+      value: [{ due_on: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) }],
+    });
   });
 });

@@ -400,6 +400,89 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/practice/baseline': {
+      post: {
+        tags: ['Practice'],
+        summary: 'Put learned dances on an interval step once (all or nothing)',
+        description:
+          'For dances learned long ago without a practice record. Adds an entry that sets the step and the due date; it is no practice (not counted, not "last practiced"). The next practice continues from the step. With `spread` (default) the due dates are spread evenly over the interval of the step so that the dances do not come back on the same day.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  choreography_ids: {
+                    type: 'array',
+                    items: { type: 'integer' },
+                    minItems: 1,
+                    maxItems: 1000,
+                  },
+                  step: {
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 14,
+                    description: 'Step of the interval ladder, see /api/practice/intervals.',
+                  },
+                  spread: { type: 'boolean', default: true },
+                },
+                required: ['choreography_ids', 'step'],
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Dances set to the step',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { updated: { type: 'integer' }, step: { type: 'integer' } },
+                  required: ['updated', 'step'],
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/api/practice/intervals': {
+      get: {
+        tags: ['Practice'],
+        summary: 'The interval ladder (days per step) of every level tier',
+        responses: {
+          200: {
+            description: 'Level tiers with their interval days; the last step repeats',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    tiers: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          name: { type: 'string' },
+                          max_level_value: { type: 'integer', nullable: true },
+                          interval_days: { type: 'array', items: { type: 'integer' } },
+                        },
+                        required: ['name', 'max_level_value', 'interval_days'],
+                      },
+                    },
+                  },
+                  required: ['tiers'],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/practice/suggestions': {
       get: {
         tags: ['Practice'],
@@ -1977,6 +2060,12 @@ export const openApiSpec = {
           note: { type: 'string', nullable: true },
           song_id: { type: 'integer', nullable: true },
           song_title: { type: 'string', nullable: true },
+          step: {
+            type: 'integer',
+            nullable: true,
+            description: 'Set when the entry put the dance on an interval step (no practice).',
+          },
+          due_on: { type: 'string', format: 'date', nullable: true },
         },
         required: ['id', 'choreography_id', 'choreography_name', 'practiced_on', 'confidence'],
       },
