@@ -41,72 +41,74 @@ export const ChoreographyCardTitle: React.FC<ChoreographyCardTitleProps> = ({
   };
 
   return (
-    <h3 onKeyDown={handleKeyDown}>
-      <span className="learning-status-picker">
-        {isOpen && (
-          <span className="learning-status-options" role="group" aria-label="Learning status">
-            {LEARNING_STATUS_OPTIONS.map((option) => (
+    <h3 className="card-title" onKeyDown={handleKeyDown}>
+      {(isOpen || current) && (
+        <span className="learning-status-picker">
+          {isOpen && (
+            <span className="learning-status-options" role="group" aria-label="Learning status">
+              {LEARNING_STATUS_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`learning-status-option${learningStatus === option.value ? " is-active" : ""}`}
+                  aria-pressed={learningStatus === option.value}
+                  aria-label={option.label}
+                  title={option.label}
+                  ref={learningStatus === option.value ? focusWhenOpened : undefined}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    choose(option.value);
+                  }}
+                >
+                  {option.emoji}
+                </button>
+              ))}
               <button
-                key={option.value}
                 type="button"
-                className={`learning-status-option${learningStatus === option.value ? " is-active" : ""}`}
-                aria-pressed={learningStatus === option.value}
-                aria-label={option.label}
-                title={option.label}
-                ref={learningStatus === option.value ? focusWhenOpened : undefined}
+                className={`learning-status-option${learningStatus === null ? " is-active" : ""}`}
+                aria-pressed={learningStatus === null}
+                aria-label={NO_STATUS_LABEL}
+                title={NO_STATUS_LABEL}
                 onClick={(event) => {
                   event.stopPropagation();
-                  choose(option.value);
+                  choose(null);
                 }}
               >
-                {option.emoji}
+                🔳
               </button>
-            ))}
+              <button
+                type="button"
+                className="learning-status-option learning-status-close"
+                aria-label="Close status editor"
+                title="Close"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsOpen(false);
+                }}
+              >
+                ✕
+              </button>
+            </span>
+          )}
+          {!isOpen && current && (
             <button
               type="button"
-              className={`learning-status-option${learningStatus === null ? " is-active" : ""}`}
-              aria-pressed={learningStatus === null}
-              aria-label={NO_STATUS_LABEL}
-              title={NO_STATUS_LABEL}
+              className="learning-status-summary"
+              aria-label={`Learning status: ${current.label}. Open status editor`}
+              aria-expanded={false}
+              title={learningStatusText}
               onClick={(event) => {
                 event.stopPropagation();
-                choose(null);
+                setIsOpen(true);
               }}
             >
-              🔳
+              {current.emoji}
             </button>
-            <button
-              type="button"
-              className="learning-status-option learning-status-close"
-              aria-label="Close status editor"
-              title="Close"
-              onClick={(event) => {
-                event.stopPropagation();
-                setIsOpen(false);
-              }}
-            >
-              ✕
-            </button>
-          </span>
-        )}
-        {!isOpen && current && (
-          <button
-            type="button"
-            className="learning-status-summary"
-            aria-label={`Learning status: ${current.label}. Open status editor`}
-            aria-expanded={false}
-            title={learningStatusText}
-            onClick={(event) => {
-              event.stopPropagation();
-              setIsOpen(true);
-            }}
-          >
-            {current.emoji}
-          </button>
-        )}
-      </span>
+          )}
+        </span>
+      )}
       {current ? (
-        title
+        <span>{title}</span>
       ) : (
         <button
           type="button"

@@ -568,16 +568,23 @@
 
 .learning-status-date {
   font-size: 12px;
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.85);
   white-space: nowrap;
 }
 
 /* The status picker mirrors the rating pill: a collapsed icon that unfolds into the options. */
+/* Flex instead of inline layout: an inline-block title button would jump to a new line when it
+   does not fit next to the icon, leaving an empty first line. */
+.card-header h3.card-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
 .learning-status-picker {
   display: inline-flex;
   align-items: center;
-  vertical-align: middle;
-  margin-right: 6px;
+  flex-shrink: 0;
 }
 
 .learning-status-summary,
