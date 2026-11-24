@@ -113,7 +113,7 @@ describe("SearchBar", () => {
     });
   });
 
-  it("groups choreographers and rating under max counts while keeping tags full-width", () => {
+  it("groups choreographers and rating under max counts and places tags in the left column under step figures", () => {
     const onSearch = vi.fn().mockResolvedValue(undefined);
     render(<SearchBar onSearch={onSearch} filters={{}} />);
 
@@ -126,7 +126,9 @@ describe("SearchBar", () => {
 
     const tagFilter = screen.getByText("Tags").parentElement;
     expect(tagFilter).toHaveClass("advanced-filter-tags");
-    expect(tagFilter?.parentElement).toHaveClass("advanced-filters");
+    const stepFiguresColumn = screen.getByText("Step Figures").parentElement?.parentElement;
+    expect(tagFilter?.parentElement).toBe(stepFiguresColumn);
+    expect(tagFilter?.parentElement).not.toBe(maxCountColumn);
   });
 
   it("searches on blur only when the filters changed", async () => {

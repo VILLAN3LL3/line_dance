@@ -158,6 +158,20 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
           onWithoutStepFiguresChange={onWithoutStepFiguresChange}
           onStepFiguresMatchModeChange={onStepFiguresMatchModeChange}
         />
+
+        <SearchBarTagFilter
+          inputTag={inputTag}
+          tagMode={tagMode}
+          tagOptions={tagOptions}
+          includedTags={includedTags}
+          excludedTags={excludedTags}
+          isLoading={isLoading}
+          onTagInput={onTagInput}
+          onTagModeChange={onTagModeChange}
+          onAddTagFromInput={onAddTagFromInput}
+          onRemoveIncludedTag={onRemoveIncludedTag}
+          onRemoveExcludedTag={onRemoveExcludedTag}
+        />
       </div>
 
       <div className="advanced-filter-column">
@@ -204,19 +218,5 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
         <SearchBarMusicFilter {...music} />
       </div>
     </div>
-
-    <SearchBarTagFilter
-      inputTag={inputTag}
-      tagMode={tagMode}
-      tagOptions={tagOptions}
-      includedTags={includedTags}
-      excludedTags={excludedTags}
-      isLoading={isLoading}
-      onTagInput={onTagInput}
-      onTagModeChange={onTagModeChange}
-      onAddTagFromInput={onAddTagFromInput}
-      onRemoveIncludedTag={onRemoveIncludedTag}
-      onRemoveExcludedTag={onRemoveExcludedTag}
-    />
   </div>
 );

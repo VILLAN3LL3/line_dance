@@ -147,8 +147,7 @@
 }
 
 .advanced-filter-column > .filter-group,
-.advanced-filter-column > .filter-section,
-.advanced-filters > .advanced-filter-tags {
+.advanced-filter-column > .filter-section {
   min-width: 0;
   margin-bottom: 0;
   padding: 12px;
@@ -159,7 +158,7 @@
 
 .advanced-filter-column > .filter-group > label,
 .advanced-filter-column > .filter-section > .filter-label,
-.advanced-filters > .advanced-filter-tags > label,
+.advanced-filter-column > .advanced-filter-tags > label,
 .saved-filters-panel > label {
   display: block;
   margin: -12px -12px 12px;
@@ -509,7 +508,7 @@
 
 .filter-list-sections {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
 }
 
