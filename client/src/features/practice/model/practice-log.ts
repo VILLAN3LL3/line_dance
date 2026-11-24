@@ -1,3 +1,4 @@
+import { matchesName } from "../../../shared/utils/search";
 import type {
   Choreography,
   PracticeConfidence,
@@ -62,7 +63,10 @@ export function groupLogByDay(entries: readonly PracticeLogEntry[]): PracticeLog
 export const toggleSelection = (selected: readonly number[], id: number): number[] =>
   selected.includes(id) ? selected.filter((candidate) => candidate !== id) : [...selected, id];
 
-export function filterByName(dances: readonly Choreography[], query: string): Choreography[] {
-  const needle = query.trim().toLowerCase();
-  return needle ? dances.filter((dance) => dance.name.toLowerCase().includes(needle)) : [...dances];
-}
+export const filterByName = (dances: readonly Choreography[], query: string): Choreography[] =>
+  dances.filter((dance) => matchesName(dance.name, query));
+
+export const filterLogByName = (
+  entries: readonly PracticeLogEntry[],
+  query: string,
+): PracticeLogEntry[] => entries.filter((entry) => matchesName(entry.choreography_name, query));

@@ -18,7 +18,10 @@ export const PracticeLogList: React.FC<PracticeLogListProps> = ({ viewModel }) =
   return (
     <div className="practice-log">
       {state.error && <ErrorMessage message={state.error} />}
-      {state.days.length === 0 && !state.error && (
+      {state.days.length === 0 && !state.error && state.isFiltered && (
+        <EmptyState>No practice matches your search.</EmptyState>
+      )}
+      {state.days.length === 0 && !state.error && !state.isFiltered && (
         <EmptyState>
           Nothing logged yet. Use “Log practice” or the buttons on the back of a card.
         </EmptyState>

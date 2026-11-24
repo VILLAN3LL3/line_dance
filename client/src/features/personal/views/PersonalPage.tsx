@@ -24,6 +24,8 @@ const PersonalPage: React.FC = () => {
     content = <PracticeLogList viewModel={state.practice.log} />;
   } else if (isLoading) {
     content = <LoadingState message="Loading your dances..." />;
+  } else if (choreographies.length === 0 && state.query.trim() !== "") {
+    content = <EmptyState>No dance matches your search.</EmptyState>;
   } else if (choreographies.length === 0) {
     content = <EmptyState>{activeTab.emptyMessage}</EmptyState>;
   } else {
@@ -49,6 +51,15 @@ const PersonalPage: React.FC = () => {
       {error && isStatusTab(state.activeId) && <ErrorMessage message={error} />}
 
       <div className="list-view">
+        <input
+          type="search"
+          className="personal-search"
+          placeholder="Search dances by name"
+          aria-label="Search dances by name"
+          value={state.query}
+          onChange={(event) => actions.setQuery(event.target.value)}
+        />
+
         <div className="view-toggle" role="tablist" aria-label="Personal dance lists">
           {state.tabs.map((tab) => (
             <button

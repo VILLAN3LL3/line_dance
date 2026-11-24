@@ -16,6 +16,9 @@ export const PracticeDeck: React.FC<PracticeDeckProps> = ({ viewModel, cardViewM
 
   if (state.isLoading) return <LoadingState message="Loading your practice cards..." />;
   if (state.error) return <ErrorMessage message={state.error} />;
+  if (due.length + later.length === 0 && state.isFiltered) {
+    return <EmptyState>No learned dance matches your search.</EmptyState>;
+  }
   if (due.length + later.length === 0) {
     return (
       <EmptyState>
@@ -42,13 +45,20 @@ export const PracticeDeck: React.FC<PracticeDeckProps> = ({ viewModel, cardViewM
   return (
     <div className="practice-deck">
       {state.saveError && <ErrorMessage message={state.saveError} />}
-      <h3 className="practice-section-title">Time to practice ({due.length})</h3>
-      {due.length > 0 ? (
-        renderCards(due)
-      ) : (
+      {(due.length > 0 || !state.isFiltered) && (
+        <h3 className="practice-section-title">Time to practice ({due.length})</h3>
+      )}
+      {due.length > 0 && renderCards(due)}
+      {due.length === 0 && !state.isFiltered && (
         <EmptyState>Nothing to practice right now. Come back later!</EmptyState>
       )}
-      {later.length > 0 && (
+      {later.length > 0 && state.isFiltered && (
+        <>
+          <h3 className="practice-section-title">Not due yet ({later.length})</h3>
+          {renderCards(later)}
+        </>
+      )}
+      {later.length > 0 && !state.isFiltered && (
         <>
           <button
             type="button"

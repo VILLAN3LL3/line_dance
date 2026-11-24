@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPracticeDeck,
+  filterDeckByName,
   describeLastPractice,
   describeNextDue,
   describePracticeCount,
@@ -10,6 +11,7 @@ import {
 import {
   buildLogRequest,
   filterByName,
+  filterLogByName,
   formatLocalDate,
   groupLogByDay,
   toggleSelection,
@@ -46,6 +48,23 @@ describe("buildPracticeDeck", () => {
   it("ignores summaries of dances that are no longer learned", () => {
     const deck = buildPracticeDeck([makeDance(1, "A")], [makeSummary(1), makeSummary(9)]);
     expect([...deck.due, ...deck.later]).toHaveLength(1);
+  });
+});
+
+describe("filterDeckByName", () => {
+  it("filters due and later cards by the dance name", () => {
+    const deck = buildPracticeDeck(
+      [makeDance(1, "Cowboy Boogie"), makeDance(2, "Cowgirl Waltz"), makeDance(3, "Other")],
+      [
+        makeSummary(1),
+        makeSummary(2, { is_due: false, next_due_on: "2999-01-01" }),
+        makeSummary(3),
+      ],
+    );
+    const filtered = filterDeckByName(deck, "cow");
+    expect(filtered.due.map((card) => card.choreography.id)).toEqual([1]);
+    expect(filtered.later.map((card) => card.choreography.id)).toEqual([2]);
+    expect(filterDeckByName(deck, "")).toEqual(deck);
   });
 });
 
@@ -132,6 +151,22 @@ describe("practice log model", () => {
       ["2026-11-02", 2],
       ["2026-11-01", 1],
     ]);
+  });
+
+  it("filters log entries by the dance name", () => {
+    const entry = (id: number, name: string): PracticeLogEntry => ({
+      id,
+      choreography_id: id,
+      choreography_name: name,
+      practiced_on: "2026-11-01",
+      confidence: "sure",
+      note: null,
+      song_id: null,
+      song_title: null,
+    });
+    const entries = [entry(1, "Cowboy Boogie"), entry(2, "Waltz")];
+    expect(filterLogByName(entries, "WALTZ").map((e) => e.id)).toEqual([2]);
+    expect(filterLogByName(entries, "")).toHaveLength(2);
   });
 
   it("toggles selections and filters dances by name", () => {

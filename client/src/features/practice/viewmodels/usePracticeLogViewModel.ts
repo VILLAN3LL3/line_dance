@@ -1,8 +1,8 @@
-import { groupLogByDay } from "../model/practice-log";
+import { filterLogByName, groupLogByDay } from "../model/practice-log";
 import { useDeletePracticeEntryMutation, usePracticeLogQuery } from "./usePracticeQueries";
 
 /** The practice log grouped by day, with deletion of wrong entries. */
-export const usePracticeLogViewModel = () => {
+export const usePracticeLogViewModel = (query = "") => {
   const log = usePracticeLogQuery();
   const deletion = useDeletePracticeEntryMutation();
 
@@ -16,8 +16,8 @@ export const usePracticeLogViewModel = () => {
 
   return {
     state: {
-      days: groupLogByDay(log.data ?? []),
-      count: log.data?.length ?? null,
+      days: groupLogByDay(filterLogByName(log.data ?? [], query)),
+      isFiltered: query.trim() !== "",
       isLoading: log.isPending,
       error: log.isError
         ? "Failed to load your practice log"

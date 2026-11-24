@@ -172,6 +172,16 @@ describe("PersonalPage", () => {
     expect(await screen.findByText("Failed to load your dances")).toBeInTheDocument();
   });
 
+  const summaryOf = (id: number) => ({
+    choreography_id: id,
+    last_practiced_on: null,
+    last_note: null,
+    practice_count: 0,
+    next_due_on: null,
+    is_due: true,
+    days_overdue: null,
+  });
+
   describe("practice", () => {
     const summary = (id: number, overrides = {}) => ({
       choreography_id: id,
@@ -295,6 +305,91 @@ describe("PersonalPage", () => {
         screen.getByRole("button", { name: "Delete practice of Known Dance on 2026-11-20" }),
       );
       await waitFor(() => expect(deletePracticeEntry).toHaveBeenCalledWith(7));
+    });
+  });
+
+  describe("search", () => {
+    it("filters the lists by dance name and explains when nothing matches", async () => {
+      mockLists(
+        [
+          makeChoreography(1, "Cowboy Boogie", "wishlist"),
+          makeChoreography(2, "Waltz", "wishlist"),
+        ],
+        [],
+      );
+      render(<PersonalPage />);
+      await screen.findByText("Cowboy Boogie");
+
+      const search = screen.getByRole("searchbox", { name: "Search dances by name" });
+      fireEvent.change(search, { target: { value: "BOOGIE" } });
+      expect(screen.getByText("Cowboy Boogie")).toBeInTheDocument();
+      expect(screen.queryByText("Waltz")).toBeNull();
+      expect(screen.getByRole("tab", { name: "🤍 Wishlist (2)" })).toBeInTheDocument();
+
+      fireEvent.change(search, { target: { value: "xyz" } });
+      expect(screen.getByText("No dance matches your search.")).toBeInTheDocument();
+
+      fireEvent.change(search, { target: { value: "" } });
+      expect(screen.getByText("Waltz")).toBeInTheDocument();
+    });
+
+    it("filters the practice cards, including dances that are not due yet", async () => {
+      mockLists(
+        [],
+        [
+          makeChoreography(2, "Cowboy Boogie", "learned"),
+          makeChoreography(3, "Cowgirl Waltz", "learned"),
+          makeChoreography(4, "Other", "learned"),
+        ],
+      );
+      vi.mocked(fetchPracticeSuggestions).mockResolvedValue([
+        { ...summaryOf(2) },
+        { ...summaryOf(3), is_due: false, next_due_on: "2999-01-01", practice_count: 1 },
+        { ...summaryOf(4) },
+      ]);
+      render(<PersonalPage />);
+      fireEvent.click(await screen.findByRole("tab", { name: /^🔁 Practice/ }));
+      await screen.findByText("Time to practice (2)");
+
+      fireEvent.change(screen.getByRole("searchbox"), { target: { value: "cow" } });
+
+      expect(screen.getByText("Time to practice (1)")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Show back of Cowboy Boogie" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Not due yet (1)")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Show back of Cowgirl Waltz" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Show back of Other" })).toBeNull();
+
+      fireEvent.change(screen.getByRole("searchbox"), { target: { value: "xyz" } });
+      expect(screen.getByText("No learned dance matches your search.")).toBeInTheDocument();
+    });
+
+    it("filters the practice log by dance name", async () => {
+      mockLists([], []);
+      const entry = (id: number, name: string) => ({
+        id,
+        choreography_id: id,
+        choreography_name: name,
+        practiced_on: "2026-11-20",
+        confidence: "sure" as const,
+        note: null,
+        song_id: null,
+        song_title: null,
+      });
+      vi.mocked(fetchPracticeLog).mockResolvedValue([entry(1, "Cowboy Boogie"), entry(2, "Waltz")]);
+      render(<PersonalPage />);
+      fireEvent.click(await screen.findByRole("tab", { name: /Practice log/ }));
+      await screen.findByText("Waltz");
+
+      fireEvent.change(screen.getByRole("searchbox"), { target: { value: "waltz" } });
+      expect(screen.queryByText("Cowboy Boogie")).toBeNull();
+      expect(screen.getByText("Waltz")).toBeInTheDocument();
+
+      fireEvent.change(screen.getByRole("searchbox"), { target: { value: "xyz" } });
+      expect(screen.getByText("No practice matches your search.")).toBeInTheDocument();
     });
   });
 });

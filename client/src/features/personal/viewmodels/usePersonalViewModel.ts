@@ -5,6 +5,7 @@ import {
   useChoreographyCardViewModel,
   useLearningStatusChoreographiesQuery,
 } from "../../choreographies";
+import { matchesName } from "../../../shared/utils/search";
 import { usePracticeViewModel } from "../../practice";
 import { buildPersonalTabs, isStatusTab } from "../model/personal-tabs";
 import type { PersonalTabId } from "../model/personal-tabs";
@@ -15,7 +16,8 @@ export const usePersonalViewModel = () => {
   const wishlist = useLearningStatusChoreographiesQuery("wishlist");
   const learned = useLearningStatusChoreographiesQuery("learned");
   const cardViewModel = useChoreographyCardViewModel();
-  const practice = usePracticeViewModel();
+  const [query, setQuery] = useState("");
+  const practice = usePracticeViewModel(query);
 
   const queries = { wishlist, learned };
   const active = isStatusTab(activeId) ? queries[activeId] : null;
@@ -32,13 +34,14 @@ export const usePersonalViewModel = () => {
       activeId,
       tabs,
       activeTab: tabs.find((tab) => tab.id === activeId) ?? tabs[0],
-      choreographies: active?.data ?? [],
+      query,
+      choreographies: (active?.data ?? []).filter((dance) => matchesName(dance.name, query)),
       isLoading: active?.isPending ?? false,
       error: active?.isError ? "Failed to load your dances" : null,
       cardViewModel,
       practice,
     },
-    actions: { selectTab: setActiveId },
+    actions: { selectTab: setActiveId, setQuery },
   };
 };
 

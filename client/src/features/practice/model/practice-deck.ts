@@ -1,3 +1,4 @@
+import { matchesName } from "../../../shared/utils/search";
 import type { Choreography, ChoreographyInformation, PracticeSummary } from "../../../types";
 
 export interface PracticeCard {
@@ -43,6 +44,11 @@ export function buildPracticeDeck(
     due: cards.filter((card) => card.summary.is_due),
     later: cards.filter((card) => !card.summary.is_due),
   };
+}
+
+export function filterDeckByName(deck: PracticeDeck, query: string): PracticeDeck {
+  const matches = (card: PracticeCard) => matchesName(card.choreography.name, query);
+  return { due: deck.due.filter(matches), later: deck.later.filter(matches) };
 }
 
 export const describeLastPractice = (summary: PracticeSummary): string =>

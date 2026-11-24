@@ -145,3 +145,13 @@
 .practice-log-note {
   color: var(--color-text-muted);
 }
+
+.personal-search {
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
