@@ -2,8 +2,8 @@ import React from "react";
 
 import { ExternalLink, Tag, TagGroup, YouTubeVideo } from "../../../../shared/ui";
 import { getInformationCategoryIcon } from "../../model/choreography-card";
-import { ChoreographySongs } from "./ChoreographySongs";
 import { ChoreographerNames } from "./ChoreographerNames";
+import { ChoreographySongs } from "./ChoreographySongs";
 
 import type { Choreography, ChoreographyInformation } from "../../../../types";
 export interface ChoreographyCardContentProps {
@@ -109,9 +109,7 @@ export const ChoreographyCardContent: React.FC<ChoreographyCardContentProps> = (
                 <Tag key={tag} value={tag} className="tag-small" />
               ))}
             </TagGroup>
-          ) : (
-            <span>No tags</span>
-          )}
+          ) : null}
         </div>
       )}
 
