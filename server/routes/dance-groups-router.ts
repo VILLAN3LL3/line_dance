@@ -34,6 +34,7 @@ import {
   prepareUpdate,
 } from './dance-courses.ts';
 import { preparePdfId, exportDanceCoursePdf } from './course-pdf.ts';
+import { exportParticipantPdf } from './course-participant-pdf.ts';
 import {
   getLearnedChoreographies,
   getStepFigureSuggestions,
@@ -96,6 +97,7 @@ export function createDanceGroupsRouter(): Router {
   router.put('/api/dance-courses/:id', prepareUpdate, updateDanceCourse);
   router.delete('/api/dance-courses/:id', deleteDanceCourse);
   router.get('/api/dance-courses/:id/export-pdf', preparePdfId, exportDanceCoursePdf);
+  router.get('/api/dance-courses/:id/export-participant-pdf', preparePdfId, exportParticipantPdf);
   router.get('/api/sessions', prepareSessionFilter, getSessions);
   router.post('/api/sessions', prepareNewSession, createSession);
   router.post('/api/sessions/reorder-contents', prepareReorder, reorderSessionContents);

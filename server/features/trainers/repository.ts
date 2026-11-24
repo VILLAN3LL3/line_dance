@@ -16,7 +16,7 @@ export async function withTrainerTransaction<T>(action: () => T | Promise<T>): P
 
 export async function listTrainers(): Promise<Trainer[]> {
   return allQuery<Trainer>(
-    'SELECT id, name, phone, email, created_at FROM trainers ORDER BY LOWER(name) ASC',
+    'SELECT id, name, phone, email, gender, created_at FROM trainers ORDER BY LOWER(name) ASC',
     [],
     dbName,
   );
@@ -24,7 +24,7 @@ export async function listTrainers(): Promise<Trainer[]> {
 
 export async function findTrainer(id: number | string): Promise<Trainer | undefined> {
   return getQuery<Trainer>(
-    'SELECT id, name, phone, email, created_at FROM trainers WHERE id = ?',
+    'SELECT id, name, phone, email, gender, created_at FROM trainers WHERE id = ?',
     [id],
     dbName,
   );
@@ -46,11 +46,12 @@ export async function insertTrainer({
   name,
   phone,
   email,
+  gender,
 }: TrainerDetails): Promise<{ id: number } | DuplicateEmailError> {
   try {
     const result = await runQuery(
-      'INSERT INTO trainers (name, phone, email) VALUES (?, ?, ?)',
-      [name, phone, email],
+      'INSERT INTO trainers (name, phone, email, gender) VALUES (?, ?, ?, ?)',
+      [name, phone, email, gender],
       dbName,
     );
     return { id: result.id };
@@ -62,12 +63,12 @@ export async function insertTrainer({
 
 export async function saveTrainer(
   id: number | string,
-  { name, phone, email }: TrainerDetails,
+  { name, phone, email, gender }: TrainerDetails,
 ): Promise<{ error?: never } | DuplicateEmailError> {
   try {
     await runQuery(
-      'UPDATE trainers SET name = ?, phone = ?, email = ? WHERE id = ?',
-      [name, phone, email, id],
+      'UPDATE trainers SET name = ?, phone = ?, email = ?, gender = ? WHERE id = ?',
+      [name, phone, email, gender, id],
       dbName,
     );
     return {};

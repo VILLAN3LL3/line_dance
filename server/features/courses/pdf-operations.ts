@@ -9,6 +9,7 @@ export type CoursePdf = {
   course_id: number | null;
   name: string | null;
   semester: string | null;
+  dance_group_id: number;
   dance_group_name: string | null;
   youtube_playlist_url: string | null;
   copperknob_list_url: string | null;
@@ -17,6 +18,7 @@ export type CoursePdf = {
   trainer_name: string | null;
   trainer_phone: string | null;
   trainer_email: string | null;
+  trainer_gender: 'female' | 'male' | 'diverse' | null;
 };
 export type CoursePdfLink = { label: string; url: string };
 
@@ -32,13 +34,16 @@ export function escapeVCardValue(value: string | number | boolean | null | undef
     .replaceAll('\n', String.raw`\n`);
 }
 
-export function getCoursePdfFileName(course: Pick<CoursePdf, 'course_id' | 'semester'>): string {
+export function getCoursePdfFileName(
+  course: Pick<CoursePdf, 'course_id' | 'semester'>,
+  prefix = 'Kurs',
+): string {
   const safeSemester = String(course.semester ?? 'Kurs')
     .split(/[^a-zA-Z0-9_-]+/)
     .filter(Boolean)
     .join('_');
   const courseFilePart = course.course_id === null ? '' : `${course.course_id}-`;
-  return `Kurs-${courseFilePart}${safeSemester}.pdf`;
+  return `${prefix}-${courseFilePart}${safeSemester}.pdf`;
 }
 
 export function getCoursePdfLinks(

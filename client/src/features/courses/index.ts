@@ -10,6 +10,7 @@ export type { CourseStatus, SessionBadgeStatus } from "./model/course-status";
 export {
   useDeleteCourseMutation,
   useExportCoursePdfMutation,
+  useExportParticipantPdfMutation,
 } from "./viewmodels/useCourseCommands";
 export {
   useAllSessionsQuery,

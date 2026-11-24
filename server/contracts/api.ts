@@ -173,6 +173,7 @@ export interface Trainer {
   name: string;
   phone: string;
   email: string;
+  gender?: 'female' | 'male' | 'diverse' | null;
   created_at: string;
 }
 

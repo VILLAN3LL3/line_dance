@@ -8,6 +8,7 @@ import {
   getTrainerErrorMessage,
   hasAllTrainerFields,
   MISSING_TRAINER_FIELDS_MESSAGE,
+  toGenderPayload,
   toTrainerFormValues,
   type TrainerFormValues,
 } from "../model/trainer-form";
@@ -29,12 +30,12 @@ export function useTrainersViewModel() {
 
   const createMutation = useMutation({
     mutationFn: (values: TrainerFormValues) =>
-      createTrainer(values.name, values.phone, values.email),
+      createTrainer(values.name, values.phone, values.email, toGenderPayload(values.gender)),
     onSuccess: refreshTrainers,
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, values }: { id: number; values: TrainerFormValues }) =>
-      updateTrainer(id, values.name, values.phone, values.email),
+      updateTrainer(id, values.name, values.phone, values.email, toGenderPayload(values.gender)),
     onSuccess: refreshTrainers,
   });
   const deleteMutation = useMutation({

@@ -14,7 +14,7 @@ const trainer = {
 const baseProps = {
   trainer,
   isBusy: false,
-  editValues: { name: "", phone: "", email: "" },
+  editValues: { name: "", phone: "", email: "", gender: "" as const },
   onEditValuesChange: vi.fn(),
   onStartEdit: vi.fn(),
   onCancelEdit: vi.fn(),
@@ -48,7 +48,7 @@ describe("TrainerListItem", () => {
       <TrainerListItem
         {...baseProps}
         isEditing
-        editValues={{ name: "Ann", phone: "123", email: "ann@example.com" }}
+        editValues={{ name: "Ann", phone: "123", email: "ann@example.com", gender: "" }}
         onEditValuesChange={onEditValuesChange}
         onSave={onSave}
       />,
@@ -57,5 +57,30 @@ describe("TrainerListItem", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(onEditValuesChange).toHaveBeenCalledWith({ name: "Anne" });
     expect(onSave).toHaveBeenCalledWith(7);
+  });
+
+  it("shows the gender and emits a patch when it is changed", () => {
+    const onEditValuesChange = vi.fn();
+    const { rerender } = render(
+      <TrainerListItem
+        {...baseProps}
+        trainer={{ ...trainer, gender: "female" }}
+        isEditing={false}
+      />,
+    );
+    expect(screen.getByText("Female")).toBeInTheDocument();
+
+    rerender(
+      <TrainerListItem
+        {...baseProps}
+        isEditing
+        editValues={{ name: "Ann", phone: "1", email: "a@b.c", gender: "female" }}
+        onEditValuesChange={onEditValuesChange}
+      />,
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: "Trainer gender" }), {
+      target: { value: "diverse" },
+    });
+    expect(onEditValuesChange).toHaveBeenCalledWith({ gender: "diverse" });
   });
 });

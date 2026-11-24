@@ -10,7 +10,7 @@ respective router modules under `server/routes/`.
 Backend features live under `server/features/`. Pure operations normalize, validate, and transform
 data without database or HTTP dependencies; flows coordinate operations, persistence, external
 services, and transactions; repositories own SQLite queries; and route handlers translate flow
-results into HTTP responses. The URL checker uses an HTTP gateway, and the PDF renderer writes the
+results into HTTP responses. The URL checker uses an HTTP gateway, and the PDF renderers (course and participant PDF, sharing header, colors, trainer box and privacy notice in `routes/course-pdf-shared.ts` and `routes/course-pdf-trainer.ts`) write the
 prepared document to the response. Search SQL is assembled on the repository side, while
 step-figure hierarchy expansion is a pure operation.
 

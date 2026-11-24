@@ -31,8 +31,19 @@ describe('trainer validation', () => {
       error: 'email_required',
     });
     expect(validateTrainer({ name: ' Jane ', phone: ' 1 ', email: ' a@b.test ' })).toEqual({
-      value: { name: 'Jane', phone: '1', email: 'a@b.test' },
+      value: { name: 'Jane', phone: '1', email: 'a@b.test', gender: null },
     });
+  });
+
+  it('accepts a known gender, treats null as unspecified and rejects anything else', () => {
+    const base = { name: 'Jane', phone: '1', email: 'a@b.test' };
+    expect(validateTrainer({ ...base, gender: 'female' })).toEqual({
+      value: { ...base, gender: 'female' },
+    });
+    expect(validateTrainer({ ...base, gender: null })).toEqual({
+      value: { ...base, gender: null },
+    });
+    expect(validateTrainer({ ...base, gender: 'x' })).toEqual({ error: 'invalid_gender' });
   });
 
   it('rejects invalid field types in field order without coercing them', () => {

@@ -23,6 +23,7 @@ interface DanceGroupCoursesSectionProps {
   parsedGroupId: number;
   onDeleteCourse: (courseId: number) => Promise<void>;
   onExportCoursePdf: (course: DanceCourse) => Promise<void>;
+  onExportParticipantPdf: (course: DanceCourse) => Promise<void>;
 }
 
 export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> = ({
@@ -32,6 +33,7 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
   parsedGroupId,
   onDeleteCourse,
   onExportCoursePdf,
+  onExportParticipantPdf,
 }) => {
   const navigate = useNavigate();
   const [showPlannedCourses, setShowPlannedCourses] = useState(false);
@@ -101,6 +103,14 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
                   disabled={isLoading}
                 >
                   PDF Export
+                </ActionButton>
+                <ActionButton
+                  onClick={() => onExportParticipantPdf(course)}
+                  variant="secondary"
+                  disabled={isLoading}
+                  aria-label="Teilnehmenden-PDF exportieren"
+                >
+                  Teilnehmenden-PDF
                 </ActionButton>
                 <ActionButton
                   onClick={() => navigate(`/admin/groups/${parsedGroupId}/courses/${course.id}`)}

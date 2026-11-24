@@ -417,6 +417,13 @@ migrations.push(
       await runQuery('ALTER TABLE session_choreographies ADD COLUMN song_id INTEGER', [], dbName);
     },
   },
+  {
+    id: '017_add_trainer_gender',
+    up: async () => {
+      // NULL means "not specified"; used for the salutation in the participant PDF.
+      await ensureColumnExists('trainers', 'gender', 'TEXT');
+    },
+  },
 );
 
 async function applyMigration(migration: Migration): Promise<void> {

@@ -1,6 +1,8 @@
 import type { Trainer } from "../../../types";
 import { ActionButton, ActionGroup } from "../../../shared/ui";
+import { genderLabel } from "../model/trainer-form";
 import type { TrainerFormValues } from "../model/trainer-form";
+import { TrainerGenderSelect } from "./TrainerGenderSelect";
 
 interface TrainerListItemProps {
   trainer: Trainer;
@@ -46,6 +48,11 @@ export const TrainerListItem: React.FC<TrainerListItemProps> = ({
           onChange={(e) => onEditValuesChange({ email: e.target.value })}
           disabled={isBusy}
         />
+        <TrainerGenderSelect
+          value={editValues.gender}
+          onChange={(gender) => onEditValuesChange({ gender })}
+          disabled={isBusy}
+        />
         <ActionGroup className="trainer-actions">
           <ActionButton variant="primary" onClick={() => onSave(trainer.id)} disabled={isBusy}>
             Save
@@ -61,6 +68,7 @@ export const TrainerListItem: React.FC<TrainerListItemProps> = ({
           <h4>{trainer.name}</h4>
           <p>{trainer.phone}</p>
           <p>{trainer.email}</p>
+          {trainer.gender && <p>{genderLabel(trainer.gender)}</p>}
         </div>
         <ActionGroup className="trainer-actions">
           <ActionButton variant="edit" onClick={() => onStartEdit(trainer)} disabled={isBusy}>

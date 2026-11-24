@@ -9,6 +9,7 @@ import {
   useCoursesQuery,
   useDeleteCourseMutation,
   useExportCoursePdfMutation,
+  useExportParticipantPdfMutation,
 } from "../../courses";
 import { useLevelsQuery } from "../../metadata";
 import { useStepFiguresWithIdsQuery } from "../../step-figures";
@@ -52,6 +53,7 @@ export const useDanceGroupDetailViewModel = () => {
 
   const deleteCourse = useDeleteCourseMutation();
   const exportPdf = useExportCoursePdfMutation();
+  const exportParticipantPdf = useExportParticipantPdfMutation();
   const maxLevelMutation = useMutation({
     mutationFn: (value: number | null) => updateGroupMaxLevel(parsedGroupId, value),
     onSuccess: (updated) =>
@@ -87,6 +89,7 @@ export const useDanceGroupDetailViewModel = () => {
     queries.some((query) => query.isFetching) ||
     deleteCourse.isPending ||
     exportPdf.isPending ||
+    exportParticipantPdf.isPending ||
     maxLevelMutation.isPending;
 
   const run = async (action: () => Promise<unknown>, failure: string, useServerMessage = true) => {
@@ -121,6 +124,8 @@ export const useDanceGroupDetailViewModel = () => {
         run(() => deleteCourse.mutateAsync(courseId), "Failed to delete course", false),
       exportCoursePdf: (course: DanceCourse) =>
         run(() => exportPdf.mutateAsync(course), "PDF-Export fehlgeschlagen"),
+      exportParticipantPdf: (course: DanceCourse) =>
+        run(() => exportParticipantPdf.mutateAsync(course), "PDF-Export fehlgeschlagen"),
       changeMaxGroupLevel: (value: number | null) =>
         run(() => maxLevelMutation.mutateAsync(value), "Failed to update max group level"),
       changeBaseStepFigures: (stepFigureIds: number[]) =>

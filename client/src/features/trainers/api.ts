@@ -6,8 +6,13 @@ export async function getTrainers(): Promise<Trainer[]> {
   return response.data;
 }
 
-export async function createTrainer(name: string, phone: string, email: string): Promise<Trainer> {
-  const response = await httpClient.post("/trainers", { name, phone, email });
+export async function createTrainer(
+  name: string,
+  phone: string,
+  email: string,
+  gender: Trainer["gender"],
+): Promise<Trainer> {
+  const response = await httpClient.post("/trainers", { name, phone, email, gender });
   return response.data;
 }
 
@@ -16,8 +21,9 @@ export async function updateTrainer(
   name: string,
   phone: string,
   email: string,
+  gender: Trainer["gender"],
 ): Promise<Trainer> {
-  const response = await httpClient.put(`/trainers/${id}`, { name, phone, email });
+  const response = await httpClient.put(`/trainers/${id}`, { name, phone, email, gender });
   return response.data;
 }
 

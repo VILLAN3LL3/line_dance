@@ -7,6 +7,7 @@ import { fetchChoreographies } from "../../../features/choreographies/api";
 import {
   deleteDanceCourse,
   exportDanceCoursePdf,
+  exportParticipantCoursePdf,
   getDanceCourses,
   getSessions,
 } from "../../../features/courses/api";
@@ -38,6 +39,7 @@ vi.mock("../../../features/choreographies/api", () => ({ fetchChoreographies: vi
 vi.mock("../../../features/courses/api", () => ({
   deleteDanceCourse: vi.fn(),
   exportDanceCoursePdf: vi.fn(),
+  exportParticipantCoursePdf: vi.fn(),
   getDanceCourses: vi.fn(),
   getSessions: vi.fn(),
 }));
@@ -113,6 +115,9 @@ describe("DanceGroupDetail", () => {
     vi.mocked(exportDanceCoursePdf).mockResolvedValue(
       new Blob(["pdf"], { type: "application/pdf" }),
     );
+    vi.mocked(exportParticipantCoursePdf).mockResolvedValue(
+      new Blob(["pdf"], { type: "application/pdf" }),
+    );
     vi.mocked(getStepFigureSuggestions).mockResolvedValue([]);
     vi.mocked(getGroupBaseStepFigures).mockResolvedValue([]);
     vi.mocked(getStepFiguresWithIds).mockResolvedValue([]);
@@ -140,6 +145,26 @@ describe("DanceGroupDetail", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "Planned" }));
 
     expect(await screen.findByText("(WS 2099)")).toBeInTheDocument();
+  });
+
+  it("exports the participant PDF for a course and reports a failure", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    URL.createObjectURL = vi.fn(() => "blob:pdf");
+    URL.revokeObjectURL = vi.fn();
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    renderWithRoute();
+    await screen.findByText("Group One");
+
+    const exportButton = () =>
+      screen.getByRole("button", { name: "Teilnehmenden-PDF exportieren" });
+    await waitFor(() => expect(exportButton()).toBeEnabled());
+    fireEvent.click(exportButton());
+    await waitFor(() => expect(exportParticipantCoursePdf).toHaveBeenCalledWith(1));
+    await waitFor(() => expect(exportButton()).toBeEnabled());
+
+    vi.mocked(exportParticipantCoursePdf).mockRejectedValue(new Error("boom"));
+    fireEvent.click(exportButton());
+    expect(await screen.findByText(/boom|PDF-Export fehlgeschlagen/)).toBeInTheDocument();
   });
 
   it("shows the next planned course by default when no running courses exist", async () => {

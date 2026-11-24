@@ -39,6 +39,7 @@ This guide describes the app's catalog, group administration, and course-plannin
 - **Step figure suggestions**: ranked list of figures that would unlock the most new choreographies, accounting for both learned and base step figures — available at group level and per session.
 - Swap choreographies between sessions within a course.
 - Export a course PDF (German): session dates, trainer contact with vCard QR code, playlist QR codes.
+- Export a participant PDF at the end of a course (German, `Kursabschluss-…pdf`): per session date the dances learned there (official level, count/wall, choreographers, clickable QR codes for the Copperknob step sheet and the demo video; repetitions and missing links are omitted), the steps the group learned in the course (steps of earlier dances and the group's base figures are excluded), the trainer contact with vCard QR code, a friendly closing note signed with "Deine"/"Dein" and the trainer's name, and the same privacy notice as the course PDF. The signature depends on the optional trainer gender (female/male/diverse); without it only the name is shown.
 
 ## Step Figure Hierarchy
 

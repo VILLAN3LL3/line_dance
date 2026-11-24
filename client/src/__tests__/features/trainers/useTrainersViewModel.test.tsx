@@ -66,7 +66,7 @@ describe("useTrainersViewModel", () => {
       result.current.actions.changeNewTrainer({ name: "Bob", phone: "9", email: "b@example.com" }),
     );
     await act(() => result.current.actions.submitNewTrainer());
-    expect(createTrainer).toHaveBeenCalledWith("Bob", "9", "b@example.com");
+    expect(createTrainer).toHaveBeenCalledWith("Bob", "9", "b@example.com", null);
     expect(result.current.state.newTrainer.name).toBe("");
     expect(getTrainers).toHaveBeenCalledTimes(2);
   });
@@ -88,9 +88,9 @@ describe("useTrainersViewModel", () => {
     const { result } = renderViewModel();
     await waitFor(() => expect(result.current.state.trainers).toHaveLength(1));
     act(() => result.current.actions.startEdit(trainer));
-    act(() => result.current.actions.changeEditTrainer({ name: "Anne" }));
+    act(() => result.current.actions.changeEditTrainer({ name: "Anne", gender: "female" }));
     await act(() => result.current.actions.saveEdit(1));
-    expect(updateTrainer).toHaveBeenCalledWith(1, "Anne", "123", "ann@example.com");
+    expect(updateTrainer).toHaveBeenCalledWith(1, "Anne", "123", "ann@example.com", "female");
     expect(result.current.state.editingId).toBeNull();
   });
 

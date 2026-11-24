@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildCoursePdfFileName,
   filterVisibleSessions,
   findChoreographyByQuery,
   formatCourseHeader,
@@ -26,6 +27,12 @@ const choreo = (id: number, name: string): Choreography =>
   ({ id, name, level: "Beginner" }) as Choreography;
 
 describe("course-detail model", () => {
+  it("builds PDF file names with a safe semester and optional prefix", () => {
+    const course = { id: 1, course_id: 3, semester: "WS 25/26" } as DanceCourse;
+    expect(buildCoursePdfFileName(course)).toBe("Kurs-3-WS_25_26.pdf");
+    expect(buildCoursePdfFileName(course, "Kursabschluss")).toBe("Kursabschluss-3-WS_25_26.pdf");
+  });
+
   it("flags invalid route params", () => {
     expect(parseCourseDetailRoute("2", "7")).toMatchObject({
       groupId: 2,

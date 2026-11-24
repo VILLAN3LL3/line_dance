@@ -56,6 +56,27 @@ describe('POST /api/trainers', () => {
     expect(res.body.id).toBeDefined();
   });
 
+  it('stores the gender and defaults to unspecified', async () => {
+    const withGender = await request(app)
+      .post('/api/trainers')
+      .send({ ...BASE, gender: 'female' });
+    expect(withGender.status).toBe(201);
+    expect(withGender.body.gender).toBe('female');
+
+    const without = await request(app)
+      .post('/api/trainers')
+      .send({ ...BASE, email: 'other@example.com' });
+    expect(without.body.gender).toBeNull();
+  });
+
+  it('returns 400 for an unknown gender', async () => {
+    const res = await request(app)
+      .post('/api/trainers')
+      .send({ ...BASE, gender: 'robot' });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Gender must be female, male or diverse' });
+  });
+
   it('trims whitespace from all fields', async () => {
     const res = await request(app).post('/api/trainers').send({
       name: '  John  ',
@@ -159,6 +180,16 @@ describe('PUT /api/trainers/:id', () => {
     expect(res.body.name).toBe('Updated Name');
     expect(res.body.phone).toBe('+999');
     expect(res.body.email).toBe('updated@example.com');
+  });
+
+  it('sets and clears the gender on update', async () => {
+    const created = await request(app).post('/api/trainers').send(BASE);
+    const set = await request(app)
+      .put(`/api/trainers/${created.body.id}`)
+      .send({ ...BASE, gender: 'male' });
+    expect(set.body.gender).toBe('male');
+    const cleared = await request(app).put(`/api/trainers/${created.body.id}`).send(BASE);
+    expect(cleared.body.gender).toBeNull();
   });
 
   it('returns 404 for non-existent trainer', async () => {

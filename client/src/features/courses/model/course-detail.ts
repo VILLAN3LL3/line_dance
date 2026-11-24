@@ -61,13 +61,13 @@ export const omitKey = <T>(record: NumericRecord<T>, key: number): NumericRecord
 export const hasKey = (record: NumericRecord<unknown>, key: number): boolean =>
   Object.prototype.hasOwnProperty.call(record, key);
 
-/** `Kurs-<courseId>-<semester>.pdf` with the semester reduced to filename-safe characters. */
-export const buildCoursePdfFileName = (course: DanceCourse): string => {
+/** `<prefix>-<courseId>-<semester>.pdf` with the semester reduced to filename-safe characters. */
+export const buildCoursePdfFileName = (course: DanceCourse, prefix = "Kurs"): string => {
   const safeSemester = (course.semester ?? "Kurs")
     .split(/[^a-zA-Z0-9_-]+/)
     .filter(Boolean)
     .join("_");
   const courseFilePart =
     course.course_id === null || course.course_id === undefined ? "" : `${course.course_id}-`;
-  return `Kurs-${courseFilePart}${safeSemester}.pdf`;
+  return `${prefix}-${courseFilePart}${safeSemester}.pdf`;
 };

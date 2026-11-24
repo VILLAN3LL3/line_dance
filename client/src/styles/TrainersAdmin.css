@@ -26,11 +26,12 @@
 
 .trainer-form {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr 1fr auto;
   gap: 10px;
 }
 
-.trainer-form input {
+.trainer-form input,
+.trainer-form select {
   min-width: 0;
 }
 

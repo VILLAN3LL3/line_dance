@@ -1037,6 +1037,12 @@ export const openApiSpec = {
                   name: { type: 'string' },
                   phone: { type: 'string' },
                   email: { type: 'string', format: 'email' },
+                  gender: {
+                    type: 'string',
+                    enum: ['female', 'male', 'diverse'],
+                    nullable: true,
+                    description: 'Optional; used for the salutation in the participant PDF.',
+                  },
                 },
                 required: ['name', 'phone', 'email'],
               },
@@ -1070,6 +1076,12 @@ export const openApiSpec = {
                   name: { type: 'string' },
                   phone: { type: 'string' },
                   email: { type: 'string', format: 'email' },
+                  gender: {
+                    type: 'string',
+                    enum: ['female', 'male', 'diverse'],
+                    nullable: true,
+                    description: 'Optional; used for the salutation in the participant PDF.',
+                  },
                 },
                 required: ['name', 'phone', 'email'],
               },
@@ -1198,6 +1210,26 @@ export const openApiSpec = {
       get: {
         tags: ['Dance Courses'],
         summary: 'Export course PDF',
+        parameters: [{ $ref: '#/components/parameters/IdPath' }],
+        responses: {
+          200: {
+            description: 'PDF binary',
+            content: {
+              'application/pdf': {
+                schema: { type: 'string', format: 'binary' },
+              },
+            },
+          },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/api/dance-courses/{id}/export-participant-pdf': {
+      get: {
+        tags: ['Dance Courses'],
+        summary: 'Export end-of-course PDF for participants',
+        description:
+          'Session dates with the dances learned there (official level, count/wall, choreographers, QR codes and links to step sheet and demo video), the steps learned in the course and the trainer contact.',
         parameters: [{ $ref: '#/components/parameters/IdPath' }],
         responses: {
           200: {
@@ -1964,6 +1996,7 @@ export const openApiSpec = {
           name: { type: 'string' },
           phone: { type: 'string' },
           email: { type: 'string', format: 'email' },
+          gender: { type: 'string', enum: ['female', 'male', 'diverse'], nullable: true },
           created_at: { type: 'string' },
         },
         required: ['id', 'name', 'phone', 'email'],

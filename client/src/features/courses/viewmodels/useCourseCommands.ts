@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { downloadBlob } from "../../../shared/browser/download";
 import type { DanceCourse } from "../../../types";
-import { deleteDanceCourse, exportDanceCoursePdf } from "../api";
+import { deleteDanceCourse, exportDanceCoursePdf, exportParticipantCoursePdf } from "../api";
 import { buildCoursePdfFileName } from "../model/course-detail";
 import { courseKeys } from "../queryKeys";
 
@@ -21,6 +21,16 @@ export function useExportCoursePdfMutation() {
     mutationFn: async (course: DanceCourse) => {
       const pdfBlob = await exportDanceCoursePdf(course.id);
       downloadBlob(pdfBlob, buildCoursePdfFileName(course));
+    },
+  });
+}
+
+/** Renders the end-of-course handout for participants as PDF and offers it as a download. */
+export function useExportParticipantPdfMutation() {
+  return useMutation({
+    mutationFn: async (course: DanceCourse) => {
+      const pdfBlob = await exportParticipantCoursePdf(course.id);
+      downloadBlob(pdfBlob, buildCoursePdfFileName(course, "Kursabschluss"));
     },
   });
 }

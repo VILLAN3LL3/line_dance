@@ -78,6 +78,13 @@ export async function exportDanceCoursePdf(id: number): Promise<Blob> {
   return response.data;
 }
 
+export async function exportParticipantCoursePdf(id: number): Promise<Blob> {
+  const response = await api.get(`/dance-courses/${id}/export-participant-pdf`, {
+    responseType: "blob",
+  });
+  return response.data;
+}
+
 export async function getSessions(danceCoursesId?: number): Promise<Session[]> {
   const response = await api.get("/sessions", {
     params: danceCoursesId ? { dance_course_id: danceCoursesId } : {},

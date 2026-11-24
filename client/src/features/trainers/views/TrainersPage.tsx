@@ -11,6 +11,7 @@ import {
   Section,
 } from "../../../shared/ui";
 import { useTrainersViewModel } from "../viewmodels/useTrainersViewModel";
+import { TrainerGenderSelect } from "./TrainerGenderSelect";
 import { TrainerListItem } from "./TrainerListItem";
 
 const TrainersPage: React.FC = () => {
@@ -62,6 +63,11 @@ const TrainersPage: React.FC = () => {
             placeholder="E-Mail"
             value={newTrainer.email}
             onChange={(e) => actions.changeNewTrainer({ email: e.target.value })}
+            disabled={isBusy}
+          />
+          <TrainerGenderSelect
+            value={newTrainer.gender}
+            onChange={(gender) => actions.changeNewTrainer({ gender })}
             disabled={isBusy}
           />
           <ActionButton type="submit" variant="primary" disabled={isBusy}>

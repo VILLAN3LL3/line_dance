@@ -35,6 +35,7 @@ const DanceGroupDetail: React.FC = () => {
           parsedGroupId={state.groupId}
           onDeleteCourse={handleDeleteCourse}
           onExportCoursePdf={actions.exportCoursePdf}
+          onExportParticipantPdf={actions.exportParticipantPdf}
         />
 
         <DanceGroupLevelsSection

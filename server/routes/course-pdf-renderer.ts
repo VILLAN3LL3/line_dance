@@ -3,10 +3,14 @@ import path from 'node:path';
 import type { Writable } from 'node:stream';
 import PDFDocument from 'pdfkit';
 import SVGtoPDF from 'svg-to-pdfkit';
-import { hslToHex } from '../utils/colorUtils.ts';
 import { serverRoot } from '../utils/server-paths.ts';
 import type { CoursePdfDocument } from '../features/courses/pdf-flow.ts';
-import type { CoursePdf } from '../features/courses/pdf-operations.ts';
+import {
+  getCoursePdfColors,
+  privacyDisclaimerText,
+  renderCoursePdfHeader,
+} from './course-pdf-shared.ts';
+import { renderTrainerBox } from './course-pdf-trainer.ts';
 
 type PlaceholderLayout = {
   linksWithQr: CoursePdfDocument['linksWithQr'];
@@ -20,14 +24,6 @@ type PlaceholderLayout = {
 };
 type PlaceholderColors = { headerBg: string; title: string };
 
-function loadOptionalAssetBuffer(assetName: string): Buffer | null {
-  try {
-    return readFileSync(path.join(serverRoot, 'assets', assetName));
-  } catch {
-    return null;
-  }
-}
-
 function loadOptionalAssetText(assetName: string): string | null {
   try {
     return readFileSync(path.join(serverRoot, 'assets', assetName), 'utf8');
@@ -36,117 +32,7 @@ function loadOptionalAssetText(assetName: string): string | null {
   }
 }
 
-const trainerPhoneIcon = loadOptionalAssetBuffer('icons8-mobile-phone-90.png');
-const trainerEmailIcon = loadOptionalAssetBuffer('icons8-email-90.png');
 const dancingIconSvg = loadOptionalAssetText('dancing.svg');
-
-function courseIdToColors(courseId: number): {
-  headerBg: string;
-  headerBorder: string;
-  title: string;
-  surfaceBg: string;
-  surfaceBorder: string;
-  cardBg: string;
-  cardBorder: string;
-  qrBorder: string;
-  strongBorder: string;
-} {
-  const hue = (courseId * 137.508) % 360;
-  return {
-    headerBg: hslToHex(hue, 75, 95),
-    headerBorder: hslToHex(hue, 55, 83),
-    title: hslToHex(hue, 72, 25),
-    // Neutral grays with a subtle hint of the primary hue mixed in
-    surfaceBg: hslToHex(hue, 20, 98),
-    surfaceBorder: hslToHex(hue, 18, 91),
-    cardBg: hslToHex(hue, 18, 98),
-    cardBorder: hslToHex(hue, 14, 85),
-    qrBorder: hslToHex(hue, 14, 91),
-    strongBorder: hslToHex(hue, 16, 84),
-  };
-}
-
-function formatPhoneNumberDin(number: string | null): string {
-  const input = String(number ?? '').trim();
-  if (!input) {
-    return '';
-  }
-
-  const digits = input.replaceAll(/\D/g, '');
-  if (!digits) {
-    return input;
-  }
-
-  const { countryPrefix, nationalNumber } = parseGermanPhoneInput(input, digits);
-  if (!nationalNumber) {
-    return countryPrefix || input;
-  }
-
-  const areaCodeLength = getAreaCodeLength(countryPrefix, nationalNumber);
-  const boundedAreaCodeLength = Math.max(1, Math.min(areaCodeLength, nationalNumber.length));
-  const areaCode = nationalNumber.slice(0, boundedAreaCodeLength);
-  const subscriberNumber = nationalNumber.slice(boundedAreaCodeLength);
-
-  return formatPhoneSegments(countryPrefix, areaCode, subscriberNumber);
-}
-
-function parseGermanPhoneInput(
-  input: string,
-  digits: string,
-): { countryPrefix: string; nationalNumber: string } {
-  const hasPlusPrefix = input.startsWith('+');
-  const hasInternationalZeroPrefix = input.startsWith('00');
-  const isGermanInternational =
-    (hasPlusPrefix && digits.startsWith('49')) ||
-    (hasInternationalZeroPrefix && digits.startsWith('0049'));
-
-  let countryPrefix = '';
-  let nationalNumber = digits;
-
-  if (isGermanInternational) {
-    countryPrefix = '+49';
-    nationalNumber = hasInternationalZeroPrefix ? digits.slice(4) : digits.slice(2);
-    if (nationalNumber.startsWith('0')) {
-      nationalNumber = nationalNumber.slice(1);
-    }
-  }
-
-  return { countryPrefix, nationalNumber };
-}
-
-function getAreaCodeLength(countryPrefix: string, nationalNumber: string): number {
-  const mobilePrefixLength = countryPrefix ? 3 : 4;
-  const shortAreaPrefixLength = countryPrefix ? 2 : 3;
-  const defaultAreaPrefixLength = countryPrefix ? 3 : 4;
-
-  if (
-    (countryPrefix && nationalNumber.startsWith('1')) ||
-    (!countryPrefix && nationalNumber.startsWith('01'))
-  ) {
-    return mobilePrefixLength;
-  }
-
-  const shortAreaPrefixes = countryPrefix ? ['30', '40', '69', '89'] : ['030', '040', '069', '089'];
-  if (shortAreaPrefixes.some((prefix) => nationalNumber.startsWith(prefix))) {
-    return shortAreaPrefixLength;
-  }
-
-  return defaultAreaPrefixLength;
-}
-
-function formatPhoneSegments(
-  countryPrefix: string,
-  areaCode: string,
-  subscriberNumber: string,
-): string {
-  if (!subscriberNumber) {
-    return countryPrefix ? `${countryPrefix} ${areaCode}` : areaCode;
-  }
-
-  return countryPrefix
-    ? `${countryPrefix} ${areaCode} ${subscriberNumber}`
-    : `${areaCode} ${subscriberNumber}`;
-}
 
 function renderDancingPlaceholder(
   doc: PDFKit.PDFDocument,
@@ -197,56 +83,6 @@ function renderDancingPlaceholder(
   });
 }
 
-function buildBalancedTwoLineTitle(
-  doc: PDFKit.PDFDocument,
-  rawTitle: string,
-  maxWidth: number,
-): string {
-  const title = String(rawTitle ?? '').trim();
-  const words = title.split(/\s+/).filter(Boolean);
-
-  if (words.length < 4) {
-    return title;
-  }
-
-  const singleLineWidth = doc.widthOfString(title);
-  if (singleLineWidth <= maxWidth) {
-    return title;
-  }
-
-  let bestSplit = null;
-
-  for (let splitIndex = 2; splitIndex <= words.length - 2; splitIndex += 1) {
-    const line1 = words.slice(0, splitIndex).join(' ');
-    const line2 = words.slice(splitIndex).join(' ');
-    const width1 = doc.widthOfString(line1);
-    const width2 = doc.widthOfString(line2);
-    const overflow = Math.max(0, width1 - maxWidth) + Math.max(0, width2 - maxWidth);
-    const balancePenalty = Math.abs(width1 - width2);
-    const score = overflow * 100 + balancePenalty;
-
-    if (!bestSplit || score < bestSplit.score) {
-      bestSplit = { line1, line2, score };
-    }
-  }
-
-  if (!bestSplit) {
-    return title;
-  }
-
-  return `${bestSplit.line1}\n${bestSplit.line2}`;
-}
-
-function getCoursePdfSubtitle(course: CoursePdf): string {
-  return [
-    course.name,
-    course.course_id !== null ? `Kurs #${course.course_id}` : null,
-    course.semester,
-  ]
-    .filter(Boolean)
-    .join(' ');
-}
-
 export function renderCoursePdf(
   res: Writable,
   { course, sessions, linksWithQr, trainerQr }: CoursePdfDocument,
@@ -256,57 +92,14 @@ export function renderCoursePdf(
   const doc = new PDFDocument({ size: 'A4', margin: 50 });
   doc.pipe(res);
 
-  const dynamicColors = courseIdToColors(course.id);
-  const colors = {
-    headerBg: dynamicColors.headerBg,
-    headerBorder: dynamicColors.headerBorder,
-    title: dynamicColors.title,
-    subtitle: '#1F2937',
-    muted: '#6B7280',
-    surfaceBg: dynamicColors.surfaceBg,
-    surfaceBorder: dynamicColors.surfaceBorder,
-    qrBorder: dynamicColors.qrBorder,
-    strongBorder: dynamicColors.strongBorder,
-    cardBg: dynamicColors.cardBg,
-    cardBorder: dynamicColors.cardBorder,
-  };
+  const colors = getCoursePdfColors(course.id);
 
   const pageWidth = doc.page.width;
   const leftMargin = doc.page.margins.left;
   const rightMargin = doc.page.margins.right;
   const contentWidth = pageWidth - leftMargin - rightMargin;
 
-  // Friendly header panel
-  const headerY = doc.y;
-  const headerHeight = 108;
-  doc
-    .roundedRect(leftMargin, headerY, contentWidth, headerHeight, 10)
-    .fillAndStroke(colors.headerBg, colors.headerBorder);
-
-  const titleY = headerY + 16;
-  const titleTextRaw = `${course.dance_group_name ?? 'Dance Group'}`;
-  const titleOptions = {
-    width: contentWidth,
-    align: 'center' as const,
-  };
-  doc.fontSize(24);
-  const titleText = buildBalancedTwoLineTitle(doc, titleTextRaw, contentWidth);
-  const titleHeight = doc.heightOfString(titleText, titleOptions);
-
-  doc.fillColor(colors.title).fontSize(24).text(titleText, leftMargin, titleY, titleOptions);
-
-  const subtitleY = titleY + titleHeight + 6;
-
-  doc
-    .fillColor(colors.subtitle)
-    .fontSize(14)
-    .text(getCoursePdfSubtitle(course), leftMargin, subtitleY, {
-      width: contentWidth,
-      align: 'center',
-    });
-
-  doc.fillColor('black');
-  doc.y = headerY + headerHeight + 18;
+  renderCoursePdfHeader(doc, course, colors);
 
   // Session dates section (5-column table)
   const weekdayAbbreviations = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
@@ -358,96 +151,8 @@ export function renderCoursePdf(
     });
   }
 
-  const trainerBoxY = sessionsBoxY + sessionsBoxHeight + 12;
-  const trainerBoxHeight = 112;
-  const trainerQrSize = 72;
-  const trainerQrX = leftMargin + contentWidth - trainerQrSize - 12;
-  const trainerQrY = trainerBoxY + 20;
-
-  doc
-    .roundedRect(leftMargin, trainerBoxY, contentWidth, trainerBoxHeight, 8)
-    .fillAndStroke(colors.surfaceBg, colors.surfaceBorder);
-
-  if (hasTrainer && trainerQr) {
-    doc.fillColor(colors.subtitle).fontSize(11);
-    const nameText = `${course.trainer_name}`.toUpperCase();
-    const phoneText = `${formatPhoneNumberDin(course.trainer_phone)}`;
-    const emailText = `${course.trainer_email}`;
-    const contactLineWidth = contentWidth - trainerQrSize - 34;
-    const contactIconSize = 12;
-    const contactIconX = leftMargin + 12;
-    const contactTextX = contactIconX + contactIconSize + 5;
-    const contactTextWidth = contactLineWidth - (contactTextX - (leftMargin + 12));
-    const contactLineGap = 5;
-
-    doc.font('Helvetica-Bold').fontSize(11);
-    const nameHeight = doc.heightOfString(nameText, { width: contactLineWidth });
-    doc.font('Helvetica').fontSize(11);
-    const phoneHeight = doc.heightOfString(phoneText, { width: contactTextWidth });
-    const emailHeight = doc.heightOfString(emailText, { width: contactTextWidth });
-
-    const phoneRowHeight = Math.max(phoneHeight, contactIconSize);
-    const emailRowHeight = Math.max(emailHeight, contactIconSize);
-    const contactBlockHeight =
-      nameHeight + contactLineGap + phoneRowHeight + contactLineGap + emailRowHeight;
-    const contactBlockTop = trainerBoxY + Math.max(8, (trainerBoxHeight - contactBlockHeight) / 2);
-    const nameY = contactBlockTop;
-    const phoneLineY = nameY + nameHeight + contactLineGap;
-    const emailLineY = phoneLineY + phoneRowHeight + contactLineGap;
-    const phoneIconY = phoneLineY + (phoneHeight - contactIconSize) / 2;
-    const emailIconY = emailLineY + (emailHeight - contactIconSize) / 2;
-
-    doc.font('Helvetica-Bold').text(nameText, leftMargin + 12, nameY, {
-      width: contactLineWidth,
-    });
-
-    if (trainerPhoneIcon) {
-      doc.image(trainerPhoneIcon, contactIconX, phoneIconY, {
-        fit: [contactIconSize, contactIconSize],
-      });
-    }
-
-    if (trainerEmailIcon) {
-      doc.image(trainerEmailIcon, contactIconX, emailIconY, {
-        fit: [contactIconSize, contactIconSize],
-      });
-    }
-
-    doc.font('Helvetica').text(phoneText, contactTextX, phoneLineY, {
-      width: contactTextWidth,
-    });
-    doc.text(emailText, contactTextX, emailLineY, {
-      width: contactTextWidth,
-    });
-
-    doc.image(trainerQr, trainerQrX, trainerQrY, { fit: [trainerQrSize, trainerQrSize] });
-    doc
-      .roundedRect(trainerQrX - 2, trainerQrY - 2, trainerQrSize + 4, trainerQrSize + 4, 4)
-      .lineWidth(1)
-      .stroke(colors.strongBorder);
-
-    doc
-      .fillColor(colors.muted)
-      .fontSize(9)
-      .text('vCard', trainerQrX, trainerQrY + trainerQrSize + 3, {
-        width: trainerQrSize,
-        align: 'center',
-      });
-  } else {
-    const noTrainerText = 'Kein Trainer fuer diesen Kurs hinterlegt.';
-    const noTrainerTextHeight = doc.heightOfString(noTrainerText, {
-      width: contentWidth - 24,
-    });
-    const noTrainerTextY = trainerBoxY + (trainerBoxHeight - noTrainerTextHeight) / 2;
-    doc
-      .fillColor(colors.muted)
-      .fontSize(11)
-      .text(noTrainerText, leftMargin + 12, noTrainerTextY, {
-        width: contentWidth - 24,
-      });
-  }
-
-  doc.y = trainerBoxY + trainerBoxHeight + 14;
+  doc.y = sessionsBoxY + sessionsBoxHeight + 12;
+  renderTrainerBox(doc, course, trainerQr, colors);
 
   if (linksWithQr.length === 0) {
     const warningBoxY = doc.y;
@@ -481,13 +186,7 @@ export function renderCoursePdf(
   const gridStartY = doc.y;
 
   // Measure the footer disclaimer up front so the tile grid can reserve space for it
-  const disclaimerText =
-    'Datenschutzhinweis: Dieses Dokument enthält Links und QR-Codes zu externen Angeboten Dritter ' +
-    '(z. B. YouTube/Google, Spotify, Copperknob). Auf deren Inhalte und Datenverarbeitung habe ich ' +
-    'keinen Einfluss. Beim Aufrufen können personenbezogene Daten (insbesondere deine IP-Adresse) an die ' +
-    'jeweiligen Anbieter – auch in Drittländer wie die USA – übertragen werden. Es gelten ausschließlich ' +
-    'die Datenschutzbestimmungen der jeweiligen Anbieter. Die Nutzung ist freiwillig und erfolgt auf ' +
-    'eigene Verantwortung.';
+  const disclaimerText = privacyDisclaimerText;
   doc.fontSize(8);
   const disclaimerHeight = doc.heightOfString(disclaimerText, { width: contentWidth });
   const disclaimerGap = 16;

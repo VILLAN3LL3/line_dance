@@ -9,7 +9,12 @@ import type { PreparedInput } from './prepare-input.ts';
 import { captureDanceGroupError as captureError } from '../utils/danceGroupRouteErrors.ts';
 
 type TrainerError =
-  'name_required' | 'phone_required' | 'email_required' | 'duplicate_email' | 'not_found';
+  | 'name_required'
+  | 'phone_required'
+  | 'email_required'
+  | 'invalid_gender'
+  | 'duplicate_email'
+  | 'not_found';
 type ErrorResponse = { error: string };
 type TrainerResponse = Trainer | ErrorResponse;
 type DeleteResponse = { message: 'Trainer deleted successfully' } | ErrorResponse;
@@ -25,6 +30,7 @@ const trainerErrors: Record<TrainerError, [number, string]> = {
   name_required: [400, 'Name is required'],
   phone_required: [400, 'Phone is required'],
   email_required: [400, 'Email is required'],
+  invalid_gender: [400, 'Gender must be female, male or diverse'],
   duplicate_email: [400, 'A trainer with that email already exists'],
   not_found: [404, 'Trainer not found'],
 };

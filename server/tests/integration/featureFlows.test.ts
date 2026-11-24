@@ -12,6 +12,7 @@ import * as courses from '../../features/courses/flow.ts';
 import { prepareCourseInput, prepareNewCourse } from '../../features/courses/validation.ts';
 import type { Course } from '../../features/courses/repository.ts';
 import { prepareCoursePdf } from '../../features/courses/pdf-flow.ts';
+import { prepareParticipantPdf } from '../../features/courses/participant-pdf-flow.ts';
 import { prepareCoursePdfId } from '../../features/courses/pdf-operations.ts';
 import * as trainers from '../../features/trainers/flow.ts';
 import { validateTrainer } from '../../features/trainers/validation.ts';
@@ -159,6 +160,107 @@ describe('group, course and trainer flows', () => {
       'danceGroups',
     );
     await expect(prepareCoursePdf(prepareCoursePdfId({ id: String(course.id) }))).rejects.toThrow();
+  });
+});
+
+describe('participant PDF flow', () => {
+  async function insertDance(
+    name: string,
+    figures: number[],
+    extra: string[] = [],
+  ): Promise<number> {
+    const result = await runQuery(
+      `INSERT INTO choreographies (name, level_id, count, wall_count, step_sheet_link, demo_video_url)
+       SELECT ?, id, 32, 4, ?, ? FROM levels WHERE name = 'BEGINNER'`,
+      [name, extra[0] ?? null, extra[1] ?? null],
+    );
+    for (const figure of figures) {
+      await runQuery(
+        'INSERT INTO choreography_step_figures (choreography_id, step_figure_id) VALUES (?, ?)',
+        [result.id, figure],
+      );
+    }
+    return result.id;
+  }
+
+  async function insertSession(courseId: number, date: string): Promise<number> {
+    const result = await runQuery(
+      'INSERT INTO sessions (dance_course_id, session_date) VALUES (?, ?)',
+      [courseId, date],
+      'danceGroups',
+    );
+    return result.id;
+  }
+
+  async function assign(sessionId: number, danceId: number, isNew: number): Promise<void> {
+    await runQuery(
+      'INSERT INTO session_choreographies (session_id, choreography_id, is_new) VALUES (?, ?, ?)',
+      [sessionId, danceId, isNew],
+      'danceGroups',
+    );
+  }
+
+  it('lists new dances per session with official levels, QR codes and unknown steps only', async () => {
+    const base = (await runQuery("INSERT INTO step_figures (name) VALUES ('Base')")).id;
+    const old = (await runQuery("INSERT INTO step_figures (name) VALUES ('Old')")).id;
+    const fresh = (await runQuery("INSERT INTO step_figures (name) VALUES ('Fresh')")).id;
+    const group = await createTestGroup('Group');
+    await runQuery(
+      'INSERT OR IGNORE INTO group_base_step_figures (dance_group_id, step_figure_id) VALUES (?, ?)',
+      [group.id, base],
+      'danceGroups',
+    );
+    const earlierCourse = await createTestCourse({ dance_group_id: group.id, name: 'Earlier' });
+    const course = await createTestCourse({ dance_group_id: group.id, name: 'Current' });
+
+    const oldDance = await insertDance('Old Dance', [old]);
+    await assign(await insertSession(earlierCourse.id, '2024-01-01'), oldDance, 1);
+    const newDance = await insertDance(
+      'New Dance',
+      [base, old, fresh],
+      ['https://example.com/sheet', 'https://example.com/video'],
+    );
+    const noLinks = await insertDance('No Links', []);
+    await runQuery(
+      "INSERT INTO personal_data.choreography_personal_levels (choreography_id, level_id) SELECT ?, id FROM levels WHERE name = 'ADVANCED'",
+      [newDance],
+    );
+    await runQuery("INSERT INTO authors (name) VALUES ('Jane')");
+    await runQuery(
+      'INSERT INTO choreography_authors (choreography_id, author_id) SELECT ?, id FROM authors',
+      [newDance],
+    );
+    const first = await insertSession(course.id, '2025-01-01');
+    const second = await insertSession(course.id, '2025-01-08');
+    await insertSession(course.id, '2025-01-15');
+    await assign(first, newDance, 1);
+    await assign(first, noLinks, 1);
+    await assign(second, newDance, 0);
+
+    const result = await prepareParticipantPdf(prepareCoursePdfId({ id: String(course.id) }));
+    if ('error' in result) throw new Error('Participant PDF preparation failed');
+    const { sessions, learnedSteps } = result.value;
+    expect(sessions.map((session) => session.dances.map((dance) => dance.name))).toEqual([
+      ['New Dance', 'No Links'],
+      [],
+      [],
+    ]);
+    expect(sessions[0].dances[0]).toMatchObject({ level: 'BEGINNER', authors: ['Jane'] });
+    expect(sessions[0].dances[0].stepSheet?.qr.subarray(1, 4).toString()).toBe('PNG');
+    expect(sessions[0].dances[0].demoVideo?.url).toBe('https://example.com/video');
+    expect(sessions[0].dances[1]).toMatchObject({ stepSheet: null, demoVideo: null });
+    expect(learnedSteps).toEqual(['Fresh']);
+    expect(await prepareParticipantPdf(prepareCoursePdfId({ id: '999' }))).toEqual({
+      error: 'course_not_found',
+    });
+  });
+
+  it('returns an empty document for a course without sessions', async () => {
+    const group = await createTestGroup('Group');
+    const course = await createTestCourse({ dance_group_id: group.id, name: 'Empty' });
+    const result = await prepareParticipantPdf(prepareCoursePdfId({ id: String(course.id) }));
+    if ('error' in result) throw new Error('Participant PDF preparation failed');
+    expect(result.value).toMatchObject({ sessions: [], learnedSteps: [], trainerQr: null });
   });
 });
 

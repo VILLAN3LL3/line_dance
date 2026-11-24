@@ -12,7 +12,7 @@ type SessionResult =
       };
     };
 
-async function getKnownFigures(
+export async function getKnownFigures(
   groupId: number,
   choreographyIds: number[],
 ): Promise<{ names: string[]; namesLower: string[] }> {

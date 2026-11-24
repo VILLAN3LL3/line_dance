@@ -615,3 +615,38 @@ describe('GET /api/dance-courses/:id/export-pdf', () => {
     expect(res.body.error).toBe('Dance course not found');
   });
 });
+
+describe('GET /api/dance-courses/:id/export-participant-pdf', () => {
+  it('returns a PDF attachment for an existing course', async () => {
+    const group = await createGroup('Participant PDF Group');
+    const trainer = await createTrainer();
+    const course = await request(app).post('/api/dance-courses').send({
+      dance_group_id: group.id,
+      semester: 'WS 2025',
+      name: 'Course',
+      trainer_id: trainer.id,
+    });
+    await request(app)
+      .post('/api/sessions')
+      .send({ dance_course_id: course.body.id, session_date: '2025-01-15' });
+
+    const res = await request(app).get(
+      `/api/dance-courses/${course.body.id}/export-participant-pdf`,
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.headers['content-disposition']).toContain('attachment; filename="Kursabschluss-');
+    expect(res.body.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(res.body.toString('latin1')).toContain('%%EOF');
+  });
+
+  it('returns 404 for a non-existent course and malformed id', async () => {
+    const missing = await request(app).get('/api/dance-courses/99999/export-participant-pdf');
+    expect(missing.status).toBe(404);
+    expect(missing.body.error).toBe('Dance course not found');
+
+    const malformed = await request(app).get('/api/dance-courses/1suffix/export-participant-pdf');
+    expect(malformed.status).toBe(404);
+  });
+});
