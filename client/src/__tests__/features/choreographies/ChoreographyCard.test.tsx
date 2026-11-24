@@ -504,7 +504,8 @@ describe("ChoreographyCard", () => {
       within(editor)
         .getAllByRole("button")
         .map((button) => button.getAttribute("aria-label")),
-    ).toEqual(["Wishlist", "Learned", "No status"]);
+    ).toEqual(["Wishlist", "Learned", "No status", "Close status editor"]);
+    expect(within(editor).getByRole("button", { name: "No status" })).toHaveTextContent("🔳");
     expect(within(editor).getByRole("button", { name: "No status" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -528,6 +529,18 @@ describe("ChoreographyCard", () => {
     expect(screen.queryByRole("button", { name: /Learning status: Wishlist/ })).toBeNull();
   });
 
+  it("closes the status editor with the close button without changing anything", () => {
+    render(<ChoreographyCard choreography={makeChoreography({ learning_status: "wishlist" })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Learning status: Wishlist/ }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Close status editor" }));
+
+    expect(screen.queryByRole("group", { name: "Learning status" })).toBeNull();
+    expect(screen.getByRole("button", { name: /Learning status: Wishlist/ })).toBeInTheDocument();
+    expect(setChoreographyLearningStatus).not.toHaveBeenCalled();
+    expect(deleteChoreographyLearningStatus).not.toHaveBeenCalled();
+  });
+
   it("closes the status editor with Escape without changing anything", () => {
     render(<ChoreographyCard choreography={makeChoreography({ learning_status: "wishlist" })} />);
     fireEvent.click(screen.getByRole("button", { name: /Learning status: Wishlist/ }));
@@ -537,6 +550,26 @@ describe("ChoreographyCard", () => {
     expect(screen.queryByRole("group", { name: "Learning status" })).toBeNull();
     expect(setChoreographyLearningStatus).not.toHaveBeenCalled();
     expect(deleteChoreographyLearningStatus).not.toHaveBeenCalled();
+  });
+
+  it("moves the focus into the editor when it is opened from the icon", () => {
+    render(<ChoreographyCard choreography={makeChoreography({ learning_status: "learned" })} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Learning status: Learned/ }));
+
+    expect(screen.getByRole("button", { name: "Learned" })).toHaveFocus();
+  });
+
+  it("closes the editor with Escape when it was opened from the title", () => {
+    render(<ChoreographyCard choreography={makeChoreography()} />);
+    const title = screen.getByRole("button", { name: "Neon Waltz (2024)" });
+    fireEvent.click(title);
+    expect(screen.getByRole("group", { name: "Learning status" })).toBeInTheDocument();
+
+    fireEvent.keyDown(title, { key: "Escape" });
+
+    expect(screen.queryByRole("group", { name: "Learning status" })).toBeNull();
+    expect(setChoreographyLearningStatus).not.toHaveBeenCalled();
   });
 
   it("sets a status from the editor, closes it and reflects the change immediately", async () => {

@@ -13,10 +13,14 @@ interface ChoreographyCardTitleProps {
 
 const NO_STATUS_LABEL = "No status";
 
+// The icon that had the focus is replaced by the editor, so the current option takes over the
+// focus; otherwise Escape would not reach the title.
+const focusWhenOpened = (element: HTMLButtonElement | null) => element?.focus();
+
 /**
  * Card title with the learning status icon in front. The icon opens a small editor (like the
  * rating pill); a dance without status opens it by clicking the title itself. Pressing the
- * active option or Escape closes it without a change.
+ * active option, the close button or Escape closes it without a change.
  */
 export const ChoreographyCardTitle: React.FC<ChoreographyCardTitleProps> = ({
   title,
@@ -32,13 +36,13 @@ export const ChoreographyCardTitle: React.FC<ChoreographyCardTitleProps> = ({
     onLearningStatusChange(status);
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLHeadingElement>) => {
     if (event.key === "Escape") setIsOpen(false);
   };
 
   return (
-    <h3>
-      <span className="learning-status-picker" onKeyDown={handleKeyDown}>
+    <h3 onKeyDown={handleKeyDown}>
+      <span className="learning-status-picker">
         {isOpen && (
           <span className="learning-status-options" role="group" aria-label="Learning status">
             {LEARNING_STATUS_OPTIONS.map((option) => (
@@ -49,6 +53,7 @@ export const ChoreographyCardTitle: React.FC<ChoreographyCardTitleProps> = ({
                 aria-pressed={learningStatus === option.value}
                 aria-label={option.label}
                 title={option.label}
+                ref={learningStatus === option.value ? focusWhenOpened : undefined}
                 onClick={(event) => {
                   event.stopPropagation();
                   choose(option.value);
@@ -66,6 +71,18 @@ export const ChoreographyCardTitle: React.FC<ChoreographyCardTitleProps> = ({
               onClick={(event) => {
                 event.stopPropagation();
                 choose(null);
+              }}
+            >
+              🔳
+            </button>
+            <button
+              type="button"
+              className="learning-status-option learning-status-close"
+              aria-label="Close status editor"
+              title="Close"
+              onClick={(event) => {
+                event.stopPropagation();
+                setIsOpen(false);
               }}
             >
               ✕

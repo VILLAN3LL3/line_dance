@@ -40,4 +40,40 @@ test.describe("Personal learning status", () => {
     );
     await expect(learnedCard.getByText(/Learned since \d{4}-\d{2}-\d{2}/)).toBeVisible();
   });
+
+  test("closes the status editor with Escape when opened from the title or the icon", async ({
+    page,
+    request,
+  }) => {
+    const name = `Escape Dance ${Date.now()}`;
+    await createChoreographyViaApi(request, name);
+
+    await page.goto("/");
+    const closeMenuButton = page.getByRole("button", { name: "Close menu" });
+    if (await closeMenuButton.isVisible()) {
+      await closeMenuButton.click();
+    }
+    const search = page.getByPlaceholder(/Search choreographies by name/i);
+    await search.fill(name);
+    await search.press("Enter");
+
+    const card = page.locator(".choreography-card", { hasText: name }).first();
+    const editor = card.getByRole("group", { name: "Learning status" });
+
+    await card.getByRole("button", { name: name }).click();
+    await expect(editor).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(editor).toBeHidden();
+
+    await card.getByRole("button", { name: name }).click();
+    await card.getByRole("button", { name: "Close status editor" }).click();
+    await expect(editor).toBeHidden();
+
+    await card.getByRole("button", { name: name }).click();
+    await card.getByRole("button", { name: "Learned" }).click();
+    await card.getByRole("button", { name: /Learning status: Learned/ }).click();
+    await expect(editor).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(editor).toBeHidden();
+  });
 });

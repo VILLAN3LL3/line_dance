@@ -156,8 +156,8 @@ Code: `server/features/learning-status/` (`operations.ts` pure, `validation.ts`,
 
 On the client, the card title starts with 🤍 (wishlist) or ✅ (learned), with the date in its
 tooltip and under the level badge. Clicking the icon unfolds a small editor like the rating pill with
-the three choices 🤍, ✅ and ✕ (no status); a dance without status opens the same editor by clicking
-its title. Picking an option saves it and closes the editor, Escape closes it without a change. The
+the three choices 🤍, ✅ and 🔳 (no status) plus a ✕ button to close it; a dance without status opens the same editor by clicking
+its title. Picking an option saves it and closes the editor; ✕ and Escape close it without a change. The
 choreography form has a "Learning Status" field. The "Personal" page (`client/src/features/personal/`, route `/personal`)
 lists both lists as tabs; it is the home of the personal dance development features, separate from
 the catalog and from course planning.
