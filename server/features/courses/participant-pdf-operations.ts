@@ -50,7 +50,7 @@ export function groupDancesBySession<D extends { id: number }>(
   }));
 }
 
-/** `Deine Jane` / `Dein Jan`; `Dein/e Alex` when the gender is diverse or unspecified. */
+/** `Deine Jane` / `Dein Jan`; only the name when the gender is diverse or unspecified. */
 export function getTrainerSignature(
   name: string | null,
   gender: 'female' | 'male' | 'diverse' | null,
@@ -59,7 +59,7 @@ export function getTrainerSignature(
   if (!trimmed) return null;
   if (gender === 'female') return `Deine ${trimmed}`;
   if (gender === 'male') return `Dein ${trimmed}`;
-  return `Dein/e ${trimmed}`;
+  return trimmed;
 }
 
 /** Figures of the new dances that the group did not know before (case-insensitive). */

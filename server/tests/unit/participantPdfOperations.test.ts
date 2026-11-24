@@ -56,8 +56,8 @@ describe('participant PDF operations', () => {
   it('builds the trainer signature from the gender', () => {
     expect(getTrainerSignature('Jane', 'female')).toBe('Deine Jane');
     expect(getTrainerSignature(' Jan ', 'male')).toBe('Dein Jan');
-    expect(getTrainerSignature('Alex', 'diverse')).toBe('Dein/e Alex');
-    expect(getTrainerSignature('Alex', null)).toBe('Dein/e Alex');
+    expect(getTrainerSignature('Alex', 'diverse')).toBe('Alex');
+    expect(getTrainerSignature('Alex', null)).toBe('Alex');
     expect(getTrainerSignature(null, 'female')).toBeNull();
   });
 
