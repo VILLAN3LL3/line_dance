@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 
 import {
+  deleteChoreographyLearningStatus,
   deleteChoreographyRating,
+  setChoreographyLearningStatus,
   setChoreographyRating,
 } from "../../../features/choreographies/api";
 import { buildChoreographyClipboardText } from "../../../features/choreographies/model/choreography-clipboard";
@@ -12,7 +14,9 @@ import { ChoreographyCard as ChoreographyCardView } from "../../../features/chor
 import { renderWithQueryClient as render } from "../../helpers/renderWithQueryClient";
 
 vi.mock("../../../features/choreographies/api", () => ({
+  deleteChoreographyLearningStatus: vi.fn().mockResolvedValue(undefined),
   deleteChoreographyRating: vi.fn().mockResolvedValue(undefined),
+  setChoreographyLearningStatus: vi.fn().mockResolvedValue(undefined),
   setChoreographyRating: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("../../../features/metadata/api", () => ({
@@ -50,6 +54,8 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
       { id: 2, category: "Tag", description: "Has tag" },
     ],
     rating: null,
+    learning_status: null,
+    learning_status_date: null,
     choreography_songs: [],
     created_at: "2024-01-01T00:00:00.000Z",
     updated_at: "2024-01-02T00:00:00.000Z",
@@ -438,6 +444,91 @@ describe("ChoreographyCard", () => {
       "href",
       "https://open.spotify.com/search/Alan+Walker+Faded",
     );
+  });
+
+  it.each([
+    ["wishlist", "🤍", "Wishlist"],
+    ["learned", "✅", "Learned"],
+  ] as const)("shows the %s marker before the title", (status, emoji, label) => {
+    render(<ChoreographyCard choreography={makeChoreography({ learning_status: status })} />);
+
+    const marker = screen.getByRole("img", { name: label });
+    expect(marker).toHaveTextContent(emoji);
+    expect(marker.closest("h3")?.textContent).toBe(`${emoji} Neon Waltz (2024)`);
+  });
+
+  it("shows no marker and no date without a learning status", () => {
+    const { container } = render(<ChoreographyCard choreography={makeChoreography()} />);
+
+    expect(screen.queryByRole("img", { name: /wishlist|learned/i })).toBeNull();
+    expect(container.querySelector(".learning-status-date")).toBeNull();
+  });
+
+  it("shows since when the status was set", () => {
+    render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          learning_status: "learned",
+          learning_status_date: "2026-11-24",
+        })}
+      />,
+    );
+
+    expect(screen.getByText("Learned since 2026-11-24")).toBeInTheDocument();
+  });
+
+  it("sets a learning status and reflects it immediately", async () => {
+    render(<ChoreographyCard choreography={makeChoreography()} />);
+
+    const wishlist = screen.getByRole("button", { name: "Wishlist" });
+    expect(wishlist).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(wishlist);
+
+    expect(screen.getByRole("button", { name: "Wishlist" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("img", { name: "Wishlist" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(setChoreographyLearningStatus).toHaveBeenCalledWith(42, "wishlist");
+    });
+  });
+
+  it("replaces the status when the other one is chosen", async () => {
+    render(<ChoreographyCard choreography={makeChoreography({ learning_status: "wishlist" })} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Learned" }));
+
+    await waitFor(() => {
+      expect(setChoreographyLearningStatus).toHaveBeenCalledWith(42, "learned");
+    });
+    expect(deleteChoreographyLearningStatus).not.toHaveBeenCalled();
+  });
+
+  it("clears the status when the active one is pressed again", async () => {
+    render(<ChoreographyCard choreography={makeChoreography({ learning_status: "learned" })} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Learned" }));
+
+    await waitFor(() => {
+      expect(deleteChoreographyLearningStatus).toHaveBeenCalledWith(42);
+    });
+    expect(setChoreographyLearningStatus).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the stored status when saving fails", async () => {
+    vi.mocked(setChoreographyLearningStatus).mockRejectedValueOnce(new Error("offline"));
+    render(<ChoreographyCard choreography={makeChoreography()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Learned" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Learned" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
+    });
+    expect(screen.queryByRole("img", { name: "Learned" })).toBeNull();
   });
 
   it("marks a personal level in the badge and keeps the official level in the title", () => {

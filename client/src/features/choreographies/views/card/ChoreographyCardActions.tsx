@@ -1,15 +1,18 @@
 import React from "react";
 
 import { ActionButton } from "../../../../shared/ui";
-import type { Choreography } from "../../../../types";
+import type { Choreography, LearningStatus } from "../../../../types";
 import { getDefaultSong } from "../../model/choreography-songs";
 import { formatSongLabel, resolveSongLinks } from "../../model/song-search";
+import { LearningStatusActions } from "./LearningStatusActions";
 
 interface ChoreographyCardActionsProps {
   choreography: Choreography;
   onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
   onCopy: () => Promise<void>;
+  learningStatus: LearningStatus | null;
+  onLearningStatusChange: (clicked: LearningStatus) => void;
 }
 
 export const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = ({
@@ -17,6 +20,8 @@ export const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = (
   onEdit,
   onDelete,
   onCopy,
+  learningStatus,
+  onLearningStatusChange,
 }) => {
   const defaultSong = getDefaultSong(choreography.choreography_songs);
   const songLabel = defaultSong ? formatSongLabel(defaultSong) : "";
@@ -78,6 +83,8 @@ export const ChoreographyCardActions: React.FC<ChoreographyCardActionsProps> = (
           🎵
         </a>
       )}
+
+      <LearningStatusActions status={learningStatus} onChange={onLearningStatusChange} />
 
       <button
         type="button"

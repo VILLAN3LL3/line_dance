@@ -565,3 +565,13 @@
   font-size: 12px;
   color: var(--color-text-muted);
 }
+
+.learning-status-date {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.learning-status-action.is-active {
+  border-color: var(--color-primary);
+}

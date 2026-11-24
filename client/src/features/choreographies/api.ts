@@ -4,6 +4,7 @@ import type {
   ChoreographyFormData,
   ChoreographyWriteResponse,
   DuplicateChoreography,
+  LearningStatus,
   PaginatedResponse,
   SearchFilters,
 } from "../../types";
@@ -78,6 +79,19 @@ export async function setChoreographyRating(
 
 export async function deleteChoreographyRating(id: number): Promise<{ message: string }> {
   const response = await api.delete(`/choreographies/${id}/rating`);
+  return response.data;
+}
+
+export async function setChoreographyLearningStatus(
+  id: number,
+  status: LearningStatus,
+): Promise<{ choreography_id: number; status: LearningStatus; status_date: string | null }> {
+  const response = await api.put(`/choreographies/${id}/learning-status`, { status });
+  return response.data;
+}
+
+export async function deleteChoreographyLearningStatus(id: number): Promise<{ message: string }> {
+  const response = await api.delete(`/choreographies/${id}/learning-status`);
   return response.data;
 }
 

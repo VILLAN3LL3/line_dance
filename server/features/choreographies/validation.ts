@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { ChoreographyIssue } from '../../contracts/api.ts';
 import { jsonInput } from '../../utils/json-input.ts';
+import { isValidLearningStatusChange } from '../learning-status/operations.ts';
 import { getSongIssues } from './song-operations.ts';
 
 const value = jsonInput.optional();
@@ -9,6 +10,7 @@ const writeInput = z
     name: value,
     level: value,
     personal_level: value,
+    learning_status: value,
     step_sheet_link: value,
     demo_video_url: value,
     tutorial_video_url: value,
@@ -85,6 +87,9 @@ export function getChoreographyFieldIssues(
     ...getChoreographyInformationIssues(data),
     ...getSongIssues(data.choreography_songs),
   ];
+  if (!isValidLearningStatusChange(data.learning_status)) {
+    issues.push({ field: 'learning_status', key: 'invalid_learning_status' });
+  }
   for (const field of ['name', 'level'] as const) {
     if (partial && data[field] === undefined) continue;
     if (typeof data[field] !== 'string' || !data[field].trim()) {

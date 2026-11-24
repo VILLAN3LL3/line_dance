@@ -1,6 +1,8 @@
 import type { JsonValue } from '../../utils/json-input.ts';
 import { normalizeSongs } from './song-operations.ts';
 import type { SongChanges } from './song-operations.ts';
+import { normalizeLearningStatusChange } from '../learning-status/operations.ts';
+import type { LearningStatusChange } from '../learning-status/operations.ts';
 import { informationEntry } from './validation.ts';
 import type { ChoreographyWriteInput } from './validation.ts';
 
@@ -40,6 +42,7 @@ export function prepareChoreography(input: ChoreographyWriteInput): {
   wall_count: JsonValue;
   level: JsonValue | undefined;
   personal_level: PersonalLevelChange;
+  learning_status: LearningStatusChange;
   creation_year: JsonValue;
   songs: SongChanges;
   authors: JsonValue | undefined;
@@ -69,6 +72,7 @@ export function prepareChoreography(input: ChoreographyWriteInput): {
     wall_count: wall_count === '' ? null : (wall_count ?? null),
     level,
     personal_level: normalizePersonalLevel(input.personal_level),
+    learning_status: normalizeLearningStatusChange(input.learning_status),
     creation_year: creation_year === '' ? null : (creation_year ?? null),
     songs: normalizeSongs(input.choreography_songs),
     authors,

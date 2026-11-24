@@ -18,6 +18,7 @@ interface BasicInformationTabProps {
     name?: string;
     level?: string;
     personal_level?: string;
+    learning_status?: string;
     count?: string;
     wall_count?: string;
     creation_year?: string;
@@ -36,6 +37,7 @@ export const BasicInformationTab: React.FC<BasicInformationTabProps> = ({
       name={formData.name}
       level={formData.level}
       personalLevel={formData.personal_level}
+      learningStatus={formData.learning_status}
       count={formData.count}
       wall_count={formData.wall_count}
       creation_year={formData.creation_year}

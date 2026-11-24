@@ -1,6 +1,8 @@
 import React from "react";
 
 import { FormField } from "../../../../shared/ui";
+import type { LearningStatus } from "../../../../types";
+import { LEARNING_STATUS_OPTIONS } from "../../model/learning-status";
 
 interface LevelOption {
   id: number;
@@ -11,6 +13,7 @@ interface ChoreographyFormBasicSectionProps {
   name: string;
   level: string;
   personalLevel?: string | null;
+  learningStatus?: LearningStatus | "" | null;
   count?: number;
   wall_count?: number;
   creation_year?: number;
@@ -19,6 +22,7 @@ interface ChoreographyFormBasicSectionProps {
     name?: string;
     level?: string;
     personal_level?: string;
+    learning_status?: string;
     count?: string;
     wall_count?: string;
     creation_year?: string;
@@ -32,6 +36,7 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
   name,
   level,
   personalLevel,
+  learningStatus,
   count,
   wall_count,
   creation_year,
@@ -102,6 +107,29 @@ export const ChoreographyFormBasicSection: React.FC<ChoreographyFormBasicSection
           {levels.map((item) => (
             <option key={item.id} value={item.name}>
               {item.name}
+            </option>
+          ))}
+        </select>
+      </FormField>
+
+      <FormField
+        label="Learning Status"
+        htmlFor="learning_status"
+        className="form-group"
+        error={errors.learning_status}
+      >
+        <select
+          id="learning_status"
+          name="learning_status"
+          value={learningStatus ?? ""}
+          onChange={onChange}
+          aria-invalid={errors.learning_status ? true : undefined}
+          aria-describedby={errors.learning_status ? "learning_status-error" : undefined}
+        >
+          <option value="">No status</option>
+          {LEARNING_STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.emoji} {option.label}
             </option>
           ))}
         </select>

@@ -1,3 +1,5 @@
+export type LearningStatus = 'wishlist' | 'learned';
+
 export interface Choreography {
   id: number;
   name: string;
@@ -17,6 +19,10 @@ export interface Choreography {
   tags: string[];
   step_figures: string[];
   rating: number | null;
+  /** Personal learning status; `null` when the dance is on neither list. */
+  learning_status: LearningStatus | null;
+  /** Day (YYYY-MM-DD) the current status was set; `null` for entries migrated from hashtags. */
+  learning_status_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -31,6 +37,8 @@ export interface ChoreographyFormData {
   level: string;
   /** Personal level assessment; empty or null means "same as official". */
   personal_level?: string | null;
+  /** Omitted keeps the status; an empty value or null removes it. */
+  learning_status?: LearningStatus | '' | null;
   creation_year?: number;
   choreography_information?: ChoreographyInformation[];
   /** Rows without an `id` are new; at most one row is the favorite. */
@@ -89,7 +97,8 @@ export interface ChoreographyIssue {
     | 'invalid_songs'
     | 'required'
     | 'invalid_level'
-    | 'invalid_integer';
+    | 'invalid_integer'
+    | 'invalid_learning_status';
 }
 
 export interface PaginatedResponse<T> {
@@ -121,6 +130,8 @@ export interface SearchFilters {
   excluded_tags?: string[];
   authors?: string[];
   min_rating?: number;
+  /** Only dances with this learning status. */
+  learning_status?: LearningStatus;
   use_official_level?: boolean;
   sort_field?: string;
   sort_direction?: 'asc' | 'desc';

@@ -104,6 +104,8 @@ describe("DanceGroupDetail", () => {
           tags: [],
           step_figures: ["Mambo"],
           rating: null,
+          learning_status: null,
+          learning_status_date: null,
           choreography_songs: [],
           created_at: "2024-01-01",
           updated_at: "2024-01-01",

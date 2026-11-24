@@ -11,6 +11,7 @@ export type {
   DanceGroup,
   DuplicateChoreography,
   LearnedChoreography,
+  LearningStatus,
   LevelOption,
   PaginatedResponse,
   SavedFilterConfiguration,

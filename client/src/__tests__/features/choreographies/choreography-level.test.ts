@@ -16,6 +16,8 @@ const choreography: Choreography = {
   tags: [],
   step_figures: [],
   rating: null,
+  learning_status: null,
+  learning_status_date: null,
   choreography_songs: [],
   created_at: "2020-01-01T00:00:00.000Z",
   updated_at: "2020-01-01T00:00:00.000Z",

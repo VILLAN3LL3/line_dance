@@ -4,6 +4,7 @@ export { ChoreographySearchPage } from "./views/ChoreographySearchPage";
 export {
   useAllChoreographiesQuery,
   useDeleteChoreographyMutation,
+  useLearningStatusChoreographiesQuery,
 } from "./viewmodels/useChoreographyQueries";
 export { useChoreographyCardViewModel } from "./viewmodels/useChoreographyCardViewModel";
 export type { ChoreographyCardViewModel } from "./viewmodels/useChoreographyCardViewModel";
@@ -12,3 +13,4 @@ export { default as ChoreographyDetailPage } from "./views/ChoreographyDetailPag
 export { ChoreographyFormListSection } from "./views/form/ChoreographyFormListSection";
 export { getDefaultSong } from "./model/choreography-songs";
 export { formatSongLabel } from "./model/song-search";
+export { LEARNING_STATUS_OPTIONS } from "./model/learning-status";

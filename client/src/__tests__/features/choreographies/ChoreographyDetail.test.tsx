@@ -69,6 +69,8 @@ const BASE_CHOREOGRAPHY = {
   tags: ["classic"],
   step_figures: ["Weave"],
   rating: null,
+  learning_status: null,
+  learning_status_date: null,
   choreography_songs: [],
   created_at: "2024-01-01",
   updated_at: "2024-01-01",
@@ -282,6 +284,27 @@ describe("ChoreographyDetail", () => {
       expect(updateChoreography).toHaveBeenCalledWith(
         1,
         expect.objectContaining({ personal_level: "" }),
+      );
+    });
+  });
+
+  it("preselects the stored learning status and sends an empty one when it is cleared", async () => {
+    vi.mocked(fetchChoreography).mockResolvedValue({
+      ...BASE_CHOREOGRAPHY,
+      learning_status: "learned",
+    });
+
+    renderDetail("/choreographies/1?edit=1");
+    const saveButton = await screen.findByRole("button", { name: "Save Choreography" });
+    const select = screen.getByLabelText("Learning Status");
+    expect(select).toHaveValue("learned");
+    fireEvent.change(select, { target: { value: "" } });
+    fireEvent.submit(saveButton.closest("form")!);
+
+    await waitFor(() => {
+      expect(updateChoreography).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ learning_status: "" }),
       );
     });
   });

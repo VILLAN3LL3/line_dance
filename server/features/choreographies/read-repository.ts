@@ -5,6 +5,8 @@ import type { FigureRelation } from './search-operations.ts';
 import type { DuplicateCriteria } from './read-operations.ts';
 import type { ChoreographyReadId } from './read-validation.ts';
 import { effectiveLevelValue, levelColumns, personalLevelJoins } from './level-sql.ts';
+import { learningStatusColumns, learningStatusJoin } from './learning-status-sql.ts';
+import type { LearningStatus } from '../learning-status/operations.ts';
 
 export type ChoreographyRow = {
   id: number;
@@ -21,6 +23,8 @@ export type ChoreographyRow = {
   level: string | null;
   official_level: string | null;
   personal_level: string | null;
+  learning_status: LearningStatus | null;
+  learning_status_date: string | null;
 };
 export type InformationRow = { id: number; category: string; description: string };
 export type DuplicateRow = { id: number; name: string; level: string };
@@ -30,9 +34,10 @@ export async function listChoreographies(
   offset: number,
 ): Promise<ChoreographyRow[]> {
   return allQuery<ChoreographyRow>(
-    `SELECT c.*, ${levelColumns} FROM choreographies c
+    `SELECT c.*, ${levelColumns}, ${learningStatusColumns} FROM choreographies c
      LEFT JOIN levels l ON c.level_id = l.id
      ${personalLevelJoins}
+     ${learningStatusJoin}
      ORDER BY LOWER(c.name) ASC, COALESCE(${effectiveLevelValue}, 2147483647) ASC LIMIT ? OFFSET ?`,
     [limit, offset],
   );
@@ -42,9 +47,10 @@ export async function findChoreography(
   id: ChoreographyReadId,
 ): Promise<ChoreographyRow | undefined> {
   return getQuery<ChoreographyRow>(
-    `SELECT c.*, ${levelColumns} FROM choreographies c
+    `SELECT c.*, ${levelColumns}, ${learningStatusColumns} FROM choreographies c
      LEFT JOIN levels l ON c.level_id = l.id
      ${personalLevelJoins}
+     ${learningStatusJoin}
      WHERE c.id = ?`,
     [id],
   );
@@ -136,9 +142,10 @@ export async function listFigureRelations(): Promise<FigureRelation[]> {
 
 export async function searchChoreographies(filters: SearchFilters): Promise<ChoreographyRow[]> {
   const { conditions, params, joins, stepFilter } = buildFilterConditions(filters);
-  let query = `SELECT DISTINCT c.*, ${levelColumns} FROM choreographies c
+  let query = `SELECT DISTINCT c.*, ${levelColumns}, ${learningStatusColumns} FROM choreographies c
      LEFT JOIN levels l ON c.level_id = l.id
-     ${personalLevelJoins}`;
+     ${personalLevelJoins}
+     ${learningStatusJoin}`;
   query += joins.map((join) => ` ${join}`).join('');
   if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
   if (stepFilter.groupBy) query += stepFilter.groupBy;

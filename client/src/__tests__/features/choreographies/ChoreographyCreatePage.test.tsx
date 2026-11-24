@@ -167,6 +167,46 @@ describe("ChoreographyCreatePage", () => {
     });
   });
 
+  it("sends the chosen learning status with the create request", async () => {
+    vi.mocked(checkChoreographyDuplicates).mockResolvedValue([]);
+    vi.mocked(getLevels).mockResolvedValue([{ id: 1, name: "Beginner", value: 30 }]);
+    render(
+      <MemoryRouter initialEntries={["/choreographies/new"]}>
+        <Routes>
+          <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await screen.findAllByRole("option", { name: "Beginner" });
+
+    fireEvent.change(screen.getByLabelText("Choreography Name *"), {
+      target: { value: "River Dance" },
+    });
+    fireEvent.change(screen.getByLabelText("Official Level *"), { target: { value: "Beginner" } });
+    expect(screen.getByLabelText("Learning Status")).toHaveValue("");
+    fireEvent.change(screen.getByLabelText("Learning Status"), { target: { value: "wishlist" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+
+    await waitFor(() => {
+      expect(createChoreography).toHaveBeenCalledWith(
+        expect.objectContaining({ level: "Beginner", learning_status: "wishlist" }),
+      );
+    });
+  });
+
+  it("shows a backend issue for the learning status next to the field after validation", async () => {
+    vi.mocked(validateChoreography).mockRejectedValueOnce(
+      validationFailure([{ field: "learning_status", key: "invalid_learning_status" }]),
+    );
+
+    await renderAndSubmit();
+
+    expect(await screen.findByText("Select a valid learning status.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Learning Status")).toHaveAccessibleDescription(
+      "Select a valid learning status.",
+    );
+  });
+
   it("shows a backend issue for the personal level next to the field after validation", async () => {
     vi.mocked(validateChoreography).mockRejectedValueOnce(
       validationFailure([{ field: "personal_level", key: "invalid_level" }]),

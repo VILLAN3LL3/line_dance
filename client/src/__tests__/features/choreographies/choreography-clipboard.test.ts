@@ -30,6 +30,8 @@ function makeChoreography(overrides: Partial<Choreography> = {}): Choreography {
       { id: 2, category: "Tag", description: "Tag after chorus" },
     ],
     rating: null,
+    learning_status: null,
+    learning_status_date: null,
     created_at: "2025-01-01T00:00:00.000Z",
     updated_at: "2025-01-02T00:00:00.000Z",
     ...overrides,

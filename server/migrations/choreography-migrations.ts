@@ -910,6 +910,56 @@ const migrations: Migration[] = [
       );
     },
   },
+  {
+    id: '018_add_choreography_learning_status',
+    up: async () => {
+      // No cross-database foreign key: orphans are removed by the choreography write flow.
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS personal_data.choreography_learning_status (
+          choreography_id INTEGER PRIMARY KEY,
+          status TEXT NOT NULL CHECK (status IN ('wishlist', 'learned')),
+          status_date TEXT
+        )`,
+        [],
+        dbName,
+      );
+
+      // The former hashtags have no timestamp, so migrated entries get no date. A dance with both
+      // tags counts as learned, hence 'learned' is inserted first.
+      const legacyTags: [string, string][] = [
+        ['learned', 'gelernt'],
+        ['wishlist', 'will lernen'],
+      ];
+      await runSequential(legacyTags, async ([status, tagName]) => {
+        await runQuery(
+          `INSERT OR IGNORE INTO personal_data.choreography_learning_status (choreography_id, status)
+           SELECT DISTINCT ct.choreography_id, ?
+           FROM personal_data.choreography_tags ct
+           JOIN personal_data.tags t ON t.id = ct.tag_id
+           WHERE LOWER(TRIM(t.name)) = ?
+             AND ct.choreography_id IN (SELECT id FROM choreographies)`,
+          [status, tagName],
+          dbName,
+        );
+      });
+
+      const legacyTagNames = legacyTags.map(([, tagName]) => tagName);
+      const placeholders = legacyTagNames.map(() => '?').join(', ');
+      await runQuery(
+        `DELETE FROM personal_data.choreography_tags
+         WHERE tag_id IN (
+           SELECT id FROM personal_data.tags WHERE LOWER(TRIM(name)) IN (${placeholders})
+         )`,
+        legacyTagNames,
+        dbName,
+      );
+      await runQuery(
+        `DELETE FROM personal_data.tags WHERE LOWER(TRIM(name)) IN (${placeholders})`,
+        legacyTagNames,
+        dbName,
+      );
+    },
+  },
 ];
 
 export async function runChoreographyMigrations(): Promise<void> {

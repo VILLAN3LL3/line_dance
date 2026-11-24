@@ -27,6 +27,7 @@ export type SearchFilters = {
   excluded_tags?: QueryValue;
   authors?: QueryValue;
   min_rating?: QueryValue;
+  learning_status?: QueryValue;
   use_official_level?: QueryValue;
 };
 type QueryParameter = string | number;
@@ -63,6 +64,7 @@ export function buildFilterConditions(filterObj: SearchFilters): FilterCondition
     excluded_tags,
     authors,
     min_rating,
+    learning_status,
     use_official_level,
   } = filterObj;
   const conditions: string[] = [];
@@ -141,6 +143,12 @@ export function buildFilterConditions(filterObj: SearchFilters): FilterCondition
   joins.push(...authorsFilter.joins);
   conditions.push(...authorsFilter.conditions);
   params.push(...authorsFilter.params);
+
+  const learningStatuses = normalizeUniqueTextQueryParam(learning_status);
+  if (learningStatuses.length > 0) {
+    conditions.push(`ls.status IN (${learningStatuses.map(() => 'LOWER(?)').join(',')})`);
+    params.push(...learningStatuses);
+  }
 
   const parsedMinRating = normalizeNonNegativeInteger(min_rating);
   if (parsedMinRating !== null && parsedMinRating >= 0 && parsedMinRating <= 5) {

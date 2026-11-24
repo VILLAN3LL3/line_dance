@@ -212,6 +212,15 @@ export async function setupChoreographyTestDb(): Promise<Database> {
 
   await run(
     testDb,
+    `CREATE TABLE IF NOT EXISTS personal_data.choreography_learning_status (
+    choreography_id INTEGER PRIMARY KEY,
+    status TEXT NOT NULL CHECK (status IN ('wishlist', 'learned')),
+    status_date TEXT
+  )`,
+  );
+
+  await run(
+    testDb,
     `CREATE TABLE IF NOT EXISTS personal_data.choreography_favorite_songs (
     choreography_id INTEGER PRIMARY KEY,
     song_id INTEGER NOT NULL
@@ -278,6 +287,7 @@ export async function clearChoreographyTables(): Promise<void> {
   await run(testDb, 'DELETE FROM personal_data.choreography_tags');
   await run(testDb, 'DELETE FROM personal_data.choreography_ratings');
   await run(testDb, 'DELETE FROM personal_data.choreography_personal_levels');
+  await run(testDb, 'DELETE FROM personal_data.choreography_learning_status');
   await run(testDb, 'DELETE FROM personal_data.choreography_favorite_songs');
   await run(testDb, 'DELETE FROM choreography_songs');
   await run(testDb, 'DELETE FROM genres');

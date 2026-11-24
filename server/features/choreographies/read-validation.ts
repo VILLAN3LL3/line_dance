@@ -29,6 +29,7 @@ const searchQuery = z
     excluded_tags: queryValue,
     authors: queryValue,
     min_rating: queryValue,
+    learning_status: queryValue,
     use_official_level: queryValue,
   })
   .brand<'ChoreographySearchQuery'>();

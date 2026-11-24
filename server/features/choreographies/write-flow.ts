@@ -5,6 +5,8 @@ import type { Information, PersonalLevelChange } from './write-operations.ts';
 import type { SongChanges } from './song-operations.ts';
 import { replaceSongs } from './song-flow.ts';
 import * as songRepository from './song-repository.ts';
+import * as learningStatusRepository from '../learning-status/repository.ts';
+import type { LearningStatusChange } from '../learning-status/operations.ts';
 import * as repository from './write-repository.ts';
 import type { RelationshipKind } from './write-repository.ts';
 
@@ -63,6 +65,15 @@ async function applyPersonalLevel(
   await repository.savePersonalLevel(id, level.id);
 }
 
+async function applyLearningStatus(
+  id: ChoreographyId,
+  learningStatus: LearningStatusChange,
+): Promise<void> {
+  if (learningStatus === undefined) return;
+  if (learningStatus === null) await learningStatusRepository.deleteStatus(id);
+  else await learningStatusRepository.saveStatus(id, learningStatus);
+}
+
 async function applySongs(id: ChoreographyId, songs: SongChanges): Promise<void> {
   if (songs === null) throw new Error('Invalid choreography songs');
   if (songs !== undefined) await replaceSongs(id, songs);
@@ -116,6 +127,7 @@ async function cleanupOrphanedRecords(): Promise<void> {
   await repository.deleteOrphanedInformation();
   await repository.deleteUnusedInformationCategories();
   await repository.deleteOrphanedPersonalLevels();
+  await learningStatusRepository.deleteOrphanedStatuses();
   await songRepository.deleteOrphanedFavoriteSongs();
   await songRepository.deleteUnusedGenres();
   await repository.deleteUnusedLevels(canonicalLevels);
@@ -147,6 +159,7 @@ export async function createChoreography(
     await replaceInformation(result.id, information ?? []);
     await applySongs(result.id, prepared.songs);
     await applyPersonalLevel(result.id, prepared.personal_level);
+    await applyLearningStatus(result.id, prepared.learning_status);
     return { value: result.id };
   });
 }
@@ -178,6 +191,7 @@ export async function updateChoreography(
     if (information !== undefined) await replaceInformation(id, information);
     await applySongs(id, prepared.songs);
     await applyPersonalLevel(id, prepared.personal_level);
+    await applyLearningStatus(id, prepared.learning_status);
     await cleanupOrphanedRecords();
     return { value: choreography.id };
   });

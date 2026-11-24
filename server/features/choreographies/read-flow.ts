@@ -11,6 +11,7 @@ import {
 import * as repository from './read-repository.ts';
 import type { ChoreographyRow } from './read-repository.ts';
 import { listSongs } from './song-repository.ts';
+import { learningStatuses } from '../learning-status/operations.ts';
 
 export type { Choreography, DuplicateChoreography } from '../../contracts/api.ts';
 
@@ -28,6 +29,8 @@ const choreographyResponse = z.looseObject({
   level: z.string(),
   official_level: z.string(),
   personal_level: z.string().nullable(),
+  learning_status: z.enum(learningStatuses).nullable(),
+  learning_status_date: z.string().nullable(),
   step_sheet_link: optionalText,
   demo_video_url: optionalText,
   tutorial_video_url: optionalText,

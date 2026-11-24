@@ -22,6 +22,7 @@ const FIELD_ISSUE_MESSAGES: Record<string, string> = {
   "level.required": "Select a level.",
   "level.invalid_level": "Select a valid level.",
   "personal_level.invalid_level": "Select a valid personal level.",
+  "learning_status.invalid_learning_status": "Select a valid learning status.",
   "count.invalid_integer": "Enter a whole number.",
   "wall_count.invalid_integer": "Enter a whole number.",
   "creation_year.invalid_integer": "Enter a whole number.",
@@ -213,6 +214,7 @@ export function getTabErrors(fieldErrors: FieldErrors): Record<FormTabId, boolea
       fieldErrors.name ||
       fieldErrors.level ||
       fieldErrors.personal_level ||
+      fieldErrors.learning_status ||
       fieldErrors.count ||
       fieldErrors.wall_count ||
       fieldErrors.creation_year,

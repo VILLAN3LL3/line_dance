@@ -110,6 +110,16 @@ describe("choreography-form model", () => {
     expect(hasUnmappedIssue).toBe(false);
   });
 
+  it("maps the learning status issue to the basic information tab", () => {
+    const { fieldErrors, hasUnmappedIssue } = mapFieldIssues(
+      [{ field: "learning_status", key: "invalid_learning_status" }],
+      base(),
+    );
+    expect(fieldErrors).toEqual({ learning_status: "Select a valid learning status." });
+    expect(hasUnmappedIssue).toBe(false);
+    expect(getTabErrors(fieldErrors)["basic-information"]).toBe(true);
+  });
+
   it("flags unknown issues and rows that cannot be addressed", () => {
     expect(mapFieldIssues([{ field: "name", key: "weird" }], base()).hasUnmappedIssue).toBe(true);
     expect(

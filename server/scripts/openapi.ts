@@ -216,6 +216,17 @@ export const openApiSpec = {
             schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
           },
           { name: 'max_count', in: 'query', schema: { type: 'integer', minimum: 0 } },
+          {
+            name: 'learning_status',
+            in: 'query',
+            description: 'Only choreographies with one of these personal learning statuses.',
+            schema: {
+              oneOf: [
+                { $ref: '#/components/schemas/LearningStatus' },
+                { type: 'array', items: { $ref: '#/components/schemas/LearningStatus' } },
+              ],
+            },
+          },
         ],
         responses: {
           200: {
@@ -338,6 +349,62 @@ export const openApiSpec = {
               },
             },
           },
+        },
+      },
+    },
+    '/api/choreographies/{id}/learning-status': {
+      put: {
+        tags: ['Choreographies'],
+        summary: 'Set the personal learning status (wishlist or learned) of a choreography',
+        parameters: [{ $ref: '#/components/parameters/IdPath' }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { status: { $ref: '#/components/schemas/LearningStatus' } },
+                required: ['status'],
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description:
+              'Saved status. The date is the day the status was set; it stays when the same status is saved again.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    choreography_id: { type: 'integer' },
+                    status: { $ref: '#/components/schemas/LearningStatus' },
+                    status_date: { type: 'string', nullable: true },
+                  },
+                  required: ['choreography_id', 'status', 'status_date'],
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+      delete: {
+        tags: ['Choreographies'],
+        summary: 'Remove the personal learning status of a choreography',
+        parameters: [{ $ref: '#/components/parameters/IdPath' }],
+        responses: {
+          200: {
+            description: 'Learning status removed',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/MessageResponse' },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
         },
       },
     },
@@ -1775,6 +1842,7 @@ export const openApiSpec = {
         },
         required: ['id', 'message'],
       },
+      LearningStatus: { type: 'string', enum: ['wishlist', 'learned'] },
       Choreography: {
         type: 'object',
         properties: {
@@ -1804,6 +1872,16 @@ export const openApiSpec = {
           tags: { type: 'array', items: { type: 'string' } },
           step_figures: { type: 'array', items: { type: 'string' } },
           rating: { type: 'integer', nullable: true, minimum: 0, maximum: 5 },
+          learning_status: {
+            nullable: true,
+            allOf: [{ $ref: '#/components/schemas/LearningStatus' }],
+            description: 'Personal learning status; null when the dance is on neither list',
+          },
+          learning_status_date: {
+            type: 'string',
+            nullable: true,
+            description: 'Day the current status was set; null for statuses migrated from hashtags',
+          },
           created_at: { type: 'string' },
           updated_at: { type: 'string' },
         },
@@ -1852,6 +1930,12 @@ export const openApiSpec = {
             nullable: true,
             description:
               'Personal level assessment. Omit to keep it unchanged; null or an empty string removes it.',
+          },
+          learning_status: {
+            nullable: true,
+            allOf: [{ $ref: '#/components/schemas/LearningStatus' }],
+            description:
+              'Personal learning status. Omit to keep it unchanged; null or an empty string removes it.',
           },
           creation_year: { type: 'integer' },
           choreography_information: {

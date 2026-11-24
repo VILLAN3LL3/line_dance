@@ -6,6 +6,7 @@ import { Card } from "../../../shared/ui";
 import { getYouTubeVideoEmbedUrl } from "../../../shared/utils/youtube";
 import type { Choreography } from "../../../types";
 import { getCountWallSummary } from "../model/choreography-card";
+import { describeLearningStatus, getLearningStatusOption } from "../model/learning-status";
 import type { ChoreographyCardViewModel } from "../viewmodels/useChoreographyCardViewModel";
 import { ChoreographyCardActions } from "./card/ChoreographyCardActions";
 import { ChoreographyCardContent } from "./card/ChoreographyCardContent";
@@ -33,6 +34,10 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   const tutorialEmbedUrl = getYouTubeVideoEmbedUrl(choreography.tutorial_video_url);
   const cardClassName =
     videoEmbedMode === "all" ? "choreography-card card-detail-video-layout" : "choreography-card";
+  const learningStatus = cardViewModel.state.learningStatusFor(choreography);
+  const learningStatusOption = getLearningStatusOption(learningStatus.status);
+  const learningStatusText =
+    learningStatus.status && describeLearningStatus(learningStatus.status, learningStatus.date);
   const handleContentLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();
   };
@@ -40,6 +45,18 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   const header = (
     <>
       <h3>
+        {learningStatusOption && (
+          <>
+            <span
+              className="learning-status-marker"
+              role="img"
+              aria-label={learningStatusOption.label}
+              title={learningStatusText ?? undefined}
+            >
+              {learningStatusOption.emoji}
+            </span>{" "}
+          </>
+        )}
         {choreography.name}
         {choreography.creation_year != null ? ` (${choreography.creation_year})` : ""}
       </h3>
@@ -54,6 +71,9 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
             />
           }
         />
+        {learningStatus.date && learningStatusText && (
+          <span className="learning-status-date">{learningStatusText}</span>
+        )}
       </div>
     </>
   );
@@ -75,6 +95,10 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       onEdit={onEdit}
       onDelete={onDelete}
       onCopy={() => cardViewModel.actions.copyToClipboard(choreography)}
+      learningStatus={learningStatus.status}
+      onLearningStatusChange={(clicked) =>
+        void cardViewModel.actions.changeLearningStatus(choreography, clicked)
+      }
     />
   );
 

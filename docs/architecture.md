@@ -129,3 +129,33 @@ does not import features). Validation rules stay on the server; the client only 
 issue keys to display text. See the
 [frontend architecture skill](../.github/skills/frontend-architecture/SKILL.md) for the rules and
 `client/src/features/trainers/` for the reference implementation.
+
+### Personal learning status
+
+Each choreography can be on the personal **wishlist** (`wishlist`) or marked **learned** (`learned`);
+without an entry it is on neither list. The status lives in
+`personal_data.choreography_learning_status` (`choreography_id`, `status`, `status_date`; no
+cross-database foreign key, so the choreography write cleanup removes orphans). `status_date` is the
+day (`YYYY-MM-DD`, local time) the current status was set: it changes together with the status and
+stays when the same status is saved again. Entries migrated from hashtags have no date.
+
+Migration `018_add_choreography_learning_status` replaces the former hashtags: dances tagged
+`Gelernt` become `learned`, dances tagged `will lernen` (any capitalization) become `wishlist`
+(`learned` wins when both exist). The tags are then removed from the dances and deleted, so back up
+the database before deploying. Saved filters that reference these tags are not migrated.
+
+API responses return `learning_status` and `learning_status_date` (both `null` without a status).
+`PUT /api/choreographies/:id/learning-status` with `{ "status": "wishlist" | "learned" }` sets it and
+returns `{ choreography_id, status, status_date }`; `DELETE` removes it (`400` for an invalid id or
+status, `404` for an unknown choreography on `PUT`). `POST` and `PUT /api/choreographies` also accept
+`learning_status` and write it in the same transaction: omitted keeps it, `null` or an empty string
+removes it, any other value is reported as `{ field: "learning_status", key: "invalid_learning_status" }`.
+`GET /api/choreographies/search` accepts `learning_status` (one or several statuses, ignoring case).
+Code: `server/features/learning-status/` (`operations.ts` pure, `validation.ts`, `repository.ts`,
+`flow.ts`), the SQL join fragment in `server/features/choreographies/learning-status-sql.ts`.
+
+On the client, the card shows 🤍 (wishlist) or ✅ (learned) before the title, with the date in its
+tooltip and under the level badge, and offers one toggle button per status. The choreography form has
+a "Learning Status" field. The "Personal" page (`client/src/features/personal/`, route `/personal`)
+lists both lists as tabs; it is the home of the personal dance development features, separate from
+the catalog and from course planning.

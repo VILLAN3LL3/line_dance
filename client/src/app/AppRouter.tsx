@@ -9,6 +9,7 @@ import {
   ChoreographySearchPage,
 } from "../features/choreographies";
 import { ChoreographersPage } from "../features/choreographers";
+import { PersonalPage } from "../features/personal";
 import { StepFigureHierarchyAdmin } from "../features/step-figures";
 import { CourseDetailPage, CourseFormPage } from "../features/courses";
 import { DanceGroupDetail, DanceGroupsAdmin } from "../features/dance-groups/pages";
@@ -92,6 +93,19 @@ export const AppRouter: React.FC = () => {
             </li>
             <li>
               <Link
+                to="/personal"
+                className={`sidebar-link${
+                  location.pathname.startsWith("/personal") ? " active" : ""
+                }`}
+                title="Personal"
+                onClick={closeMobile}
+              >
+                <span className="sidebar-icon">🙋</span>
+                <span className="sidebar-label">Personal</span>
+              </Link>
+            </li>
+            <li>
+              <Link
                 to="/admin"
                 className={`sidebar-link${
                   isDanceGroupsRoute && !isStepFiguresRoute ? " active" : ""
@@ -150,6 +164,7 @@ export const AppRouter: React.FC = () => {
           <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
           <Route path="/choreographies/:id" element={<ChoreographyDetailPage />} />
           <Route path="/choreographers" element={<ChoreographersPage />} />
+          <Route path="/personal" element={<PersonalPage />} />
           <Route path="/admin" element={<DanceGroupsAdmin mode="list" />} />
           <Route path="/admin/step-figures" element={<StepFigureHierarchyAdmin />} />
           <Route path="/admin/groups/new" element={<DanceGroupsAdmin mode="create" />} />
