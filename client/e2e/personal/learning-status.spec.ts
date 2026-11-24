@@ -20,20 +20,24 @@ test.describe("Personal learning status", () => {
     await search.press("Enter");
 
     const card = page.locator(".choreography-card", { hasText: name }).first();
+    await card.getByRole("button", { name: name }).click();
     await card.getByRole("button", { name: "Wishlist" }).click();
-    await expect(card.getByRole("img", { name: "Wishlist" })).toHaveText("🤍");
+    await expect(card.getByRole("button", { name: /Learning status: Wishlist/ })).toHaveText("🤍");
 
     await page.goto("/personal");
     await expect(page.getByRole("heading", { name: "Personal" })).toBeVisible();
     const wishlistCard = page.locator(".choreography-card", { hasText: name });
     await expect(wishlistCard).toBeVisible();
 
+    await wishlistCard.getByRole("button", { name: /Learning status: Wishlist/ }).click();
     await wishlistCard.getByRole("button", { name: "Learned" }).click();
     await expect(wishlistCard).toHaveCount(0);
 
     await page.getByRole("tab", { name: /Learned/ }).click();
     const learnedCard = page.locator(".choreography-card", { hasText: name });
-    await expect(learnedCard.getByRole("img", { name: "Learned" })).toHaveText("✅");
+    await expect(learnedCard.getByRole("button", { name: /Learning status: Learned/ })).toHaveText(
+      "✅",
+    );
     await expect(learnedCard.getByText(/Learned since \d{4}-\d{2}-\d{2}/)).toBeVisible();
   });
 });

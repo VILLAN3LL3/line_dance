@@ -154,8 +154,10 @@ removes it, any other value is reported as `{ field: "learning_status", key: "in
 Code: `server/features/learning-status/` (`operations.ts` pure, `validation.ts`, `repository.ts`,
 `flow.ts`), the SQL join fragment in `server/features/choreographies/learning-status-sql.ts`.
 
-On the client, the card shows 🤍 (wishlist) or ✅ (learned) before the title, with the date in its
-tooltip and under the level badge, and offers one toggle button per status. The choreography form has
-a "Learning Status" field. The "Personal" page (`client/src/features/personal/`, route `/personal`)
+On the client, the card title starts with 🤍 (wishlist) or ✅ (learned), with the date in its
+tooltip and under the level badge. Clicking the icon unfolds a small editor like the rating pill with
+the three choices 🤍, ✅ and ✕ (no status); a dance without status opens the same editor by clicking
+its title. Picking an option saves it and closes the editor, Escape closes it without a change. The
+choreography form has a "Learning Status" field. The "Personal" page (`client/src/features/personal/`, route `/personal`)
 lists both lists as tabs; it is the home of the personal dance development features, separate from
 the catalog and from course planning.

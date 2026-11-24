@@ -118,6 +118,7 @@ describe("PersonalPage", () => {
     render(<PersonalPage />);
     await screen.findByText("Wished Dance");
 
+    fireEvent.click(screen.getByRole("button", { name: /Learning status: Wishlist/ }));
     fireEvent.click(screen.getByRole("button", { name: "Learned" }));
 
     await waitFor(() => {
@@ -127,7 +128,7 @@ describe("PersonalPage", () => {
     expect(screen.getByRole("tab", { name: "✅ Learned (1)" })).toBeInTheDocument();
   });
 
-  it("removes a dance from its list when the active status is pressed again", async () => {
+  it('removes a dance from its list with the "No status" option', async () => {
     let wishlist = [makeChoreography(1, "Wished Dance", "wishlist")];
     vi.mocked(searchChoreographies).mockImplementation(async (filters) =>
       page(filters.learning_status === "wishlist" ? wishlist : []),
@@ -139,7 +140,8 @@ describe("PersonalPage", () => {
     render(<PersonalPage />);
     await screen.findByText("Wished Dance");
 
-    fireEvent.click(screen.getByRole("button", { name: "Wishlist" }));
+    fireEvent.click(screen.getByRole("button", { name: /Learning status: Wishlist/ }));
+    fireEvent.click(screen.getByRole("button", { name: "No status" }));
 
     await waitFor(() => {
       expect(screen.getByText(/Your wishlist is empty/)).toBeInTheDocument();

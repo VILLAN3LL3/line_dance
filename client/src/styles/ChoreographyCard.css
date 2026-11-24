@@ -572,6 +572,80 @@
   white-space: nowrap;
 }
 
-.learning-status-action.is-active {
-  border-color: var(--color-primary);
+/* The status picker mirrors the rating pill: a collapsed icon that unfolds into the options. */
+.learning-status-picker {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.learning-status-summary,
+.card-title-toggle {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.learning-status-summary:hover,
+.card-title-toggle:hover {
+  opacity: 0.9;
+}
+
+.learning-status-summary:focus-visible,
+.card-title-toggle:focus-visible,
+.learning-status-option:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+}
+
+.learning-status-options {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  overflow: hidden;
+  animation: learning-status-unfold 0.22s ease;
+}
+
+.learning-status-option {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 1px 4px;
+  margin: 0;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.learning-status-option:hover,
+.learning-status-option.is-active {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+@keyframes learning-status-unfold {
+  from {
+    max-width: 0;
+    opacity: 0;
+  }
+  to {
+    max-width: 120px;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .learning-status-options {
+    animation: none;
+  }
 }

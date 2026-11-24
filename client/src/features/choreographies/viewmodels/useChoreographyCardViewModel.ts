@@ -11,7 +11,6 @@ import {
   setChoreographyRating,
 } from "../api";
 import { buildChoreographyClipboardText } from "../model/choreography-clipboard";
-import { toggleLearningStatus } from "../model/learning-status";
 import { choreographyKeys } from "../queryKeys";
 
 /** Page-level card actions: optimistic ratings and learning status, and copy-to-clipboard. */
@@ -51,8 +50,11 @@ export const useChoreographyCardViewModel = () => {
     return { status, date: isUnchanged ? choreography.learning_status_date : null };
   };
 
-  const changeLearningStatus = async (choreography: Choreography, clicked: LearningStatus) => {
-    const status = toggleLearningStatus(learningStatusFor(choreography).status, clicked);
+  const changeLearningStatus = async (
+    choreography: Choreography,
+    status: LearningStatus | null,
+  ) => {
+    if (status === learningStatusFor(choreography).status) return;
     setPendingStatuses((current) => ({ ...current, [choreography.id]: status }));
     try {
       await learningStatusMutation.mutateAsync({ id: choreography.id, status });

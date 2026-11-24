@@ -6,10 +6,11 @@ import { Card } from "../../../shared/ui";
 import { getYouTubeVideoEmbedUrl } from "../../../shared/utils/youtube";
 import type { Choreography } from "../../../types";
 import { getCountWallSummary } from "../model/choreography-card";
-import { describeLearningStatus, getLearningStatusOption } from "../model/learning-status";
+import { describeLearningStatus } from "../model/learning-status";
 import type { ChoreographyCardViewModel } from "../viewmodels/useChoreographyCardViewModel";
 import { ChoreographyCardActions } from "./card/ChoreographyCardActions";
 import { ChoreographyCardContent } from "./card/ChoreographyCardContent";
+import { ChoreographyCardTitle } from "./card/ChoreographyCardTitle";
 import { ChoreographyLevelBadge } from "./ChoreographyLevelBadge";
 import { StarRating } from "./StarRating";
 
@@ -35,7 +36,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
   const cardClassName =
     videoEmbedMode === "all" ? "choreography-card card-detail-video-layout" : "choreography-card";
   const learningStatus = cardViewModel.state.learningStatusFor(choreography);
-  const learningStatusOption = getLearningStatusOption(learningStatus.status);
   const learningStatusText =
     learningStatus.status && describeLearningStatus(learningStatus.status, learningStatus.date);
   const handleContentLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -44,22 +44,14 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
 
   const header = (
     <>
-      <h3>
-        {learningStatusOption && (
-          <>
-            <span
-              className="learning-status-marker"
-              role="img"
-              aria-label={learningStatusOption.label}
-              title={learningStatusText ?? undefined}
-            >
-              {learningStatusOption.emoji}
-            </span>{" "}
-          </>
-        )}
-        {choreography.name}
-        {choreography.creation_year != null ? ` (${choreography.creation_year})` : ""}
-      </h3>
+      <ChoreographyCardTitle
+        title={`${choreography.name}${choreography.creation_year != null ? ` (${choreography.creation_year})` : ""}`}
+        learningStatus={learningStatus.status}
+        learningStatusText={learningStatusText || undefined}
+        onLearningStatusChange={(status) =>
+          void cardViewModel.actions.changeLearningStatus(choreography, status)
+        }
+      />
       <div className="card-header-meta">
         <ChoreographyLevelBadge
           choreography={choreography}
@@ -95,10 +87,6 @@ export const ChoreographyCard: React.FC<ChoreographyCardProps> = ({
       onEdit={onEdit}
       onDelete={onDelete}
       onCopy={() => cardViewModel.actions.copyToClipboard(choreography)}
-      learningStatus={learningStatus.status}
-      onLearningStatusChange={(clicked) =>
-        void cardViewModel.actions.changeLearningStatus(choreography, clicked)
-      }
     />
   );
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 
 import {
   deleteChoreographyLearningStatus,
@@ -449,22 +449,24 @@ describe("ChoreographyCard", () => {
   it.each([
     ["wishlist", "🤍", "Wishlist"],
     ["learned", "✅", "Learned"],
-  ] as const)("shows the %s marker before the title", (status, emoji, label) => {
+  ] as const)("shows the %s icon before the title", (status, emoji, label) => {
     render(<ChoreographyCard choreography={makeChoreography({ learning_status: status })} />);
 
-    const marker = screen.getByRole("img", { name: label });
-    expect(marker).toHaveTextContent(emoji);
-    expect(marker.closest("h3")?.textContent).toBe(`${emoji} Neon Waltz (2024)`);
+    const icon = screen.getByRole("button", {
+      name: `Learning status: ${label}. Open status editor`,
+    });
+    expect(icon).toHaveTextContent(emoji);
+    expect(icon.closest("h3")?.textContent).toBe(`${emoji}Neon Waltz (2024)`);
   });
 
-  it("shows no marker and no date without a learning status", () => {
+  it("shows no icon and no date without a learning status", () => {
     const { container } = render(<ChoreographyCard choreography={makeChoreography()} />);
 
-    expect(screen.queryByRole("img", { name: /wishlist|learned/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Learning status:/ })).toBeNull();
     expect(container.querySelector(".learning-status-date")).toBeNull();
   });
 
-  it("shows since when the status was set", () => {
+  it("shows since when the status was set, also as tooltip of the icon", () => {
     render(
       <ChoreographyCard
         choreography={makeChoreography({
@@ -475,28 +477,85 @@ describe("ChoreographyCard", () => {
     );
 
     expect(screen.getByText("Learned since 2026-11-24")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Learning status: Learned/ })).toHaveAttribute(
+      "title",
+      "Learned since 2026-11-24",
+    );
   });
 
-  it("sets a learning status and reflects it immediately", async () => {
+  it("has no learning status buttons in the card footer", () => {
+    const { container } = render(<ChoreographyCard choreography={makeChoreography()} />);
+
+    expect(container.querySelector(".card-actions")).not.toHaveTextContent(/🤍|✅/);
+    expect(screen.queryByRole("button", { name: "Wishlist" })).toBeNull();
+  });
+
+  it("opens the status editor from the title when the dance has no status", () => {
     render(<ChoreographyCard choreography={makeChoreography()} />);
 
-    const wishlist = screen.getByRole("button", { name: "Wishlist" });
-    expect(wishlist).toHaveAttribute("aria-pressed", "false");
-    fireEvent.click(wishlist);
+    const title = screen.getByRole("button", { name: "Neon Waltz (2024)" });
+    expect(title).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("group", { name: "Learning status" })).toBeNull();
 
-    expect(screen.getByRole("button", { name: "Wishlist" })).toHaveAttribute(
+    fireEvent.click(title);
+
+    const editor = screen.getByRole("group", { name: "Learning status" });
+    expect(
+      within(editor)
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label")),
+    ).toEqual(["Wishlist", "Learned", "No status"]);
+    expect(within(editor).getByRole("button", { name: "No status" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByRole("img", { name: "Wishlist" })).toBeInTheDocument();
+    expect(title).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(title);
+    expect(screen.queryByRole("group", { name: "Learning status" })).toBeNull();
+  });
+
+  it("opens the status editor from the icon and marks the current status", () => {
+    render(<ChoreographyCard choreography={makeChoreography({ learning_status: "wishlist" })} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Learning status: Wishlist/ }));
+
+    const editor = screen.getByRole("group", { name: "Learning status" });
+    expect(within(editor).getByRole("button", { name: "Wishlist" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.queryByRole("button", { name: /Learning status: Wishlist/ })).toBeNull();
+  });
+
+  it("closes the status editor with Escape without changing anything", () => {
+    render(<ChoreographyCard choreography={makeChoreography({ learning_status: "wishlist" })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Learning status: Wishlist/ }));
+
+    fireEvent.keyDown(screen.getByRole("button", { name: "Wishlist" }), { key: "Escape" });
+
+    expect(screen.queryByRole("group", { name: "Learning status" })).toBeNull();
+    expect(setChoreographyLearningStatus).not.toHaveBeenCalled();
+    expect(deleteChoreographyLearningStatus).not.toHaveBeenCalled();
+  });
+
+  it("sets a status from the editor, closes it and reflects the change immediately", async () => {
+    render(<ChoreographyCard choreography={makeChoreography()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Neon Waltz (2024)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Wishlist" }));
+
+    expect(screen.queryByRole("group", { name: "Learning status" })).toBeNull();
+    expect(screen.getByRole("button", { name: /Learning status: Wishlist/ })).toBeInTheDocument();
     await waitFor(() => {
       expect(setChoreographyLearningStatus).toHaveBeenCalledWith(42, "wishlist");
     });
   });
 
-  it("replaces the status when the other one is chosen", async () => {
+  it("switches between the statuses", async () => {
     render(<ChoreographyCard choreography={makeChoreography({ learning_status: "wishlist" })} />);
 
+    fireEvent.click(screen.getByRole("button", { name: /Learning status: Wishlist/ }));
     fireEvent.click(screen.getByRole("button", { name: "Learned" }));
 
     await waitFor(() => {
@@ -505,10 +564,11 @@ describe("ChoreographyCard", () => {
     expect(deleteChoreographyLearningStatus).not.toHaveBeenCalled();
   });
 
-  it("clears the status when the active one is pressed again", async () => {
+  it("clears the status with the 'No status' option", async () => {
     render(<ChoreographyCard choreography={makeChoreography({ learning_status: "learned" })} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Learned" }));
+    fireEvent.click(screen.getByRole("button", { name: /Learning status: Learned/ }));
+    fireEvent.click(screen.getByRole("button", { name: "No status" }));
 
     await waitFor(() => {
       expect(deleteChoreographyLearningStatus).toHaveBeenCalledWith(42);
@@ -516,19 +576,26 @@ describe("ChoreographyCard", () => {
     expect(setChoreographyLearningStatus).not.toHaveBeenCalled();
   });
 
+  it("does not save when the current status is picked again", () => {
+    render(<ChoreographyCard choreography={makeChoreography({ learning_status: "learned" })} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Learning status: Learned/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Learned" }));
+
+    expect(screen.queryByRole("group", { name: "Learning status" })).toBeNull();
+    expect(setChoreographyLearningStatus).not.toHaveBeenCalled();
+  });
+
   it("falls back to the stored status when saving fails", async () => {
     vi.mocked(setChoreographyLearningStatus).mockRejectedValueOnce(new Error("offline"));
     render(<ChoreographyCard choreography={makeChoreography()} />);
 
+    fireEvent.click(screen.getByRole("button", { name: "Neon Waltz (2024)" }));
     fireEvent.click(screen.getByRole("button", { name: "Learned" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Learned" })).toHaveAttribute(
-        "aria-pressed",
-        "false",
-      );
+      expect(screen.queryByRole("button", { name: /Learning status:/ })).toBeNull();
     });
-    expect(screen.queryByRole("img", { name: "Learned" })).toBeNull();
   });
 
   it("marks a personal level in the badge and keeps the official level in the title", () => {
