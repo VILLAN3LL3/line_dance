@@ -22,12 +22,16 @@ const qrCaptionHeight = 11;
 const qrSlotWidth = 64;
 const cardPadding = 8;
 const cardGap = 6;
-const sessionHeadingHeight = 22;
+const headingHeight = 18;
+// Space above a heading is larger than below it so the title visibly belongs to the dances after it.
+const sectionGap = 14;
+const noteHeight = 18;
 const stepColumns = 3;
 const stepRowHeight = 16;
-const closingText = 'Ich hoffe, der Kurs hat dir gefallen!';
 const trainerQrSize = 64;
+const closingText = 'Ich hoffe, der Kurs hat dir gefallen!';
 const closingThanksText = 'Danke fürs Mittanzen und bis zum nächsten Mal.';
+const footerGap = 12;
 
 type Layout = {
   doc: PDFKit.PDFDocument;
@@ -39,31 +43,36 @@ type Layout = {
 };
 
 function ensureSpace(layout: Layout, height: number): void {
-  if (layout.doc.y + height <= layout.bottom - layout.disclaimerHeight - cardGap) return;
+  if (layout.doc.y + height <= layout.bottom) return;
   layout.doc.addPage();
   layout.doc.y = layout.doc.page.margins.top;
 }
 
-function danceDetails(dance: ParticipantPdfDance): string {
+function danceDetails(dance: ParticipantPdfDance): string[] {
   return [
     dance.level,
     formatCountWall(dance.count, dance.wall_count),
-    dance.authors.length > 0 ? `Choreograf: ${dance.authors.join(', ')}` : null,
-  ]
-    .filter(Boolean)
-    .join('  |  ');
+    dance.authors.length > 0 ? dance.authors.join(', ') : null,
+  ].filter((line): line is string => Boolean(line));
 }
 
-function measureDance(layout: Layout, dance: ParticipantPdfDance, textWidth: number): number {
+function danceTextWidth(layout: Layout): number {
+  return layout.width - 3 * cardPadding - 2 * qrSlotWidth;
+}
+
+function measureDance(layout: Layout, dance: ParticipantPdfDance): number {
   const { doc } = layout;
+  const textWidth = danceTextWidth(layout);
   doc.font('Helvetica-Bold').fontSize(12);
   let height = doc.heightOfString(dance.name, { width: textWidth });
   doc.font('Helvetica').fontSize(10);
-  const details = danceDetails(dance);
-  if (details) height += 3 + doc.heightOfString(details, { width: textWidth });
+  for (const line of danceDetails(dance)) {
+    height += 3 + doc.heightOfString(line, { width: textWidth });
+  }
   return Math.max(height, qrSize + qrCaptionHeight) + 2 * cardPadding;
 }
 
+/** The QR code itself is not linked; only the caption below it is clickable. */
 function renderLinkQr(
   layout: Layout,
   link: ParticipantPdfLink,
@@ -78,7 +87,6 @@ function renderLinkQr(
     .roundedRect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4, 5)
     .lineWidth(1)
     .stroke(colors.qrBorder);
-  doc.link(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4, link.url);
   doc
     .font('Helvetica')
     .fillColor(colors.muted)
@@ -94,8 +102,8 @@ function renderLinkQr(
 
 function renderDance(layout: Layout, dance: ParticipantPdfDance): void {
   const { doc, colors, left, width } = layout;
-  const textWidth = width - 3 * cardPadding - 2 * qrSlotWidth;
-  const height = measureDance(layout, dance, textWidth);
+  const textWidth = danceTextWidth(layout);
+  const height = measureDance(layout, dance);
   ensureSpace(layout, height + cardGap);
 
   const top = doc.y;
@@ -103,10 +111,9 @@ function renderDance(layout: Layout, dance: ParticipantPdfDance): void {
 
   doc.fillColor(colors.subtitle).font('Helvetica-Bold').fontSize(12);
   doc.text(dance.name, left + cardPadding, top + cardPadding, { width: textWidth });
-  const details = danceDetails(dance);
-  if (details) {
-    doc.font('Helvetica').fontSize(10).fillColor(colors.muted);
-    doc.text(details, left + cardPadding, doc.y + 3, { width: textWidth });
+  doc.font('Helvetica').fontSize(10).fillColor(colors.muted);
+  for (const line of danceDetails(dance)) {
+    doc.text(line, left + cardPadding, doc.y + 3, { width: textWidth });
   }
 
   const slotsX = left + width - cardPadding - 2 * qrSlotWidth;
@@ -118,67 +125,55 @@ function renderDance(layout: Layout, dance: ParticipantPdfDance): void {
   doc.y = top + height + cardGap;
 }
 
-function renderBoxText(layout: Layout, text: string, bold = false): void {
+/** Plain heading text on the page background. */
+function renderHeading(layout: Layout, text: string): void {
   const { doc, colors, left, width } = layout;
-  doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(11);
-  doc.fillColor(colors.subtitle).text(text, left + 12, doc.y, { width: width - 24 });
+  doc.font('Helvetica-Bold').fontSize(13).fillColor(colors.title);
+  const y = doc.y;
+  doc.text(text, left, y, { width, lineBreak: false });
+  doc.y = y + headingHeight;
 }
 
-function renderHeadingBox(layout: Layout, text: string): void {
+function renderNote(layout: Layout, text: string): void {
   const { doc, colors, left, width } = layout;
-  const y = doc.y;
-  doc
-    .roundedRect(left, y, width, sessionHeadingHeight, 8)
-    .fillAndStroke(colors.surfaceBg, colors.surfaceBorder);
-  doc.y = y + 5.5;
-  renderBoxText(layout, text, true);
-  doc.y = y + sessionHeadingHeight + cardGap;
+  doc.font('Helvetica').fontSize(11).fillColor(colors.muted);
+  doc.text(text, left + cardPadding, doc.y, { width: width - 2 * cardPadding });
+  doc.y += noteHeight - 11;
 }
 
 function renderSessions(layout: Layout, sessions: ParticipantPdfDocument['sessions']): void {
-  const { doc, colors, left, width } = layout;
   if (sessions.length === 0) {
-    renderHeadingBox(layout, 'Keine Termine hinterlegt.');
+    ensureSpace(layout, headingHeight + noteHeight);
+    renderNote(layout, 'Keine Termine hinterlegt.');
     return;
   }
   for (const session of sessions) {
-    ensureSpace(layout, sessionHeadingHeight + cardGap + 72);
-    renderHeadingBox(layout, formatSessionDate(session.session_date));
-    if (session.dances.length === 0) {
-      doc.font('Helvetica').fontSize(11).fillColor(colors.muted);
-      doc.text('Keine neuen Tänze', left + 12, doc.y, { width: width - 24 });
-      doc.y += cardGap;
-    }
+    // A heading always stays together with its first dance (or the "no dances" note).
+    const [firstDance] = session.dances;
+    const firstBlock = firstDance ? measureDance(layout, firstDance) + cardGap : noteHeight;
+    ensureSpace(layout, headingHeight + firstBlock);
+    renderHeading(layout, formatSessionDate(session.session_date));
+    if (!firstDance) renderNote(layout, 'Keine neuen Tänze');
     session.dances.forEach((dance) => renderDance(layout, dance));
-    doc.y += 2;
+    layout.doc.y += sectionGap;
   }
 }
 
-function closingHeight(hasTrainerQr: boolean): number {
-  return 80 + (hasTrainerQr ? trainerQrSize + 24 : 0);
-}
-
-function renderLearnedSteps(layout: Layout, steps: string[], reserved: number): void {
+function renderLearnedSteps(layout: Layout, steps: string[]): void {
   const { doc, colors, left, width } = layout;
-  const rows = Math.max(1, Math.ceil(steps.length / stepColumns));
-  // Keep the whole block together with the closing sentence instead of orphaning it
-  ensureSpace(layout, sessionHeadingHeight + 2 * cardGap + rows * stepRowHeight + reserved);
-  renderHeadingBox(layout, 'Gelernte Steps in diesem Kurs');
+  ensureSpace(layout, headingHeight + Math.max(noteHeight, stepRowHeight));
+  renderHeading(layout, 'Gelernte Steps in diesem Kurs');
   if (steps.length === 0) {
-    doc.font('Helvetica').fontSize(11).fillColor(colors.muted);
-    doc.text('In diesem Kurs wurden keine neuen Steps gelernt.', left + 12, doc.y, {
-      width: width - 24,
-    });
-    doc.y += cardGap;
+    renderNote(layout, 'In diesem Kurs wurden keine neuen Steps gelernt.');
     return;
   }
-  const columnWidth = (width - 24) / stepColumns;
+  const columnWidth = (width - 2 * cardPadding) / stepColumns;
   for (let start = 0; start < steps.length; start += stepColumns) {
     ensureSpace(layout, stepRowHeight);
     const y = doc.y;
     steps.slice(start, start + stepColumns).forEach((step, column) => {
       doc.font('Helvetica').fontSize(11).fillColor(colors.subtitle);
-      doc.text(`• ${step}`, left + 12 + column * columnWidth, y, {
+      doc.text(`• ${step}`, left + cardPadding + column * columnWidth, y, {
         width: columnWidth - 6,
         lineBreak: false,
         ellipsis: true,
@@ -204,13 +199,19 @@ function drawSmiley(doc: PDFKit.PDFDocument, colors: CoursePdfColors, x: number,
     .stroke(colors.title);
 }
 
+function closingHeight(layout: Layout, hasTrainerQr: boolean): number {
+  const closing = 80 + (hasTrainerQr ? trainerQrSize + 24 : 0);
+  return closing + footerGap + layout.disclaimerHeight;
+}
+
+/** Closing note, trainer signature and vCard; kept together with the privacy notice. */
 function renderClosing(
   layout: Layout,
   trainerSignature: string | null,
   trainerQr: Buffer | null,
 ): void {
   const { doc, colors, left, width } = layout;
-  ensureSpace(layout, closingHeight(Boolean(trainerQr)));
+  ensureSpace(layout, closingHeight(layout, Boolean(trainerQr)));
   const smileySize = 18;
   const smileyGap = 6;
   doc.font('Helvetica-Bold').fontSize(13);
@@ -243,7 +244,6 @@ function renderClosing(
         lineBreak: false,
       });
   }
-  doc.y += 12;
 }
 
 function renderDisclaimer(layout: Layout): void {
@@ -252,11 +252,33 @@ function renderDisclaimer(layout: Layout): void {
   doc.text(privacyDisclaimerText, left, bottom - disclaimerHeight, { width, align: 'center' });
 }
 
+/** Needs `bufferPages` so the total page count is known; writes into the bottom margin. */
+function renderPageNumbers(layout: Layout): void {
+  const { doc, colors, left, width } = layout;
+  const { start, count } = doc.bufferedPageRange();
+  for (let index = start; index < start + count; index += 1) {
+    doc.switchToPage(index);
+    const { bottom } = doc.page.margins;
+    // Text below the bottom margin would otherwise trigger an automatic page break.
+    doc.page.margins.bottom = 0;
+    doc
+      .font('Helvetica')
+      .fontSize(9)
+      .fillColor(colors.muted)
+      .text(`Seite ${index - start + 1} von ${count}`, left, doc.page.height - 34, {
+        width,
+        align: 'center',
+        lineBreak: false,
+      });
+    doc.page.margins.bottom = bottom;
+  }
+}
+
 /** Renders the end-of-course PDF for participants into `res`. */
 export function renderParticipantPdf(res: Writable, document: ParticipantPdfDocument): void {
   const { course, sessions, learnedSteps, trainerQr } = document;
   if (course.trainer_id && !trainerQr) throw new Error('Trainer QR code is missing');
-  const doc = new PDFDocument({ size: 'A4', margin: 50 });
+  const doc = new PDFDocument({ size: 'A4', margin: 50, bufferPages: true });
   doc.pipe(res);
 
   const colors = getCoursePdfColors(course.id);
@@ -274,8 +296,9 @@ export function renderParticipantPdf(res: Writable, document: ParticipantPdfDocu
 
   renderCoursePdfHeader(doc, course, colors);
   renderSessions(layout, sessions);
-  renderLearnedSteps(layout, learnedSteps, closingHeight(Boolean(trainerQr)));
+  renderLearnedSteps(layout, learnedSteps);
   renderClosing(layout, getTrainerSignature(course.trainer_name, course.trainer_gender), trainerQr);
   renderDisclaimer(layout);
+  renderPageNumbers(layout);
   doc.end();
 }

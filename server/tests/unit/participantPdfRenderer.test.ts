@@ -80,7 +80,7 @@ describe('participant PDF renderer', () => {
     const pdf = await render(data);
     expect(pdf).toContain('https://example.com/sheet');
     expect(pdf).toContain('https://example.com/video');
-    expect(pdf.match(/\/Subtype \/Link/g)).toHaveLength(4);
+    expect(pdf.match(/\/Subtype \/Link/g)).toHaveLength(2);
   });
 
   it('paginates many dances and renders the trainer box', async () => {
