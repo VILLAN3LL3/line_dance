@@ -261,3 +261,38 @@ export interface AuthorStats {
   total: number;
   by_level: Record<string, number>;
 }
+
+export type PracticeConfidence = 'sure' | 'unsure';
+
+/** Practice state of a learned dance (`GET /api/practice/suggestions`). */
+export interface PracticeSummary {
+  choreography_id: number;
+  last_practiced_on: string | null;
+  last_note: string | null;
+  practice_count: number;
+  next_due_on: string | null;
+  is_due: boolean;
+  /** Days past the due date (negative while not due yet); `null` if never practiced. */
+  days_overdue: number | null;
+}
+
+export interface PracticeLogEntry {
+  id: number;
+  choreography_id: number;
+  choreography_name: string;
+  practiced_on: string;
+  confidence: PracticeConfidence;
+  note: string | null;
+  song_id: number | null;
+  song_title: string | null;
+}
+
+export interface PracticeLogRequest {
+  choreography_ids: number[];
+  /** Defaults to today on the server; past dates are allowed. */
+  practiced_on?: string;
+  confidence?: PracticeConfidence;
+  /** Only valid with exactly one dance. */
+  song_id?: number | null;
+  note?: string | null;
+}

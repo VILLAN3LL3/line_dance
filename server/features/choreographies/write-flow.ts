@@ -6,6 +6,7 @@ import type { SongChanges } from './song-operations.ts';
 import { replaceSongs } from './song-flow.ts';
 import * as songRepository from './song-repository.ts';
 import * as learningStatusRepository from '../learning-status/repository.ts';
+import * as practiceRepository from '../practice/repository.ts';
 import type { LearningStatusChange } from '../learning-status/operations.ts';
 import * as repository from './write-repository.ts';
 import type { RelationshipKind } from './write-repository.ts';
@@ -128,6 +129,7 @@ async function cleanupOrphanedRecords(): Promise<void> {
   await repository.deleteUnusedInformationCategories();
   await repository.deleteOrphanedPersonalLevels();
   await learningStatusRepository.deleteOrphanedStatuses();
+  await practiceRepository.deleteOrphanedEntries();
   await songRepository.deleteOrphanedFavoriteSongs();
   await songRepository.deleteUnusedGenres();
   await repository.deleteUnusedLevels(canonicalLevels);

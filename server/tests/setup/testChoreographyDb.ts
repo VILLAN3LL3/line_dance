@@ -227,6 +227,18 @@ export async function setupChoreographyTestDb(): Promise<Database> {
   )`,
   );
 
+  await run(
+    testDb,
+    `CREATE TABLE IF NOT EXISTS personal_data.choreography_practice_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    choreography_id INTEGER NOT NULL,
+    practiced_on TEXT NOT NULL,
+    confidence TEXT NOT NULL DEFAULT 'sure' CHECK (confidence IN ('sure', 'unsure')),
+    song_id INTEGER,
+    note TEXT
+  )`,
+  );
+
   await seedDefaultLevels(testDb);
 
   // Populate test countries data (subset of commonly used countries)
@@ -289,6 +301,7 @@ export async function clearChoreographyTables(): Promise<void> {
   await run(testDb, 'DELETE FROM personal_data.choreography_personal_levels');
   await run(testDb, 'DELETE FROM personal_data.choreography_learning_status');
   await run(testDb, 'DELETE FROM personal_data.choreography_favorite_songs');
+  await run(testDb, 'DELETE FROM personal_data.choreography_practice_log');
   await run(testDb, 'DELETE FROM choreography_songs');
   await run(testDb, 'DELETE FROM genres');
   await run(testDb, 'DELETE FROM choreography_information');

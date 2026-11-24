@@ -1,7 +1,9 @@
 import type { LearningStatus } from "../../../types";
 
+export type PersonalTabId = LearningStatus | "practice" | "log";
+
 export interface PersonalTab {
-  status: LearningStatus;
+  id: PersonalTabId;
   label: string;
   emoji: string;
   count: number | null;
@@ -13,16 +15,31 @@ const EMPTY_MESSAGES: Record<LearningStatus, string> = {
   learned: "No learned dances yet. Mark dances with the ✅ button on a choreography card.",
 };
 
+/** Tabs that list choreographies by status; the others have their own content. */
+export const isStatusTab = (id: PersonalTabId): id is LearningStatus =>
+  id === "wishlist" || id === "learned";
+
 /** `count` is null while a list is still loading, so the tab does not claim to be empty. */
 export function buildPersonalTabs(
   options: readonly { value: LearningStatus; label: string; emoji: string }[],
-  counts: Record<LearningStatus, number | null>,
+  counts: Partial<Record<PersonalTabId, number | null>>,
 ): PersonalTab[] {
-  return options.map((option) => ({
-    status: option.value,
+  const statusTabs: PersonalTab[] = options.map((option) => ({
+    id: option.value,
     label: option.label,
     emoji: option.emoji,
-    count: counts[option.value],
+    count: counts[option.value] ?? null,
     emptyMessage: EMPTY_MESSAGES[option.value],
   }));
+  return [
+    ...statusTabs,
+    {
+      id: "practice",
+      label: "Practice",
+      emoji: "🔁",
+      count: counts.practice ?? null,
+      emptyMessage: "",
+    },
+    { id: "log", label: "Practice log", emoji: "📓", count: null, emptyMessage: "" },
+  ];
 }

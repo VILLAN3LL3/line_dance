@@ -161,3 +161,45 @@ its title. Picking an option saves it and closes the editor; ✕ and Escape clos
 choreography form has a "Learning Status" field. The "Personal" page (`client/src/features/personal/`, route `/personal`)
 lists both lists as tabs; it is the home of the personal dance development features, separate from
 the catalog and from course planning.
+
+### Practice log and flash cards
+
+Practicing is logged in `personal_data.choreography_practice_log` (migration
+`019_add_choreography_practice_log`): `id`, `choreography_id`, `practiced_on` (`YYYY-MM-DD`, any day
+up to today, so practice can be entered afterwards), `confidence` (`sure` or `unsure`), optional
+`song_id` and `note`. There is no cross-database foreign key; the choreography write cleanup removes
+orphans. Practicing in a course session does not count automatically.
+
+- `POST /api/practice-log` takes `{ choreography_ids[], practiced_on?, confidence?, song_id?, note? }`
+  (1–100 dances, all or nothing in one transaction; `song_id` only with exactly one dance, and it must
+  be one of its songs) and returns `201 { logged, practiced_on }`. `400` for invalid input or a future
+  date, `404` if a dance does not exist. `GET /api/practice-log?limit=` lists the entries newest first
+  (default 100, maximum 500), `DELETE /api/practice-log/:id` removes one.
+- `GET /api/practice/suggestions` returns every **learned** dance with `last_practiced_on`,
+  `last_note`, `practice_count`, `next_due_on`, `is_due` and `days_overdue`, the most urgent first.
+  The client combines it with the learned choreographies, so no second choreography serialization
+  exists.
+
+Spaced repetition (`server/features/practice/operations.ts`, pure): the interval until the next review
+grows with the number of consecutive `sure` practices; an `unsure` practice starts again at the first
+step. The higher the effective level (personal level when set, see above), the more often a dance has
+to be repeated, so the early steps are shorter. All levels end at the same step of 182 days, which
+repeats for good: a learned dance stays in the box and comes back at least every half year.
+
+| Level (value) | Days after 1, 2, 3 … consecutive `sure` practices |
+|---|---|
+| Beginner (up to 40, also unknown) | 1, 2, 4, 7, 10, 14, 21, 30, 45, 60, 90, 120, 150, then 182 |
+| Improver (up to 80) | 1, 2, 3, 5, 8, 12, 18, 26, 38, 55, 80, 115, 150, then 182 |
+| Intermediate (up to 120) | 1, 2, 3, 4, 6, 9, 13, 19, 28, 42, 62, 95, 140, then 182 |
+| Advanced (above 120) | 1, 1, 2, 3, 5, 7, 10, 15, 22, 33, 50, 80, 125, then 182 |
+
+Entries are ordered by their date, not by when they were entered. A learned dance without entries is
+due immediately. The order is the time since the last practice relative to its interval; never
+practiced dances come first. Change `REVIEW_INTERVAL_TIERS` to tune it.
+
+On the client, `client/src/features/practice/` adds the tabs "Practice" and "Practice log" to the
+Personal page. The Practice tab is the flash card box: each due dance is a `FlipCard`
+(`shared/ui/FlipCard.tsx`, generic front/back component) with the unchanged `ChoreographyCard` on the
+front and `PracticeCardBack` on the back (music, restarts and tags, last practice, count, next due
+date, date, note, "Sure" and "Unsure"). "Log practice" is the quick capture for several dances.
+Dances that are not due yet are folded away behind a button.

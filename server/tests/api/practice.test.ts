@@ -1,0 +1,182 @@
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import request from 'supertest';
+import { setupChoreographyTestDb, clearChoreographyTables } from '../setup/testChoreographyDb.ts';
+import app from '../setup/testChoreographyApp.ts';
+import { allQuery, runQuery } from '../../scripts/db.ts';
+
+beforeAll(async () => {
+  await setupChoreographyTestDb();
+});
+
+beforeEach(async () => {
+  await clearChoreographyTables();
+});
+
+async function createChoreo(name = 'Test Dance'): Promise<number> {
+  const res = await request(app).post('/api/choreographies').send({ name, level: 'BEGINNER' });
+  return res.body.id;
+}
+
+async function levelId(name: string): Promise<number> {
+  const rows = await allQuery<{ id: number }>('SELECT id FROM levels WHERE name = ?', [name]);
+  return rows[0].id;
+}
+
+async function learn(id: number): Promise<void> {
+  await request(app).put(`/api/choreographies/${id}/learning-status`).send({ status: 'learned' });
+}
+
+describe('POST /api/practice-log', () => {
+  it('logs several dances at once and returns 201', async () => {
+    const a = await createChoreo('A');
+    const b = await createChoreo('B');
+    const res = await request(app)
+      .post('/api/practice-log')
+      .send({ choreography_ids: [a, b], practiced_on: '2026-01-02', note: ' Restart ' });
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ logged: 2, practiced_on: '2026-01-02' });
+    const log = await request(app).get('/api/practice-log');
+    expect(log.body).toHaveLength(2);
+    expect(log.body[0]).toMatchObject({ note: 'Restart', confidence: 'sure' });
+  });
+
+  it('accepts a past date entered afterwards', async () => {
+    const id = await createChoreo();
+    const res = await request(app)
+      .post('/api/practice-log')
+      .send({ choreography_ids: [id], practiced_on: '2020-05-17' });
+    expect(res.status).toBe(201);
+  });
+
+  it.each([
+    [{}, 'choreography_ids'],
+    [{ choreography_ids: [] }, 'choreography_ids'],
+    [{ choreography_ids: [1], practiced_on: 'yesterday' }, 'practiced_on'],
+    [{ choreography_ids: [1], practiced_on: '2999-01-01' }, 'future'],
+    [{ choreography_ids: [1], confidence: 'x' }, 'confidence'],
+  ])('returns 400 for %j', async (body, hint) => {
+    const res = await request(app).post('/api/practice-log').send(body);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain(hint);
+  });
+
+  it('returns 404 and stores nothing if a dance is unknown', async () => {
+    const id = await createChoreo();
+    const res = await request(app)
+      .post('/api/practice-log')
+      .send({ choreography_ids: [id, 9999] });
+    expect(res.status).toBe(404);
+    const rows = await allQuery('SELECT * FROM personal_data.choreography_practice_log');
+    expect(rows).toHaveLength(0);
+  });
+});
+
+describe('GET /api/practice-log and DELETE /api/practice-log/:id', () => {
+  it('rejects an invalid limit', async () => {
+    const res = await request(app).get('/api/practice-log').query({ limit: '0' });
+    expect(res.status).toBe(400);
+  });
+
+  it('deletes an entry, 404 for a missing one, 400 for a bad id', async () => {
+    const id = await createChoreo();
+    await request(app)
+      .post('/api/practice-log')
+      .send({ choreography_ids: [id] });
+    const [entry] = (await request(app).get('/api/practice-log')).body;
+    expect((await request(app).delete(`/api/practice-log/${entry.id}`)).status).toBe(200);
+    expect((await request(app).delete(`/api/practice-log/${entry.id}`)).status).toBe(404);
+    expect((await request(app).delete('/api/practice-log/abc')).status).toBe(400);
+  });
+
+  it('removes entries of a deleted choreography', async () => {
+    const id = await createChoreo();
+    await request(app)
+      .post('/api/practice-log')
+      .send({ choreography_ids: [id] });
+    await request(app).delete(`/api/choreographies/${id}`);
+    expect((await request(app).get('/api/practice-log')).body).toEqual([]);
+    const rows = await allQuery('SELECT * FROM personal_data.choreography_practice_log');
+    expect(rows).toHaveLength(0);
+  });
+});
+
+describe('GET /api/practice/suggestions', () => {
+  it('returns an empty list without learned dances', async () => {
+    await createChoreo();
+    expect((await request(app).get('/api/practice/suggestions')).body).toEqual([]);
+  });
+
+  it('lists learned dances with their practice state, due ones first', async () => {
+    const old = await createChoreo('Old');
+    const recent = await createChoreo('Recent');
+    const fresh = await createChoreo('Fresh');
+    await Promise.all([old, recent, fresh].map(learn));
+    await request(app)
+      .post('/api/practice-log')
+      .send({ choreography_ids: [old], practiced_on: '2020-01-01' });
+    await request(app)
+      .post('/api/practice-log')
+      .send({ choreography_ids: [recent] });
+
+    const res = await request(app).get('/api/practice/suggestions');
+    expect(res.body.map((s: { choreography_id: number }) => s.choreography_id)).toEqual([
+      fresh,
+      old,
+      recent,
+    ]);
+    expect(res.body[0]).toMatchObject({ practice_count: 0, is_due: true, last_practiced_on: null });
+    expect(res.body[1]).toMatchObject({
+      practice_count: 1,
+      last_practiced_on: '2020-01-01',
+      next_due_on: '2020-01-02',
+      is_due: true,
+    });
+    expect(res.body[2].is_due).toBe(false);
+  });
+
+  it('an unsure practice makes the dance due again the next day', async () => {
+    const id = await createChoreo();
+    await learn(id);
+    await request(app)
+      .post('/api/practice-log')
+      .send({ choreography_ids: [id], practiced_on: '2020-01-01', confidence: 'sure' });
+    await request(app)
+      .post('/api/practice-log')
+      .send({ choreography_ids: [id], practiced_on: '2020-01-10', confidence: 'unsure' });
+    const [summary] = (await request(app).get('/api/practice/suggestions')).body;
+    expect(summary).toMatchObject({ practice_count: 2, next_due_on: '2020-01-11' });
+  });
+});
+
+describe('level dependent intervals', () => {
+  async function dueDateAfterThreeSurePractices(id: number): Promise<string> {
+    await learn(id);
+    await Promise.all(
+      ['2020-01-01', '2020-01-02', '2020-01-03'].map((day) =>
+        request(app)
+          .post('/api/practice-log')
+          .send({ choreography_ids: [id], practiced_on: day }),
+      ),
+    );
+    const res = await request(app).get('/api/practice/suggestions');
+    return res.body.find((s: { choreography_id: number }) => s.choreography_id === id).next_due_on;
+  }
+
+  it('repeats an advanced dance sooner than a beginner dance', async () => {
+    const beginner = await createChoreo('Beginner Dance');
+    const advanced = (
+      await request(app).post('/api/choreographies').send({ name: 'Advanced', level: 'ADVANCED' })
+    ).body.id;
+    expect(await dueDateAfterThreeSurePractices(beginner)).toBe('2020-01-07');
+    expect(await dueDateAfterThreeSurePractices(advanced)).toBe('2020-01-05');
+  });
+
+  it('uses the personal level instead of the official one', async () => {
+    const id = await createChoreo('Hard For Me');
+    await runQuery(
+      'INSERT INTO personal_data.choreography_personal_levels (choreography_id, level_id) VALUES (?, ?)',
+      [id, await levelId('ADVANCED')],
+    );
+    expect(await dueDateAfterThreeSurePractices(id)).toBe('2020-01-05');
+  });
+});

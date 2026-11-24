@@ -4,6 +4,8 @@ import React from "react";
 
 import { EmptyState, ErrorMessage, LoadingState } from "../../../shared/ui";
 import { ChoreographyCard } from "../../choreographies";
+import { PracticeDeck, PracticeLogList, QuickLogPanel } from "../../practice";
+import { isStatusTab } from "../model/personal-tabs";
 import { usePersonalViewModel } from "../viewmodels/usePersonalViewModel";
 
 const PersonalPage: React.FC = () => {
@@ -11,7 +13,16 @@ const PersonalPage: React.FC = () => {
   const { activeTab, choreographies, isLoading, error } = state;
 
   let content: React.ReactNode;
-  if (isLoading) {
+  if (state.activeId === "practice") {
+    content = (
+      <>
+        <QuickLogPanel viewModel={state.practice.quickLog} />
+        <PracticeDeck viewModel={state.practice.deck} cardViewModel={state.cardViewModel} />
+      </>
+    );
+  } else if (state.activeId === "log") {
+    content = <PracticeLogList viewModel={state.practice.log} />;
+  } else if (isLoading) {
     content = <LoadingState message="Loading your dances..." />;
   } else if (choreographies.length === 0) {
     content = <EmptyState>{activeTab.emptyMessage}</EmptyState>;
@@ -35,20 +46,20 @@ const PersonalPage: React.FC = () => {
         <h2>Personal</h2>
       </header>
 
-      {error && <ErrorMessage message={error} />}
+      {error && isStatusTab(state.activeId) && <ErrorMessage message={error} />}
 
       <div className="list-view">
         <div className="view-toggle" role="tablist" aria-label="Personal dance lists">
           {state.tabs.map((tab) => (
             <button
-              key={tab.status}
-              id={`personal-tab-${tab.status}`}
+              key={tab.id}
+              id={`personal-tab-${tab.id}`}
               type="button"
               role="tab"
-              aria-selected={tab.status === state.activeStatus}
+              aria-selected={tab.id === state.activeId}
               aria-controls="personal-panel"
-              className={`view-toggle-btn${tab.status === state.activeStatus ? " active" : ""}`}
-              onClick={() => actions.selectStatus(tab.status)}
+              className={`view-toggle-btn${tab.id === state.activeId ? " active" : ""}`}
+              onClick={() => actions.selectTab(tab.id)}
             >
               {tab.emoji} {tab.label}
               {tab.count !== null && ` (${tab.count})`}
@@ -56,11 +67,7 @@ const PersonalPage: React.FC = () => {
           ))}
         </div>
 
-        <div
-          id="personal-panel"
-          role="tabpanel"
-          aria-labelledby={`personal-tab-${state.activeStatus}`}
-        >
+        <div id="personal-panel" role="tabpanel" aria-labelledby={`personal-tab-${state.activeId}`}>
           {content}
         </div>
       </div>

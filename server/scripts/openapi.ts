@@ -20,6 +20,7 @@ export const openApiSpec = {
     { name: 'Metadata' },
     { name: 'Step Figures' },
     { name: 'Saved Filters' },
+    { name: 'Practice' },
     { name: 'Dance Groups' },
     { name: 'Trainers' },
     { name: 'Dance Courses' },
@@ -292,6 +293,127 @@ export const openApiSpec = {
                   type: 'object',
                   properties: { max_count: { type: 'integer' } },
                   required: ['max_count'],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/practice-log': {
+      post: {
+        tags: ['Practice'],
+        summary: 'Log a practice of one or several dances (all or nothing)',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  choreography_ids: {
+                    type: 'array',
+                    items: { type: 'integer' },
+                    minItems: 1,
+                    maxItems: 100,
+                  },
+                  practiced_on: {
+                    type: 'string',
+                    format: 'date',
+                    description: 'Defaults to today; past dates are allowed, future dates are not.',
+                  },
+                  confidence: { $ref: '#/components/schemas/PracticeConfidence' },
+                  song_id: {
+                    type: 'integer',
+                    nullable: true,
+                    description: 'Only with exactly one dance; must be one of its songs.',
+                  },
+                  note: { type: 'string', nullable: true, maxLength: 500 },
+                },
+                required: ['choreography_ids'],
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Practice logged',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    logged: { type: 'integer' },
+                    practiced_on: { type: 'string', format: 'date' },
+                  },
+                  required: ['logged', 'practiced_on'],
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+      get: {
+        tags: ['Practice'],
+        summary: 'List the practice log, newest first',
+        parameters: [
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, maximum: 500, default: 100 },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Practice entries',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/PracticeLogEntry' },
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+        },
+      },
+    },
+    '/api/practice-log/{id}': {
+      delete: {
+        tags: ['Practice'],
+        summary: 'Delete a practice entry',
+        parameters: [{ $ref: '#/components/parameters/IdPath' }],
+        responses: {
+          200: {
+            description: 'Practice entry removed',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/MessageResponse' },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/BadRequest' },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/api/practice/suggestions': {
+      get: {
+        tags: ['Practice'],
+        summary: 'Learned dances with their practice state, the most urgent first',
+        description:
+          'Intervals grow slowly with the number of consecutive "sure" practices and depend on the effective level (personal level when set): the early steps are shorter for higher levels (Beginner, up to level value 40: 1, 2, 4, 7, 10, 14, 21, 30, 45, 60, 90, 120, 150 days; Improver, up to 80: 1, 2, 3, 5, 8, 12, 18, 26, 38, 55, 80, 115, 150; Intermediate, up to 120: 1, 2, 3, 4, 6, 9, 13, 19, 28, 42, 62, 95, 140; Advanced, above 120: 1, 1, 2, 3, 5, 7, 10, 15, 22, 33, 50, 80, 125). Every level then stays at 182 days (half a year) for good. An "unsure" practice starts again. A learned dance without entries is due immediately.',
+        responses: {
+          200: {
+            description: 'Practice suggestions',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/PracticeSummary' },
                 },
               },
             },
@@ -1843,6 +1965,38 @@ export const openApiSpec = {
         required: ['id', 'message'],
       },
       LearningStatus: { type: 'string', enum: ['wishlist', 'learned'] },
+      PracticeConfidence: { type: 'string', enum: ['sure', 'unsure'], default: 'sure' },
+      PracticeLogEntry: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          choreography_id: { type: 'integer' },
+          choreography_name: { type: 'string' },
+          practiced_on: { type: 'string', format: 'date' },
+          confidence: { $ref: '#/components/schemas/PracticeConfidence' },
+          note: { type: 'string', nullable: true },
+          song_id: { type: 'integer', nullable: true },
+          song_title: { type: 'string', nullable: true },
+        },
+        required: ['id', 'choreography_id', 'choreography_name', 'practiced_on', 'confidence'],
+      },
+      PracticeSummary: {
+        type: 'object',
+        properties: {
+          choreography_id: { type: 'integer' },
+          last_practiced_on: { type: 'string', format: 'date', nullable: true },
+          last_note: { type: 'string', nullable: true },
+          practice_count: { type: 'integer' },
+          next_due_on: { type: 'string', format: 'date', nullable: true },
+          is_due: { type: 'boolean' },
+          days_overdue: {
+            type: 'integer',
+            nullable: true,
+            description: 'Negative while the dance is not due yet.',
+          },
+        },
+        required: ['choreography_id', 'practice_count', 'is_due'],
+      },
       Choreography: {
         type: 'object',
         properties: {

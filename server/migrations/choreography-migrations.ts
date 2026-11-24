@@ -960,6 +960,30 @@ const migrations: Migration[] = [
       );
     },
   },
+  {
+    id: '019_add_choreography_practice_log',
+    up: async () => {
+      // No cross-database foreign key: orphans are removed by the choreography write flow.
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS personal_data.choreography_practice_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          choreography_id INTEGER NOT NULL,
+          practiced_on TEXT NOT NULL,
+          confidence TEXT NOT NULL DEFAULT 'sure' CHECK (confidence IN ('sure', 'unsure')),
+          song_id INTEGER,
+          note TEXT
+        )`,
+        [],
+        dbName,
+      );
+      await runQuery(
+        `CREATE INDEX IF NOT EXISTS personal_data.choreography_practice_log_dance
+         ON choreography_practice_log (choreography_id, practiced_on)`,
+        [],
+        dbName,
+      );
+    },
+  },
 ];
 
 export async function runChoreographyMigrations(): Promise<void> {

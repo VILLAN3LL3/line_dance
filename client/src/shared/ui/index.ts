@@ -9,6 +9,7 @@ export { Card } from "./Card";
 export { EmptyState } from "./EmptyState";
 export { ErrorMessage } from "./ErrorMessage";
 export { ExternalLink } from "./ExternalLink";
+export { FlipCard } from "./FlipCard";
 export { FormField } from "./FormField";
 export { LevelBatch } from "./LevelBatch";
 export { LoadingState } from "./LoadingState";

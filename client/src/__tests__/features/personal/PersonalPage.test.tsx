@@ -7,6 +7,12 @@ import {
   searchChoreographies,
   setChoreographyLearningStatus,
 } from "../../../features/choreographies/api";
+import {
+  deletePracticeEntry,
+  fetchPracticeLog,
+  fetchPracticeSuggestions,
+  logPractice,
+} from "../../../features/practice/api";
 import PersonalPage from "../../../features/personal/views/PersonalPage";
 import { renderWithQueryClient as render } from "../../helpers/renderWithQueryClient";
 
@@ -18,6 +24,12 @@ vi.mock("../../../features/choreographies/api", () => ({
   deleteChoreographyLearningStatus: vi.fn().mockResolvedValue(undefined),
   deleteChoreographyRating: vi.fn().mockResolvedValue(undefined),
   setChoreographyRating: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock("../../../features/practice/api", () => ({
+  fetchPracticeSuggestions: vi.fn(),
+  fetchPracticeLog: vi.fn(),
+  logPractice: vi.fn(),
+  deletePracticeEntry: vi.fn(),
 }));
 vi.mock("../../../features/metadata/api", () => ({
   getCountryCodes: vi.fn().mockResolvedValue({}),
@@ -61,6 +73,10 @@ function mockLists(wishlist: Choreography[], learned: Choreography[]) {
 describe("PersonalPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fetchPracticeSuggestions).mockResolvedValue([]);
+    vi.mocked(fetchPracticeLog).mockResolvedValue([]);
+    vi.mocked(logPractice).mockResolvedValue({ logged: 1, practiced_on: "2026-11-24" });
+    vi.mocked(deletePracticeEntry).mockResolvedValue({ message: "ok" });
   });
 
   it("shows the wishlist first and requests each list by its status", async () => {
@@ -154,5 +170,131 @@ describe("PersonalPage", () => {
     render(<PersonalPage />);
 
     expect(await screen.findByText("Failed to load your dances")).toBeInTheDocument();
+  });
+
+  describe("practice", () => {
+    const summary = (id: number, overrides = {}) => ({
+      choreography_id: id,
+      last_practiced_on: null,
+      last_note: null,
+      practice_count: 0,
+      next_due_on: null,
+      is_due: true,
+      days_overdue: null,
+      ...overrides,
+    });
+
+    it("shows the due dances as flip cards and counts them in the tab", async () => {
+      mockLists(
+        [],
+        [
+          makeChoreography(2, "Known Dance", "learned"),
+          makeChoreography(3, "Later Dance", "learned"),
+        ],
+      );
+      vi.mocked(fetchPracticeSuggestions).mockResolvedValue([
+        summary(2),
+        summary(3, { is_due: false, next_due_on: "2999-01-01", practice_count: 2 }),
+      ]);
+      render(<PersonalPage />);
+
+      const tab = await screen.findByRole("tab", { name: "🔁 Practice (1)" });
+      fireEvent.click(tab);
+
+      expect(await screen.findByText("Time to practice (1)")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Show back of Known Dance" })).toBeInTheDocument();
+      expect(screen.queryByText("Later Dance")).toBeNull();
+
+      fireEvent.click(screen.getByRole("button", { name: /Show dances not due yet \(1\)/ }));
+      expect(
+        await screen.findByRole("button", { name: "Show back of Later Dance" }),
+      ).toBeInTheDocument();
+    });
+
+    it("logs a practice from the back of a card", async () => {
+      mockLists([], [makeChoreography(2, "Known Dance", "learned")]);
+      vi.mocked(fetchPracticeSuggestions).mockResolvedValue([summary(2)]);
+      render(<PersonalPage />);
+      fireEvent.click(await screen.findByRole("tab", { name: /Practice \(1\)/ }));
+
+      fireEvent.click(await screen.findByRole("button", { name: "Show back of Known Dance" }));
+      fireEvent.change(screen.getByLabelText("Practiced on"), { target: { value: "2026-11-20" } });
+      fireEvent.click(screen.getByRole("button", { name: /Unsure/ }));
+
+      await waitFor(() => {
+        expect(logPractice).toHaveBeenCalledWith({
+          choreography_ids: [2],
+          practiced_on: "2026-11-20",
+          confidence: "unsure",
+        });
+      });
+    });
+
+    it("logs several dances at once with the quick capture", async () => {
+      mockLists(
+        [],
+        [
+          makeChoreography(2, "Known Dance", "learned"),
+          makeChoreography(3, "Other Dance", "learned"),
+        ],
+      );
+      vi.mocked(fetchPracticeSuggestions).mockResolvedValue([summary(2), summary(3)]);
+      vi.mocked(logPractice).mockResolvedValue({ logged: 2, practiced_on: "2026-11-20" });
+      render(<PersonalPage />);
+      fireEvent.click(await screen.findByRole("tab", { name: /Practice \(2\)/ }));
+
+      fireEvent.click(screen.getByRole("button", { name: /Log practice/ }));
+      fireEvent.click(screen.getByRole("checkbox", { name: "Known Dance" }));
+      fireEvent.click(screen.getByRole("checkbox", { name: "Other Dance" }));
+      fireEvent.change(
+        screen.getByLabelText("Practiced on", { selector: "#practice-quick-log-date" }),
+        {
+          target: { value: "2026-11-20" },
+        },
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Log 2 dances" }));
+
+      await waitFor(() => {
+        expect(logPractice).toHaveBeenCalledWith({
+          choreography_ids: [2, 3],
+          practiced_on: "2026-11-20",
+          confidence: "sure",
+        });
+      });
+      expect(await screen.findByText("Logged 2 dances")).toBeInTheDocument();
+    });
+
+    it("explains an empty practice box", async () => {
+      mockLists([], []);
+      render(<PersonalPage />);
+      fireEvent.click(await screen.findByRole("tab", { name: /^🔁 Practice/ }));
+
+      expect(await screen.findByText(/No learned dances yet/)).toBeInTheDocument();
+    });
+
+    it("lists the practice log by day and deletes an entry", async () => {
+      mockLists([], []);
+      vi.mocked(fetchPracticeLog).mockResolvedValue([
+        {
+          id: 7,
+          choreography_id: 2,
+          choreography_name: "Known Dance",
+          practiced_on: "2026-11-20",
+          confidence: "unsure",
+          note: "turn",
+          song_id: null,
+          song_title: null,
+        },
+      ]);
+      render(<PersonalPage />);
+      fireEvent.click(await screen.findByRole("tab", { name: /Practice log/ }));
+
+      expect(await screen.findByText("2026-11-20")).toBeInTheDocument();
+      expect(screen.getByText("Known Dance")).toBeInTheDocument();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Delete practice of Known Dance on 2026-11-20" }),
+      );
+      await waitFor(() => expect(deletePracticeEntry).toHaveBeenCalledWith(7));
+    });
   });
 });

@@ -1,0 +1,147 @@
+.practice-section-title {
+  margin: 20px 0 0;
+  font-size: 16px;
+  color: var(--color-text);
+}
+
+.practice-later-toggle {
+  margin-top: 20px;
+}
+
+.practice-card-back .card-content {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.practice-due-badge {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.practice-due-badge.is-due {
+  color: var(--color-secondary);
+}
+
+.practice-memory-aids {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.practice-stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.practice-stats dt {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.practice-stats dd {
+  margin: 0;
+}
+
+.practice-last-note {
+  font-style: italic;
+}
+
+.practice-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.practice-form .form-group {
+  margin-bottom: 6px;
+}
+
+.practice-card-back .card-actions {
+  flex-wrap: wrap;
+}
+
+.practice-quick-log {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.practice-saved {
+  color: var(--color-success);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.practice-quick-log-form {
+  flex-basis: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.practice-dance-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.practice-dance-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.practice-quick-log-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.practice-log-day ul {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.practice-log-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+}
+
+.practice-log-entry-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.practice-log-note {
+  color: var(--color-text-muted);
+}

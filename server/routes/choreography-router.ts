@@ -56,6 +56,14 @@ import {
   setChoreographyLearningStatus,
   deleteChoreographyLearningStatus,
 } from './choreography-learning-status.ts';
+import {
+  preparePracticeLog,
+  preparePracticeList,
+  logPractice,
+  listPracticeLog,
+  deletePracticeEntry,
+  getPracticeSuggestions,
+} from './practice.ts';
 
 export function createChoreographyRouter(): Router {
   const router = Router();
@@ -76,6 +84,10 @@ export function createChoreographyRouter(): Router {
     setChoreographyLearningStatus,
   );
   router.delete('/api/choreographies/:id/learning-status', deleteChoreographyLearningStatus);
+  router.post('/api/practice-log', preparePracticeLog, logPractice);
+  router.get('/api/practice-log', preparePracticeList, listPracticeLog);
+  router.delete('/api/practice-log/:id', deletePracticeEntry);
+  router.get('/api/practice/suggestions', getPracticeSuggestions);
   router.get('/api/levels', getLevels);
   router.post('/api/levels', prepareLevelInput, addLevel);
   router.get('/api/tags', getTags);

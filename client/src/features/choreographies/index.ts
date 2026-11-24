@@ -12,5 +12,6 @@ export { default as ChoreographyCreatePage } from "./views/ChoreographyCreatePag
 export { default as ChoreographyDetailPage } from "./views/ChoreographyDetailPage";
 export { ChoreographyFormListSection } from "./views/form/ChoreographyFormListSection";
 export { getDefaultSong } from "./model/choreography-songs";
-export { formatSongLabel } from "./model/song-search";
+export { formatSongLabel, resolveSongLinks } from "./model/song-search";
+export { getInformationCategoryIcon } from "./model/choreography-card";
 export { LEARNING_STATUS_OPTIONS } from "./model/learning-status";

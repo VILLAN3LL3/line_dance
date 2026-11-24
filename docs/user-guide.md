@@ -23,6 +23,11 @@ This guide describes the app's catalog, group administration, and course-plannin
 ## Personal
 
 - The "Personal" page lists your wishlist and your learned dances as two tabs with their counts. Use the marker in the card title to move a dance between the lists or remove it.
+- The "Practice" tab is your flash card box for learned dances. The tab shows how many dances are due; the cards are sorted with the most urgent dance first. Each card has two sides like a playing card: the front is the normal choreography card, the back shows the music, restarts and tags, when you practiced last, how often, and when the dance is due next. Click "Flip card" below the card to turn it.
+- On the back, choose the day you practiced (today by default; earlier days are fine, future days are not), optionally add a note and, for dances with several songs, the song, then click "Sure" if you remembered the dance or "Unsure" if you did not. "Unsure" brings the dance back tomorrow. The dance then moves to "Dances not due yet" until it is due again.
+- The higher the level of a dance (your personal level when set), the more often it is due, especially in the beginning. After four "Sure" in a row a beginner dance comes back after 7 days, an advanced one after 3 days. The intervals grow slowly; after roughly one to one and a half years of regular practice every dance, whatever its level, comes back every half year (182 days) and stays in the box for good.
+- "Log practice" records several dances at once: tick the dances, choose the day and click "Log". Use it when you practiced without the cards, also afterwards for earlier days.
+- The "Practice log" tab lists everything you logged by day. Use 🗑️ to delete a wrong entry. Dancing in a course session does not count as practice.
 
 ## Choreographers
 
