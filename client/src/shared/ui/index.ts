@@ -1,5 +1,6 @@
 export { ActionButton } from "./ActionButton";
 export { ActionGroup } from "./ActionGroup";
+export { ActionMenu } from "./ActionMenu";
 export { AutoCompleteInput } from "./AutoCompleteInput";
 export { BackButton } from "./BackButton";
 export { Badge } from "./Badge";

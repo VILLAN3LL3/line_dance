@@ -410,7 +410,8 @@
     flex-wrap: wrap;
   }
 
-  .course-actions button {
+  .course-actions button,
+  .course-actions .action-menu {
     flex: 1 1 auto;
     min-width: 120px;
   }
@@ -452,6 +453,7 @@
   }
 
   .course-actions button,
+  .course-actions .action-menu,
   .session-actions button {
     flex: 1;
   }

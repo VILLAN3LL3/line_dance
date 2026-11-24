@@ -34,6 +34,33 @@ test.describe("Dance Group Detail", () => {
     await expect(page.locator(".course-semester", { hasText: semester })).toBeVisible();
   });
 
+  test("exports the before and after course PDFs from the PDF menu", async ({ page, request }) => {
+    const groupId = await createDanceGroupViaApi(request, `E2E PDF Group ${Date.now()}`);
+    const courseId = await createDanceCourseViaApi(request, groupId, "WS2099", "2099-01-01");
+    const sessionId = await createSessionViaApi(request, courseId, "2099-01-01");
+    await addSessionChoreographyViaApi(
+      request,
+      sessionId,
+      await createChoreographyViaApi(request, `E2E PDF Dance ${Date.now()}`),
+    );
+
+    await page.goto(`/admin/groups/${groupId}`);
+    await page.getByRole("checkbox", { name: /Planned/i }).check();
+    const toggle = page.getByRole("button", { name: /PDF Export/ });
+
+    await toggle.click();
+    await expect(page.getByRole("menuitem")).toHaveText(["Before Course", "After Course"]);
+    const before = page.waitForEvent("download");
+    await page.getByRole("menuitem", { name: "Before Course" }).click();
+    expect((await before).suggestedFilename()).toMatch(/^Kurs-.*\.pdf$/);
+    await expect(page.getByRole("menu")).toBeHidden();
+
+    await toggle.click();
+    const after = page.waitForEvent("download");
+    await page.getByRole("menuitem", { name: "After Course" }).click();
+    expect((await after).suggestedFilename()).toMatch(/^Kursabschluss-.*\.pdf$/);
+  });
+
   test("search choreographies applies prefilled learned filters", async ({ page, request }) => {
     const choreoName = `E2E Learned ${Date.now()}`;
     const choreographyId = await createChoreographyViaApi(request, choreoName);

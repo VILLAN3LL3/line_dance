@@ -1,0 +1,41 @@
+.action-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.action-menu .action-menu__toggle {
+  width: 100%;
+}
+
+.action-menu__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 100%;
+  padding: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+
+.action-menu .action-menu__item {
+  flex: none;
+  min-width: 0;
+  padding: 8px 12px;
+  text-align: left;
+  white-space: nowrap;
+  background: transparent;
+  color: var(--color-text);
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.action-menu .action-menu__item:hover,
+.action-menu .action-menu__item:focus-visible {
+  background-color: #f4eef9;
+  color: var(--color-primary);
+}

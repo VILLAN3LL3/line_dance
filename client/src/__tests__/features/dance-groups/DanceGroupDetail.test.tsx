@@ -147,7 +147,7 @@ describe("DanceGroupDetail", () => {
     expect(await screen.findByText("(WS 2099)")).toBeInTheDocument();
   });
 
-  it("exports the participant PDF for a course and reports a failure", async () => {
+  it("offers the PDF exports for a course in a menu and reports a failure", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     URL.createObjectURL = vi.fn(() => "blob:pdf");
     URL.revokeObjectURL = vi.fn();
@@ -155,15 +155,24 @@ describe("DanceGroupDetail", () => {
     renderWithRoute();
     await screen.findByText("Group One");
 
-    const exportButton = () =>
-      screen.getByRole("button", { name: "Teilnehmenden-PDF exportieren" });
-    await waitFor(() => expect(exportButton()).toBeEnabled());
-    fireEvent.click(exportButton());
+    const openMenu = async () => {
+      const toggle = screen.getByRole("button", { name: /PDF Export/ });
+      await waitFor(() => expect(toggle).toBeEnabled());
+      fireEvent.click(toggle);
+    };
+
+    await openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Before Course" }));
+    await waitFor(() => expect(exportDanceCoursePdf).toHaveBeenCalledWith(1));
+    expect(exportParticipantCoursePdf).not.toHaveBeenCalled();
+
+    await openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "After Course" }));
     await waitFor(() => expect(exportParticipantCoursePdf).toHaveBeenCalledWith(1));
-    await waitFor(() => expect(exportButton()).toBeEnabled());
 
     vi.mocked(exportParticipantCoursePdf).mockRejectedValue(new Error("boom"));
-    fireEvent.click(exportButton());
+    await openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "After Course" }));
     expect(await screen.findByText(/boom|PDF-Export fehlgeschlagen/)).toBeInTheDocument();
   });
 

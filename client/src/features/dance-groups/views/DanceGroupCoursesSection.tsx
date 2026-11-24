@@ -7,6 +7,7 @@ import { buildCoursesWithStatus, selectVisibleCourses } from "../model/course-ov
 import { getYouTubePlaylistPageUrl } from "../../../shared/utils/youtube";
 import {
   ActionButton,
+  ActionMenu,
   ActionGroup,
   CheckboxFilter,
   EmptyState,
@@ -97,21 +98,17 @@ export const DanceGroupCoursesSection: React.FC<DanceGroupCoursesSectionProps> =
                 </div>
               </div>
               <ActionGroup className="course-actions">
-                <ActionButton
-                  onClick={() => onExportCoursePdf(course)}
-                  variant="secondary"
+                <ActionMenu
+                  label="PDF Export"
                   disabled={isLoading}
-                >
-                  PDF Export
-                </ActionButton>
-                <ActionButton
-                  onClick={() => onExportParticipantPdf(course)}
-                  variant="secondary"
-                  disabled={isLoading}
-                  aria-label="Teilnehmenden-PDF exportieren"
-                >
-                  Teilnehmenden-PDF
-                </ActionButton>
+                  items={[
+                    { label: "Before Course", onSelect: () => void onExportCoursePdf(course) },
+                    {
+                      label: "After Course",
+                      onSelect: () => void onExportParticipantPdf(course),
+                    },
+                  ]}
+                />
                 <ActionButton
                   onClick={() => navigate(`/admin/groups/${parsedGroupId}/courses/${course.id}`)}
                   variant="secondary"
