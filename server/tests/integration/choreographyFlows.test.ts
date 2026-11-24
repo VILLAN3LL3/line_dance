@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestDb, clearAllTables } from '../setup/testDb.ts';
-import { runQuery } from '../../scripts/db.ts';
+import { allQuery, runQuery } from '../../scripts/db.ts';
 import * as choreography from '../../features/choreographies/write-flow.ts';
 import {
   preparePartialWriteRequest,
@@ -154,6 +154,27 @@ describe('choreography integration flows', () => {
     const { data } = await reads.listChoreographies(preparePagination({}));
     expect(data.map((dance) => dance.name)).toEqual(['Dance']);
     expect(data[0].choreography_songs).toMatchObject([{ title: 'Keep', is_favorite: true }]);
+  });
+
+  it('rolls back a newly created genre when the song write fails', async () => {
+    await runQuery(
+      "CREATE TEMP TRIGGER fail_choreography_song BEFORE INSERT ON choreography_songs BEGIN SELECT RAISE(ABORT, 'Song failure'); END",
+    );
+    try {
+      await expect(
+        choreography.createChoreography(
+          prepareWriteRequest({
+            name: 'Dance',
+            level: 'BEGINNER',
+            choreography_songs: [{ title: 'New', bpm: 120, genre: 'Country' }],
+          }),
+        ),
+      ).rejects.toThrow('Song failure');
+    } finally {
+      await runQuery('DROP TRIGGER fail_choreography_song');
+    }
+
+    expect(await allQuery('SELECT name FROM genres')).toEqual([]);
   });
 
   it('expands hierarchy for exact searches and filters on attached tags', async () => {

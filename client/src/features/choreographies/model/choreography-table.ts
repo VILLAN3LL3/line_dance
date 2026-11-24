@@ -1,7 +1,16 @@
 import type { Choreography } from "../../../types";
+import { getDefaultSong } from "./choreography-songs";
 
 export type SortField =
-  "name" | "level" | "count" | "wall_count" | "creation_year" | `information:${string}`;
+  | "name"
+  | "level"
+  | "count"
+  | "wall_count"
+  | "creation_year"
+  | "bpm"
+  | "genre"
+  | "length"
+  | `information:${string}`;
 export type SortDirection = "asc" | "desc";
 
 const INFORMATION_PREFIX = "information:";
@@ -17,6 +26,19 @@ const compareBooleanFlag = (a: boolean, b: boolean): number => {
   if (a === b) return 0;
   return a ? -1 : 1;
 };
+
+const compareOptionalText = (a: string | undefined, b: string | undefined): number => {
+  if (a === undefined && b === undefined) return 0;
+  if (a === undefined) return 1;
+  if (b === undefined) return -1;
+  return a.localeCompare(b);
+};
+
+/** Music columns show the default song: the favorite, otherwise the first. */
+export const getDefaultSongMusic = (
+  choreography: Choreography,
+): { bpm?: number; genre?: string; length_seconds?: number } =>
+  getDefaultSong(choreography.choreography_songs) ?? {};
 
 const hasInformationCategory = (choreography: Choreography, category: string): boolean =>
   (choreography.choreography_information || []).some((item) => item.category === category);
@@ -60,6 +82,22 @@ export const sortChoreographies = (
         return compareOptionalNumber(a.wall_count, b.wall_count) * multiplier;
       case "creation_year":
         return compareOptionalNumber(a.creation_year, b.creation_year) * multiplier;
+      case "bpm":
+        return (
+          compareOptionalNumber(getDefaultSongMusic(a).bpm, getDefaultSongMusic(b).bpm) * multiplier
+        );
+      case "length":
+        return (
+          compareOptionalNumber(
+            getDefaultSongMusic(a).length_seconds,
+            getDefaultSongMusic(b).length_seconds,
+          ) * multiplier
+        );
+      case "genre":
+        return (
+          compareOptionalText(getDefaultSongMusic(a).genre, getDefaultSongMusic(b).genre) *
+          multiplier
+        );
       default:
         if (field.startsWith(INFORMATION_PREFIX)) {
           const category = field.slice(INFORMATION_PREFIX.length);

@@ -123,6 +123,24 @@ describe('POST /api/saved-filters', () => {
     expect(res.body.filters).not.toHaveProperty('unknown');
   });
 
+  it('keeps the music filters and drops empty ones', async () => {
+    const res = await createConfig('Music', {
+      min_bpm: 100,
+      max_bpm: 130,
+      max_length_seconds: 240,
+      genres: ['Country', 'Pop'],
+    });
+    expect(res.body.filters).toEqual({
+      min_bpm: 100,
+      max_bpm: 130,
+      max_length_seconds: 240,
+      genres: ['Country', 'Pop'],
+    });
+
+    const empty = await createConfig('No music', { min_bpm: null, genres: [] });
+    expect(empty.body.filters).toEqual({});
+  });
+
   it('reports an invalid name before attempting filter conversion', async () => {
     const res = await createConfig('', { max_count: { toString: null } });
     expect(res.status).toBe(400);

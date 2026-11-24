@@ -56,6 +56,18 @@ export async function getTags(
   }
 }
 
+export async function getGenres(
+  _req: Request,
+  res: Response<string[] | ErrorResponse>,
+): Promise<void> {
+  try {
+    res.json(await metadata.getGenres());
+  } catch (error) {
+    captureError(error);
+    res.status(500).json({ error: 'Failed to fetch genres' });
+  }
+}
+
 export async function getChoreographyInfoCategories(
   _req: Request,
   res: Response<string[] | ErrorResponse>,

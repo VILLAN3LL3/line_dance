@@ -497,6 +497,22 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/genres': {
+      get: {
+        tags: ['Metadata'],
+        summary: 'Get all genres used by songs',
+        responses: {
+          200: {
+            description: 'Genre names',
+            content: {
+              'application/json': {
+                schema: { type: 'array', items: { type: 'string' } },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/choreography-info-categories': {
       get: {
         tags: ['Metadata'],
@@ -1769,6 +1785,9 @@ export const openApiSpec = {
           youtube_url: { type: 'string', description: 'Optional; otherwise a search link is used' },
           spotify_url: { type: 'string', description: 'Optional; otherwise a search link is used' },
           note: { type: 'string' },
+          bpm: { type: 'integer', minimum: 30, maximum: 300 },
+          length_seconds: { type: 'integer', minimum: 1, maximum: 3600 },
+          genre: { type: 'string', description: 'Name of a genre; see GET /api/genres' },
           is_favorite: {
             type: 'boolean',
             description:
@@ -1827,6 +1846,12 @@ export const openApiSpec = {
                 youtube_url: { type: 'string' },
                 spotify_url: { type: 'string' },
                 note: { type: 'string' },
+                bpm: { type: 'integer', minimum: 30, maximum: 300 },
+                length_seconds: { type: 'integer', minimum: 1, maximum: 3600 },
+                genre: {
+                  type: 'string',
+                  description: 'Created on demand (case-insensitive) and removed when unused',
+                },
                 is_favorite: { type: 'boolean' },
               },
               required: ['title'],

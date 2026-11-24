@@ -149,3 +149,10 @@
 .alternative-songs .song-search-buttons-compact {
   margin-top: 4px;
 }
+
+.song-music {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}

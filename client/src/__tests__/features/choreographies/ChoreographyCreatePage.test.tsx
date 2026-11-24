@@ -14,6 +14,7 @@ import {
   getChoreographyInfoCategories,
   getLevels,
   getStepFigures,
+  getGenres,
   getTags,
 } from "../../../features/metadata/api";
 import { renderWithQueryClient as render } from "../../helpers/renderWithQueryClient";
@@ -39,6 +40,7 @@ vi.mock("../../../features/metadata/api", () => ({
   getLevels: vi.fn(),
   getStepFigures: vi.fn(),
   getTags: vi.fn(),
+  getGenres: vi.fn(),
 }));
 
 const DUPLICATE = { id: 7, name: "River Dance", level: "BEGINNER", authors: ["Alice"] };
@@ -61,6 +63,7 @@ describe("ChoreographyCreatePage", () => {
       "Styling",
     ]);
     vi.mocked(getTags).mockResolvedValue([]);
+    vi.mocked(getGenres).mockResolvedValue([]);
     vi.mocked(getStepFigures).mockResolvedValue([]);
     vi.mocked(createChoreography).mockResolvedValue({ id: 99, message: "created" });
     vi.mocked(validateChoreography).mockResolvedValue();
@@ -589,6 +592,9 @@ describe("ChoreographyCreatePage", () => {
           youtube_url: "https://youtu.be/1",
           spotify_url: "",
           note: "",
+          bpm: "",
+          length_seconds: "",
+          genre: "",
           is_favorite: false,
         },
         {
@@ -597,9 +603,69 @@ describe("ChoreographyCreatePage", () => {
           youtube_url: "",
           spotify_url: "",
           note: "",
+          bpm: "",
+          length_seconds: "",
+          genre: "",
           is_favorite: true,
         },
       ]);
+    });
+
+    it("saves BPM, genre and the length as seconds", async () => {
+      vi.mocked(getGenres).mockResolvedValue(["Country"]);
+      await openSongsTab();
+      fireEvent.change(screen.getByLabelText("Title 1"), { target: { value: "Song" } });
+      fireEvent.change(screen.getByLabelText("BPM 1 (optional)"), { target: { value: " 120 " } });
+      fireEvent.change(screen.getByLabelText("Length 1 (optional)"), { target: { value: "3:45" } });
+      fireEvent.change(screen.getByLabelText("Genre 1 (optional)"), {
+        target: { value: "Country" },
+      });
+      await waitFor(() => {
+        expect(
+          document.querySelector('#choreography-song-genres option[value="Country"]'),
+        ).not.toBeNull();
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+
+      await waitFor(() => {
+        expect(createChoreography).toHaveBeenCalledOnce();
+      });
+      expect(vi.mocked(createChoreography).mock.calls[0][0].choreography_songs?.[0]).toMatchObject({
+        title: "Song",
+        bpm: 120,
+        length_seconds: 225,
+        genre: "Country",
+      });
+    });
+
+    it("sends text that is not a length unchanged and shows the backend issue", async () => {
+      vi.mocked(validateChoreography).mockRejectedValueOnce(
+        validationFailure([
+          { field: "choreography_songs.0.bpm", key: "invalid_integer" },
+          { field: "choreography_songs.0.length_seconds", key: "invalid_integer" },
+        ]),
+      );
+      await openSongsTab();
+      fireEvent.change(screen.getByLabelText("Title 1"), { target: { value: "Song" } });
+      fireEvent.change(screen.getByLabelText("BPM 1 (optional)"), { target: { value: "fast" } });
+      fireEvent.change(screen.getByLabelText("Length 1 (optional)"), { target: { value: "225" } });
+      fireEvent.click(screen.getByRole("tab", { name: "Basic Information" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+
+      fireEvent.click(await screen.findByRole("tab", { name: "Songs, validation errors" }));
+      const bpm = screen.getByLabelText("BPM 1 (optional)");
+      const length = screen.getByLabelText("Length 1 (optional)");
+      expect(bpm).toHaveAttribute("aria-invalid", "true");
+      expect(bpm).toHaveAccessibleDescription("Enter a whole number from 30 to 300.");
+      expect(length).toHaveAttribute("aria-invalid", "true");
+      expect(length).toHaveAccessibleDescription(
+        "Enter the length as m:ss, e.g. 3:45 (up to 60:00).",
+      );
+      expect(createChoreography).not.toHaveBeenCalled();
+
+      fireEvent.change(bpm, { target: { value: "120" } });
+      expect(bpm).not.toHaveAttribute("aria-invalid");
+      expect(length).toHaveAttribute("aria-invalid", "true");
     });
 
     it("removes a song and keeps a trailing empty row", async () => {

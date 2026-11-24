@@ -874,6 +874,42 @@ const migrations: Migration[] = [
       });
     },
   },
+  {
+    id: '017_add_song_music_metadata',
+    up: async () => {
+      await runQuery(
+        `CREATE TABLE IF NOT EXISTS genres (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL COLLATE NOCASE UNIQUE
+        )`,
+        [],
+        dbName,
+      );
+      const existing = await allQuery<NamedRow>(
+        `SELECT name FROM pragma_table_info('choreography_songs')`,
+        [],
+        dbName,
+      );
+      const columns: [string, string][] = [
+        ['bpm', 'INTEGER'],
+        ['length_seconds', 'INTEGER'],
+        ['genre_id', 'INTEGER REFERENCES genres(id)'],
+      ];
+      await runSequential(columns, async ([column, definition]) => {
+        if (existing.some((row) => row.name === column)) return;
+        await runQuery(
+          `ALTER TABLE choreography_songs ADD COLUMN ${column} ${definition}`,
+          [],
+          dbName,
+        );
+      });
+      await runQuery(
+        'CREATE INDEX IF NOT EXISTS choreography_songs_genre ON choreography_songs (genre_id)',
+        [],
+        dbName,
+      );
+    },
+  },
 ];
 
 export async function runChoreographyMigrations(): Promise<void> {

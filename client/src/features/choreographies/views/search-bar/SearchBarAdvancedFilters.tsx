@@ -3,6 +3,7 @@ import React from "react";
 import type { SavedFiltersViewModel } from "../../../saved-filters";
 import { SearchBarLevelFilter } from "./SearchBarLevelFilter";
 import { SearchBarMaxCountFilter } from "./SearchBarMaxCountFilter";
+import { SearchBarMusicFilter, type SearchBarMusicFilterProps } from "./SearchBarMusicFilter";
 import { SavedConfigurationsPanel } from "../../../saved-filters";
 import { SearchBarSelectableListFilter } from "./SearchBarSelectableListFilter";
 import { SearchBarStepFiguresFilter } from "./SearchBarStepFiguresFilter";
@@ -65,6 +66,7 @@ interface SearchBarAdvancedFiltersProps {
   // Rating filter
   minRating: number | null;
   onMinRatingChange: (value: number | null) => void;
+  music: SearchBarMusicFilterProps;
   savedFilters: SavedFiltersViewModel;
 }
 
@@ -116,6 +118,7 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
   isLoading,
   minRating,
   onMinRatingChange,
+  music,
   savedFilters,
 }) => (
   <div className="advanced-filters">
@@ -197,6 +200,8 @@ export const SearchBarAdvancedFilters: React.FC<SearchBarAdvancedFiltersProps> =
             )}
           </div>
         </div>
+
+        <SearchBarMusicFilter {...music} />
       </div>
     </div>
 

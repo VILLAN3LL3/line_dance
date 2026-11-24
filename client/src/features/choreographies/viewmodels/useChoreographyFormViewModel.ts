@@ -4,6 +4,7 @@ import { getFieldIssues } from "../../../shared/http/apiErrors";
 import type { ChoreographyFormData } from "../../../types";
 import {
   useAuthorsQuery,
+  useGenresQuery,
   useInfoCategoriesQuery,
   useLevelsQuery,
   useStepFiguresQuery,
@@ -81,6 +82,7 @@ export const useChoreographyFormViewModel = ({
   const tagsQuery = useTagsQuery();
   const figuresQuery = useStepFiguresQuery();
   const categoriesQuery = useInfoCategoriesQuery();
+  const genresQuery = useGenresQuery();
   const stepSheetUrlCheck = useUrlCheck();
   const demoVideoUrlCheck = useUrlCheck();
   const tutorialVideoUrlCheck = useUrlCheck();
@@ -262,6 +264,7 @@ export const useChoreographyFormViewModel = ({
       isValidating,
       inputs,
       options,
+      genreOptions: genresQuery.data ?? NO_OPTIONS,
       levels: levelsQuery.data ?? [],
       informationCategories,
       customCategoryRowIds,

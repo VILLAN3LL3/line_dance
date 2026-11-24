@@ -16,6 +16,10 @@ export async function getTags(): Promise<string[]> {
   return (await metadata.listTags()).map((row) => row.name);
 }
 
+export async function getGenres(): Promise<string[]> {
+  return (await metadata.listGenres()).map((row) => row.name);
+}
+
 export async function getInformationCategories(): Promise<string[]> {
   return (await metadata.listInformationCategories()).map((row) => row.name);
 }

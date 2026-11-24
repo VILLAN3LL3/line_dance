@@ -1,8 +1,15 @@
 import type { SearchFilters } from "../../../types";
+import { formatLength, parseLength } from "./song-music";
 
 export interface SearchBarFilterValues {
   searchTerm: string;
   songArtistTerm: string;
+  /** BPM and length are typed text; text that does not parse sets no filter. */
+  minBpm: string;
+  maxBpm: string;
+  maxLength: string;
+  selectedGenres: string[];
+  inputGenre: string;
   levelMode: "selected" | "max";
   selectedLevel: string[];
   maxLevelValue: number | null;
@@ -26,6 +33,11 @@ export interface SearchBarFilterValues {
 export const defaultSearchBarFilterValues = (maxCountLimit = 0): SearchBarFilterValues => ({
   searchTerm: "",
   songArtistTerm: "",
+  minBpm: "",
+  maxBpm: "",
+  maxLength: "",
+  selectedGenres: [],
+  inputGenre: "",
   levelMode: "selected",
   selectedLevel: [],
   maxLevelValue: null,
@@ -52,6 +64,12 @@ export const searchBarValuesFromFilters = (
 ): SearchBarFilterValues => ({
   searchTerm: filters.search || "",
   songArtistTerm: filters.song_artist || "",
+  minBpm: filters.min_bpm === undefined ? "" : String(filters.min_bpm),
+  maxBpm: filters.max_bpm === undefined ? "" : String(filters.max_bpm),
+  maxLength:
+    filters.max_length_seconds === undefined ? "" : formatLength(filters.max_length_seconds),
+  selectedGenres: filters.genres || [],
+  inputGenre: "",
   levelMode:
     filters.max_level_value !== undefined &&
     (!Array.isArray(filters.level) || filters.level.length === 0)
@@ -81,12 +99,23 @@ export const searchBarValuesFromFilters = (
   inputAuthor: "",
 });
 
+const parseWholeNumber = (text: string): number | undefined =>
+  /^\d+$/.test(text.trim()) ? Number(text.trim()) : undefined;
+
+/** Typed length text that is neither empty nor a valid m:ss value. */
+export const isLengthInputInvalid = (text: string): boolean =>
+  text.trim() !== "" && parseLength(text) === null;
+
 export const buildSearchFilters = (
   values: SearchBarFilterValues,
   maxCountLimit: number,
 ): SearchFilters => ({
   search: values.searchTerm || undefined,
   song_artist: values.songArtistTerm || undefined,
+  min_bpm: parseWholeNumber(values.minBpm),
+  max_bpm: parseWholeNumber(values.maxBpm),
+  max_length_seconds: parseLength(values.maxLength) ?? undefined,
+  genres: values.selectedGenres.length > 0 ? values.selectedGenres : undefined,
   level:
     values.levelMode === "selected" && values.selectedLevel.length > 0
       ? values.selectedLevel
@@ -158,6 +187,18 @@ export const toggleAuthor = (values: Values, author: string): Values => ({
   ...values,
   selectedAuthors: toggleIgnoreCase(values.selectedAuthors, author),
 });
+
+export const toggleGenre = (values: Values, genre: string): Values => ({
+  ...values,
+  selectedGenres: toggleIgnoreCase(values.selectedGenres, genre),
+});
+
+export const addGenre = (values: Values, input: string, genreOptions: string[]): Values => {
+  const trimmed = input.trim();
+  const genre = findOptionIgnoreCase(genreOptions, trimmed) ?? trimmed;
+  if (!genre || includesIgnoreCase(values.selectedGenres, genre)) return values;
+  return { ...values, selectedGenres: [...values.selectedGenres, genre], inputGenre: "" };
+};
 
 export const toggleLevel = (values: Values, level: string): Values => ({
   ...values,

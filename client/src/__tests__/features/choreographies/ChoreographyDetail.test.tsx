@@ -15,6 +15,7 @@ import {
   getChoreographyInfoCategories,
   getLevels,
   getStepFigures,
+  getGenres,
   getTags,
 } from "../../../features/metadata/api";
 import { GlobalApiErrorNotice } from "../../../app/GlobalApiErrorNotice";
@@ -43,6 +44,7 @@ vi.mock("../../../features/metadata/api", () => ({
   getAuthors: vi.fn(),
   getChoreographyInfoCategories: vi.fn(),
   getTags: vi.fn(),
+  getGenres: vi.fn(),
   getStepFigures: vi.fn(),
 }));
 
@@ -90,6 +92,7 @@ describe("ChoreographyDetail", () => {
       "Styling",
     ]);
     vi.mocked(getTags).mockResolvedValue([]);
+    vi.mocked(getGenres).mockResolvedValue([]);
     vi.mocked(getStepFigures).mockResolvedValue([]);
   });
 

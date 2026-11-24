@@ -69,3 +69,32 @@ describe('choreography songs migration', () => {
     expect(await allQuery('SELECT * FROM personal_data.choreography_favorite_songs')).toEqual([]);
   });
 });
+
+describe('song music metadata migration', () => {
+  it('adds the metadata columns without touching existing songs and can run again', async () => {
+    await open();
+    await runQuery(
+      "INSERT INTO choreographies (name, level_id) VALUES ('Dance', (SELECT id FROM levels LIMIT 1))",
+    );
+    await runQuery(
+      "INSERT INTO choreography_songs (choreography_id, title) SELECT id, 'Song' FROM choreographies",
+    );
+
+    // Simulate a database from before the migration.
+    await runQuery('DROP INDEX choreography_songs_genre');
+    await runQuery('ALTER TABLE choreography_songs DROP COLUMN genre_id');
+    await runQuery('ALTER TABLE choreography_songs DROP COLUMN bpm');
+    await runQuery('ALTER TABLE choreography_songs DROP COLUMN length_seconds');
+    await runQuery('DROP TABLE genres');
+    await runQuery("DELETE FROM schema_migrations WHERE id = '017_add_song_music_metadata'");
+
+    await runChoreographyMigrations();
+    await runQuery("DELETE FROM schema_migrations WHERE id = '017_add_song_music_metadata'");
+    await runChoreographyMigrations();
+
+    expect(
+      await allQuery('SELECT title, bpm, length_seconds, genre_id FROM choreography_songs'),
+    ).toEqual([{ title: 'Song', bpm: null, length_seconds: null, genre_id: null }]);
+    expect(await allQuery('SELECT * FROM genres')).toEqual([]);
+  });
+});

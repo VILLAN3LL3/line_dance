@@ -148,6 +148,7 @@ export const ChoreographyForm: React.FC<ChoreographyFormProps> = ({
         {activeTab === "songs" && (
           <SongsTab
             songs={formData.choreography_songs ?? []}
+            genreOptions={state.genreOptions}
             errors={fieldErrors}
             onChange={actions.changeSong}
             onFavorite={actions.chooseFavoriteSong}

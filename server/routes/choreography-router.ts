@@ -21,6 +21,7 @@ import {
   getLevels,
   prepareLevelInput,
   addLevel,
+  getGenres,
   getTags,
   getChoreographyInfoCategories,
   getAuthors,
@@ -67,6 +68,7 @@ export function createChoreographyRouter(): Router {
   router.get('/api/levels', getLevels);
   router.post('/api/levels', prepareLevelInput, addLevel);
   router.get('/api/tags', getTags);
+  router.get('/api/genres', getGenres);
   router.get('/api/choreography-info-categories', getChoreographyInfoCategories);
   router.get('/api/authors', getAuthors);
   router.get('/api/authors/stats', getAuthorStats);

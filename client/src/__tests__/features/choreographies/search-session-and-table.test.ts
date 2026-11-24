@@ -74,6 +74,41 @@ describe("choreography-table model", () => {
     expect(result.map((c) => c.id)).toEqual([2, 1]);
   });
 
+  describe("music columns", () => {
+    const withSongs = (id: number, songs: Choreography["choreography_songs"]) =>
+      choreo({ id, choreography_songs: songs });
+    const song = (id: number, overrides: Partial<Choreography["choreography_songs"][number]>) => ({
+      id,
+      title: `Song ${id}`,
+      is_favorite: false,
+      ...overrides,
+    });
+    const items = [
+      withSongs(1, [song(1, { bpm: 150, genre: "Pop", length_seconds: 180 })]),
+      withSongs(2, [song(2, { bpm: 90, genre: "Country", length_seconds: 240 })]),
+      withSongs(3, []),
+    ];
+
+    it("sorts by the default song and puts choreographies without values last", () => {
+      expect(sortChoreographies(items, "bpm", "asc").map((c) => c.id)).toEqual([2, 1, 3]);
+      expect(sortChoreographies(items, "length", "asc").map((c) => c.id)).toEqual([1, 2, 3]);
+      expect(sortChoreographies(items, "genre", "asc").map((c) => c.id)).toEqual([2, 1, 3]);
+      expect(sortChoreographies(items, "bpm", "desc").map((c) => c.id)).toEqual([3, 1, 2]);
+    });
+
+    it("uses the favorite song rather than the first one", () => {
+      const sorted = sortChoreographies(
+        [
+          withSongs(1, [song(1, { bpm: 60 }), song(2, { bpm: 200, is_favorite: true })]),
+          withSongs(2, [song(3, { bpm: 100 })]),
+        ],
+        "bpm",
+        "asc",
+      );
+      expect(sorted.map((c) => c.id)).toEqual([2, 1]);
+    });
+  });
+
   it("flips direction on the active column and resets on a new one", () => {
     expect(nextSort({ field: "name", direction: "asc" }, "name")).toEqual({
       field: "name",

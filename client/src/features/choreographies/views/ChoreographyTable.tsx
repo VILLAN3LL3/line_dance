@@ -6,7 +6,13 @@ import { openInNewTab } from "../../../shared/browser/window";
 import { ChoreographyLevelBadge } from "./ChoreographyLevelBadge";
 import { ActionButton } from "../../../shared/ui";
 import { Choreography } from "../../../types";
-import { getSortIndicator, type SortDirection, type SortField } from "../model/choreography-table";
+import {
+  getDefaultSongMusic,
+  getSortIndicator,
+  type SortDirection,
+  type SortField,
+} from "../model/choreography-table";
+import { formatLength } from "../model/song-music";
 
 interface ChoreographyTableState {
   sortField: SortField;
@@ -61,6 +67,15 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
               <th className="sortable" onClick={() => onToggleSort("creation_year")}>
                 Year{getSortIndicator(sortField, "creation_year", sortDirection)}
               </th>
+              <th className="sortable" onClick={() => onToggleSort("bpm")}>
+                BPM{getSortIndicator(sortField, "bpm", sortDirection)}
+              </th>
+              <th className="sortable" onClick={() => onToggleSort("genre")}>
+                Genre{getSortIndicator(sortField, "genre", sortDirection)}
+              </th>
+              <th className="sortable" onClick={() => onToggleSort("length")}>
+                Length{getSortIndicator(sortField, "length", sortDirection)}
+              </th>
               {informationCategories.map((category) => {
                 const field: SortField = `information:${category}`;
                 return (
@@ -84,6 +99,7 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
           </thead>
           <tbody>
             {sortedChoreographies.map((choreo) => {
+              const music = getDefaultSongMusic(choreo);
               return (
                 <tr
                   key={choreo.id}
@@ -99,6 +115,11 @@ export const ChoreographyTable: React.FC<ChoreographyTableProps> = ({
                   <td>{choreo.count ?? "-"}</td>
                   <td>{choreo.wall_count ?? "-"}</td>
                   <td>{choreo.creation_year ?? "-"}</td>
+                  <td>{music.bpm ?? "-"}</td>
+                  <td>{music.genre ?? "-"}</td>
+                  <td>
+                    {music.length_seconds === undefined ? "-" : formatLength(music.length_seconds)}
+                  </td>
                   {informationCategories.map((category) => {
                     const hasInformation = (choreo.choreography_information || []).some(
                       (information) => information.category === category,

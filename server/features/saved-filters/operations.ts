@@ -24,6 +24,10 @@ const nonNegativeInteger = z.preprocess(
 const filterFieldsSchema = z.object({
   search: stringField,
   song_artist: stringField,
+  min_bpm: nonNegativeInteger,
+  max_bpm: nonNegativeInteger,
+  max_length_seconds: nonNegativeInteger,
+  genres: stringArray,
   level: stringArray,
   max_level_value: nonNegativeInteger,
   step_figures: stringArray,
@@ -64,6 +68,10 @@ export function normalizeSavedFilters(rawFilters: unknown): SavedFilters {
   const normalized: SavedFilters = {};
   if (parsed.search) normalized.search = parsed.search;
   if (parsed.song_artist) normalized.song_artist = parsed.song_artist;
+  if (parsed.min_bpm !== null) normalized.min_bpm = parsed.min_bpm;
+  if (parsed.max_bpm !== null) normalized.max_bpm = parsed.max_bpm;
+  if (parsed.max_length_seconds !== null) normalized.max_length_seconds = parsed.max_length_seconds;
+  if (parsed.genres.length > 0) normalized.genres = parsed.genres;
   if (parsed.level.length > 0) normalized.level = parsed.level;
 
   if (parsed.max_level_value !== null) normalized.max_level_value = parsed.max_level_value;

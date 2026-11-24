@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   addAuthor,
   addFigure,
+  addGenre,
   addLevel,
   addTag,
   buildSearchFilters,
@@ -10,8 +11,10 @@ import {
   changeWithoutStepFigures,
   clampMaxCount,
   defaultSearchBarFilterValues,
+  isLengthInputInvalid,
   searchBarValuesFromFilters,
   toggleFigure,
+  toggleGenre,
   toggleLevel,
 } from "../../../features/choreographies/model/search-filters";
 
@@ -28,6 +31,52 @@ describe("search-filters model", () => {
     };
     const values = searchBarValuesFromFilters(filters, 64);
     expect(buildSearchFilters(values, 64)).toMatchObject(filters);
+  });
+
+  it("round-trips the music filters with the length as m:ss text", () => {
+    const filters = {
+      min_bpm: 100,
+      max_bpm: 130,
+      max_length_seconds: 225,
+      genres: ["Country", "Pop"],
+    };
+    const values = searchBarValuesFromFilters(filters, 0);
+    expect(values).toMatchObject({ minBpm: "100", maxBpm: "130", maxLength: "3:45" });
+    expect(buildSearchFilters(values, 0)).toMatchObject(filters);
+  });
+
+  it("sets no music filter for blank or unparsable text", () => {
+    const built = buildSearchFilters(
+      {
+        ...defaultSearchBarFilterValues(),
+        minBpm: "fast",
+        maxBpm: "",
+        maxLength: "225",
+      },
+      0,
+    );
+    expect(built).toMatchObject({
+      min_bpm: undefined,
+      max_bpm: undefined,
+      max_length_seconds: undefined,
+      genres: undefined,
+    });
+  });
+
+  it("flags only non-empty text that is not a length", () => {
+    expect(isLengthInputInvalid("")).toBe(false);
+    expect(isLengthInputInvalid("3:45")).toBe(false);
+    expect(isLengthInputInvalid("225")).toBe(true);
+  });
+
+  it("adds genres once, with the spelling of the option, and toggles them", () => {
+    const base = defaultSearchBarFilterValues();
+    const added = addGenre({ ...base, inputGenre: "country" }, "country", ["Country"]);
+    expect(added.selectedGenres).toEqual(["Country"]);
+    expect(added.inputGenre).toBe("");
+    expect(addGenre(added, "COUNTRY", ["Country"])).toBe(added);
+    expect(addGenre(base, "  ", [])).toBe(base);
+    expect(toggleGenre(added, "country").selectedGenres).toEqual([]);
   });
 
   it("derives max level and exclude tag modes from the filters", () => {

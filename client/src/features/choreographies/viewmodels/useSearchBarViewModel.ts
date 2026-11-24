@@ -1,11 +1,18 @@
 import { useMemo, useState } from "react";
 
 import type { SearchFilters } from "../../../types";
-import { useAuthorsQuery, useLevelsQuery, useStepFiguresQuery, useTagsQuery } from "../../metadata";
+import {
+  useAuthorsQuery,
+  useGenresQuery,
+  useLevelsQuery,
+  useStepFiguresQuery,
+  useTagsQuery,
+} from "../../metadata";
 import { areFiltersEqual } from "../model/search-session";
 import {
   addAuthor,
   addFigure,
+  addGenre,
   addLevel,
   addTag,
   buildSearchFilters,
@@ -22,6 +29,7 @@ import {
   searchBarValuesFromFilters,
   toggleAuthor,
   toggleFigure,
+  toggleGenre,
   toggleLevel,
   type SearchBarFilterValues,
 } from "../model/search-filters";
@@ -46,6 +54,7 @@ export const useSearchBarViewModel = ({
   const figuresQuery = useStepFiguresQuery();
   const tagsQuery = useTagsQuery();
   const authorsQuery = useAuthorsQuery();
+  const genresQuery = useGenresQuery();
   const maxCountQuery = useMaxChoreographyCountQuery();
 
   const levels = levelsQuery.data;
@@ -57,6 +66,7 @@ export const useSearchBarViewModel = ({
   const figureOptions = figuresQuery.data ?? NO_OPTIONS;
   const tagOptions = tagsQuery.data ?? NO_OPTIONS;
   const authorOptions = authorsQuery.data ?? NO_OPTIONS;
+  const genreOptions = genresQuery.data ?? NO_OPTIONS;
   const maxCountLimit = maxCountQuery.data ?? 0;
 
   const [rawValues, setRawValues] = useState<SearchBarFilterValues>(() =>
@@ -155,6 +165,19 @@ export const useSearchBarViewModel = ({
     }
   };
 
+  const inputGenre = (value: string, inputType?: string) => {
+    const trimmed = value.trim();
+    update({ inputGenre: value });
+    if (
+      trimmed &&
+      findOptionIgnoreCase(genreOptions, trimmed) &&
+      !includesIgnoreCase(values.selectedGenres, trimmed) &&
+      isDatalistInputType(inputType)
+    ) {
+      transform((current) => addGenre(current, value, genreOptions));
+    }
+  };
+
   return {
     state: {
       values,
@@ -164,6 +187,7 @@ export const useSearchBarViewModel = ({
       figureOptions,
       tagOptions,
       authorOptions,
+      genreOptions,
       savedFilters: savedFilters.state,
     },
     actions: {
@@ -206,6 +230,13 @@ export const useSearchBarViewModel = ({
       addAuthorFromInput: (value?: string) =>
         transform((current) => addAuthor(current, value ?? current.inputAuthor, authorOptions)),
       toggleAuthor: (author: string) => transform((current) => toggleAuthor(current, author)),
+      changeMinBpm: (minBpm: string) => update({ minBpm }),
+      changeMaxBpm: (maxBpm: string) => update({ maxBpm }),
+      changeMaxLength: (maxLength: string) => update({ maxLength }),
+      inputGenre,
+      addGenreFromInput: (value?: string) =>
+        transform((current) => addGenre(current, value ?? current.inputGenre, genreOptions)),
+      toggleGenre: (genre: string) => transform((current) => toggleGenre(current, genre)),
       changeMinRating: (minRating: number | null) => update({ minRating }),
       savedFilters: savedFilters.actions,
     },

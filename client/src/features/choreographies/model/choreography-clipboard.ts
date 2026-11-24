@@ -1,5 +1,6 @@
 import type { Choreography, ChoreographySong } from "../../../types";
 import { splitSongs } from "./choreography-songs";
+import { formatSongMusicSummary } from "./song-music";
 import { formatSongLabel, resolveSongLinks } from "./song-search";
 
 /**
@@ -72,13 +73,22 @@ function buildMusicSection(choreography: Choreography): string[] {
   if (primary.note?.trim()) {
     musicLines.push(`• Note: ${primary.note.trim()}`);
   }
+  const primaryMusic = formatSongMusicSummary(primary);
+  if (primaryMusic) {
+    musicLines.push(`• Details: ${primaryMusic}`);
+  }
   musicLines.push(...buildLinkLines(primary, "", true));
 
   if (alternatives.length > 0) {
     musicLines.push("", "Alternative songs:");
     for (const song of alternatives) {
       const note = song.note?.trim() ? ` (${song.note.trim()})` : "";
-      musicLines.push(`• ${formatSongLabel(song)}${note}`, ...buildLinkLines(song, "  ", false));
+      const music = formatSongMusicSummary(song);
+      const musicSuffix = music ? ` – ${music}` : "";
+      musicLines.push(
+        `• ${formatSongLabel(song)}${note}${musicSuffix}`,
+        ...buildLinkLines(song, "  ", false),
+      );
     }
   }
 

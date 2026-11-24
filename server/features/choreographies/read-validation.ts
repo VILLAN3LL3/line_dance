@@ -15,6 +15,10 @@ const searchQuery = z
   .object({
     search: queryValue,
     song_artist: queryValue,
+    min_bpm: queryValue,
+    max_bpm: queryValue,
+    max_length_seconds: queryValue,
+    genres: queryValue,
     level: queryValue,
     max_level_value: queryValue,
     step_figures: queryValue,

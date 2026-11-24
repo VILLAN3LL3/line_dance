@@ -16,6 +16,10 @@ export async function listTags(): Promise<{ name: string }[]> {
   return allQuery<{ name: string }>('SELECT name FROM personal_data.tags ORDER BY name');
 }
 
+export async function listGenres(): Promise<{ name: string }[]> {
+  return allQuery<{ name: string }>('SELECT name FROM genres ORDER BY name');
+}
+
 export async function listInformationCategories(): Promise<{ name: string }[]> {
   return allQuery<{ name: string }>(
     'SELECT name FROM choreography_info_categories ORDER BY is_seeded DESC, id ASC',

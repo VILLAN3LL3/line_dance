@@ -71,6 +71,11 @@ CREATE TABLE IF NOT EXISTS choreographies (
   FOREIGN KEY (level_id) REFERENCES levels(id)
 );
 
+CREATE TABLE IF NOT EXISTS genres (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL COLLATE NOCASE UNIQUE
+);
+
 CREATE TABLE IF NOT EXISTS choreography_songs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   choreography_id INTEGER NOT NULL REFERENCES choreographies(id) ON DELETE CASCADE,
@@ -79,7 +84,10 @@ CREATE TABLE IF NOT EXISTS choreography_songs (
   youtube_url TEXT,
   spotify_url TEXT,
   note TEXT,
-  position INTEGER NOT NULL DEFAULT 0
+  position INTEGER NOT NULL DEFAULT 0,
+  bpm INTEGER,
+  length_seconds INTEGER,
+  genre_id INTEGER REFERENCES genres(id)
 );
 
 CREATE TABLE IF NOT EXISTS choreography_info_categories (
@@ -272,6 +280,7 @@ export async function clearChoreographyTables(): Promise<void> {
   await run(testDb, 'DELETE FROM personal_data.choreography_personal_levels');
   await run(testDb, 'DELETE FROM personal_data.choreography_favorite_songs');
   await run(testDb, 'DELETE FROM choreography_songs');
+  await run(testDb, 'DELETE FROM genres');
   await run(testDb, 'DELETE FROM choreography_information');
   await run(testDb, 'DELETE FROM choreography_info_categories');
   await run(

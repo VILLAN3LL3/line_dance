@@ -160,7 +160,10 @@ describe("choreography-form model", () => {
         ],
       }),
     );
-    expect(submitted.choreography_songs).toEqual([{ id: 4, title: "A" }, { title: "B" }]);
+    expect(submitted.choreography_songs).toEqual([
+      { id: 4, title: "A", bpm: "", length_seconds: "" },
+      { title: "B", bpm: "", length_seconds: "" },
+    ]);
   });
 
   it("maps song issues to rows by id and the tab error badge", () => {

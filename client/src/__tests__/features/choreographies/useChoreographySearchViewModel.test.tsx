@@ -10,7 +10,13 @@ import {
   getMaxChoreographyCount,
   searchChoreographies,
 } from "../../../features/choreographies/api";
-import { getAuthors, getLevels, getStepFigures, getTags } from "../../../features/metadata/api";
+import {
+  getAuthors,
+  getGenres,
+  getLevels,
+  getStepFigures,
+  getTags,
+} from "../../../features/metadata/api";
 import { getSavedFilterConfigurations } from "../../../features/saved-filters/api";
 import { useChoreographySearchViewModel } from "../../../features/choreographies/viewmodels/useChoreographySearchViewModel";
 import { createQueryClient } from "../../../shared/query/queryClient";
@@ -27,6 +33,7 @@ vi.mock("../../../features/metadata/api", () => ({
   getLevels: vi.fn(),
   getStepFigures: vi.fn(),
   getTags: vi.fn(),
+  getGenres: vi.fn(),
 }));
 vi.mock("../../../features/saved-filters/api", () => ({
   getSavedFilterConfigurations: vi.fn(),
@@ -65,6 +72,7 @@ describe("useChoreographySearchViewModel", () => {
     vi.mocked(getLevels).mockResolvedValue([]);
     vi.mocked(getStepFigures).mockResolvedValue([]);
     vi.mocked(getTags).mockResolvedValue([]);
+    vi.mocked(getGenres).mockResolvedValue([]);
     vi.mocked(getSavedFilterConfigurations).mockResolvedValue([]);
   });
 

@@ -86,6 +86,29 @@ assigned choreography. The legacy `choreographies.song` and `artist` columns wer
 before deploying. Song rules live in `server/features/choreographies/song-operations.ts`
 (pure), `song-repository.ts` (SQL) and `song-flow.ts` (orchestration).
 
+#### Music metadata per song
+
+Each song may have `bpm` (whole number, 30–300), `length_seconds` (whole number, 1–3600) and a `genre`.
+They belong to the song rather than the choreography because a choreography can have several songs.
+Genres live in the catalog table `genres` (name unique ignoring case) and are referenced by
+`choreography_songs.genre_id`. They are created by name while the songs are written (in the same
+transaction), the stored spelling of the first use wins, and the write cleanup removes genres that no
+song uses any more. `GET /api/genres` returns the names. Writing `bpm` or `length_seconds` accepts only
+whole numbers or blank (`null`, `""`, omitted); anything else is reported as
+`{ field: "choreography_songs.N.bpm" | "choreography_songs.N.length_seconds", key: "invalid_integer" }`.
+Responses return `bpm`, `length_seconds` and `genre` when set.
+
+`GET /api/choreographies/search` accepts `min_bpm`, `max_bpm`, `max_length_seconds` and `genres` (any
+of the names, ignoring case). All of them must hold for the same song of a choreography; songs without
+a BPM or length never satisfy a bound on it. They are combined with the other filters (including
+`song_artist`, which is evaluated independently) and stored in saved filter configurations. Sorting
+by BPM, genre and length is done on the client in the table view, based on the default song.
+
+On the client, `model/song-music.ts` converts between the `m:ss` form text and seconds and builds the
+summary line (`120 BPM · Country · 3:45`) shown on cards, in the detail view and in the clipboard text.
+Text that does not parse is submitted unchanged, so the backend reports the issue and the range rules
+exist only there.
+
 On the client, the pure functions in `features/choreographies/model/choreography-songs.ts` and
 `song-search.ts` handle the form rows, the default and session song and the link resolution: a stored
 link wins, otherwise the YouTube/Spotify button searches for "artist title" (this needs both).

@@ -6,6 +6,7 @@ import { countFilledSongs, songHasContent, type SongField } from "../../model/ch
 
 interface SongsTabProps {
   songs: ChoreographySongInput[];
+  genreOptions: string[];
   errors: Record<string, string>;
   onChange: (index: number, field: SongField, value: string) => void;
   onFavorite: (index: number) => void;
@@ -18,6 +19,8 @@ const FIELDS: {
   placeholder: string;
   type?: string;
   optional?: boolean;
+  inputMode?: "numeric";
+  listId?: string;
 }[] = [
   { field: "title", label: "Title", placeholder: "Enter song title" },
   { field: "artist", label: "Artist", placeholder: "Enter artist name" },
@@ -36,10 +39,31 @@ const FIELDS: {
     optional: true,
   },
   { field: "note", label: "Note", placeholder: "e.g., slower version", optional: true },
+  {
+    field: "bpm",
+    label: "BPM",
+    placeholder: "e.g., 120",
+    optional: true,
+    inputMode: "numeric",
+  },
+  {
+    field: "length_seconds",
+    label: "Length",
+    placeholder: "m:ss, e.g., 3:45",
+    optional: true,
+  },
+  {
+    field: "genre",
+    label: "Genre",
+    placeholder: "e.g., Country",
+    optional: true,
+    listId: "choreography-song-genres",
+  },
 ];
 
 export const SongsTab: React.FC<SongsTabProps> = ({
   songs,
+  genreOptions,
   errors,
   onChange,
   onFavorite,
@@ -57,6 +81,11 @@ export const SongsTab: React.FC<SongsTabProps> = ({
           {errors.choreography_songs}
         </p>
       )}
+      <datalist id="choreography-song-genres">
+        {genreOptions.map((genre) => (
+          <option key={genre} value={genre} />
+        ))}
+      </datalist>
       {songs.map((song, index) => {
         const rowId = String(song.id ?? index);
         const isFilled = songHasContent(song);
@@ -65,7 +94,7 @@ export const SongsTab: React.FC<SongsTabProps> = ({
           <fieldset className="choreography-song-entry" key={rowId}>
             <legend className="sr-only">Song {index + 1}</legend>
             <div className="choreography-song-fields">
-              {FIELDS.map(({ field, label, placeholder, type, optional }) => {
+              {FIELDS.map(({ field, label, placeholder, type, optional, inputMode, listId }) => {
                 const id = `choreography-song-${rowId}-${field}`;
                 const error = errors[`choreography_songs.${rowId}.${field}`];
                 return (
@@ -81,6 +110,8 @@ export const SongsTab: React.FC<SongsTabProps> = ({
                       id={id}
                       value={song[field] ?? ""}
                       placeholder={placeholder}
+                      inputMode={inputMode}
+                      list={listId}
                       aria-invalid={error ? true : undefined}
                       aria-describedby={error ? `${id}-error` : undefined}
                       onChange={(event) => onChange(index, field, event.target.value)}

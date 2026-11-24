@@ -27,6 +27,9 @@ const row = (overrides: Partial<ChoreographySongInput> = {}): ChoreographySongIn
   youtube_url: "",
   spotify_url: "",
   note: "",
+  bpm: "",
+  length_seconds: "",
+  genre: "",
   is_favorite: false,
   ...overrides,
 });
@@ -162,5 +165,38 @@ describe("song links", () => {
   it("labels a song with its artist when known", () => {
     expect(formatSongLabel({ title: "Faded", artist: "Alan Walker" })).toBe("Alan Walker - Faded");
     expect(formatSongLabel({ title: " Faded " })).toBe("Faded");
+  });
+});
+
+describe("music metadata of song rows", () => {
+  it("shows loaded values as form text and starts blank without them", () => {
+    const [withMusic, withoutMusic] = createInitialSongs([
+      { id: 1, title: "A", bpm: 120, length_seconds: 225, genre: "Country" },
+      { id: 2, title: "B" },
+    ]);
+    expect(withMusic).toMatchObject({ bpm: "120", length_seconds: "3:45", genre: "Country" });
+    expect(withoutMusic).toMatchObject({ bpm: "", length_seconds: "", genre: "" });
+  });
+
+  it("counts a row with only music data as content", () => {
+    expect(countFilledSongs([row({ genre: "Pop" }), row({ bpm: "100" }), row()])).toBe(2);
+    expect(countFilledSongs([row({ length_seconds: " " })])).toBe(0);
+  });
+
+  it("submits BPM and length as numbers and hands over text that does not parse", () => {
+    expect(
+      toSubmittedSongs([
+        row({ id: 4, title: "A", bpm: "120", length_seconds: "3:45", genre: "Country" }),
+        row({ id: "uuid", title: "B", bpm: "fast", length_seconds: "225" }),
+      ]),
+    ).toMatchObject([
+      { id: 4, bpm: 120, length_seconds: 225, genre: "Country" },
+      { bpm: "fast", length_seconds: "225" },
+    ]);
+  });
+
+  it("updates the music fields like any other field", () => {
+    const [updated] = updateSongRow([row({ id: "1", title: "A" })], 0, "bpm", "128");
+    expect(updated.bpm).toBe("128");
   });
 });

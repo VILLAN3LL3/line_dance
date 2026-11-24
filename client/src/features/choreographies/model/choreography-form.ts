@@ -33,11 +33,13 @@ const FIELD_ISSUE_MESSAGES: Record<string, string> = {
   "title.required": "Enter a song title.",
   "youtube_url.invalid_url": "Enter a valid http(s) link.",
   "spotify_url.invalid_url": "Enter a valid http(s) link.",
+  "bpm.invalid_integer": "Enter a whole number from 30 to 300.",
+  "length_seconds.invalid_integer": "Enter the length as m:ss, e.g. 3:45 (up to 60:00).",
   "choreography_songs.invalid_songs": "Check the songs: only one can be the favorite.",
 };
 
 const ROW_ISSUE_FIELD =
-  /^(choreography_information|choreography_songs)\.(\d+)\.(category|description|title|youtube_url|spotify_url)$/;
+  /^(choreography_information|choreography_songs)\.(\d+)\.(category|description|title|youtube_url|spotify_url|bpm|length_seconds)$/;
 
 /** Maps backend issue keys to display text; list rows are addressed by their row id. */
 export function mapFieldIssues(issues: FieldIssue[], formData: ChoreographyFormData) {

@@ -5,7 +5,13 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { getMaxChoreographyCount } from "../../../features/choreographies/api";
 import { useSearchBarViewModel } from "../../../features/choreographies/viewmodels/useSearchBarViewModel";
 import { SearchBar as SearchBarView } from "../../../features/choreographies/views/search-bar/SearchBar";
-import { getAuthors, getLevels, getStepFigures, getTags } from "../../../features/metadata/api";
+import {
+  getAuthors,
+  getGenres,
+  getLevels,
+  getStepFigures,
+  getTags,
+} from "../../../features/metadata/api";
 import {
   deleteSavedFilterConfiguration,
   getSavedFilterConfigurations,
@@ -36,6 +42,7 @@ vi.mock("../../../features/metadata/api", () => ({
   getLevels: vi.fn(),
   getStepFigures: vi.fn(),
   getTags: vi.fn(),
+  getGenres: vi.fn(),
   getAuthors: vi.fn(),
 }));
 vi.mock("../../../features/choreographies/api", () => ({
@@ -58,6 +65,7 @@ describe("SearchBar", () => {
     ]);
     vi.mocked(getStepFigures).mockResolvedValue(["Mambo"]);
     vi.mocked(getTags).mockResolvedValue(["classic"]);
+    vi.mocked(getGenres).mockResolvedValue([]);
     vi.mocked(getAuthors).mockResolvedValue(["Alice"]);
     vi.mocked(getMaxChoreographyCount).mockResolvedValue(64);
     vi.mocked(getSavedFilterConfigurations).mockResolvedValue([]);
@@ -219,6 +227,47 @@ describe("SearchBar", () => {
     await waitFor(() => {
       expect(onSearch).toHaveBeenCalledWith(expect.objectContaining({ use_official_level: true }));
     });
+  });
+
+  it("searches with BPM, length and genre filters", async () => {
+    vi.mocked(getGenres).mockResolvedValue(["Country", "Pop"]);
+    const onSearch = vi.fn().mockResolvedValue(undefined);
+    render(<SearchBar onSearch={onSearch} filters={{}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
+    fireEvent.change(screen.getByLabelText("Min BPM"), { target: { value: "100" } });
+    fireEvent.change(screen.getByLabelText("Max BPM"), { target: { value: "130" } });
+    fireEvent.change(screen.getByLabelText("Max length"), { target: { value: "3:45" } });
+    const genreInput = await screen.findByRole("combobox", { name: "Genres" });
+    fireEvent.change(genreInput, { target: { value: "country" } });
+    fireEvent.keyDown(genreInput, { key: "Enter", code: "Enter" });
+    fireEvent.click(screen.getByRole("button", { name: /apply filters/i }));
+
+    await waitFor(() => {
+      expect(onSearch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          min_bpm: 100,
+          max_bpm: 130,
+          max_length_seconds: 225,
+          genres: ["Country"],
+        }),
+      );
+    });
+  });
+
+  it("restores the music filters and flags a length that is not m:ss", () => {
+    const onSearch = vi.fn().mockResolvedValue(undefined);
+    render(<SearchBar onSearch={onSearch} filters={{ min_bpm: 90, max_length_seconds: 180 }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /advanced filters/i }));
+    expect(screen.getByLabelText("Min BPM")).toHaveValue(90);
+    const length = screen.getByLabelText("Max length");
+    expect(length).toHaveValue("3:00");
+    expect(length).not.toHaveAttribute("aria-invalid");
+
+    fireEvent.change(length, { target: { value: "180" } });
+    expect(length).toHaveAttribute("aria-invalid", "true");
+    expect(length).toHaveAccessibleDescription("Enter the length as m:ss, e.g. 3:45.");
   });
 
   it("adds tags to the excluded list", async () => {

@@ -117,6 +117,7 @@ async function cleanupOrphanedRecords(): Promise<void> {
   await repository.deleteUnusedInformationCategories();
   await repository.deleteOrphanedPersonalLevels();
   await songRepository.deleteOrphanedFavoriteSongs();
+  await songRepository.deleteUnusedGenres();
   await repository.deleteUnusedLevels(canonicalLevels);
   await repository.deleteOrphanedRelationships('authors');
   await repository.deleteOrphanedRelationships('tags');

@@ -132,6 +132,21 @@ export const SearchBar: React.FC<SearchBarProps> = ({ viewModel, isLoading = fal
           isLoading={isLoading}
           minRating={values.minRating}
           onMinRatingChange={actions.changeMinRating}
+          music={{
+            minBpm: values.minBpm,
+            maxBpm: values.maxBpm,
+            maxLength: values.maxLength,
+            selectedGenres: values.selectedGenres,
+            inputGenre: values.inputGenre,
+            genreOptions: state.genreOptions,
+            isLoading,
+            onMinBpmChange: actions.changeMinBpm,
+            onMaxBpmChange: actions.changeMaxBpm,
+            onMaxLengthChange: actions.changeMaxLength,
+            onGenreInput: (e) => actions.inputGenre(e.target.value, inputTypeOf(e)),
+            onAddGenreFromInput: actions.addGenreFromInput,
+            onToggleGenre: actions.toggleGenre,
+          }}
           savedFilters={savedFilters}
         />
       )}

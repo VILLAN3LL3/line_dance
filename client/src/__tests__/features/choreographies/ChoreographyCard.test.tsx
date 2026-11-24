@@ -248,6 +248,51 @@ describe("ChoreographyCard", () => {
     expect(screen.getByRole("link", { name: /Queen - Original" on YouTube/ })).toBeInTheDocument();
   });
 
+  it("shows tempo, genre and length of the favorite and of the alternative songs", () => {
+    render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          choreography_songs: [
+            {
+              id: 1,
+              title: "Remix",
+              artist: "DJ",
+              bpm: 140,
+              genre: "Dance",
+              is_favorite: false,
+            },
+            {
+              id: 2,
+              title: "Original",
+              artist: "Queen",
+              bpm: 120,
+              genre: "Rock",
+              length_seconds: 225,
+              is_favorite: true,
+            },
+          ],
+        })}
+        videoEmbedMode="all"
+      />,
+    );
+
+    expect(screen.getByText("120 BPM · Rock · 3:45")).toBeInTheDocument();
+    const alternatives = screen.getByText("Alternative songs:").closest(".alternative-songs");
+    expect(alternatives).toHaveTextContent("140 BPM · Dance");
+  });
+
+  it("shows no music line for songs without metadata", () => {
+    const { container } = render(
+      <ChoreographyCard
+        choreography={makeChoreography({
+          choreography_songs: [{ id: 1, title: "Plain", is_favorite: false }],
+        })}
+      />,
+    );
+
+    expect(container.querySelector(".song-music")).toBeNull();
+  });
+
   it("links to a stored link instead of a search and shows a song that has no artist", () => {
     render(
       <ChoreographyCard

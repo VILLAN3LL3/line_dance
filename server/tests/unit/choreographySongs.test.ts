@@ -72,6 +72,38 @@ describe('getSongIssues', () => {
   });
 });
 
+describe('getSongIssues music metadata', () => {
+  const issues = (song: object): unknown => getSongIssues([{ title: 'A', ...song }]);
+
+  it('accepts BPM and length within their ranges and blank values', () => {
+    expect(issues({ bpm: 30, length_seconds: 1 })).toEqual([]);
+    expect(issues({ bpm: 300, length_seconds: 3600 })).toEqual([]);
+    expect(issues({ bpm: null, length_seconds: '', genre: 'Pop' })).toEqual([]);
+  });
+
+  it('flags values that are out of range or not whole numbers per field', () => {
+    expect(issues({ bpm: 29 })).toEqual([
+      { field: 'choreography_songs.0.bpm', key: 'invalid_integer' },
+    ]);
+    expect(issues({ bpm: 301, length_seconds: 3601 })).toEqual([
+      { field: 'choreography_songs.0.bpm', key: 'invalid_integer' },
+      { field: 'choreography_songs.0.length_seconds', key: 'invalid_integer' },
+    ]);
+    for (const bad of [0, -5, 120.5, 'abc', '3:45', '225', true]) {
+      expect(issues({ length_seconds: bad })).toEqual([
+        { field: 'choreography_songs.0.length_seconds', key: 'invalid_integer' },
+      ]);
+    }
+  });
+
+  it('counts metadata as content, so a title is required', () => {
+    expect(getSongIssues([{ genre: 'Pop' }, { bpm: 100 }])).toEqual([
+      { field: 'choreography_songs.0.title', key: 'required' },
+      { field: 'choreography_songs.1.title', key: 'required' },
+    ]);
+  });
+});
+
 describe('normalizeSongs', () => {
   it('keeps the stored songs when nothing is submitted', () => {
     expect(normalizeSongs(undefined)).toBeUndefined();
@@ -96,6 +128,9 @@ describe('normalizeSongs', () => {
         youtube_url: null,
         spotify_url: null,
         note: null,
+        bpm: null,
+        length_seconds: null,
+        genre: null,
         is_favorite: true,
       },
       {
@@ -105,8 +140,23 @@ describe('normalizeSongs', () => {
         youtube_url: 'https://youtu.be/1',
         spotify_url: null,
         note: null,
+        bpm: null,
+        length_seconds: null,
+        genre: null,
         is_favorite: false,
       },
+    ]);
+  });
+
+  it('normalizes the music metadata', () => {
+    expect(
+      normalizeSongs([
+        { title: 'A', bpm: 120, length_seconds: 225, genre: '  Country  ' },
+        { title: 'B', bpm: '', length_seconds: null, genre: '   ' },
+      ]),
+    ).toMatchObject([
+      { bpm: 120, length_seconds: 225, genre: 'Country' },
+      { bpm: null, length_seconds: null, genre: null },
     ]);
   });
 
@@ -128,6 +178,9 @@ describe('planSongChanges', () => {
     youtube_url: null,
     spotify_url: null,
     note: null,
+    bpm: null,
+    length_seconds: null,
+    genre: null,
     is_favorite: false,
   });
 

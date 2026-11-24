@@ -13,6 +13,10 @@ import { effectiveLevelName, effectiveLevelValue } from './level-sql.ts';
 export type SearchFilters = {
   search?: QueryValue;
   song_artist?: QueryValue;
+  min_bpm?: QueryValue;
+  max_bpm?: QueryValue;
+  max_length_seconds?: QueryValue;
+  genres?: QueryValue;
   level?: QueryValue;
   max_level_value?: QueryValue;
   step_figures?: QueryValue;
@@ -45,6 +49,10 @@ export function buildFilterConditions(filterObj: SearchFilters): FilterCondition
   const {
     search,
     song_artist,
+    min_bpm,
+    max_bpm,
+    max_length_seconds,
+    genres,
     level,
     max_level_value,
     step_figures,
@@ -78,6 +86,12 @@ export function buildFilterConditions(filterObj: SearchFilters): FilterCondition
     )`);
     const searchTerm = `%${stringifyQueryValue(song_artist)}%`;
     params.push(searchTerm, searchTerm);
+  }
+
+  const musicFilter = buildMusicFilter(min_bpm, max_bpm, max_length_seconds, genres);
+  if (musicFilter.condition) {
+    conditions.push(musicFilter.condition);
+    params.push(...musicFilter.params);
   }
 
   const levelFilter = buildLevelFilter(
@@ -193,6 +207,49 @@ function buildStepFiguresFilter(
     }
   }
   return result;
+}
+
+/** All criteria must hold for the same song; songs without a BPM or length never satisfy its bound. */
+function buildMusicFilter(
+  min_bpm: QueryValue | undefined,
+  max_bpm: QueryValue | undefined,
+  max_length_seconds: QueryValue | undefined,
+  genres: QueryValue | undefined,
+): { condition: string; params: QueryParameter[] } {
+  const parts: string[] = [];
+  const params: QueryParameter[] = [];
+  const minBpm = normalizeNumericQueryParam(min_bpm);
+  const maxBpm = normalizeNumericQueryParam(max_bpm);
+  const maxLength = normalizeNumericQueryParam(max_length_seconds);
+  const genreList = normalizeUniqueTextQueryParam(genres);
+
+  if (minBpm !== null) {
+    parts.push('music.bpm >= ?');
+    params.push(minBpm);
+  }
+  if (maxBpm !== null) {
+    parts.push('music.bpm <= ?');
+    params.push(maxBpm);
+  }
+  if (maxLength !== null) {
+    parts.push('music.length_seconds <= ?');
+    params.push(maxLength);
+  }
+  if (genreList.length > 0) {
+    parts.push(
+      `music.genre_id IN (SELECT id FROM genres WHERE LOWER(name) IN (${genreList.map(() => 'LOWER(?)').join(',')}))`,
+    );
+    params.push(...genreList);
+  }
+  if (parts.length === 0) return { condition: '', params: [] };
+
+  return {
+    condition: `EXISTS (
+      SELECT 1 FROM choreography_songs music
+      WHERE music.choreography_id = c.id AND ${parts.join(' AND ')}
+    )`,
+    params,
+  };
 }
 
 function buildLevelFilter(

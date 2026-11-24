@@ -1,6 +1,20 @@
 import type { ChoreographySong, ChoreographySongInput } from "../../../types";
+import { bpmToFormText, lengthToFormText, toSubmittedBpm, toSubmittedLength } from "./song-music";
 
-export type SongField = "title" | "artist" | "youtube_url" | "spotify_url" | "note";
+export type SongField =
+  "title" | "artist" | "youtube_url" | "spotify_url" | "note" | "bpm" | "length_seconds" | "genre";
+
+/** In the form, `bpm` is the typed text and `length_seconds` the typed m:ss text. */
+const CONTENT_FIELDS: SongField[] = [
+  "title",
+  "artist",
+  "youtube_url",
+  "spotify_url",
+  "note",
+  "bpm",
+  "length_seconds",
+  "genre",
+];
 
 export function createEmptySong(): ChoreographySongInput {
   return {
@@ -10,17 +24,15 @@ export function createEmptySong(): ChoreographySongInput {
     youtube_url: "",
     spotify_url: "",
     note: "",
+    bpm: "",
+    length_seconds: "",
+    genre: "",
     is_favorite: false,
   };
 }
 
 export const songHasContent = (song: ChoreographySongInput | undefined): boolean =>
-  Boolean(
-    song &&
-    [song.title, song.artist, song.youtube_url, song.spotify_url, song.note].some((value) =>
-      value?.trim(),
-    ),
-  );
+  Boolean(song && CONTENT_FIELDS.some((field) => String(song[field] ?? "").trim()));
 
 /** Songs with content; the trailing empty row of the form does not count. */
 export const countFilledSongs = (songs: ChoreographySongInput[]): number =>
@@ -41,6 +53,9 @@ export function createInitialSongs(songs: ChoreographySongInput[] = []): Choreog
       youtube_url: song.youtube_url ?? "",
       spotify_url: song.spotify_url ?? "",
       note: song.note ?? "",
+      bpm: bpmToFormText(song.bpm),
+      length_seconds: lengthToFormText(song.length_seconds),
+      genre: song.genre ?? "",
       is_favorite: song.is_favorite ?? false,
     })),
   );
@@ -82,9 +97,19 @@ export const setFavoriteSong = (
 ): ChoreographySongInput[] =>
   songs.map((song, songIndex) => ({ ...song, is_favorite: songIndex === index }));
 
-/** Placeholder ids of rows that are not saved yet are not sent; the server assigns the id. */
+/**
+ * Placeholder ids of rows that are not saved yet are not sent; the server assigns the id. BPM and
+ * length are converted from their form text to numbers.
+ */
 export const toSubmittedSongs = (songs: ChoreographySongInput[]): ChoreographySongInput[] =>
-  songs.map(({ id, ...song }) => (typeof id === "number" ? { id, ...song } : song));
+  songs.map(({ id, ...song }) => {
+    const submitted = {
+      ...song,
+      bpm: toSubmittedBpm(String(song.bpm ?? "")),
+      length_seconds: toSubmittedLength(String(song.length_seconds ?? "")),
+    };
+    return typeof id === "number" ? { id, ...submitted } : submitted;
+  });
 
 /** Favorite first, the rest in their saved order. */
 export function splitSongs(songs: ChoreographySong[]): {

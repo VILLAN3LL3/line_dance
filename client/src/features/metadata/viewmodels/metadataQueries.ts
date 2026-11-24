@@ -4,6 +4,7 @@ import {
   getAuthors,
   getChoreographyInfoCategories,
   getCountryCodes,
+  getGenres,
   getLevels,
   getStepFigures,
   getTags,
@@ -16,6 +17,10 @@ export function useLevelsQuery() {
 
 export function useTagsQuery() {
   return useQuery({ queryKey: metadataKeys.tags, queryFn: getTags });
+}
+
+export function useGenresQuery() {
+  return useQuery({ queryKey: metadataKeys.genres, queryFn: getGenres });
 }
 
 export function useAuthorsQuery() {

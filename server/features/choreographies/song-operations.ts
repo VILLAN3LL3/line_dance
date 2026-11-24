@@ -10,6 +10,9 @@ const songEntry = z.object({
   youtube_url: optionalText,
   spotify_url: optionalText,
   note: optionalText,
+  bpm: z.unknown().optional(),
+  length_seconds: z.unknown().optional(),
+  genre: optionalText,
   is_favorite: z.boolean().nullish(),
 });
 type SongEntry = z.output<typeof songEntry>;
@@ -22,6 +25,9 @@ export type SongInput = {
   youtube_url: string | null;
   spotify_url: string | null;
   note: string | null;
+  bpm: number | null;
+  length_seconds: number | null;
+  genre: string | null;
   is_favorite: boolean;
 };
 /** `undefined` keeps the stored songs, an array replaces them, `null` marks invalid input. */
@@ -30,10 +36,25 @@ export type SongChanges = SongInput[] | null | undefined;
 const trimmed = (value: string | null | undefined): string => value?.trim() ?? '';
 const textOrNull = (value: string | null | undefined): string | null => trimmed(value) || null;
 
+export const BPM_RANGE = { min: 30, max: 300 } as const;
+export const LENGTH_SECONDS_RANGE = { min: 1, max: 3600 } as const;
+
+type NumberField = { kind: 'empty' } | { kind: 'invalid' } | { kind: 'value'; value: number };
+
+/** Only whole numbers in range are valid; text other than blank is an invalid value. */
+function parseNumberField(value: unknown, range: { min: number; max: number }): NumberField {
+  if (value === undefined || value === null) return { kind: 'empty' };
+  if (typeof value === 'string' && !value.trim()) return { kind: 'empty' };
+  if (typeof value !== 'number' || !Number.isInteger(value)) return { kind: 'invalid' };
+  return value >= range.min && value <= range.max ? { kind: 'value', value } : { kind: 'invalid' };
+}
+
 const hasContent = (entry: SongEntry): boolean =>
-  [entry.title, entry.artist, entry.youtube_url, entry.spotify_url, entry.note].some((value) =>
-    trimmed(value),
-  );
+  [entry.title, entry.artist, entry.youtube_url, entry.spotify_url, entry.note, entry.genre].some(
+    (value) => trimmed(value),
+  ) ||
+  parseNumberField(entry.bpm, BPM_RANGE).kind !== 'empty' ||
+  parseNumberField(entry.length_seconds, LENGTH_SECONDS_RANGE).kind !== 'empty';
 
 /** Links are rendered as hrefs, so only http(s) is accepted. */
 export function isHttpUrl(value: string): boolean {
@@ -66,6 +87,15 @@ export function getSongIssues(value: JsonValue | undefined): ChoreographyIssue[]
       const url = trimmed(entry[link]);
       if (url && !isHttpUrl(url)) issues.push({ field: `${field}.${link}`, key: 'invalid_url' });
     }
+    const numberFields = [
+      ['bpm', BPM_RANGE],
+      ['length_seconds', LENGTH_SECONDS_RANGE],
+    ] as const;
+    for (const [name, range] of numberFields) {
+      if (parseNumberField(entry[name], range).kind === 'invalid') {
+        issues.push({ field: `${field}.${name}`, key: 'invalid_integer' });
+      }
+    }
   });
   if (favorites > 1) issues.push({ field: 'choreography_songs', key: 'invalid_songs' });
   return issues;
@@ -75,6 +105,9 @@ export function getSongIssues(value: JsonValue | undefined): ChoreographyIssue[]
 function toSongInput(entry: SongEntry, usedIds: Set<number>): SongInput | null {
   const title = trimmed(entry.title);
   if (!title) return null;
+  const bpm = parseNumberField(entry.bpm, BPM_RANGE);
+  const length = parseNumberField(entry.length_seconds, LENGTH_SECONDS_RANGE);
+  if (bpm.kind === 'invalid' || length.kind === 'invalid') return null;
   const id = Number.isSafeInteger(entry.id) && Number(entry.id) > 0 ? Number(entry.id) : null;
   const isRepeat = id !== null && usedIds.has(id);
   if (id !== null) usedIds.add(id);
@@ -85,6 +118,9 @@ function toSongInput(entry: SongEntry, usedIds: Set<number>): SongInput | null {
     youtube_url: textOrNull(entry.youtube_url),
     spotify_url: textOrNull(entry.spotify_url),
     note: textOrNull(entry.note),
+    bpm: bpm.kind === 'value' ? bpm.value : null,
+    length_seconds: length.kind === 'value' ? length.value : null,
+    genre: textOrNull(entry.genre),
     is_favorite: entry.is_favorite === true,
   };
 }

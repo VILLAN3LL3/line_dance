@@ -70,6 +70,39 @@ describe("ChoreographyTable", () => {
     expect(screen.getByTitle("Cha Cha")).toBeInTheDocument();
   });
 
+  it("shows tempo, genre and length of the default song and sorts by them", async () => {
+    const song = (id: number, bpm: number, genre: string, length_seconds: number) => ({
+      id,
+      title: `Song ${id}`,
+      bpm,
+      genre,
+      length_seconds,
+      is_favorite: false,
+    });
+    render(
+      <ChoreographyTable
+        choreographies={[
+          makeChoreo({ id: 1, name: "Fast", choreography_songs: [song(1, 150, "Pop", 180)] }),
+          makeChoreo({ id: 2, name: "Slow", choreography_songs: [song(2, 90, "Country", 245)] }),
+          makeChoreo({ id: 3, name: "Silent" }),
+        ]}
+      />,
+    );
+
+    expect(await screen.findByText("4:05")).toBeInTheDocument();
+    expect(screen.getByText("Country")).toBeInTheDocument();
+    const names = () =>
+      screen
+        .getAllByRole("row")
+        .slice(1)
+        .map((row) => row.querySelector("strong")?.textContent);
+
+    fireEvent.click(screen.getByRole("columnheader", { name: "BPM" }));
+    expect(names()).toEqual(["Slow", "Fast", "Silent"]);
+    fireEvent.click(screen.getByRole("columnheader", { name: /^BPM/ }));
+    expect(names()).toEqual(["Silent", "Fast", "Slow"]);
+  });
+
   it("renders zero-valued numeric fields rather than placeholders", async () => {
     render(
       <ChoreographyTable

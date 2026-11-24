@@ -16,11 +16,12 @@ export async function replaceSongs(id: ChoreographyId, songs: SongInput[]): Prom
 
   const songIds = await songs.reduce<Promise<number[]>>(async (previous, song, position) => {
     const saved = await previous;
+    const genreId = song.genre === null ? null : await repository.findOrCreateGenre(song.genre);
     if (song.id !== null && existingIds.has(song.id)) {
-      await repository.updateSong(id, song.id, song, position);
+      await repository.updateSong(id, song.id, song, position, genreId);
       return [...saved, song.id];
     }
-    return [...saved, (await repository.insertSong(id, song, position)).id];
+    return [...saved, (await repository.insertSong(id, song, position, genreId)).id];
   }, Promise.resolve([]));
 
   const favoriteIndex = songs.findIndex((song) => song.is_favorite);

@@ -12,6 +12,11 @@ export async function getTags(): Promise<string[]> {
   return response.data;
 }
 
+export async function getGenres(): Promise<string[]> {
+  const response = await httpClient.get("/genres");
+  return response.data;
+}
+
 export async function getAuthors(): Promise<string[]> {
   const response = await httpClient.get("/authors");
   return response.data;

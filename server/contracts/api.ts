@@ -54,6 +54,9 @@ export interface ChoreographySong {
   youtube_url?: string;
   spotify_url?: string;
   note?: string;
+  bpm?: number;
+  length_seconds?: number;
+  genre?: string;
   /** Without a favorite the first song is the default. */
   is_favorite: boolean;
 }
@@ -66,6 +69,10 @@ export interface ChoreographySongInput {
   youtube_url?: string;
   spotify_url?: string;
   note?: string;
+  /** Whole numbers only; any other value, including text, is reported as an `invalid_integer` issue. */
+  bpm?: number | string;
+  length_seconds?: number | string;
+  genre?: string;
   is_favorite?: boolean;
 }
 
@@ -98,6 +105,11 @@ export interface PaginatedResponse<T> {
 export interface SearchFilters {
   search?: string;
   song_artist?: string;
+  /** The music filters below must all match the same song of a choreography. */
+  min_bpm?: number;
+  max_bpm?: number;
+  max_length_seconds?: number;
+  genres?: string[];
   level?: string[];
   max_level_value?: number;
   max_count?: number;

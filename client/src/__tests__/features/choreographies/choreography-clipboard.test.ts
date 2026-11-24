@@ -103,6 +103,30 @@ describe("buildChoreographyClipboardText", () => {
     expect(text).not.toContain("YouTube");
   });
 
+  it("shares tempo, genre and length of the songs", () => {
+    const text = buildChoreographyClipboardText(
+      makeChoreography({
+        choreography_songs: [
+          {
+            id: 1,
+            title: "Original",
+            artist: "Queen",
+            bpm: 120,
+            genre: "Rock",
+            length_seconds: 225,
+            is_favorite: true,
+          },
+          { id: 2, title: "Remix", artist: "DJ", bpm: 140, is_favorite: false },
+          { id: 3, title: "Plain", is_favorite: false },
+        ],
+      }),
+    );
+
+    expect(text).toContain("• Details: 120 BPM · Rock · 3:45");
+    expect(text).toContain("• DJ - Remix – 140 BPM");
+    expect(text).toContain("• Plain\n");
+  });
+
   it("shares the official level instead of the effective personal level", () => {
     const text = buildChoreographyClipboardText(
       makeChoreography({ level: "Advanced", personal_level: "Advanced" }),

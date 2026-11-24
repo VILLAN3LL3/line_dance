@@ -18,6 +18,9 @@ type Song = {
   youtube_url?: string;
   spotify_url?: string;
   note?: string;
+  bpm?: number;
+  length_seconds?: number;
+  genre?: string;
   is_favorite: boolean;
 };
 
@@ -235,5 +238,139 @@ describe('song_artist search', () => {
   it('returns each choreography once when several songs match', async () => {
     await createChoreo([{ title: 'Love 1' }, { title: 'Love 2' }], 'Match');
     expect(await search('love')).toEqual(['Match']);
+  });
+});
+
+describe('song music metadata', () => {
+  async function genres(): Promise<string[]> {
+    return (await request(app).get('/api/genres')).body;
+  }
+
+  it('stores BPM, length and genre and returns them with the song', async () => {
+    const id = await createChoreo([
+      { title: 'A', bpm: 120, length_seconds: 225, genre: ' Country ' },
+      { title: 'B' },
+    ]);
+    const songs = await getSongs(id);
+    expect(songs[0]).toMatchObject({ bpm: 120, length_seconds: 225, genre: 'Country' });
+    expect(songs[1]).not.toHaveProperty('bpm');
+    expect(songs[1]).not.toHaveProperty('length_seconds');
+    expect(songs[1]).not.toHaveProperty('genre');
+  });
+
+  it('updates and clears the metadata of a song that keeps its id', async () => {
+    const id = await createChoreo([{ title: 'A', bpm: 100, genre: 'Pop' }]);
+    const [song] = await getSongs(id);
+
+    await updateSongs(id, [{ id: song.id, title: 'A', bpm: 140, length_seconds: 200 }]);
+    expect((await getSongs(id))[0]).toMatchObject({ id: song.id, bpm: 140, length_seconds: 200 });
+    expect((await getSongs(id))[0]).not.toHaveProperty('genre');
+
+    await updateSongs(id, [{ id: song.id, title: 'A', bpm: null, length_seconds: '' }]);
+    expect((await getSongs(id))[0]).not.toHaveProperty('bpm');
+    expect((await getSongs(id))[0]).not.toHaveProperty('length_seconds');
+  });
+
+  it('reuses a genre ignoring case and lists each one once', async () => {
+    await createChoreo([{ title: 'A', genre: 'Country' }], 'One');
+    const id = await createChoreo(
+      [
+        { title: 'B', genre: 'country' },
+        { title: 'C', genre: 'Pop' },
+      ],
+      'Two',
+    );
+
+    expect(await genres()).toEqual(['Country', 'Pop']);
+    expect((await getSongs(id))[0].genre).toBe('Country');
+  });
+
+  it('removes genres that no song uses any more', async () => {
+    const id = await createChoreo([
+      { title: 'A', genre: 'Country' },
+      { title: 'B', genre: 'Pop' },
+    ]);
+    const [first] = await getSongs(id);
+
+    await updateSongs(id, [{ id: first.id, title: 'A', genre: 'Country' }]);
+    expect(await genres()).toEqual(['Country']);
+
+    await request(app).delete(`/api/choreographies/${id}`);
+    expect(await genres()).toEqual([]);
+  });
+
+  it('rejects BPM and length that are out of range or not whole numbers', async () => {
+    const res = await request(app)
+      .post('/api/choreographies')
+      .send({
+        name: 'Test Dance',
+        level: 'BEGINNER',
+        choreography_songs: [
+          { title: 'A', bpm: 20, length_seconds: '3:45' },
+          { title: 'B', bpm: 300, length_seconds: 3600 },
+        ],
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.issues).toEqual([
+      { field: 'choreography_songs.0.bpm', key: 'invalid_integer' },
+      { field: 'choreography_songs.0.length_seconds', key: 'invalid_integer' },
+    ]);
+    expect(await genres()).toEqual([]);
+  });
+});
+
+describe('music filters', () => {
+  async function search(query: Record<string, unknown>): Promise<string[]> {
+    const res = await request(app).get('/api/choreographies/search').query(query);
+    expect(res.status).toBe(200);
+    return res.body.data.map((dance: { name: string }) => dance.name).sort();
+  }
+
+  beforeEach(async () => {
+    await createChoreo([{ title: 'Slow', bpm: 90, length_seconds: 240, genre: 'Country' }], 'Slow');
+    await createChoreo(
+      [
+        { title: 'Fast', bpm: 150, length_seconds: 180, genre: 'Pop' },
+        { title: 'Medium', bpm: 110, length_seconds: 300, genre: 'country' },
+      ],
+      'Mixed',
+    );
+    await createChoreo([{ title: 'Unknown' }], 'No metadata');
+    await createChoreo(undefined, 'No songs');
+  });
+
+  it('filters by a BPM range and never matches songs without a BPM', async () => {
+    expect(await search({ min_bpm: 100 })).toEqual(['Mixed']);
+    expect(await search({ max_bpm: 100 })).toEqual(['Slow']);
+    expect(await search({ min_bpm: 100, max_bpm: 120 })).toEqual(['Mixed']);
+    expect(await search({ min_bpm: 200 })).toEqual([]);
+  });
+
+  it('filters by the maximum length', async () => {
+    expect(await search({ max_length_seconds: 200 })).toEqual(['Mixed']);
+    expect(await search({ max_length_seconds: 240 })).toEqual(['Mixed', 'Slow']);
+  });
+
+  it('filters by one or several genres ignoring case', async () => {
+    expect(await search({ genres: 'COUNTRY' })).toEqual(['Mixed', 'Slow']);
+    expect(await search({ genres: ['pop'] })).toEqual(['Mixed']);
+    expect(await search({ genres: ['pop', 'country'] })).toEqual(['Mixed', 'Slow']);
+    expect(await search({ genres: 'jazz' })).toEqual([]);
+  });
+
+  it('requires one single song to satisfy all music criteria', async () => {
+    // "Mixed" has a fast pop song and a medium country song, but no fast country song.
+    expect(await search({ min_bpm: 140, genres: 'country' })).toEqual([]);
+    expect(await search({ min_bpm: 140, genres: 'pop', max_length_seconds: 200 })).toEqual([
+      'Mixed',
+    ]);
+    expect(await search({ min_bpm: 100, genres: 'country', max_length_seconds: 300 })).toEqual([
+      'Mixed',
+    ]);
+  });
+
+  it('combines with other filters', async () => {
+    expect(await search({ genres: 'country', search: 'slow' })).toEqual(['Slow']);
+    expect(await search({ min_bpm: 100, song_artist: 'fast' })).toEqual(['Mixed']);
   });
 });
