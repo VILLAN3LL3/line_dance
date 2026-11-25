@@ -43,12 +43,7 @@ export const PracticeLogList: React.FC<PracticeLogListProps> = ({ viewModel }) =
                 <span aria-hidden="true">{emojiFor(entry)}</span>
                 <span className="practice-log-entry-text">
                   <strong>{entry.choreography_name}</strong>
-                  {entry.step !== null && (
-                    <span>
-                      {" "}
-                      · set to step {entry.step}, due {entry.due_on}
-                    </span>
-                  )}
+                  {entry.step !== null && <span> · set to step {entry.step}</span>}
                   {entry.song_title && <span> · {entry.song_title}</span>}
                   {entry.note && <span className="practice-log-note"> — {entry.note}</span>}
                 </span>

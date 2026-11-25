@@ -169,7 +169,6 @@ describe("useQuickLogViewModel baseline mode", () => {
     act(() => {
       result.current.actions.setMode("baseline");
       result.current.actions.setStep(3);
-      result.current.actions.setSpread(false);
       result.current.actions.selectShown();
     });
     await act(() => result.current.actions.submit());
@@ -177,7 +176,6 @@ describe("useQuickLogViewModel baseline mode", () => {
     expect(setPracticeBaseline).toHaveBeenCalledWith({
       choreography_ids: [1, 2],
       step: 3,
-      spread: false,
     });
     expect(logPractice).not.toHaveBeenCalled();
     expect(result.current.state.savedMessage).toBe("Set 2 dances to step 3");
@@ -222,7 +220,6 @@ describe("usePracticeLogViewModel", () => {
     song_id: null,
     song_title: null,
     step: null,
-    due_on: null,
   };
 
   it("groups the log by day and deletes an entry", async () => {

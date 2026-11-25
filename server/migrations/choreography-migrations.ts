@@ -1000,6 +1000,17 @@ const migrations: Migration[] = [
       );
     },
   },
+  {
+    id: '021_drop_practice_log_due_on',
+    up: async () => {
+      // The due date of a step is calculated when it is read, so it follows the level of the dance.
+      await runQuery(
+        'ALTER TABLE personal_data.choreography_practice_log DROP COLUMN due_on',
+        [],
+        dbName,
+      );
+    },
+  },
 ];
 
 export async function runChoreographyMigrations(): Promise<void> {

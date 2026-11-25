@@ -24,7 +24,6 @@ const practiceErrors: Record<string, [number, string]> = {
   invalid_song: [400, 'song_id must belong to the practiced choreography'],
   invalid_note: [400, 'note must be at most 500 characters'],
   invalid_step: [400, 'step must be an integer between 1 and 14'],
-  invalid_spread: [400, 'spread must be a boolean'],
   not_learned: [400, 'Only learned dances can be set to an interval step'],
   invalid_limit: [400, 'limit must be an integer between 1 and 500'],
   invalid_offset: [400, 'offset must be a non-negative integer'],

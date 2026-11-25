@@ -304,16 +304,12 @@ describe("PersonalPage", () => {
       fireEvent.click(screen.getByRole("button", { name: "Select all shown (2)" }));
       await screen.findByRole("option", { name: "Step 5 · due again after 10–30 days" });
       fireEvent.change(screen.getByLabelText("Interval step"), { target: { value: "5" } });
-      fireEvent.click(
-        screen.getByRole("checkbox", { name: "Spread the due dates over the interval" }),
-      );
       fireEvent.click(screen.getByRole("button", { name: "Set step for 2 dances" }));
 
       await waitFor(() => {
         expect(setPracticeBaseline).toHaveBeenCalledWith({
           choreography_ids: [2, 3],
           step: 5,
-          spread: false,
         });
       });
       expect(logPractice).not.toHaveBeenCalled();
@@ -343,7 +339,6 @@ describe("PersonalPage", () => {
             song_id: null,
             song_title: null,
             step: null,
-            due_on: null,
           },
         ],
       });
@@ -430,7 +425,6 @@ describe("PersonalPage", () => {
         song_id: null,
         song_title: null,
         step: null,
-        due_on: null,
       });
       const all = [entry(1, "Cowboy Boogie"), entry(2, "Waltz")];
       vi.mocked(fetchPracticeLog).mockImplementation(async ({ q }) => {
@@ -462,7 +456,6 @@ describe("PersonalPage", () => {
         song_id: null,
         song_title: null,
         step: null,
-        due_on: null,
       });
       vi.mocked(fetchPracticeLog)
         .mockResolvedValueOnce({ data: [entry(1)], total: 2 })

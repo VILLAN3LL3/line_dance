@@ -86,18 +86,11 @@ export const QuickLogPanel: React.FC<QuickLogPanelProps> = ({ viewModel }) => {
                       ))}
                     </select>
                   </div>
-                  <label className="practice-dance-option">
-                    <input
-                      type="checkbox"
-                      checked={form.spread}
-                      onChange={(event) => actions.setSpread(event.target.checked)}
-                    />
-                    <span>Spread the due dates over the interval</span>
-                  </label>
                   <p className="practice-hint">
                     The dances count as practiced up to this step starting today. This does not add
-                    a practice; your next practice continues from this step. Higher levels come back
-                    sooner.
+                    a practice; your next practice continues from this step. A dance is due again
+                    after the interval of its level for this step, and never sooner. To avoid
+                    getting all dances on the same day, some come back a few days later.
                   </p>
                 </>
               ) : (

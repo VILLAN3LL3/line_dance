@@ -28,7 +28,6 @@ export const useQuickLogViewModel = () => {
       const result = await baselineMutation.mutateAsync({
         choreography_ids: form.selected,
         step: form.step,
-        spread: form.spread,
       });
       return describeSaved("baseline", result.updated, result.step);
     }
@@ -74,7 +73,6 @@ export const useQuickLogViewModel = () => {
       toggleOpen: () => dispatch({ type: "toggle-open" }),
       setMode: (mode: QuickLogMode) => dispatch({ type: "set-mode", mode }),
       setStep: (step: number) => dispatch({ type: "set-step", step }),
-      setSpread: (spread: boolean) => dispatch({ type: "set-spread", spread }),
       selectShown: () => dispatch({ type: "select-all", ids: dances.map((dance) => dance.id) }),
       clearSelection: () => dispatch({ type: "clear-selection" }),
       setQuery: (query: string) => dispatch({ type: "set-query", query }),

@@ -2,7 +2,6 @@ import {
   describeIntervalTiers,
   formatLocalDate,
   isFutureDate,
-  planBaseline,
   summarizePractice,
   toContainsPattern,
 } from './operations.ts';
@@ -88,7 +87,7 @@ export async function getPracticeSuggestions(): Promise<PracticeSummary[]> {
 export async function setPracticeBaseline(input: BaselineRequest): Promise<BaselineResult> {
   if ('exception' in input) throw input.exception;
   if ('error' in input) return input;
-  const { choreography_ids: ids, step, spread } = input.value;
+  const { choreography_ids: ids, step } = input.value;
 
   return practice.withPracticeTransaction(async () => {
     const dances = await practice.findBaselineDances(ids);
@@ -97,20 +96,14 @@ export async function setPracticeBaseline(input: BaselineRequest): Promise<Basel
       return { error: 'not_learned' };
     }
     const practicedOn = today();
-    const plan = planBaseline(dances, step, spread, practicedOn);
-    await plan.reduce(
-      (previous, entry) =>
+    await ids.reduce(
+      (previous, choreographyId) =>
         previous.then(async () => {
-          await practice.insertBaselineEntry(
-            entry.choreography_id,
-            practicedOn,
-            step,
-            entry.due_on,
-          );
+          await practice.insertBaselineEntry(choreographyId, practicedOn, step);
         }),
       Promise.resolve(),
     );
-    return { value: { updated: plan.length, step } };
+    return { value: { updated: ids.length, step } };
   });
 }
 

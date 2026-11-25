@@ -14,7 +14,6 @@ export type PracticeLogEntry = {
   song_title: string | null;
   /** Set when the entry put the dance on an interval step instead of recording a practice. */
   step: number | null;
-  due_on: string | null;
 };
 
 export type NewPracticeEntry = {
@@ -57,14 +56,12 @@ export async function insertEntry(entry: NewPracticeEntry): Promise<WriteResult>
   );
 }
 
-export type BaselineDance = { id: number; learning_status: string | null; level_value: number };
+export type BaselineDance = { id: number; learning_status: string | null };
 
 export async function findBaselineDances(ids: number[]): Promise<BaselineDance[]> {
   return allQuery<BaselineDance>(
-    `SELECT c.id, ls.status AS learning_status, COALESCE(${effectiveLevelValue}, 0) AS level_value
+    `SELECT c.id, ls.status AS learning_status
      FROM choreographies c
-     LEFT JOIN levels l ON l.id = c.level_id
-     ${personalLevelJoins}
      LEFT JOIN personal_data.choreography_learning_status ls ON ls.choreography_id = c.id
      WHERE c.id IN (${ids.map(() => '?').join(',')})`,
     ids,
@@ -75,13 +72,12 @@ export async function insertBaselineEntry(
   choreographyId: number,
   practicedOn: string,
   step: number,
-  dueOn: string,
 ): Promise<WriteResult> {
   return runQuery(
     `INSERT INTO personal_data.choreography_practice_log
-       (choreography_id, practiced_on, confidence, step, due_on)
-     VALUES (?, ?, 'sure', ?, ?)`,
-    [choreographyId, practicedOn, step, dueOn],
+       (choreography_id, practiced_on, confidence, step)
+     VALUES (?, ?, 'sure', ?)`,
+    [choreographyId, practicedOn, step],
   );
 }
 
@@ -94,7 +90,7 @@ export async function listEntries(
 ): Promise<PracticeLogEntry[]> {
   return allQuery<PracticeLogEntry>(
     `SELECT l.id, l.choreography_id, c.name AS choreography_name, l.practiced_on, l.confidence,
-            l.note, l.song_id, s.title AS song_title, l.step, l.due_on
+            l.note, l.song_id, s.title AS song_title, l.step
      FROM personal_data.choreography_practice_log l
      JOIN choreographies c ON c.id = l.choreography_id
      LEFT JOIN choreography_songs s ON s.id = l.song_id
@@ -124,7 +120,7 @@ export async function deleteEntry(id: number): Promise<WriteResult> {
 export async function listLearnedPracticeRows(): Promise<PracticeRow[]> {
   return allQuery<PracticeRow>(
     `SELECT ls.choreography_id, pl.id AS entry_id, pl.practiced_on, pl.confidence, pl.note,
-            pl.step, pl.due_on,
+            pl.step,
             COALESCE(${effectiveLevelValue}, 0) AS level_value
      FROM personal_data.choreography_learning_status ls
      JOIN choreographies c ON c.id = ls.choreography_id

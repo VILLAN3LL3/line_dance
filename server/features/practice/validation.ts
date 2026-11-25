@@ -9,7 +9,6 @@ export type PracticeInputError =
   | 'invalid_song'
   | 'invalid_note'
   | 'invalid_step'
-  | 'invalid_spread'
   | 'invalid_limit'
   | 'invalid_offset'
   | 'invalid_query';
@@ -49,7 +48,6 @@ const logSchema = z
 const baselineSchema = z.object({
   choreography_ids: z.array(positiveId).min(1).max(MAX_BASELINE_SIZE),
   step: z.number().int().min(1).max(REVIEW_STEP_COUNT),
-  spread: z.boolean().default(true),
 });
 
 const withDefault = (fallback: number | string) => (value: unknown) =>
@@ -89,7 +87,6 @@ const issueErrors: Record<string, PracticeInputError> = {
   song_id: 'invalid_song',
   note: 'invalid_note',
   step: 'invalid_step',
-  spread: 'invalid_spread',
 };
 
 export function validateLogPractice(input: unknown): LogPracticeValidationResult {
@@ -138,7 +135,7 @@ export function validateEntryId(rawId: string): { error: 'invalid_id' } | { valu
     : { error: 'invalid_id' };
 }
 
-export type BaselineInput = { choreography_ids: number[]; step: number; spread: boolean };
+export type BaselineInput = { choreography_ids: number[]; step: number };
 export type BaselineValidationResult = { error: PracticeInputError } | { value: BaselineInput };
 
 export function validateBaseline(input: unknown): BaselineValidationResult {
@@ -147,6 +144,6 @@ export function validateBaseline(input: unknown): BaselineValidationResult {
     const field = String(result.error.issues[0]?.path[0] ?? 'choreography_ids');
     return { error: issueErrors[field] ?? 'invalid_choreography_ids' };
   }
-  const { choreography_ids, step, spread } = result.data;
-  return { value: { choreography_ids: [...new Set(choreography_ids)], step, spread } };
+  const { choreography_ids, step } = result.data;
+  return { value: { choreography_ids: [...new Set(choreography_ids)], step } };
 }

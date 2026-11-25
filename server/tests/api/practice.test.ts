@@ -262,7 +262,7 @@ describe('POST /api/practice/baseline', () => {
     return id;
   }
 
-  it('sets dances to an interval step with spread due dates', async () => {
+  it('sets dances to an interval step so that they are not due', async () => {
     const ids = await Promise.all(['A', 'B', 'C', 'D'].map(learnedDance));
     const res = await request(app)
       .post('/api/practice/baseline')
@@ -273,15 +273,37 @@ describe('POST /api/practice/baseline', () => {
     const suggestions = (await request(app).get('/api/practice/suggestions')).body;
     expect(suggestions).toHaveLength(4);
     expect(suggestions.every((s: { is_due: boolean }) => !s.is_due)).toBe(true);
-    const dueDates = suggestions.map((s: { next_due_on: string }) => s.next_due_on);
-    expect(new Set(dueDates).size).toBeGreaterThan(1);
+    suggestions.forEach((summary: { practice_count: number; last_practiced_on: string | null }) =>
+      expect(summary).toMatchObject({ practice_count: 0, last_practiced_on: null }),
+    );
+  });
+
+  it('keeps dances that are set one by one for the full interval of the step', async () => {
+    const ids = await Promise.all(['A', 'B', 'C'].map(learnedDance));
+    await ids.reduce(
+      (previous, id) =>
+        previous.then(async () => {
+          await request(app)
+            .post('/api/practice/baseline')
+            .send({ choreography_ids: [id], step: 14 });
+        }),
+      Promise.resolve(),
+    );
+
+    const suggestions = (await request(app).get('/api/practice/suggestions')).body;
+    expect(suggestions).toHaveLength(3);
+    suggestions.forEach((summary: { is_due: boolean; days_overdue: number }) => {
+      expect(summary.is_due).toBe(false);
+      // The longest step is half a year, never shorter.
+      expect(summary.days_overdue).toBeLessThanOrEqual(-182);
+    });
   });
 
   it('continues from the step with the next practice', async () => {
     const id = await learnedDance('A');
     await request(app)
       .post('/api/practice/baseline')
-      .send({ choreography_ids: [id], step: 8, spread: false });
+      .send({ choreography_ids: [id], step: 8 });
     await request(app)
       .post('/api/practice-log')
       .send({ choreography_ids: [id] });
@@ -304,14 +326,13 @@ describe('POST /api/practice/baseline', () => {
     const log = (await request(app).get('/api/practice-log')).body.data;
     expect(log).toHaveLength(1);
     expect(log[0]).toMatchObject({ step: 3, choreography_name: 'A' });
-    expect(log[0].due_on).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(log[0]).not.toHaveProperty('due_on');
   });
 
   it.each([
     [{ choreography_ids: [1] }, 'step'],
     [{ choreography_ids: [1], step: 0 }, 'step'],
     [{ choreography_ids: [1], step: 15 }, 'step'],
-    [{ choreography_ids: [1], step: 3, spread: 'x' }, 'spread'],
     [{ step: 3 }, 'choreography_ids'],
   ])('returns 400 for %j', async (body, hint) => {
     const res = await request(app).post('/api/practice/baseline').send(body);

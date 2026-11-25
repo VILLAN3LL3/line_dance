@@ -236,8 +236,7 @@ export async function setupChoreographyTestDb(): Promise<Database> {
     confidence TEXT NOT NULL DEFAULT 'sure' CHECK (confidence IN ('sure', 'unsure')),
     song_id INTEGER,
     note TEXT,
-    step INTEGER,
-    due_on TEXT
+    step INTEGER
   )`,
   );
 

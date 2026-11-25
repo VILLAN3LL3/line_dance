@@ -26,6 +26,6 @@ test.describe("Practice interval step", () => {
 
     await expect(page.getByText("Not due yet (1)")).toBeVisible();
     await page.getByRole("tab", { name: /Practice log/ }).click();
-    await expect(page.getByText(/set to step 6, due \d{4}-\d{2}-\d{2}/)).toBeVisible();
+    await expect(page.getByText(/set to step 6/)).toBeVisible();
   });
 });

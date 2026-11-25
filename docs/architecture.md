@@ -196,15 +196,16 @@ repeats for good: a learned dance stays in the box and comes back at least every
 | Advanced (above 120) | 1, 1, 2, 3, 5, 7, 10, 15, 22, 33, 50, 80, 125, then 182 |
 
 **Interval step baseline:** dances learned long before the box existed can be put on a step once
-(`POST /api/practice/baseline` with `{ choreography_ids[], step, spread? }`, 1–1000 learned dances, all
-or nothing, `step` 1–14; `400` for an invalid step or a dance that is not learned, `404` for an unknown
-dance). It adds a log entry with `step` and `due_on` (migration `020_add_practice_log_step`) dated
-today. Such an entry is no practice: it is not counted, does not become "last practiced" and shows as
-"set to step N" in the log. The next practice continues from the step, a later baseline replaces the
-history. The due date is the full interval of the step for the level of the dance; with `spread`
-(default) the due dates are spread evenly over that interval, so a whole library does not come back on
-the same day. `GET /api/practice/intervals` returns the ladder of every level tier for the step
-labels in the client.
+(`POST /api/practice/baseline` with `{ choreography_ids[], step }`, 1–1000 learned dances, all or nothing,
+`step` 1–14; `400` for an invalid step or a dance that is not learned, `404` for an unknown dance). It adds
+a log entry with `step`, dated today. Such an entry is no practice: it is not counted, does not become
+"last practiced" and shows as "set to step N" in the log. The next practice continues from the step, a
+later baseline replaces the history. The due date is calculated when it is read (no stored date, see
+migration `021_drop_practice_log_due_on`): the full interval of the step for the level of the dance plus up
+to a quarter more (`baselineIntervalDays`). The extra days depend only on the id of the dance, so dances
+that are set one by one do not all come back on the same day, and the result is stable. The step is never
+shortened: a dance set to the longest step is not due for at least half a year.
+`GET /api/practice/intervals` returns the ladder of every level tier for the step labels in the client.
 
 Entries are ordered by their date, not by when they were entered. A learned dance without entries is
 due immediately. The order is the time since the last practice relative to its interval; never

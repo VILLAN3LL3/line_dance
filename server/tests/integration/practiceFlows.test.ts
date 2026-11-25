@@ -146,7 +146,7 @@ describe('practice baseline flow', () => {
     const a = await learned('A');
     const b = await learned('B');
     const result = await setPracticeBaseline(
-      validateBaseline({ choreography_ids: [a, b], step: 8, spread: false }),
+      validateBaseline({ choreography_ids: [a, b], step: 8 }),
     );
     expect(result).toEqual({ value: { updated: 2, step: 8 } });
     const suggestions = await getPracticeSuggestions();
@@ -190,13 +190,10 @@ describe('practice baseline flow', () => {
     }
   });
 
-  it('lists the baseline entry in the log with its step and due date', async () => {
+  it('lists the baseline entry in the log with its step', async () => {
     const a = await learned('A');
-    await setPracticeBaseline(validateBaseline({ choreography_ids: [a], step: 5, spread: false }));
+    await setPracticeBaseline(validateBaseline({ choreography_ids: [a], step: 5 }));
     const result = await listPracticeLog(validateLogList({}));
     expect(result).toMatchObject({ value: { data: [{ choreography_id: a, step: 5 }] } });
-    expect(result).toMatchObject({
-      value: { data: [{ due_on: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) }] },
-    });
   });
 });

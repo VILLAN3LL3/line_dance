@@ -147,7 +147,6 @@ describe("practice log model", () => {
       song_id: null,
       song_title: null,
       step: null,
-      due_on: null,
     });
     const days = groupLogByDay([
       entry(1, "2026-11-02"),
@@ -215,16 +214,14 @@ describe("quick log baseline mode", () => {
     expect(quickLogReducer(state, { type: "clear-selection" }).selected).toEqual([]);
   });
 
-  it("keeps mode, step and spread after saving", () => {
+  it("keeps mode and step after saving", () => {
     let state = createQuickLogState("2026-11-24");
     state = quickLogReducer(state, { type: "set-mode", mode: "baseline" });
     state = quickLogReducer(state, { type: "set-step", step: 9 });
-    state = quickLogReducer(state, { type: "set-spread", spread: false });
     state = quickLogReducer(state, { type: "toggle-dance", id: 1 });
     expect(quickLogReducer(state, { type: "saved", today: "2026-11-25" })).toMatchObject({
       mode: "baseline",
       step: 9,
-      spread: false,
       selected: [],
     });
   });

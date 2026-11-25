@@ -5,8 +5,8 @@ import {
   formatLocalDate,
   intervalDaysForLevel,
   isFutureDate,
-  planBaseline,
   REVIEW_STEP_COUNT,
+  baselineIntervalDays,
   reviewIntervalDays,
   summarizePractice,
   toContainsPattern,
@@ -35,7 +35,6 @@ function entry(
     confidence,
     note: null,
     step: null,
-    due_on: null,
     level_value: levelValue,
   };
 }
@@ -48,7 +47,6 @@ function never(choreographyId: number): PracticeRow {
     confidence: null,
     note: null,
     step: null,
-    due_on: null,
     level_value: 30,
   };
 }
@@ -187,31 +185,43 @@ function baseline(
   id: number,
   practicedOn: string,
   step: number,
-  dueOn: string,
   levelValue = 30,
 ): PracticeRow {
-  return {
-    ...entry(choreographyId, id, practicedOn, 'sure', levelValue),
-    step,
-    due_on: dueOn,
-  };
+  return { ...entry(choreographyId, id, practicedOn, 'sure', levelValue), step };
 }
 
 describe('interval step baseline', () => {
-  it('is due on its date, is no practice and continues from the step', () => {
-    const [summary] = summarizePractice([baseline(1, 1, '2026-11-20', 8, '2026-12-20')], today);
+  it('is due after the interval of the step, is no practice and continues from the step', () => {
+    // Dance 10, beginner, step 8: 30 days plus 10 % 9 = 1 day.
+    const [summary] = summarizePractice([baseline(10, 1, '2026-11-20', 8)], today);
     expect(summary).toMatchObject({
       last_practiced_on: null,
       last_note: null,
       practice_count: 0,
-      next_due_on: '2026-12-20',
+      next_due_on: '2026-12-21',
       is_due: false,
-      days_overdue: -26,
+      days_overdue: -27,
     });
   });
 
+  it('is not due on the day it was set, whatever the step', () => {
+    const rows = Array.from({ length: REVIEW_STEP_COUNT }, (_, index) =>
+      baseline(index + 1, index + 1, today, index + 1),
+    );
+    summarizePractice(rows, today).forEach((summary) => {
+      expect(summary.is_due).toBe(false);
+      expect(summary.days_overdue).toBeLessThan(0);
+    });
+  });
+
+  it('puts the longest step half a year ahead and never earlier', () => {
+    const [summary] = summarizePractice([baseline(1, 1, '2026-11-24', REVIEW_STEP_COUNT)], today);
+    // 182 days plus 1 % 47 = 1 day.
+    expect(summary.next_due_on).toBe('2027-05-26');
+  });
+
   it('counts the next sure practice as the step after the baseline', () => {
-    const rows = [baseline(1, 1, '2026-11-01', 8, '2026-12-01'), entry(1, 2, '2026-11-24')];
+    const rows = [baseline(1, 1, '2026-11-01', 8), entry(1, 2, '2026-11-24')];
     const [summary] = summarizePractice(rows, today);
     expect(summary).toMatchObject({ practice_count: 1, last_practiced_on: '2026-11-24' });
     // Step 9 of the beginner ladder is 45 days.
@@ -219,10 +229,7 @@ describe('interval step baseline', () => {
   });
 
   it('starts again after an unsure practice following the baseline', () => {
-    const rows = [
-      baseline(1, 1, '2026-11-01', 8, '2026-12-01'),
-      entry(1, 2, '2026-11-24', 'unsure'),
-    ];
+    const rows = [baseline(1, 1, '2026-11-01', 8), entry(1, 2, '2026-11-24', 'unsure')];
     expect(summarizePractice(rows, today)[0].next_due_on).toBe('2026-11-25');
   });
 
@@ -230,18 +237,27 @@ describe('interval step baseline', () => {
     const rows = [
       entry(1, 1, '2026-01-01'),
       entry(1, 2, '2026-01-02'),
-      baseline(1, 3, '2026-11-24', 3, '2026-11-28'),
+      baseline(1, 3, '2026-11-24', 3),
     ];
+    // Step 3 of the beginner ladder: 4 days plus 1 % 2 = 1 day.
     expect(summarizePractice(rows, today)[0]).toMatchObject({
       practice_count: 2,
-      next_due_on: '2026-11-28',
+      next_due_on: '2026-11-29',
     });
+  });
+
+  it('follows the level of the dance', () => {
+    const [beginner, advanced] = [30, 150].map(
+      (level) => summarizePractice([baseline(2, 1, '2026-11-24', 8, level)], today)[0],
+    );
+    expect(beginner.next_due_on).toBe('2026-12-26'); // 30 + 2 % 9 = 32 days
+    expect(advanced.next_due_on).toBe('2026-12-11'); // 15 + 2 % 5 = 17 days
   });
 
   it('ranks a baseline relative to its own interval', () => {
     const rows = [
-      baseline(1, 1, '2026-11-14', 8, '2026-12-14'), // 10 of 30 days
-      baseline(2, 2, '2026-11-14', 5, '2026-11-24'), // due today: 10 of 10 days
+      baseline(1, 1, '2026-11-14', 8), // 31 days, 10 of them over
+      baseline(2, 2, '2026-11-14', 5), // 10 + 2 % 4 = 12 days, 10 of them over
     ];
     expect(summarizePractice(rows, today).map((summary) => summary.choreography_id)).toEqual([
       2, 1,
@@ -249,50 +265,35 @@ describe('interval step baseline', () => {
   });
 });
 
-describe('planBaseline', () => {
-  const dances = (count: number, levelValue = 30): { id: number; level_value: number }[] =>
-    Array.from({ length: count }, (_, index) => ({ id: index + 1, level_value: levelValue }));
-
-  it('makes every dance due after the full interval without spreading', () => {
-    expect(planBaseline(dances(3), 8, false, today).map((plan) => plan.due_on)).toEqual([
-      '2026-12-24',
-      '2026-12-24',
-      '2026-12-24',
-    ]);
+describe('baselineIntervalDays', () => {
+  it('adds at most a quarter of the interval and never shortens it', () => {
+    for (let step = 1; step <= REVIEW_STEP_COUNT; step += 1) {
+      const interval = baselineIntervalDays(step, 30, 0);
+      for (let id = 1; id <= 400; id += 1) {
+        const days = baselineIntervalDays(step, 30, id);
+        expect(days).toBeGreaterThanOrEqual(interval);
+        expect(days).toBeLessThanOrEqual(interval + Math.ceil(interval * 0.25));
+      }
+    }
   });
 
-  it('spreads the due dates evenly over the interval', () => {
-    const due = planBaseline(dances(30), 8, true, today).map((plan) => plan.due_on);
-    expect(due[0]).toBe('2026-11-25');
-    expect(due.at(-1)).toBe('2026-12-24');
-    expect(new Set(due).size).toBe(30);
+  it('spreads dances that are set one by one over several days', () => {
+    const days = Array.from({ length: 200 }, (_, index) => baselineIntervalDays(8, 30, index + 1));
+    const perDay = new Map<number, number>();
+    days.forEach((value) => perDay.set(value, (perDay.get(value) ?? 0) + 1));
+    expect(perDay.size).toBe(9);
+    expect(Math.max(...perDay.values())).toBeLessThanOrEqual(23);
   });
 
-  it('keeps all dates within the interval and uses the level of each dance', () => {
-    const plan = planBaseline(
-      [
-        { id: 2, level_value: 150 },
-        { id: 1, level_value: 30 },
-      ],
-      8,
-      false,
-      today,
-    );
-    expect(plan).toEqual([
-      { choreography_id: 1, due_on: '2026-12-24' },
-      { choreography_id: 2, due_on: '2026-12-09' },
-    ]);
-    expect(planBaseline(dances(1), 1, true, today)[0].due_on).toBe('2026-11-25');
+  it('always gives a dance the same result', () => {
+    expect(baselineIntervalDays(10, 70, 123)).toBe(baselineIntervalDays(10, 70, 123));
   });
+});
 
+describe('baseline validation', () => {
   it('accepts only the steps of the ladder', () => {
-    expect(validateBaseline({ choreography_ids: [1], step: 1 })).toEqual({
-      value: { choreography_ids: [1], step: 1, spread: true },
-    });
-    expect(
-      validateBaseline({ choreography_ids: [1, 1], step: REVIEW_STEP_COUNT, spread: false }),
-    ).toEqual({
-      value: { choreography_ids: [1], step: REVIEW_STEP_COUNT, spread: false },
+    expect(validateBaseline({ choreography_ids: [1, 1], step: REVIEW_STEP_COUNT })).toEqual({
+      value: { choreography_ids: [1], step: REVIEW_STEP_COUNT },
     });
     expect(validateBaseline({ choreography_ids: [1], step: 0 })).toEqual({ error: 'invalid_step' });
     expect(validateBaseline({ choreography_ids: [1], step: REVIEW_STEP_COUNT + 1 })).toEqual({
@@ -300,9 +301,6 @@ describe('planBaseline', () => {
     });
     expect(validateBaseline({ choreography_ids: [1], step: '3' })).toEqual({
       error: 'invalid_step',
-    });
-    expect(validateBaseline({ choreography_ids: [1], step: 3, spread: 'yes' })).toEqual({
-      error: 'invalid_spread',
     });
     expect(validateBaseline({ choreography_ids: [], step: 3 })).toEqual({
       error: 'invalid_choreography_ids',

@@ -423,7 +423,7 @@ export const openApiSpec = {
         tags: ['Practice'],
         summary: 'Put learned dances on an interval step once (all or nothing)',
         description:
-          'For dances learned long ago without a practice record. Adds an entry that sets the step and the due date; it is no practice (not counted, not "last practiced"). The next practice continues from the step. With `spread` (default) the due dates are spread evenly over the interval of the step so that the dances do not come back on the same day.',
+          'For dances learned long ago without a practice record. Adds an entry that sets the step; it is no practice (not counted, not "last practiced"). The dance is due after the interval of the step for its level, plus up to a quarter more (a fixed number of days per dance, so dances do not all come back on the same day); it is never due earlier. The next practice continues from the step.',
         requestBody: {
           required: true,
           content: {
@@ -443,7 +443,6 @@ export const openApiSpec = {
                     maximum: 14,
                     description: 'Step of the interval ladder, see /api/practice/intervals.',
                   },
-                  spread: { type: 'boolean', default: true },
                 },
                 required: ['choreography_ids', 'step'],
               },
@@ -2083,7 +2082,6 @@ export const openApiSpec = {
             nullable: true,
             description: 'Set when the entry put the dance on an interval step (no practice).',
           },
-          due_on: { type: 'string', format: 'date', nullable: true },
         },
         required: ['id', 'choreography_id', 'choreography_name', 'practiced_on', 'confidence'],
       },

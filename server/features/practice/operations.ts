@@ -48,7 +48,6 @@ export type PracticeRow = {
   note: string | null;
   /** Set for an entry that sets the interval step instead of recording a practice. */
   step: number | null;
-  due_on: string | null;
   /** Value of the effective level (personal level when set). */
   level_value: number;
 };
@@ -70,7 +69,6 @@ type PracticeEntry = {
   confidence: PracticeConfidence;
   note: string | null;
   step: number | null;
-  due_on: string | null;
 };
 
 export function formatLocalDate(date: Date): string {
@@ -110,6 +108,25 @@ export const REVIEW_STEP_COUNT = REVIEW_INTERVAL_TIERS[0].intervalDays.length;
 export function intervalAtStreak(streak: number, levelValue: number): number {
   const intervals = intervalDaysForLevel(levelValue);
   return intervals[Math.min(Math.max(streak - 1, 0), intervals.length - 1)];
+}
+
+/** Share of the interval by which a step set once may be pushed back, see `baselineIntervalDays`. */
+const BASELINE_JITTER_SHARE = 0.25;
+
+/**
+ * Days until a dance that was put on `step` once is due: the full interval of the step plus up to a
+ * quarter more. The extra days depend only on the dance, so dances that are set one by one do not
+ * all come back on the same day, and the result stays the same whenever it is calculated. The step
+ * is never shortened: "I know this dance well" must not bring it back earlier than that.
+ */
+export function baselineIntervalDays(
+  step: number,
+  levelValue: number,
+  choreographyId: number,
+): number {
+  const interval = intervalAtStreak(step, levelValue);
+  const window = Math.ceil(interval * BASELINE_JITTER_SHARE);
+  return interval + (choreographyId % (window + 1));
 }
 
 /** An entry that sets the step restarts the count there; "unsure" starts again. */
@@ -161,10 +178,11 @@ function summarizeDance(
   const practices = ordered.filter((entry) => entry.step === null);
   const lastPractice = practices.at(-1);
   const referenceDay = toDayNumber(last.practiced_on);
-  const dueDay =
-    last.due_on === null
-      ? referenceDay + intervalAtStreak(streakOf(ordered), levelValue)
-      : toDayNumber(last.due_on);
+  const interval =
+    last.step === null
+      ? intervalAtStreak(streakOf(ordered), levelValue)
+      : baselineIntervalDays(last.step, levelValue, choreographyId);
+  const dueDay = referenceDay + interval;
   const overdue = toDayNumber(today) - dueDay;
   return {
     urgency: (toDayNumber(today) - referenceDay) / Math.max(dueDay - referenceDay, 1),
@@ -195,7 +213,6 @@ export function summarizePractice(rows: readonly PracticeRow[], today: string): 
         confidence: row.confidence,
         note: row.note,
         step: row.step,
-        due_on: row.due_on,
       });
     }
     entriesByDance.set(row.choreography_id, dance);
@@ -207,27 +224,6 @@ export function summarizePractice(rows: readonly PracticeRow[], today: string): 
       return a.summary.choreography_id - b.summary.choreography_id;
     })
     .map(({ summary }) => summary);
-}
-
-export type BaselinePlan = { choreography_id: number; due_on: string };
-
-/**
- * Due dates for dances that are put on an interval step once. Without `spread` every dance is due
- * after the full interval of the step; with it the due dates are spread evenly over that interval,
- * so a whole library does not come back on the same day.
- */
-export function planBaseline(
-  dances: readonly { id: number; level_value: number }[],
-  step: number,
-  spread: boolean,
-  today: string,
-): BaselinePlan[] {
-  const ordered = [...dances].sort((a, b) => a.id - b.id);
-  return ordered.map((dance, index) => {
-    const interval = intervalAtStreak(step, dance.level_value);
-    const delay = spread ? 1 + Math.floor((index * interval) / ordered.length) : interval;
-    return { choreography_id: dance.id, due_on: addDays(today, delay) };
-  });
 }
 
 /** The interval ladder of every level tier, so clients can describe the steps without a copy. */
