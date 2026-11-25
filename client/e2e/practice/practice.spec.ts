@@ -34,3 +34,32 @@ test.describe("Practice flash cards", () => {
     await expect(page.getByText(name)).toBeVisible();
   });
 });
+
+test.describe("Practice log paging", () => {
+  test("loads more entries when the end of the list is scrolled into view", async ({
+    page,
+    request,
+  }) => {
+    const name = `Paged Dance ${Date.now()}`;
+    const id = await createChoreographyViaApi(request, name);
+    const entries = Array.from({ length: 60 }, (_, index) => {
+      const day = String((index % 28) + 1).padStart(2, "0");
+      const month = String(Math.floor(index / 28) + 1).padStart(2, "0");
+      return request.post(`${API_BASE}/practice-log`, {
+        data: { choreography_ids: [id], practiced_on: `2025-${month}-${day}` },
+      });
+    });
+    await Promise.all(entries);
+
+    await page.goto("/personal");
+    await page.getByRole("tab", { name: /Practice log/ }).click();
+    await page.getByRole("searchbox", { name: "Search dances by name" }).fill(name);
+
+    const rows = page.locator(".practice-log-entry");
+    await expect(rows).toHaveCount(50);
+
+    await page.getByRole("button", { name: "Load more" }).scrollIntoViewIfNeeded();
+    await expect(rows).toHaveCount(60);
+    await expect(page.getByRole("button", { name: "Load more" })).toHaveCount(0);
+  });
+});

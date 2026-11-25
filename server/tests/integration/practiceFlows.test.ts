@@ -98,7 +98,10 @@ describe('practice flow', () => {
     await logPractice(validateLogPractice({ choreography_ids: [a], practiced_on: '2026-02-01' }));
     const result = await listPracticeLog(validateLogList({ limit: '1' }));
     expect(result).toMatchObject({
-      value: [{ choreography_name: 'A', practiced_on: '2026-02-01', song_title: null }],
+      value: {
+        data: [{ choreography_name: 'A', practiced_on: '2026-02-01', song_title: null }],
+        total: 2,
+      },
     });
   });
 
@@ -191,9 +194,9 @@ describe('practice baseline flow', () => {
     const a = await learned('A');
     await setPracticeBaseline(validateBaseline({ choreography_ids: [a], step: 5, spread: false }));
     const result = await listPracticeLog(validateLogList({}));
-    expect(result).toMatchObject({ value: [{ choreography_id: a, step: 5 }] });
+    expect(result).toMatchObject({ value: { data: [{ choreography_id: a, step: 5 }] } });
     expect(result).toMatchObject({
-      value: [{ due_on: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) }],
+      value: { data: [{ due_on: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) }] },
     });
   });
 });

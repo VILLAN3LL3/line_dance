@@ -357,22 +357,40 @@ export const openApiSpec = {
       },
       get: {
         tags: ['Practice'],
-        summary: 'List the practice log, newest first',
+        summary: 'List the practice log, newest first, page by page',
         parameters: [
           {
             name: 'limit',
             in: 'query',
             schema: { type: 'integer', minimum: 1, maximum: 500, default: 100 },
           },
+          {
+            name: 'offset',
+            in: 'query',
+            schema: { type: 'integer', minimum: 0, default: 0 },
+          },
+          {
+            name: 'q',
+            in: 'query',
+            description: 'Only entries of dances whose name contains this text (ignoring case).',
+            schema: { type: 'string', maxLength: 100 },
+          },
         ],
         responses: {
           200: {
-            description: 'Practice entries',
+            description: 'One page of practice entries and the total number of matching entries',
             content: {
               'application/json': {
                 schema: {
-                  type: 'array',
-                  items: { $ref: '#/components/schemas/PracticeLogEntry' },
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/PracticeLogEntry' },
+                    },
+                    total: { type: 'integer' },
+                  },
+                  required: ['data', 'total'],
                 },
               },
             },

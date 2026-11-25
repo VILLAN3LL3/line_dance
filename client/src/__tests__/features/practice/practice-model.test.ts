@@ -11,7 +11,6 @@ import {
 import {
   buildLogRequest,
   filterByName,
-  filterLogByName,
   formatLocalDate,
   groupLogByDay,
   toggleSelection,
@@ -159,24 +158,6 @@ describe("practice log model", () => {
       ["2026-11-02", 2],
       ["2026-11-01", 1],
     ]);
-  });
-
-  it("filters log entries by the dance name", () => {
-    const entry = (id: number, name: string): PracticeLogEntry => ({
-      id,
-      choreography_id: id,
-      choreography_name: name,
-      practiced_on: "2026-11-01",
-      confidence: "sure",
-      note: null,
-      song_id: null,
-      song_title: null,
-      step: null,
-      due_on: null,
-    });
-    const entries = [entry(1, "Cowboy Boogie"), entry(2, "Waltz")];
-    expect(filterLogByName(entries, "WALTZ").map((e) => e.id)).toEqual([2]);
-    expect(filterLogByName(entries, "")).toHaveLength(2);
   });
 
   it("toggles selections and filters dances by name", () => {

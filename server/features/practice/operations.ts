@@ -242,3 +242,8 @@ export function describeIntervalTiers(): {
     interval_days: tier.intervalDays,
   }));
 }
+
+/** LIKE pattern for "name contains query"; wildcards typed by the user are matched literally. */
+export function toContainsPattern(query: string): string {
+  return '%' + query.replace(/[\\%_]/g, (character) => '\\' + character) + '%';
+}

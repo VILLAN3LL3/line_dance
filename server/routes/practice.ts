@@ -27,6 +27,8 @@ const practiceErrors: Record<string, [number, string]> = {
   invalid_spread: [400, 'spread must be a boolean'],
   not_learned: [400, 'Only learned dances can be set to an interval step'],
   invalid_limit: [400, 'limit must be an integer between 1 and 500'],
+  invalid_offset: [400, 'offset must be a non-negative integer'],
+  invalid_query: [400, 'q must be at most 100 characters'],
   invalid_id: [400, 'Invalid practice entry id'],
   future_date: [400, 'practiced_on must not be in the future'],
   not_found: [404, 'Choreography or practice entry not found'],
@@ -64,7 +66,10 @@ export async function logPractice(
 
 export async function listPracticeLog(
   _req: Request,
-  res: Response<PracticeLogEntry[] | ErrorResponse, { input: LogListRequest }>,
+  res: Response<
+    { data: PracticeLogEntry[]; total: number } | ErrorResponse,
+    { input: LogListRequest }
+  >,
 ): Promise<Response | void> {
   try {
     const result = await practice.listPracticeLog(res.locals.input);

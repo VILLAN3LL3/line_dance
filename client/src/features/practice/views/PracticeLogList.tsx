@@ -1,5 +1,6 @@
 import React from "react";
 
+import { useOnVisible } from "../../../shared/browser/useOnVisible";
 import { EmptyState, ErrorMessage, LoadingState } from "../../../shared/ui";
 import { CONFIDENCE_OPTIONS } from "../model/practice-log";
 import type { PracticeLogEntry } from "../../../types";
@@ -16,6 +17,10 @@ const emojiFor = (entry: PracticeLogEntry): string =>
 
 export const PracticeLogList: React.FC<PracticeLogListProps> = ({ viewModel }) => {
   const { state, actions } = viewModel;
+  const loadMoreRef = useOnVisible<HTMLButtonElement>(
+    actions.loadMore,
+    state.hasMore && !state.isLoadingMore,
+  );
 
   if (state.isLoading) return <LoadingState message="Loading your practice log..." />;
   return (
@@ -60,6 +65,17 @@ export const PracticeLogList: React.FC<PracticeLogListProps> = ({ viewModel }) =
           </ul>
         </section>
       ))}
+      {state.hasMore && (
+        <button
+          ref={loadMoreRef}
+          type="button"
+          className="btn-secondary btn-small practice-load-more"
+          disabled={state.isLoadingMore}
+          onClick={actions.loadMore}
+        >
+          {state.isLoadingMore ? "Loading..." : "Load more"}
+        </button>
+      )}
     </div>
   );
 };

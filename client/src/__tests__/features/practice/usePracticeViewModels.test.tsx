@@ -39,7 +39,7 @@ beforeEach(() => {
     makeSummary(2),
     makeSummary(1, { is_due: false, next_due_on: "2999-01-01", practice_count: 1 }),
   ]);
-  vi.mocked(fetchPracticeLog).mockResolvedValue([]);
+  vi.mocked(fetchPracticeLog).mockResolvedValue({ data: [], total: 0 });
   vi.mocked(fetchPracticeIntervals).mockResolvedValue([
     { name: "Beginner", max_level_value: null, interval_days: [1, 3, 7] },
   ]);
@@ -226,7 +226,7 @@ describe("usePracticeLogViewModel", () => {
   };
 
   it("groups the log by day and deletes an entry", async () => {
-    vi.mocked(fetchPracticeLog).mockResolvedValue([entry]);
+    vi.mocked(fetchPracticeLog).mockResolvedValue({ data: [entry], total: 1 });
     const { wrapper } = createQueryWrapper();
     const { result } = renderHook(() => usePracticeLogViewModel(), { wrapper });
     await waitFor(() => expect(result.current.state.days).toHaveLength(1));
@@ -237,7 +237,7 @@ describe("usePracticeLogViewModel", () => {
   });
 
   it("reports a failed deletion", async () => {
-    vi.mocked(fetchPracticeLog).mockResolvedValue([entry]);
+    vi.mocked(fetchPracticeLog).mockResolvedValue({ data: [entry], total: 1 });
     vi.mocked(deletePracticeEntry).mockRejectedValue(new Error("nope"));
     const { wrapper } = createQueryWrapper();
     const { result } = renderHook(() => usePracticeLogViewModel(), { wrapper });
@@ -247,5 +247,58 @@ describe("usePracticeLogViewModel", () => {
     await waitFor(() =>
       expect(result.current.state.error).toBe("Failed to delete the practice entry"),
     );
+  });
+
+  const pageOf = (first: number, count: number, total: number) => ({
+    data: Array.from({ length: count }, (_, index) => ({
+      ...entry,
+      id: first + index,
+      practiced_on: "2026-11-20",
+    })),
+    total,
+  });
+
+  it("loads the next page with the offset of the entries already loaded", async () => {
+    vi.mocked(fetchPracticeLog)
+      .mockResolvedValueOnce(pageOf(1, 50, 70))
+      .mockResolvedValueOnce(pageOf(51, 20, 70));
+    const { wrapper } = createQueryWrapper();
+    const { result } = renderHook(() => usePracticeLogViewModel(), { wrapper });
+    await waitFor(() => expect(result.current.state.hasMore).toBe(true));
+    expect(fetchPracticeLog).toHaveBeenLastCalledWith({ limit: 50, offset: 0, q: "" });
+
+    act(() => result.current.actions.loadMore());
+    await waitFor(() => expect(result.current.state.hasMore).toBe(false));
+
+    expect(fetchPracticeLog).toHaveBeenLastCalledWith({ limit: 50, offset: 50, q: "" });
+    expect(result.current.state.days).toHaveLength(1);
+    expect(result.current.state.days[0].entries).toHaveLength(70);
+  });
+
+  it("does not load beyond the last page", async () => {
+    vi.mocked(fetchPracticeLog).mockResolvedValue(pageOf(1, 3, 3));
+    const { wrapper } = createQueryWrapper();
+    const { result } = renderHook(() => usePracticeLogViewModel(), { wrapper });
+    await waitFor(() => expect(result.current.state.days).toHaveLength(1));
+
+    act(() => result.current.actions.loadMore());
+    expect(result.current.state.hasMore).toBe(false);
+    expect(fetchPracticeLog).toHaveBeenCalledTimes(1);
+  });
+
+  it("filters by name on the server and starts again at the first page", async () => {
+    vi.mocked(fetchPracticeLog).mockResolvedValue(pageOf(1, 1, 1));
+    const { wrapper } = createQueryWrapper();
+    const { result, rerender } = renderHook(
+      ({ query }: { query: string }) => usePracticeLogViewModel(query),
+      { wrapper, initialProps: { query: "" } },
+    );
+    await waitFor(() => expect(result.current.state.days).toHaveLength(1));
+
+    rerender({ query: "  waltz " });
+    await waitFor(() =>
+      expect(fetchPracticeLog).toHaveBeenLastCalledWith({ limit: 50, offset: 0, q: "waltz" }),
+    );
+    expect(result.current.state.isFiltered).toBe(true);
   });
 });

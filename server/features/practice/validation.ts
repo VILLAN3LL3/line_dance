@@ -10,12 +10,15 @@ export type PracticeInputError =
   | 'invalid_note'
   | 'invalid_step'
   | 'invalid_spread'
-  | 'invalid_limit';
+  | 'invalid_limit'
+  | 'invalid_offset'
+  | 'invalid_query';
 
 export const MAX_BATCH_SIZE = 100;
 export const DEFAULT_LOG_LIMIT = 100;
 export const MAX_LOG_LIMIT = 500;
 export const MAX_BASELINE_SIZE = 1000;
+export const MAX_LOG_QUERY_LENGTH = 100;
 
 const calendarDate = z
   .string()
@@ -49,10 +52,23 @@ const baselineSchema = z.object({
   spread: z.boolean().default(true),
 });
 
-const limitSchema = z.preprocess(
-  (value) => (value === undefined ? DEFAULT_LOG_LIMIT : Number(value)),
-  z.number().int().min(1).max(MAX_LOG_LIMIT),
-);
+const withDefault = (fallback: number | string) => (value: unknown) =>
+  value === undefined ? fallback : value;
+
+const listSchema = z.object({
+  limit: z.preprocess(
+    (value) => Number(withDefault(DEFAULT_LOG_LIMIT)(value)),
+    z.number().int().min(1).max(MAX_LOG_LIMIT),
+  ),
+  offset: z.preprocess((value) => Number(withDefault(0)(value)), z.number().int().min(0)),
+  query: z.preprocess(
+    withDefault(''),
+    z
+      .string()
+      .max(MAX_LOG_QUERY_LENGTH)
+      .transform((value) => value.trim()),
+  ),
+});
 
 export type LogPracticeInput = {
   choreography_ids: number[];
@@ -63,7 +79,8 @@ export type LogPracticeInput = {
 };
 export type LogPracticeValidationResult =
   { error: PracticeInputError } | { value: LogPracticeInput };
-export type LogListValidationResult = { error: PracticeInputError } | { value: { limit: number } };
+export type LogListInput = { limit: number; offset: number; query: string };
+export type LogListValidationResult = { error: PracticeInputError } | { value: LogListInput };
 
 const issueErrors: Record<string, PracticeInputError> = {
   choreography_ids: 'invalid_choreography_ids',
@@ -93,11 +110,26 @@ export function validateLogPractice(input: unknown): LogPracticeValidationResult
   };
 }
 
+const listIssueErrors: Record<string, PracticeInputError> = {
+  limit: 'invalid_limit',
+  offset: 'invalid_offset',
+  query: 'invalid_query',
+};
+
+/** Reads `limit`, `offset` and the name filter `q` of the query string. */
 export function validateLogList(input: unknown): LogListValidationResult {
   const record =
     typeof input === 'object' && input !== null ? (input as Record<string, unknown>) : {};
-  const result = limitSchema.safeParse(record.limit);
-  return result.success ? { value: { limit: result.data } } : { error: 'invalid_limit' };
+  const result = listSchema.safeParse({
+    limit: record.limit,
+    offset: record.offset,
+    query: record.q,
+  });
+  if (!result.success) {
+    const field = String(result.error.issues[0]?.path[0] ?? 'limit');
+    return { error: listIssueErrors[field] ?? 'invalid_limit' };
+  }
+  return { value: result.data };
 }
 
 export function validateEntryId(rawId: string): { error: 'invalid_id' } | { value: number } {

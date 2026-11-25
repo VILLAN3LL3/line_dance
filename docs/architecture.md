@@ -173,8 +173,10 @@ orphans. Practicing in a course session does not count automatically.
 - `POST /api/practice-log` takes `{ choreography_ids[], practiced_on?, confidence?, song_id?, note? }`
   (1–100 dances, all or nothing in one transaction; `song_id` only with exactly one dance, and it must
   be one of its songs) and returns `201 { logged, practiced_on }`. `400` for invalid input or a future
-  date, `404` if a dance does not exist. `GET /api/practice-log?limit=` lists the entries newest first
-  (default 100, maximum 500), `DELETE /api/practice-log/:id` removes one.
+  date, `404` if a dance does not exist. `GET /api/practice-log?limit=&offset=&q=` returns
+  `{ data, total }`: one page of entries, newest first (`limit` default 100, maximum 500), and the number of
+  entries matching `q` (dance name contains the text, ignoring case; `%` and `_` match literally);
+  `400` for an invalid `limit`, `offset` or `q`. `DELETE /api/practice-log/:id` removes one.
 - `GET /api/practice/suggestions` returns every **learned** dance with `last_practiced_on`,
   `last_note`, `practice_count`, `next_due_on`, `is_due` and `days_overdue`, the most urgent first.
   The client combines it with the learned choreographies, so no second choreography serialization
@@ -207,6 +209,11 @@ labels in the client.
 Entries are ordered by their date, not by when they were entered. A learned dance without entries is
 due immediately. The order is the time since the last practice relative to its interval; never
 practiced dances come first. Change `REVIEW_INTERVAL_TIERS` to tune it.
+
+The "Practice log" tab loads the log page by page (50 entries) with `useInfiniteQuery`; the name search of the
+Personal page is applied on the server so every match can be reached. A "Load more" button at the end of the list
+is triggered automatically when it scrolls into view (`shared/browser/useOnVisible.ts`, IntersectionObserver) and
+stays clickable without that support.
 
 On the client, `client/src/features/practice/` adds the tabs "Practice" and "Practice log" to the
 Personal page. The Practice tab is the flash card box: each due dance is a `FlipCard`

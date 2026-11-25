@@ -18,6 +18,7 @@ export type {
   PracticeConfidence,
   PracticeIntervalTier,
   PracticeLogEntry,
+  PracticeLogPage,
   PracticeLogRequest,
   PracticeSummary,
   SavedFilterConfiguration,

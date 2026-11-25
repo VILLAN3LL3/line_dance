@@ -314,3 +314,9 @@ export interface PracticeIntervalTier {
   max_level_value: number | null;
   interval_days: number[];
 }
+
+export interface PracticeLogPage {
+  data: PracticeLogEntry[];
+  /** Number of entries matching the filter, over all pages. */
+  total: number;
+}

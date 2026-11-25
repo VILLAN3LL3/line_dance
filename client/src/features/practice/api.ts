@@ -2,7 +2,7 @@ import { httpClient } from "../../shared/http/httpClient";
 import type {
   PracticeBaselineRequest,
   PracticeIntervalTier,
-  PracticeLogEntry,
+  PracticeLogPage,
   PracticeLogRequest,
   PracticeSummary,
 } from "../../types";
@@ -12,8 +12,14 @@ export async function fetchPracticeSuggestions(): Promise<PracticeSummary[]> {
   return response.data;
 }
 
-export async function fetchPracticeLog(limit?: number): Promise<PracticeLogEntry[]> {
-  const response = await httpClient.get("/practice-log", { params: { limit } });
+export async function fetchPracticeLog(params: {
+  limit: number;
+  offset: number;
+  q?: string;
+}): Promise<PracticeLogPage> {
+  const response = await httpClient.get("/practice-log", {
+    params: { ...params, q: params.q || undefined },
+  });
   return response.data;
 }
 

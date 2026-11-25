@@ -4,6 +4,7 @@ import {
   isFutureDate,
   planBaseline,
   summarizePractice,
+  toContainsPattern,
 } from './operations.ts';
 import type { PracticeSummary } from './operations.ts';
 import { validateEntryId } from './validation.ts';
@@ -26,7 +27,8 @@ type LogResult =
 type BaselineResult =
   | { error: PracticeInputError | 'not_found' | 'not_learned' }
   | { value: { updated: number; step: number } };
-type ListResult = { error: PracticeInputError } | { value: PracticeLogEntry[] };
+type ListResult =
+  { error: PracticeInputError } | { value: { data: PracticeLogEntry[]; total: number } };
 type DeleteResult = { error: 'invalid_id' | 'not_found' } | { value: true };
 
 function today(): string {
@@ -60,7 +62,13 @@ export async function logPractice(input: LogPracticeRequest): Promise<LogResult>
 export async function listPracticeLog(input: LogListRequest): Promise<ListResult> {
   if ('exception' in input) throw input.exception;
   if ('error' in input) return input;
-  return { value: await practice.listEntries(input.value.limit) };
+  const { limit, offset, query } = input.value;
+  const pattern = toContainsPattern(query);
+  const [data, total] = await Promise.all([
+    practice.listEntries(limit, offset, pattern),
+    practice.countEntries(pattern),
+  ]);
+  return { value: { data, total } };
 }
 
 export async function removePracticeEntry(rawId: string): Promise<DeleteResult> {

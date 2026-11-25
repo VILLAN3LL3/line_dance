@@ -36,8 +36,8 @@ describe('POST /api/practice-log', () => {
     expect(res.status).toBe(201);
     expect(res.body).toEqual({ logged: 2, practiced_on: '2026-01-02' });
     const log = await request(app).get('/api/practice-log');
-    expect(log.body).toHaveLength(2);
-    expect(log.body[0]).toMatchObject({ note: 'Restart', confidence: 'sure' });
+    expect(log.body.total).toBe(2);
+    expect(log.body.data[0]).toMatchObject({ note: 'Restart', confidence: 'sure' });
   });
 
   it('accepts a past date entered afterwards', async () => {
@@ -71,6 +71,80 @@ describe('POST /api/practice-log', () => {
   });
 });
 
+describe('GET /api/practice-log paging and filter', () => {
+  async function logDays(id: number, days: string[]): Promise<void> {
+    await days.reduce(
+      (previous, day) =>
+        previous.then(async () => {
+          await request(app)
+            .post('/api/practice-log')
+            .send({ choreography_ids: [id], practiced_on: day });
+        }),
+      Promise.resolve(),
+    );
+  }
+
+  it('returns the pages newest first with the total number of entries', async () => {
+    const id = await createChoreo('Paged');
+    await logDays(id, ['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04', '2026-01-05']);
+
+    const first = (await request(app).get('/api/practice-log').query({ limit: '2' })).body;
+    const second = (await request(app).get('/api/practice-log').query({ limit: '2', offset: '2' }))
+      .body;
+    const last = (await request(app).get('/api/practice-log').query({ limit: '2', offset: '4' }))
+      .body;
+    const beyond = (await request(app).get('/api/practice-log').query({ limit: '2', offset: '9' }))
+      .body;
+
+    expect(first.total).toBe(5);
+    expect(first.data.map((e: { practiced_on: string }) => e.practiced_on)).toEqual([
+      '2026-01-05',
+      '2026-01-04',
+    ]);
+    expect(second.data.map((e: { practiced_on: string }) => e.practiced_on)).toEqual([
+      '2026-01-03',
+      '2026-01-02',
+    ]);
+    expect(last.data).toHaveLength(1);
+    expect(beyond).toEqual({ data: [], total: 5 });
+  });
+
+  it('filters by dance name, ignoring case, and counts only matches', async () => {
+    const boogie = await createChoreo('Cowboy Boogie');
+    const waltz = await createChoreo('Waltz');
+    await logDays(boogie, ['2026-01-01', '2026-01-02']);
+    await logDays(waltz, ['2026-01-03']);
+
+    const res = await request(app).get('/api/practice-log').query({ q: 'BOOG' });
+    expect(res.body.total).toBe(2);
+    expect(
+      res.body.data.every(
+        (e: { choreography_name: string }) => e.choreography_name === 'Cowboy Boogie',
+      ),
+    ).toBe(true);
+    expect((await request(app).get('/api/practice-log').query({ q: 'xyz' })).body).toEqual({
+      data: [],
+      total: 0,
+    });
+  });
+
+  it('matches wildcard characters literally', async () => {
+    const id = await createChoreo('100% Country');
+    const other = await createChoreo('Plain');
+    await logDays(id, ['2026-01-01']);
+    await logDays(other, ['2026-01-02']);
+    expect((await request(app).get('/api/practice-log').query({ q: '%' })).body.total).toBe(1);
+    expect((await request(app).get('/api/practice-log').query({ q: '_' })).body.total).toBe(0);
+  });
+
+  it.each([{ offset: '-1' }, { offset: 'x' }, { q: 'x'.repeat(101) }])(
+    'returns 400 for %j',
+    async (query) => {
+      expect((await request(app).get('/api/practice-log').query(query)).status).toBe(400);
+    },
+  );
+});
+
 describe('GET /api/practice-log and DELETE /api/practice-log/:id', () => {
   it('rejects an invalid limit', async () => {
     const res = await request(app).get('/api/practice-log').query({ limit: '0' });
@@ -82,7 +156,7 @@ describe('GET /api/practice-log and DELETE /api/practice-log/:id', () => {
     await request(app)
       .post('/api/practice-log')
       .send({ choreography_ids: [id] });
-    const [entry] = (await request(app).get('/api/practice-log')).body;
+    const [entry] = (await request(app).get('/api/practice-log')).body.data;
     expect((await request(app).delete(`/api/practice-log/${entry.id}`)).status).toBe(200);
     expect((await request(app).delete(`/api/practice-log/${entry.id}`)).status).toBe(404);
     expect((await request(app).delete('/api/practice-log/abc')).status).toBe(400);
@@ -94,7 +168,7 @@ describe('GET /api/practice-log and DELETE /api/practice-log/:id', () => {
       .post('/api/practice-log')
       .send({ choreography_ids: [id] });
     await request(app).delete(`/api/choreographies/${id}`);
-    expect((await request(app).get('/api/practice-log')).body).toEqual([]);
+    expect((await request(app).get('/api/practice-log')).body).toEqual({ data: [], total: 0 });
     const rows = await allQuery('SELECT * FROM personal_data.choreography_practice_log');
     expect(rows).toHaveLength(0);
   });
@@ -227,7 +301,7 @@ describe('POST /api/practice/baseline', () => {
     await request(app)
       .post('/api/practice/baseline')
       .send({ choreography_ids: [id], step: 3 });
-    const log = (await request(app).get('/api/practice-log')).body;
+    const log = (await request(app).get('/api/practice-log')).body.data;
     expect(log).toHaveLength(1);
     expect(log[0]).toMatchObject({ step: 3, choreography_name: 'A' });
     expect(log[0].due_on).toMatch(/^\d{4}-\d{2}-\d{2}$/);

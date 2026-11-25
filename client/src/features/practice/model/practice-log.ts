@@ -6,6 +6,9 @@ import type {
   PracticeLogRequest,
 } from "../../../types";
 
+/** Entries per request; the next page is loaded when the end of the list scrolls into view. */
+export const LOG_PAGE_SIZE = 50;
+
 export const CONFIDENCE_OPTIONS: readonly {
   value: PracticeConfidence;
   label: string;
@@ -65,8 +68,3 @@ export const toggleSelection = (selected: readonly number[], id: number): number
 
 export const filterByName = (dances: readonly Choreography[], query: string): Choreography[] =>
   dances.filter((dance) => matchesName(dance.name, query));
-
-export const filterLogByName = (
-  entries: readonly PracticeLogEntry[],
-  query: string,
-): PracticeLogEntry[] => entries.filter((entry) => matchesName(entry.choreography_name, query));

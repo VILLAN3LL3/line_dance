@@ -78,7 +78,7 @@ describe("PersonalPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(fetchPracticeSuggestions).mockResolvedValue([]);
-    vi.mocked(fetchPracticeLog).mockResolvedValue([]);
+    vi.mocked(fetchPracticeLog).mockResolvedValue({ data: [], total: 0 });
     vi.mocked(fetchPracticeIntervals).mockResolvedValue([
       { name: "Beginner", max_level_value: 40, interval_days: [1, 3, 7, 14, 30, 60, 182] },
       { name: "Advanced", max_level_value: null, interval_days: [1, 1, 3, 5, 10, 20, 182] },
@@ -330,20 +330,23 @@ describe("PersonalPage", () => {
 
     it("lists the practice log by day and deletes an entry", async () => {
       mockLists([], []);
-      vi.mocked(fetchPracticeLog).mockResolvedValue([
-        {
-          id: 7,
-          choreography_id: 2,
-          choreography_name: "Known Dance",
-          practiced_on: "2026-11-20",
-          confidence: "unsure",
-          note: "turn",
-          song_id: null,
-          song_title: null,
-          step: null,
-          due_on: null,
-        },
-      ]);
+      vi.mocked(fetchPracticeLog).mockResolvedValue({
+        total: 1,
+        data: [
+          {
+            id: 7,
+            choreography_id: 2,
+            choreography_name: "Known Dance",
+            practiced_on: "2026-11-20",
+            confidence: "unsure",
+            note: "turn",
+            song_id: null,
+            song_title: null,
+            step: null,
+            due_on: null,
+          },
+        ],
+      });
       render(<PersonalPage />);
       fireEvent.click(await screen.findByRole("tab", { name: /Practice log/ }));
 
@@ -415,7 +418,7 @@ describe("PersonalPage", () => {
       expect(screen.getByText("No learned dance matches your search.")).toBeInTheDocument();
     });
 
-    it("filters the practice log by dance name", async () => {
+    it("filters the practice log by dance name on the server", async () => {
       mockLists([], []);
       const entry = (id: number, name: string) => ({
         id,
@@ -429,17 +432,50 @@ describe("PersonalPage", () => {
         step: null,
         due_on: null,
       });
-      vi.mocked(fetchPracticeLog).mockResolvedValue([entry(1, "Cowboy Boogie"), entry(2, "Waltz")]);
+      const all = [entry(1, "Cowboy Boogie"), entry(2, "Waltz")];
+      vi.mocked(fetchPracticeLog).mockImplementation(async ({ q }) => {
+        const data = all.filter((e) => e.choreography_name.toLowerCase().includes(q ?? ""));
+        return { data, total: data.length };
+      });
       render(<PersonalPage />);
       fireEvent.click(await screen.findByRole("tab", { name: /Practice log/ }));
       await screen.findByText("Waltz");
 
       fireEvent.change(screen.getByRole("searchbox"), { target: { value: "waltz" } });
-      expect(screen.queryByText("Cowboy Boogie")).toBeNull();
+      await waitFor(() => expect(screen.queryByText("Cowboy Boogie")).toBeNull());
       expect(screen.getByText("Waltz")).toBeInTheDocument();
+      expect(fetchPracticeLog).toHaveBeenLastCalledWith({ limit: 50, offset: 0, q: "waltz" });
 
       fireEvent.change(screen.getByRole("searchbox"), { target: { value: "xyz" } });
-      expect(screen.getByText("No practice matches your search.")).toBeInTheDocument();
+      expect(await screen.findByText("No practice matches your search.")).toBeInTheDocument();
+    });
+
+    it("loads more log entries on demand", async () => {
+      mockLists([], []);
+      const entry = (id: number) => ({
+        id,
+        choreography_id: id,
+        choreography_name: `Dance ${id}`,
+        practiced_on: "2026-11-20",
+        confidence: "sure" as const,
+        note: null,
+        song_id: null,
+        song_title: null,
+        step: null,
+        due_on: null,
+      });
+      vi.mocked(fetchPracticeLog)
+        .mockResolvedValueOnce({ data: [entry(1)], total: 2 })
+        .mockResolvedValueOnce({ data: [entry(2)], total: 2 });
+      render(<PersonalPage />);
+      fireEvent.click(await screen.findByRole("tab", { name: /Practice log/ }));
+      await screen.findByText("Dance 1");
+
+      fireEvent.click(screen.getByRole("button", { name: "Load more" }));
+
+      expect(await screen.findByText("Dance 2")).toBeInTheDocument();
+      expect(screen.getByText("Dance 1")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Load more" })).toBeNull();
     });
   });
 });

@@ -9,6 +9,7 @@ import {
   REVIEW_STEP_COUNT,
   reviewIntervalDays,
   summarizePractice,
+  toContainsPattern,
 } from '../../features/practice/operations.ts';
 import type { PracticeRow } from '../../features/practice/operations.ts';
 import {
@@ -309,6 +310,13 @@ describe('planBaseline', () => {
   });
 });
 
+describe('toContainsPattern', () => {
+  it('matches the query literally', () => {
+    expect(toContainsPattern('boogie')).toBe('%boogie%');
+    expect(toContainsPattern('100%_a\\b')).toBe('%100\\%\\_a\\\\b%');
+  });
+});
+
 describe('dates', () => {
   it('formats local dates and detects the future', () => {
     expect(formatLocalDate(new Date(2026, 0, 5))).toBe('2026-01-05');
@@ -359,8 +367,14 @@ describe('practice validation', () => {
   });
 
   it('validates the list limit and entry ids', () => {
-    expect(validateLogList({})).toEqual({ value: { limit: 100 } });
-    expect(validateLogList({ limit: '20' })).toEqual({ value: { limit: 20 } });
+    expect(validateLogList({})).toEqual({ value: { limit: 100, offset: 0, query: '' } });
+    expect(validateLogList({ limit: '20', offset: '40', q: '  waltz ' })).toEqual({
+      value: { limit: 20, offset: 40, query: 'waltz' },
+    });
+    expect(validateLogList({ offset: '-1' })).toEqual({ error: 'invalid_offset' });
+    expect(validateLogList({ offset: 'x' })).toEqual({ error: 'invalid_offset' });
+    expect(validateLogList({ q: ['a', 'b'] })).toEqual({ error: 'invalid_query' });
+    expect(validateLogList({ q: 'x'.repeat(101) })).toEqual({ error: 'invalid_query' });
     expect(validateLogList({ limit: '0' })).toEqual({ error: 'invalid_limit' });
     expect(validateLogList({ limit: '501' })).toEqual({ error: 'invalid_limit' });
     expect(validateLogList({ limit: 'abc' })).toEqual({ error: 'invalid_limit' });

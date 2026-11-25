@@ -85,17 +85,35 @@ export async function insertBaselineEntry(
   );
 }
 
-export async function listEntries(limit: number): Promise<PracticeLogEntry[]> {
+const nameFilter = "LOWER(c.name) LIKE LOWER(?) ESCAPE '\\'";
+
+export async function listEntries(
+  limit: number,
+  offset: number,
+  namePattern: string,
+): Promise<PracticeLogEntry[]> {
   return allQuery<PracticeLogEntry>(
     `SELECT l.id, l.choreography_id, c.name AS choreography_name, l.practiced_on, l.confidence,
             l.note, l.song_id, s.title AS song_title, l.step, l.due_on
      FROM personal_data.choreography_practice_log l
      JOIN choreographies c ON c.id = l.choreography_id
      LEFT JOIN choreography_songs s ON s.id = l.song_id
+     WHERE ${nameFilter}
      ORDER BY l.practiced_on DESC, l.id DESC
-     LIMIT ?`,
-    [limit],
+     LIMIT ? OFFSET ?`,
+    [namePattern, limit, offset],
   );
+}
+
+export async function countEntries(namePattern: string): Promise<number> {
+  const row = await getQuery<{ total: number }>(
+    `SELECT COUNT(*) AS total
+     FROM personal_data.choreography_practice_log l
+     JOIN choreographies c ON c.id = l.choreography_id
+     WHERE ${nameFilter}`,
+    [namePattern],
+  );
+  return row?.total ?? 0;
 }
 
 export async function deleteEntry(id: number): Promise<WriteResult> {
