@@ -20,7 +20,10 @@ test.describe("Practice flash cards", () => {
     const flipCard = page.locator(".flip-card", { hasText: name });
     await expect(flipCard.locator(".choreography-card").first()).toBeVisible();
 
-    await flipCard.getByRole("button", { name: `Show back of ${name}` }).click();
+    // A click on a plain spot of the card turns it; the edge only tilts it first.
+    const front = flipCard.locator(".flip-card-front");
+    await flipCard.locator(".flip-card-edge-right").hover();
+    await front.getByText("Count/Wall:").click();
     await expect(flipCard.getByText("Last practiced")).toBeVisible();
     await expect(flipCard.getByText("Not practiced yet")).toBeVisible();
 

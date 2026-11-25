@@ -225,7 +225,7 @@ stays clickable without that support.
 
 On the client, `client/src/features/practice/` adds the tabs "Practice" and "Practice log" to the
 Personal page. The Practice tab is the flash card box: each due dance is a `FlipCard`
-(`shared/ui/FlipCard.tsx`, generic front/back component) with the unchanged `ChoreographyCard` on the
+(`shared/ui/FlipCard.tsx`, generic front/back component: hovering a side edge tilts the card, a click on a spot without its own click handler turns it, a visually hidden button is the keyboard equivalent) with the unchanged `ChoreographyCard` on the
 front and `PracticeCardBack` on the back (music, restarts and tags, last practice, count, next due
 date, date, note, "Sure" and "Unsure"). "Log practice" is the quick capture for several dances; its second mode sets dances on an interval step.
 The cards are grouped by due date (`groupCardsByDueDate`: never practiced first, then the oldest date first, the
