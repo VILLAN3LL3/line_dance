@@ -30,7 +30,7 @@ test.describe("Dance Group Detail", () => {
     await page.getByRole("button", { name: /Create Course/i }).click();
 
     await expect(page).toHaveURL(new RegExp(`/admin/groups/${groupId}$`));
-    await page.getByRole("checkbox", { name: /Planned/i }).check();
+    await page.getByRole("checkbox", { name: "Planned", exact: true }).check();
     await expect(page.locator(".course-semester", { hasText: semester })).toBeVisible();
   });
 
@@ -45,7 +45,7 @@ test.describe("Dance Group Detail", () => {
     );
 
     await page.goto(`/admin/groups/${groupId}`);
-    await page.getByRole("checkbox", { name: /Planned/i }).check();
+    await page.getByRole("checkbox", { name: "Planned", exact: true }).check();
     const toggle = page.getByRole("button", { name: /PDF Export/ });
 
     await toggle.click();
@@ -112,10 +112,10 @@ test.describe("Dance Group Detail", () => {
     await expect(page.locator(".course-semester", { hasText: plannedSemester })).toHaveCount(0);
     await expect(page.locator(".course-semester", { hasText: passedSemester })).toHaveCount(0);
 
-    await page.getByRole("checkbox", { name: /Planned/i }).check();
+    await page.getByRole("checkbox", { name: "Planned", exact: true }).check();
     await expect(page.locator(".course-semester", { hasText: plannedSemester })).toBeVisible();
 
-    await page.getByRole("checkbox", { name: /Passed/i }).check();
+    await page.getByRole("checkbox", { name: "Passed", exact: true }).check();
     await expect(page.locator(".course-semester", { hasText: passedSemester })).toBeVisible();
 
     page.once("dialog", async (dialog) => {
