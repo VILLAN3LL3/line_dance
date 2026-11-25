@@ -190,3 +190,14 @@
   display: block;
   margin: 16px auto 0;
 }
+
+.practice-group-title {
+  margin: 20px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.practice-due-group .choreographies-grid {
+  margin-top: 10px;
+}

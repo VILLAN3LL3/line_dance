@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 
 import {
   deleteChoreographyLearningStatus,
@@ -224,10 +224,42 @@ describe("PersonalPage", () => {
       expect(screen.getByRole("button", { name: "Show back of Known Dance" })).toBeInTheDocument();
       expect(screen.queryByText("Later Dance")).toBeNull();
 
+      expect(screen.getByRole("heading", { name: "Due now (1)" })).toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: /Show dances not due yet \(1\)/ }));
+      expect(screen.getByRole("heading", { name: "Due 2999-01-01 (1)" })).toBeInTheDocument();
       expect(
         await screen.findByRole("button", { name: "Show back of Later Dance" }),
       ).toBeInTheDocument();
+    });
+
+    it("groups the dances by their due date", async () => {
+      mockLists(
+        [],
+        [
+          makeChoreography(2, "Dance A", "learned"),
+          makeChoreography(3, "Dance B", "learned"),
+          makeChoreography(4, "Dance C", "learned"),
+          makeChoreography(5, "Dance D", "learned"),
+        ],
+      );
+      vi.mocked(fetchPracticeSuggestions).mockResolvedValue([
+        summary(2, { next_due_on: "2026-11-20", days_overdue: 5, practice_count: 1 }),
+        summary(3, { next_due_on: "2026-11-20", days_overdue: 5, practice_count: 1 }),
+        summary(4, { next_due_on: "2026-11-24", days_overdue: 1, practice_count: 1 }),
+        summary(5, { next_due_on: "2999-02-01", is_due: false, practice_count: 1 }),
+      ]);
+      render(<PersonalPage />);
+      fireEvent.click(await screen.findByRole("tab", { name: /Practice \(3\)/ }));
+
+      const headings = (await screen.findAllByRole("heading", { level: 4 })).map(
+        (heading) => heading.textContent,
+      );
+      expect(headings).toEqual(["Overdue since 2026-11-20 (2)", "Overdue since 2026-11-24 (1)"]);
+      const group = screen.getByRole("region", { name: "Overdue since 2026-11-20" });
+      expect(within(group).getAllByRole("button", { name: /Show back of/ })).toHaveLength(2);
+
+      fireEvent.click(screen.getByRole("button", { name: /Show dances not due yet \(1\)/ }));
+      expect(screen.getByRole("heading", { name: "Due 2999-02-01 (1)" })).toBeInTheDocument();
     });
 
     it("logs a practice from the back of a card", async () => {

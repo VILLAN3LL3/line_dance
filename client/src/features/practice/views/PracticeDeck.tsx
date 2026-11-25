@@ -2,6 +2,7 @@ import React from "react";
 
 import { EmptyState, ErrorMessage, LoadingState } from "../../../shared/ui";
 import type { ChoreographyCardViewModel } from "../../choreographies";
+import { groupCardsByDueDate } from "../model/practice-deck";
 import type { PracticeDeckViewModel } from "../viewmodels/usePracticeDeckViewModel";
 import { PracticeFlipCard } from "./PracticeFlipCard";
 
@@ -29,17 +30,26 @@ export const PracticeDeck: React.FC<PracticeDeckProps> = ({ viewModel, cardViewM
   }
 
   const renderCards = (cards: typeof due) => (
-    <div className="choreographies-grid">
-      {cards.map((card) => (
-        <PracticeFlipCard
-          key={card.choreography.id}
-          card={card}
-          cardViewModel={cardViewModel}
-          isSaving={state.practicingId === card.choreography.id}
-          onPractice={(draft) => void actions.practice(card.choreography, draft)}
-        />
+    <>
+      {groupCardsByDueDate(cards).map((group) => (
+        <section key={group.key} className="practice-due-group" aria-label={group.label}>
+          <h4 className="practice-group-title">
+            {group.label} ({group.cards.length})
+          </h4>
+          <div className="choreographies-grid">
+            {group.cards.map((card) => (
+              <PracticeFlipCard
+                key={card.choreography.id}
+                card={card}
+                cardViewModel={cardViewModel}
+                isSaving={state.practicingId === card.choreography.id}
+                onPractice={(draft) => void actions.practice(card.choreography, draft)}
+              />
+            ))}
+          </div>
+        </section>
       ))}
-    </div>
+    </>
   );
 
   return (

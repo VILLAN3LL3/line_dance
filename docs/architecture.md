@@ -221,4 +221,5 @@ Personal page. The Practice tab is the flash card box: each due dance is a `Flip
 (`shared/ui/FlipCard.tsx`, generic front/back component) with the unchanged `ChoreographyCard` on the
 front and `PracticeCardBack` on the back (music, restarts and tags, last practice, count, next due
 date, date, note, "Sure" and "Unsure"). "Log practice" is the quick capture for several dances; its second mode sets dances on an interval step.
-Dances that are not due yet are folded away behind a button.
+The cards are grouped by due date (`groupCardsByDueDate`: never practiced first, then the oldest date first, the
+order of the server inside a group); dances that are not due yet are folded away behind a button and grouped the same way.

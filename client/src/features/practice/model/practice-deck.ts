@@ -46,6 +46,29 @@ export function buildPracticeDeck(
   };
 }
 
+export interface PracticeCardGroup {
+  /** The due date shared by the cards, or "never" for dances without any practice. */
+  key: string;
+  label: string;
+  cards: PracticeCard[];
+}
+
+/**
+ * Groups cards by their due date, never practiced dances first, then the oldest date first. Inside
+ * a group the order of the server (most urgent first) is kept.
+ */
+export function groupCardsByDueDate(cards: readonly PracticeCard[]): PracticeCardGroup[] {
+  const groups = new Map<string, PracticeCardGroup>();
+  cards.forEach((card) => {
+    const key = card.summary.next_due_on ?? "never";
+    const group = groups.get(key) ?? { key, label: describeNextDue(card.summary), cards: [] };
+    group.cards.push(card);
+    groups.set(key, group);
+  });
+  const rank = (group: PracticeCardGroup) => (group.key === "never" ? 0 : 1);
+  return [...groups.values()].sort((a, b) => rank(a) - rank(b) || a.key.localeCompare(b.key));
+}
+
 export function filterDeckByName(deck: PracticeDeck, query: string): PracticeDeck {
   const matches = (card: PracticeCard) => matchesName(card.choreography.name, query);
   return { due: deck.due.filter(matches), later: deck.later.filter(matches) };

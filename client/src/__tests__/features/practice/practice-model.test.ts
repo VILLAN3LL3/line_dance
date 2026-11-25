@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildPracticeDeck,
   filterDeckByName,
+  groupCardsByDueDate,
   describeLastPractice,
   describeNextDue,
   describePracticeCount,
@@ -53,6 +54,31 @@ describe("buildPracticeDeck", () => {
   it("ignores summaries of dances that are no longer learned", () => {
     const deck = buildPracticeDeck([makeDance(1, "A")], [makeSummary(1), makeSummary(9)]);
     expect([...deck.due, ...deck.later]).toHaveLength(1);
+  });
+});
+
+describe("groupCardsByDueDate", () => {
+  const card = (id: number, overrides = {}) => ({
+    choreography: makeDance(id, `Dance ${id}`),
+    summary: makeSummary(id, overrides),
+  });
+
+  it("groups by due date, never practiced first, the oldest date next, server order inside", () => {
+    const groups = groupCardsByDueDate([
+      card(1, { next_due_on: "2026-11-25", days_overdue: 0 }),
+      card(2, { next_due_on: "2026-11-20", days_overdue: 5 }),
+      card(3),
+      card(4, { next_due_on: "2026-11-25", days_overdue: 0 }),
+      card(5, { next_due_on: "2026-12-30", is_due: false, days_overdue: -35 }),
+    ]);
+    expect(groups.map((group) => [group.key, group.label])).toEqual([
+      ["never", "Due now"],
+      ["2026-11-20", "Overdue since 2026-11-20"],
+      ["2026-11-25", "Due today"],
+      ["2026-12-30", "Due 2026-12-30"],
+    ]);
+    expect(groups[2].cards.map((entry) => entry.choreography.id)).toEqual([1, 4]);
+    expect(groupCardsByDueDate([])).toEqual([]);
   });
 });
 
