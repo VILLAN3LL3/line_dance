@@ -5,6 +5,7 @@ import type { Information, PersonalLevelChange } from './write-operations.ts';
 import type { SongChanges } from './song-operations.ts';
 import { replaceSongs } from './song-flow.ts';
 import * as songRepository from './song-repository.ts';
+import { storeLearningStatus } from '../learning-status/flow.ts';
 import * as learningStatusRepository from '../learning-status/repository.ts';
 import * as practiceRepository from '../practice/repository.ts';
 import type { LearningStatusChange } from '../learning-status/operations.ts';
@@ -72,7 +73,7 @@ async function applyLearningStatus(
 ): Promise<void> {
   if (learningStatus === undefined) return;
   if (learningStatus === null) await learningStatusRepository.deleteStatus(id);
-  else await learningStatusRepository.saveStatus(id, learningStatus);
+  else await storeLearningStatus(id, learningStatus);
 }
 
 async function applySongs(id: ChoreographyId, songs: SongChanges): Promise<void> {

@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-import { API_BASE, createChoreographyViaApi } from "../helpers/api";
+import {
+  API_BASE,
+  createChoreographyViaApi,
+  createLearnedChoreographyWithoutPractice,
+} from "../helpers/api";
 
 test.describe("Practice flash cards", () => {
   test("flips a learned dance, logs a practice and finds it in the log", async ({
@@ -8,11 +12,7 @@ test.describe("Practice flash cards", () => {
     request,
   }) => {
     const name = `Practice Dance ${Date.now()}`;
-    const id = await createChoreographyViaApi(request, name);
-    const status = await request.put(`${API_BASE}/choreographies/${id}/learning-status`, {
-      data: { status: "learned" },
-    });
-    expect(status.ok()).toBeTruthy();
+    await createLearnedChoreographyWithoutPractice(request, name);
 
     await page.goto("/personal");
     await page.getByRole("tab", { name: /^🔁 Practice/ }).click();
@@ -61,5 +61,27 @@ test.describe("Practice log paging", () => {
     await page.getByRole("button", { name: "Load more" }).scrollIntoViewIfNeeded();
     await expect(rows).toHaveCount(60);
     await expect(page.getByRole("button", { name: "Load more" })).toHaveCount(0);
+  });
+});
+
+test.describe("First practice", () => {
+  test("marking a dance as learned records today as its first practice", async ({
+    page,
+    request,
+  }) => {
+    const name = `First Practice Dance ${Date.now()}`;
+    const id = await createChoreographyViaApi(request, name);
+    const status = await request.put(`${API_BASE}/choreographies/${id}/learning-status`, {
+      data: { status: "learned" },
+    });
+    expect(status.ok()).toBeTruthy();
+
+    await page.goto("/personal");
+    await page.getByRole("tab", { name: /Practice log/ }).click();
+    await page.getByRole("searchbox", { name: "Search dances by name" }).fill(name);
+    await expect(page.locator(".practice-log-entry", { hasText: name })).toHaveCount(1);
+
+    await page.getByRole("tab", { name: /^🔁 Practice/ }).click();
+    await expect(page.getByText("Not due yet (1)")).toBeVisible();
   });
 });

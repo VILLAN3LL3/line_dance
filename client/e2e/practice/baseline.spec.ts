@@ -1,15 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { API_BASE, createChoreographyViaApi } from "../helpers/api";
+import { createLearnedChoreographyWithoutPractice } from "../helpers/api";
 
 test.describe("Practice interval step", () => {
   test("puts learned dances on a step so they are not due", async ({ page, request }) => {
     const name = `Baseline Dance ${Date.now()}`;
-    const id = await createChoreographyViaApi(request, name);
-    const status = await request.put(`${API_BASE}/choreographies/${id}/learning-status`, {
-      data: { status: "learned" },
-    });
-    expect(status.ok()).toBeTruthy();
+    await createLearnedChoreographyWithoutPractice(request, name);
 
     await page.goto("/personal");
     await page.getByRole("tab", { name: /^🔁 Practice/ }).click();

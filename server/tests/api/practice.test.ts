@@ -22,8 +22,12 @@ async function levelId(name: string): Promise<number> {
   return rows[0].id;
 }
 
+/** A learned dance without any practice, like the dances migrated from the former hashtags. */
 async function learn(id: number): Promise<void> {
-  await request(app).put(`/api/choreographies/${id}/learning-status`).send({ status: 'learned' });
+  await runQuery(
+    "INSERT INTO personal_data.choreography_learning_status (choreography_id, status) VALUES (?, 'learned')",
+    [id],
+  );
 }
 
 describe('POST /api/practice-log', () => {
@@ -369,5 +373,86 @@ describe('GET /api/practice/intervals', () => {
     ]);
     expect(res.body.tiers[0].interval_days.at(-1)).toBe(182);
     expect(res.body.tiers.at(-1).max_level_value).toBeNull();
+  });
+});
+
+describe('first practice when a dance is marked as learned', () => {
+  const today = (): string => {
+    const now = new Date();
+    const pad = (value: number): string => String(value).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  };
+
+  async function setStatus(id: number, status: string): Promise<request.Response> {
+    return request(app).put(`/api/choreographies/${id}/learning-status`).send({ status });
+  }
+
+  async function logEntries(): Promise<{ choreography_id: number; practiced_on: string }[]> {
+    return (await request(app).get('/api/practice-log')).body.data;
+  }
+
+  it('records today as the first practice and starts the intervals', async () => {
+    const id = await createChoreo('Fresh');
+    expect((await setStatus(id, 'learned')).status).toBe(200);
+
+    expect(await logEntries()).toMatchObject([
+      { choreography_id: id, practiced_on: today(), confidence: 'sure', step: null },
+    ]);
+    const [summary] = (await request(app).get('/api/practice/suggestions')).body;
+    expect(summary).toMatchObject({
+      choreography_id: id,
+      practice_count: 1,
+      last_practiced_on: today(),
+      is_due: false,
+    });
+  });
+
+  it('adds nothing for a wishlist dance and does it when it becomes learned', async () => {
+    const id = await createChoreo('Wish');
+    await setStatus(id, 'wishlist');
+    expect(await logEntries()).toEqual([]);
+
+    await setStatus(id, 'learned');
+    expect(await logEntries()).toHaveLength(1);
+  });
+
+  it('does not add a second practice when the status is saved again or changed back', async () => {
+    const id = await createChoreo('Again');
+    await setStatus(id, 'learned');
+    await setStatus(id, 'learned');
+    await setStatus(id, 'wishlist');
+    await setStatus(id, 'learned');
+    expect(await logEntries()).toHaveLength(1);
+  });
+
+  it('keeps the practice history of a dance that has entries already', async () => {
+    const id = await createChoreo('Known');
+    await request(app)
+      .post('/api/practice-log')
+      .send({ choreography_ids: [id], practiced_on: '2020-01-01' });
+    await setStatus(id, 'learned');
+    expect(await logEntries()).toMatchObject([{ practiced_on: '2020-01-01' }]);
+  });
+
+  it('records the first practice when the status is set with the choreography', async () => {
+    const created = await request(app)
+      .post('/api/choreographies')
+      .send({ name: 'Created Learned', level: 'BEGINNER', learning_status: 'learned' });
+    expect(created.status).toBe(201);
+    expect(await logEntries()).toMatchObject([{ choreography_id: created.body.id }]);
+
+    const other = await createChoreo('Updated');
+    const updated = await request(app)
+      .put(`/api/choreographies/${other}`)
+      .send({ name: 'Updated', level: 'BEGINNER', learning_status: 'learned' });
+    expect(updated.status).toBe(200);
+    expect(await logEntries()).toHaveLength(2);
+  });
+
+  it('records nothing when the status is removed or the dance does not exist', async () => {
+    const id = await createChoreo('Removed');
+    await request(app).delete(`/api/choreographies/${id}/learning-status`);
+    expect((await setStatus(9999, 'learned')).status).toBe(404);
+    expect(await logEntries()).toEqual([]);
   });
 });

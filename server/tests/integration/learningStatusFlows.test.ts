@@ -107,4 +107,26 @@ describe('migration 018 — legacy hashtags become learning statuses', () => {
     await rerunMigration();
     expect(await statuses()).toEqual([]);
   });
+
+  it('records the first practice together with the learned status and rolls both back on failure', async () => {
+    const id = await createChoreography('Dance');
+    await runQuery(
+      `CREATE TRIGGER personal_data.fail_practice BEFORE INSERT ON choreography_practice_log
+       BEGIN SELECT RAISE(ABORT, 'boom'); END`,
+    );
+    try {
+      await expect(
+        setLearningStatus(String(id), validateLearningStatus({ status: 'learned' })),
+      ).rejects.toThrow('boom');
+      expect(await statuses()).toEqual([]);
+    } finally {
+      await runQuery('DROP TRIGGER personal_data.fail_practice');
+    }
+
+    await setLearningStatus(String(id), validateLearningStatus({ status: 'learned' }));
+    const entries = await allQuery<{ choreography_id: number; step: number | null }>(
+      'SELECT choreography_id, step FROM personal_data.choreography_practice_log',
+    );
+    expect(entries).toEqual([{ choreography_id: id, step: null }]);
+  });
 });

@@ -83,6 +83,23 @@ export async function insertBaselineEntry(
 
 const nameFilter = "LOWER(c.name) LIKE LOWER(?) ESCAPE '\\'";
 
+/**
+ * Learning a dance is its first practice: today, "sure". Dances that already have entries (a
+ * practice or an interval step) keep them, so setting the status again never adds a second one.
+ */
+export async function insertFirstPracticeIfNone(
+  choreographyId: number | string,
+): Promise<WriteResult> {
+  return runQuery(
+    `INSERT INTO personal_data.choreography_practice_log (choreography_id, practiced_on, confidence)
+     SELECT ?, date('now', 'localtime'), 'sure'
+     WHERE NOT EXISTS (
+       SELECT 1 FROM personal_data.choreography_practice_log WHERE choreography_id = ?
+     )`,
+    [choreographyId, choreographyId],
+  );
+}
+
 export async function listEntries(
   limit: number,
   offset: number,

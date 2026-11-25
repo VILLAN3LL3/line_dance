@@ -118,3 +118,24 @@ export async function updateGroupMaxLevelViaApi(
 
   expectOk(response);
 }
+
+/** A learned dance without any practice entry: due right away, like a dance learned long ago. */
+export async function createLearnedChoreographyWithoutPractice(
+  request: APIRequestContext,
+  name: string,
+) {
+  const id = await createChoreographyViaApi(request, name);
+  const status = await request.put(`${API_BASE}/choreographies/${id}/learning-status`, {
+    data: { status: "learned" },
+  });
+  expectOk(status);
+
+  // Marking a dance as learned records its first practice; remove it again.
+  const log = await request.get(`${API_BASE}/practice-log`, { params: { q: name } });
+  expectOk(log);
+  const { data } = (await log.json()) as { data: { id: number }[] };
+  for (const entry of data) {
+    expectOk(await request.delete(`${API_BASE}/practice-log/${entry.id}`));
+  }
+  return id;
+}

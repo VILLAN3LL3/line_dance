@@ -153,6 +153,25 @@ describe("PersonalPage", () => {
     expect(screen.getByRole("tab", { name: "✅ Learned (1)" })).toBeInTheDocument();
   });
 
+  it("refreshes the practice suggestions when a dance is marked as learned", async () => {
+    let wishlist = [makeChoreography(1, "Wished Dance", "wishlist")];
+    vi.mocked(searchChoreographies).mockImplementation(async (filters) =>
+      page(filters.learning_status === "wishlist" ? wishlist : []),
+    );
+    vi.mocked(setChoreographyLearningStatus).mockImplementation(async (id, status) => {
+      wishlist = [];
+      return { choreography_id: id, status, status_date: "2026-11-25" };
+    });
+    render(<PersonalPage />);
+    await screen.findByText("Wished Dance");
+    await waitFor(() => expect(fetchPracticeSuggestions).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole("button", { name: /Learning status: Wishlist/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Learned" }));
+
+    await waitFor(() => expect(fetchPracticeSuggestions).toHaveBeenCalledTimes(2));
+  });
+
   it('removes a dance from its list with the "No status" option', async () => {
     let wishlist = [makeChoreography(1, "Wished Dance", "wishlist")];
     vi.mocked(searchChoreographies).mockImplementation(async (filters) =>

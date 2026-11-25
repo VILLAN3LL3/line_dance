@@ -207,6 +207,13 @@ that are set one by one do not all come back on the same day, and the result is 
 shortened: a dance set to the longest step is not due for at least half a year.
 `GET /api/practice/intervals` returns the ladder of every level tier for the step labels in the client.
 
+**First practice:** marking a dance as learned (`PUT /api/choreographies/:id/learning-status`, or `learning_status` in
+`POST`/`PUT /api/choreographies`) records today as its first practice (`sure`) in the same transaction
+(`storeLearningStatus` in `server/features/learning-status/flow.ts`, `insertFirstPracticeIfNone`). Only a dance
+without any entry gets it, so saving the status again, switching back and forth or learning a dance that
+already has practice or an interval step adds nothing. The client keeps the practice queries under the
+`choreographies` query key root, so a status change refreshes the practice box as well.
+
 Entries are ordered by their date, not by when they were entered. A learned dance without entries is
 due immediately. The order is the time since the last practice relative to its interval; never
 practiced dances come first. Change `REVIEW_INTERVAL_TIERS` to tune it.
