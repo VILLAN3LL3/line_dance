@@ -5,7 +5,8 @@ import React from "react";
 import { EmptyState, ErrorMessage, LoadingState } from "../../../shared/ui";
 import { ChoreographyCard } from "../../choreographies";
 import { PracticeDeck, PracticeLogList, QuickLogPanel } from "../../practice";
-import { isStatusTab } from "../model/personal-tabs";
+import { RepertoireDashboard } from "../../statistics";
+import { isSearchableTab, isStatusTab } from "../model/personal-tabs";
 import { usePersonalViewModel } from "../viewmodels/usePersonalViewModel";
 
 const PersonalPage: React.FC = () => {
@@ -20,6 +21,8 @@ const PersonalPage: React.FC = () => {
         <PracticeDeck viewModel={state.practice.deck} cardViewModel={state.cardViewModel} />
       </>
     );
+  } else if (state.activeId === "dashboard") {
+    content = <RepertoireDashboard viewModel={state.statistics} />;
   } else if (state.activeId === "log") {
     content = <PracticeLogList viewModel={state.practice.log} />;
   } else if (isLoading) {
@@ -51,14 +54,16 @@ const PersonalPage: React.FC = () => {
       {error && isStatusTab(state.activeId) && <ErrorMessage message={error} />}
 
       <div className="list-view">
-        <input
-          type="search"
-          className="personal-search"
-          placeholder="Search dances by name"
-          aria-label="Search dances by name"
-          value={state.query}
-          onChange={(event) => actions.setQuery(event.target.value)}
-        />
+        {isSearchableTab(state.activeId) && (
+          <input
+            type="search"
+            className="personal-search"
+            placeholder="Search dances by name"
+            aria-label="Search dances by name"
+            value={state.query}
+            onChange={(event) => actions.setQuery(event.target.value)}
+          />
+        )}
 
         <div className="view-toggle" role="tablist" aria-label="Personal dance lists">
           {state.tabs.map((tab) => (

@@ -21,6 +21,7 @@ export type {
   PracticeLogPage,
   PracticeLogRequest,
   PracticeSummary,
+  RepertoireStatistics,
   SavedFilterConfiguration,
   SearchFilters,
   Session,
@@ -29,6 +30,8 @@ export type {
   StepFigureDefinition,
   StepFigureOption,
   StepFigureReference,
+  StatisticsItem,
+  StatisticsMonth,
   StepFigureSuggestion,
   Trainer,
 } from "../../server/contracts/api";

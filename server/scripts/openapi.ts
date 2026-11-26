@@ -21,6 +21,7 @@ export const openApiSpec = {
     { name: 'Step Figures' },
     { name: 'Saved Filters' },
     { name: 'Practice' },
+    { name: 'Statistics' },
     { name: 'Dance Groups' },
     { name: 'Trainers' },
     { name: 'Dance Courses' },
@@ -415,6 +416,24 @@ export const openApiSpec = {
           },
           400: { $ref: '#/components/responses/BadRequest' },
           404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/api/statistics/repertoire': {
+      get: {
+        tags: ['Statistics'],
+        summary: 'Statistics over the learned dances (repertoire dashboard)',
+        description:
+          'Counts the dances with learning status "learned" by effective level (personal level when set), tempo class and genre of the default song (favorite, else first), choreographer (a dance counts for each of them, the ten most frequent are listed), and creation year. The timeline has one entry per month without gaps: dances learned (by the date of the status), the running total (dances without a date count as learned before the first month) and practices; interval steps are no practice.',
+        responses: {
+          200: {
+            description: 'Repertoire statistics',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/RepertoireStatistics' },
+              },
+            },
+          },
         },
       },
     },
@@ -2065,6 +2084,55 @@ export const openApiSpec = {
         required: ['id', 'message'],
       },
       LearningStatus: { type: 'string', enum: ['wishlist', 'learned'] },
+      StatisticsItem: {
+        type: 'object',
+        properties: {
+          key: { type: 'string' },
+          label: { type: 'string' },
+          count: { type: 'integer' },
+        },
+        required: ['key', 'label', 'count'],
+      },
+      StatisticsMonth: {
+        type: 'object',
+        properties: {
+          month: { type: 'string', example: '2026-11' },
+          learned: { type: 'integer' },
+          total_learned: { type: 'integer' },
+          practices: { type: 'integer' },
+        },
+        required: ['month', 'learned', 'total_learned', 'practices'],
+      },
+      RepertoireStatistics: {
+        type: 'object',
+        properties: {
+          total: { type: 'integer' },
+          levels: { type: 'array', items: { $ref: '#/components/schemas/StatisticsItem' } },
+          tempo: { type: 'array', items: { $ref: '#/components/schemas/StatisticsItem' } },
+          genres: { type: 'array', items: { $ref: '#/components/schemas/StatisticsItem' } },
+          choreographers: { type: 'array', items: { $ref: '#/components/schemas/StatisticsItem' } },
+          other_choreographers: { type: 'integer' },
+          years: { type: 'array', items: { $ref: '#/components/schemas/StatisticsItem' } },
+          timeline: {
+            type: 'object',
+            properties: {
+              months: { type: 'array', items: { $ref: '#/components/schemas/StatisticsMonth' } },
+              undated: { type: 'integer' },
+            },
+            required: ['months', 'undated'],
+          },
+        },
+        required: [
+          'total',
+          'levels',
+          'tempo',
+          'genres',
+          'choreographers',
+          'other_choreographers',
+          'years',
+          'timeline',
+        ],
+      },
       PracticeConfidence: { type: 'string', enum: ['sure', 'unsure'], default: 'sure' },
       PracticeLogEntry: {
         type: 'object',

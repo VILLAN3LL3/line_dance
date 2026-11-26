@@ -258,7 +258,7 @@ describe("CourseDetail", () => {
   it("creates a new session from the session form", async () => {
     renderWithRoute();
 
-    await screen.findByText(/7/);
+    await screen.findByText(/WS 2025/);
 
     const dateInput = document.querySelector<HTMLInputElement>('.session-form input[type="date"]');
     expect(dateInput).not.toBeNull();
@@ -284,7 +284,7 @@ describe("CourseDetail", () => {
       }),
     );
     renderWithRoute();
-    await screen.findByText(/7/);
+    await screen.findByText(/WS 2025/);
     const dateInput = document.querySelector<HTMLInputElement>('.session-form input[type="date"]');
     if (!dateInput) throw new Error("Session date input was not found");
     fireEvent.change(dateInput, { target: { value: "2025-02-01" } });
@@ -297,7 +297,7 @@ describe("CourseDetail", () => {
   it("selects a session and adds choreography to that session", async () => {
     renderWithRoute();
 
-    await screen.findByText(/7/);
+    await screen.findByText(/WS 2025/);
 
     fireEvent.click(screen.getAllByRole("button", { name: /manage/i })[0]);
 
@@ -344,7 +344,7 @@ describe("CourseDetail", () => {
         song_id: 2,
       });
       renderWithRoute();
-      await screen.findByText(/7/);
+      await screen.findByText(/WS 2025/);
       fireEvent.click(screen.getAllByRole("button", { name: /manage/i })[0]);
       await screen.findByRole("button", { name: /Open choreography card for Dance One/i });
     }
@@ -393,7 +393,7 @@ describe("CourseDetail", () => {
   it("shows planned sessions by default and can include passed sessions", async () => {
     renderWithRoute();
 
-    await screen.findByText(/7/);
+    await screen.findByText(/WS 2025/);
 
     expect(screen.getByText("Planned")).toBeInTheDocument();
     expect(screen.queryByText("Passed")).not.toBeInTheDocument();
@@ -420,7 +420,7 @@ describe("CourseDetail", () => {
 
     renderWithRoute();
 
-    await screen.findByText(/7/);
+    await screen.findByText(/WS 2025/);
 
     fireEvent.click(screen.getAllByRole("button", { name: /manage/i })[0]);
 
@@ -438,7 +438,7 @@ describe("CourseDetail", () => {
 
   it("shows swap dropdown when Swap button is clicked and calls swapSessions on confirm", async () => {
     renderWithRoute();
-    await screen.findByText(/7/);
+    await screen.findByText(/WS 2025/);
 
     // Click Swap on the first visible (planned) session
     fireEvent.click(screen.getByRole("button", { name: /^Swap$/i }));
@@ -466,7 +466,7 @@ describe("CourseDetail", () => {
     });
 
     renderWithRoute();
-    await screen.findByText(/7/);
+    await screen.findByText(/WS 2025/);
 
     fireEvent.click(screen.getByRole("button", { name: /^Suggest$/i }));
 
@@ -488,7 +488,7 @@ describe("CourseDetail", () => {
     });
 
     renderWithRoute();
-    await screen.findByText(/7/);
+    await screen.findByText(/WS 2025/);
 
     fireEvent.click(screen.getByRole("button", { name: /^Suggest$/i }));
     await screen.findByRole("button", { name: /hide suggestions/i });

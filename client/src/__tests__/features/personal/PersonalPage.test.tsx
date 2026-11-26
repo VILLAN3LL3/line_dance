@@ -15,7 +15,9 @@ import {
   logPractice,
   setPracticeBaseline,
 } from "../../../features/practice/api";
+import { fetchRepertoireStatistics } from "../../../features/statistics/api";
 import PersonalPage from "../../../features/personal/views/PersonalPage";
+import { statistics } from "../statistics/testData";
 import { renderWithQueryClient as render } from "../../helpers/renderWithQueryClient";
 
 import type { Choreography, LearningStatus } from "../../../types";
@@ -27,6 +29,7 @@ vi.mock("../../../features/choreographies/api", () => ({
   deleteChoreographyRating: vi.fn().mockResolvedValue(undefined),
   setChoreographyRating: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock("../../../features/statistics/api", () => ({ fetchRepertoireStatistics: vi.fn() }));
 vi.mock("../../../features/practice/api", () => ({
   fetchPracticeSuggestions: vi.fn(),
   fetchPracticeIntervals: vi.fn(),
@@ -79,6 +82,7 @@ describe("PersonalPage", () => {
     vi.clearAllMocks();
     vi.mocked(fetchPracticeSuggestions).mockResolvedValue([]);
     vi.mocked(fetchPracticeLog).mockResolvedValue({ data: [], total: 0 });
+    vi.mocked(fetchRepertoireStatistics).mockResolvedValue(statistics);
     vi.mocked(fetchPracticeIntervals).mockResolvedValue([
       { name: "Beginner", max_level_value: 40, interval_days: [1, 3, 7, 14, 30, 60, 182] },
       { name: "Advanced", max_level_value: null, interval_days: [1, 1, 3, 5, 10, 20, 182] },
@@ -520,6 +524,45 @@ describe("PersonalPage", () => {
       expect(await screen.findByText("Dance 2")).toBeInTheDocument();
       expect(screen.getByText("Dance 1")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Load more" })).toBeNull();
+    });
+  });
+
+  describe("dashboard", () => {
+    it("shows the repertoire statistics and hides the dance search", async () => {
+      mockLists([], []);
+      render(<PersonalPage />);
+      expect(
+        await screen.findByRole("searchbox", { name: "Search dances by name" }),
+      ).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("tab", { name: /Dashboard/ }));
+
+      expect(await screen.findByRole("region", { name: "By level" })).toBeInTheDocument();
+      expect(screen.getByRole("region", { name: "Over time" })).toBeInTheDocument();
+      expect(screen.queryByRole("searchbox")).toBeNull();
+      expect(fetchRepertoireStatistics).toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole("tab", { name: /Wishlist/ }));
+      expect(screen.getByRole("searchbox", { name: "Search dances by name" })).toBeInTheDocument();
+    });
+
+    it("refreshes the statistics when a dance is marked as learned", async () => {
+      let wishlist = [makeChoreography(1, "Wished Dance", "wishlist")];
+      vi.mocked(searchChoreographies).mockImplementation(async (filters) =>
+        page(filters.learning_status === "wishlist" ? wishlist : []),
+      );
+      vi.mocked(setChoreographyLearningStatus).mockImplementation(async (id, status) => {
+        wishlist = [];
+        return { choreography_id: id, status, status_date: "2026-11-26" };
+      });
+      render(<PersonalPage />);
+      await screen.findByText("Wished Dance");
+      await waitFor(() => expect(fetchRepertoireStatistics).toHaveBeenCalledTimes(1));
+
+      fireEvent.click(screen.getByRole("button", { name: /Learning status: Wishlist/ }));
+      fireEvent.click(screen.getByRole("button", { name: "Learned" }));
+
+      await waitFor(() => expect(fetchRepertoireStatistics).toHaveBeenCalledTimes(2));
     });
   });
 });

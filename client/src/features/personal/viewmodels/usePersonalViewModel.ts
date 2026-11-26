@@ -7,6 +7,7 @@ import {
 } from "../../choreographies";
 import { matchesName } from "../../../shared/utils/search";
 import { usePracticeViewModel } from "../../practice";
+import { useRepertoireStatisticsViewModel } from "../../statistics";
 import { buildPersonalTabs, isStatusTab } from "../model/personal-tabs";
 import type { PersonalTabId } from "../model/personal-tabs";
 
@@ -18,6 +19,7 @@ export const usePersonalViewModel = () => {
   const cardViewModel = useChoreographyCardViewModel();
   const [query, setQuery] = useState("");
   const practice = usePracticeViewModel(query);
+  const statistics = useRepertoireStatisticsViewModel();
 
   const queries = { wishlist, learned };
   const active = isStatusTab(activeId) ? queries[activeId] : null;
@@ -40,6 +42,7 @@ export const usePersonalViewModel = () => {
       error: active?.isError ? "Failed to load your dances" : null,
       cardViewModel,
       practice,
+      statistics,
     },
     actions: { selectTab: setActiveId, setQuery },
   };

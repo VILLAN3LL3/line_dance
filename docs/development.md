@@ -85,6 +85,7 @@ API integration tests run against in-memory SQLite. Coverage includes:
 - Step figure suggestions (group-level and session-level) including base figure exclusion
 - Max group level management
 - Choreography CRUD, ratings, personal levels, learning status (wishlist/learned, hashtag migration), songs (favorite, per-session song choice), duplicate detection
+- Repertoire statistics (learned dances only, personal level, default song tempo and genre, choreographers, timeline without gaps)
 - Practice log and flash card suggestions (batch logging, past dates, level dependent intervals ending at half a year, interval step baseline (never due before its step), rollback, orphan cleanup)
 - Author statistics (totals and per-level breakdowns)
 - Search filters: `all`/`any`/`exact`, `max_level_value`, `use_official_level`, `excluded_tags`, `max_count`, hierarchy-aware matching

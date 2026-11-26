@@ -162,6 +162,31 @@ choreography form has a "Learning Status" field. The "Personal" page (`client/sr
 lists both lists as tabs; it is the home of the personal dance development features, separate from
 the catalog and from course planning.
 
+### Repertoire dashboard
+
+The "Dashboard" tab of the Personal page shows statistics over the **learned** dances
+(`GET /api/statistics/repertoire`, `server/features/statistics/`: `repository.ts` reads the rows,
+`operations.ts` is pure, `flow.ts` composes them; the route only returns the result). The response has
+`total` and lists of `{ key, label, count }` for:
+
+- `levels`: the effective level (personal level when set), ordered by level value;
+- `tempo`: BPM classes (below 100, 100–119, 120–139, 140–159, 160 and above) of the default song, which is the
+  favorite or else the first song; `genres` is the genre of the same song;
+- `choreographers`: the ten most frequent, a dance counts for each of its choreographers (names compared
+  ignoring case); `other_choreographers` is the number of those not listed;
+- `years`: the creation year, ascending.
+
+Dances without the data count as "Unknown" (always the last bar). `timeline` has one entry per month from the
+first to the last month with data, without gaps: `learned` (by the date of the learning status),
+`total_learned` (running total; learned dances without a date, e.g. migrated from the hashtags, count as
+learned before the first month and are reported as `undated`) and `practices` (practice log entries; interval
+steps are no practice).
+
+On the client, `client/src/features/statistics/` renders the bars as accessible HTML (label and numbers are
+text, the bar is decoration) and the timeline as columns with a table alternative. Its query key lives under
+the `choreographies` root, so a new learning status or practice refreshes the dashboard. The dance search of
+the Personal page is hidden on this tab.
+
 ### Practice log and flash cards
 
 Practicing is logged in `personal_data.choreography_practice_log` (migration

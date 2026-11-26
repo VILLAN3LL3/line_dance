@@ -56,6 +56,7 @@ import {
   setChoreographyLearningStatus,
   deleteChoreographyLearningStatus,
 } from './choreography-learning-status.ts';
+import { getRepertoireStatistics } from './statistics.ts';
 import {
   preparePracticeLog,
   preparePracticeBaseline,
@@ -93,6 +94,7 @@ export function createChoreographyRouter(): Router {
   router.get('/api/practice/suggestions', getPracticeSuggestions);
   router.get('/api/practice/intervals', getIntervalTiers);
   router.post('/api/practice/baseline', preparePracticeBaseline, setPracticeBaseline);
+  router.get('/api/statistics/repertoire', getRepertoireStatistics);
   router.get('/api/levels', getLevels);
   router.post('/api/levels', prepareLevelInput, addLevel);
   router.get('/api/tags', getTags);

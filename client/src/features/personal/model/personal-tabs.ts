@@ -1,6 +1,6 @@
 import type { LearningStatus } from "../../../types";
 
-export type PersonalTabId = LearningStatus | "practice" | "log";
+export type PersonalTabId = LearningStatus | "practice" | "log" | "dashboard";
 
 export interface PersonalTab {
   id: PersonalTabId;
@@ -41,5 +41,9 @@ export function buildPersonalTabs(
       emptyMessage: "",
     },
     { id: "log", label: "Practice log", emoji: "📓", count: null, emptyMessage: "" },
+    { id: "dashboard", label: "Dashboard", emoji: "📊", count: null, emptyMessage: "" },
   ];
 }
+
+/** The search field filters the dance lists, the practice cards and the log, not the statistics. */
+export const isSearchableTab = (id: PersonalTabId): boolean => id !== "dashboard";

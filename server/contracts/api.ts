@@ -317,3 +317,38 @@ export interface PracticeLogPage {
   /** Number of entries matching the filter, over all pages. */
   total: number;
 }
+
+/** One bar of the repertoire dashboard. */
+export interface StatisticsItem {
+  key: string;
+  label: string;
+  count: number;
+}
+
+export interface StatisticsMonth {
+  /** YYYY-MM */
+  month: string;
+  /** Dances learned in the month (by the date of their learning status). */
+  learned: number;
+  /** Learned dances up to and including the month, with the dances without date. */
+  total_learned: number;
+  /** Practices logged in the month; interval steps are no practice. */
+  practices: number;
+}
+
+/** Statistics over the learned dances (`GET /api/statistics/repertoire`). */
+export interface RepertoireStatistics {
+  total: number;
+  levels: StatisticsItem[];
+  tempo: StatisticsItem[];
+  genres: StatisticsItem[];
+  /** The most frequent choreographers; a dance counts for each of its choreographers. */
+  choreographers: StatisticsItem[];
+  other_choreographers: number;
+  years: StatisticsItem[];
+  timeline: {
+    months: StatisticsMonth[];
+    /** Learned dances whose status has no date (migrated from the former hashtags). */
+    undated: number;
+  };
+}
