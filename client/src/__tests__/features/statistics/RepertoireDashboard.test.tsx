@@ -75,6 +75,45 @@ describe("RepertoireDashboard", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows level, tempo and genre as donuts with a legend and the others as bars", () => {
+    const { container } = render(<RepertoireDashboard viewModel={viewModel({ statistics })} />);
+
+    ["By level", "By tempo", "By genre"].forEach((name) => {
+      const region = screen.getByRole("region", { name });
+      expect(region.querySelector(".stat-donut")).not.toBeNull();
+      expect(region.querySelector(".stat-bar-track")).toBeNull();
+    });
+    ["By creation year", "By choreographer"].forEach((name) => {
+      const region = screen.getByRole("region", { name });
+      expect(region.querySelector(".stat-donut")).toBeNull();
+      expect(region.querySelector(".stat-bar-track")).not.toBeNull();
+    });
+    // Tempo classes without dances are not part of the legend.
+    const tempo = screen.getByRole("region", { name: "By tempo" });
+    expect(within(tempo).queryByText("Below 100 BPM")).toBeNull();
+    expect(within(tempo).getByText("100–119 BPM")).toBeInTheDocument();
+    expect(container.querySelectorAll(".stat-donut")).toHaveLength(3);
+  });
+
+  it("sums up genres beyond the five most frequent as Other", () => {
+    const genres = Array.from({ length: 8 }, (_, index) => ({
+      key: `g${index}`,
+      label: `Genre ${index}`,
+      count: 8 - index,
+    }));
+    render(
+      <RepertoireDashboard
+        viewModel={viewModel({ statistics: { ...statistics, total: 36, genres } })}
+      />,
+    );
+
+    const region = screen.getByRole("region", { name: "By genre" });
+    expect(within(region).getByText("Genre 4")).toBeInTheDocument();
+    expect(within(region).queryByText("Genre 5")).toBeNull();
+    expect(within(region).getByText("Other").closest("li")).toHaveTextContent("6 (17 %)");
+    expect(within(region).getByText('3 more genres are summed up as "Other".')).toBeInTheDocument();
+  });
+
   it("says that the years are the creation years of the choreographies", () => {
     render(<RepertoireDashboard viewModel={viewModel({ statistics })} />);
 

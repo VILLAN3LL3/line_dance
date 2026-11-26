@@ -4,12 +4,17 @@ import React from "react";
 
 import { EmptyState, ErrorMessage, LoadingState } from "../../../shared/ui";
 import type { RepertoireStatisticsViewModel } from "../viewmodels/useRepertoireStatisticsViewModel";
+import { groupMinorItems } from "../model/dashboard";
 import { StatBarList } from "./StatBarList";
+import { StatDonut } from "./StatDonut";
 import { TimelineChart } from "./TimelineChart";
 
 interface RepertoireDashboardProps {
   viewModel: RepertoireStatisticsViewModel;
 }
+
+/** More genres would make the donut unreadable. */
+const MAX_NAMED_GENRES = 5;
 
 export const RepertoireDashboard: React.FC<RepertoireDashboardProps> = ({ viewModel }) => {
   const { statistics, isLoading, error } = viewModel.state;
@@ -27,6 +32,7 @@ export const RepertoireDashboard: React.FC<RepertoireDashboardProps> = ({ viewMo
   }
 
   const { total } = statistics;
+  const genres = groupMinorItems(statistics.genres, MAX_NAMED_GENRES);
   const moreChoreographers = statistics.other_choreographers;
 
   return (
@@ -35,9 +41,17 @@ export const RepertoireDashboard: React.FC<RepertoireDashboardProps> = ({ viewMo
         <strong>{total}</strong> learned {total === 1 ? "dance" : "dances"}
       </p>
       <div className="dashboard-grid">
-        <StatBarList title="By level" items={statistics.levels} total={total} />
-        <StatBarList title="By tempo" items={statistics.tempo} total={total} />
-        <StatBarList title="By genre" items={statistics.genres} total={total} />
+        <StatDonut title="By level" items={statistics.levels} />
+        <StatDonut title="By tempo" items={statistics.tempo} />
+        <StatDonut
+          title="By genre"
+          items={genres.items}
+          note={
+            genres.groupedCount > 0
+              ? `${genres.groupedCount} more ${genres.groupedCount === 1 ? "genre is" : "genres are"} summed up as "Other".`
+              : undefined
+          }
+        />
         <StatBarList
           title="By creation year"
           items={statistics.years}

@@ -190,8 +190,10 @@ first to the last month with data, without gaps: `learned` (by the date of the l
 learned before the first month and are reported as `undated`) and `practices` (practice log entries; interval
 steps are no practice).
 
-On the client, `client/src/features/statistics/` renders the bars as accessible HTML (label and numbers are
-text, the bar is decoration) and the timeline as columns with a table alternative. Its query key lives under
+On the client, `client/src/features/statistics/` renders level, tempo and genre as donuts (`StatDonut`: CSS
+`conic-gradient`, no chart library; genres beyond the five most frequent are summed up as "Other") and creation
+year and choreographer as bars (`StatBarList`). Both are accessible HTML: the legend or the bar row carries label and numbers as
+text, the graphic is decoration and the timeline as columns with a table alternative. Its query key lives under
 the `choreographies` root, so a new learning status or practice refreshes the dashboard. The dance search of
 the Personal page is hidden in this section.
 
