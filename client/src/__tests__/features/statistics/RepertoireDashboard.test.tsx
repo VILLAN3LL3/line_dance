@@ -67,12 +67,24 @@ describe("RepertoireDashboard", () => {
     const levels = screen.getByRole("region", { name: "By level" });
     expect(within(levels).getByText("BEGINNER")).toBeInTheDocument();
     expect(within(levels).getByText("BEGINNER").closest("li")).toHaveTextContent("6 (75 %)");
-    ["By tempo", "By genre", "By year", "By choreographer"].forEach((name) =>
+    ["By tempo", "By genre", "By creation year", "By choreographer"].forEach((name) =>
       expect(screen.getByRole("region", { name })).toBeInTheDocument(),
     );
     expect(
       within(screen.getByRole("region", { name: "By tempo" })).getByText("Unknown"),
     ).toBeInTheDocument();
+  });
+
+  it("says that the years are the creation years of the choreographies", () => {
+    render(<RepertoireDashboard viewModel={viewModel({ statistics })} />);
+
+    const years = screen.getByRole("region", { name: "By creation year" });
+    expect(
+      within(years).getByText(
+        "The year the choreography was created, not the year you learned it.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(years).getByText("2021")).toBeInTheDocument();
   });
 
   it("explains how choreographers are counted and how many are not listed", () => {

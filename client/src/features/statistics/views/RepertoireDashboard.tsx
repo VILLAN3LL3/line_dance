@@ -38,7 +38,12 @@ export const RepertoireDashboard: React.FC<RepertoireDashboardProps> = ({ viewMo
         <StatBarList title="By level" items={statistics.levels} total={total} />
         <StatBarList title="By tempo" items={statistics.tempo} total={total} />
         <StatBarList title="By genre" items={statistics.genres} total={total} />
-        <StatBarList title="By year" items={statistics.years} total={total} />
+        <StatBarList
+          title="By creation year"
+          items={statistics.years}
+          total={total}
+          note="The year the choreography was created, not the year you learned it."
+        />
         <StatBarList
           title="By choreographer"
           items={statistics.choreographers}

@@ -35,7 +35,9 @@ test.describe("Repertoire dashboard", () => {
     await expect(
       page.getByRole("region", { name: "By genre" }).getByText(`Genre ${suffix}`),
     ).toBeVisible();
-    await expect(page.getByRole("region", { name: "By year" }).getByText("1999")).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "By creation year" }).getByText("1999"),
+    ).toBeVisible();
     await expect(
       page.getByRole("region", { name: "By tempo" }).getByText("100–119 BPM"),
     ).toBeVisible();
