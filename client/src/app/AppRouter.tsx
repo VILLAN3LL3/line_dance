@@ -1,7 +1,7 @@
 import "../styles/AppRouter.css";
 
 import React, { useState } from "react";
-import { Link, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import {
   ChoreographyCreatePage,
@@ -9,19 +9,21 @@ import {
   ChoreographySearchPage,
 } from "../features/choreographies";
 import { ChoreographersPage } from "../features/choreographers";
-import { PersonalPage } from "../features/personal";
+import { PERSONAL_PATH, PersonalPage } from "../features/personal";
 import { StepFigureHierarchyAdmin } from "../features/step-figures";
 import { CourseDetailPage, CourseFormPage } from "../features/courses";
 import { DanceGroupDetail, DanceGroupsAdmin } from "../features/dance-groups/pages";
 import { ExternalLink } from "../shared/ui";
 import { TrainersPage } from "../features/trainers";
 import { GlobalApiErrorNotice } from "./GlobalApiErrorNotice";
+import { PersonalSidebarMenu } from "./PersonalSidebarMenu";
 
 export const AppRouter: React.FC = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(true);
   const swaggerDocsUrl = "http://localhost:3001/api/docs";
   const isStepFiguresRoute = location.pathname.startsWith("/admin/step-figures");
+  const isPersonalRoute = location.pathname.startsWith(PERSONAL_PATH);
   const isChoreographersRoute = location.pathname.startsWith("/choreographers");
   const isDanceGroupsRoute =
     location.pathname === "/admin" || location.pathname.startsWith("/admin/groups");
@@ -93,16 +95,17 @@ export const AppRouter: React.FC = () => {
             </li>
             <li>
               <Link
-                to="/personal"
-                className={`sidebar-link${
-                  location.pathname.startsWith("/personal") ? " active" : ""
-                }`}
+                to={PERSONAL_PATH}
+                className={`sidebar-link${isPersonalRoute ? " active" : ""}`}
                 title="Personal"
                 onClick={closeMobile}
               >
                 <span className="sidebar-icon">🙋</span>
                 <span className="sidebar-label">Personal</span>
               </Link>
+              {isPersonalRoute && (
+                <PersonalSidebarMenu activePath={location.pathname} onNavigate={closeMobile} />
+              )}
             </li>
             <li>
               <Link
@@ -164,7 +167,8 @@ export const AppRouter: React.FC = () => {
           <Route path="/choreographies/new" element={<ChoreographyCreatePage />} />
           <Route path="/choreographies/:id" element={<ChoreographyDetailPage />} />
           <Route path="/choreographers" element={<ChoreographersPage />} />
-          <Route path="/personal" element={<PersonalPage />} />
+          <Route path="/personal" element={<Navigate to="/personal/dashboard" replace />} />
+          <Route path="/personal/:section" element={<PersonalPage />} />
           <Route path="/admin" element={<DanceGroupsAdmin mode="list" />} />
           <Route path="/admin/step-figures" element={<StepFigureHierarchyAdmin />} />
           <Route path="/admin/groups/new" element={<DanceGroupsAdmin mode="create" />} />

@@ -158,18 +158,26 @@ On the client, the card title starts with 🤍 (wishlist) or ✅ (learned), with
 tooltip and under the level badge. Clicking the icon unfolds a small editor like the rating pill with
 the three choices 🤍, ✅ and 🔳 (no status) plus a ✕ button to close it; a dance without status opens the same editor by clicking
 its title. Picking an option saves it and closes the editor; ✕ and Escape close it without a change. The
-choreography form has a "Learning Status" field. The "Personal" page (`client/src/features/personal/`, route `/personal`)
-lists both lists as tabs; it is the home of the personal dance development features, separate from
-the catalog and from course planning.
+choreography form has a "Learning Status" field. The personal area
+(`client/src/features/personal/`) is the home of the personal dance development features, separate from the
+catalog and from course planning. It has no tabs: every section has its own route `/personal/:section`
+(`dashboard`, `wishlist`, `learned`, `practice`, `log`), `/personal` and unknown names redirect to
+`/personal/dashboard`. The sections are entries of a submenu under "Personal" in the sidebar
+(`app/PersonalSidebarMenu.tsx` loads their counts with `usePersonalSections` and hands them to the presentational
+`PersonalSubmenu`; it is mounted only inside the personal area, so other pages do not load these lists). The page
+(`PersonalPage`) reads the section from the route in its view model and shows its heading with the count; the
+section model is `model/personal-sections.ts`.
 
 ### Repertoire dashboard
 
-The "Dashboard" tab of the Personal page shows statistics over the **learned** dances
+The "Dashboard" section of the personal area shows statistics over the **learned** dances
 (`GET /api/statistics/repertoire`, `server/features/statistics/`: `repository.ts` reads the rows,
 `operations.ts` is pure, `flow.ts` composes them; the route only returns the result). The response has
 `total` and lists of `{ key, label, count }` for:
 
-- `levels`: the effective level (personal level when set), ordered by level value;
+- `levels`: the effective level (personal level when set) grouped to the main levels Beginner, Improver,
+  Intermediate and Advanced in this order, without the prefixes absolute, easy, low and high (`mainLevelKey`);
+  levels without a main level count as Unknown;
 - `tempo`: BPM classes (below 100, 100–119, 120–139, 140–159, 160 and above) of the default song, which is the
   favorite or else the first song; `genres` is the genre of the same song;
 - `choreographers`: the ten most frequent, a dance counts for each of its choreographers (names compared
@@ -185,7 +193,7 @@ steps are no practice).
 On the client, `client/src/features/statistics/` renders the bars as accessible HTML (label and numbers are
 text, the bar is decoration) and the timeline as columns with a table alternative. Its query key lives under
 the `choreographies` root, so a new learning status or practice refreshes the dashboard. The dance search of
-the Personal page is hidden on this tab.
+the Personal page is hidden in this section.
 
 ### Practice log and flash cards
 
@@ -243,13 +251,13 @@ Entries are ordered by their date, not by when they were entered. A learned danc
 due immediately. The order is the time since the last practice relative to its interval; never
 practiced dances come first. Change `REVIEW_INTERVAL_TIERS` to tune it.
 
-The "Practice log" tab loads the log page by page (50 entries) with `useInfiniteQuery`; the name search of the
+The "Practice log" section loads the log page by page (50 entries) with `useInfiniteQuery`; the name search of the
 Personal page is applied on the server so every match can be reached. A "Load more" button at the end of the list
 is triggered automatically when it scrolls into view (`shared/browser/useOnVisible.ts`, IntersectionObserver) and
 stays clickable without that support.
 
-On the client, `client/src/features/practice/` adds the tabs "Practice" and "Practice log" to the
-Personal page. The Practice tab is the flash card box: each due dance is a `FlipCard`
+On the client, `client/src/features/practice/` adds the sections "Practice" and "Practice log" to the
+personal area. The Practice section is the flash card box: each due dance is a `FlipCard`
 (`shared/ui/FlipCard.tsx`, generic front/back component: hovering a side edge tilts the card, a click on a spot without its own click handler turns it, a visually hidden button is the keyboard equivalent) with the unchanged `ChoreographyCard` on the
 front and `PracticeCardBack` on the back (music, restarts and tags, last practice, count, next due
 date, date, note, "Sure" and "Unsure"). "Log practice" is the quick capture for several dances; its second mode sets dances on an interval step.

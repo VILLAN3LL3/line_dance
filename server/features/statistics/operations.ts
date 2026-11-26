@@ -46,24 +46,26 @@ function byCountThenLabel(a: StatisticsItem, b: StatisticsItem): number {
   return b.count - a.count || a.label.localeCompare(b.label);
 }
 
+/** The main levels in ascending order; the prefixes absolute, easy, low and high are left out. */
+const MAIN_LEVELS: { key: string; label: string }[] = [
+  { key: 'beginner', label: 'Beginner' },
+  { key: 'improver', label: 'Improver' },
+  { key: 'intermediate', label: 'Intermediate' },
+  { key: 'advanced', label: 'Advanced' },
+];
+
+/** e.g. "EASY IMPROVER" and "HIGH IMPROVER" both belong to "improver"; others are unknown. */
+export function mainLevelKey(levelName: string | null): string {
+  const name = levelName?.toLowerCase() ?? '';
+  return MAIN_LEVELS.find((level) => name.includes(level.key))?.key ?? UNKNOWN_KEY;
+}
+
 function levelItems(rows: readonly RepertoireRow[]): StatisticsItem[] {
-  const levels = new Map<string, { label: string; value: number; count: number }>();
-  rows.forEach((row) => {
-    const label = row.level_name?.trim() || UNKNOWN_LABEL;
-    const key = row.level_name?.trim() ? label.toLowerCase() : UNKNOWN_KEY;
-    const entry = levels.get(key) ?? { label, value: row.level_value ?? 0, count: 0 };
-    entry.count += 1;
-    levels.set(key, entry);
-  });
-  return [...levels]
-    .map(([key, entry]) => ({ key, ...entry }))
-    .sort((a, b) => {
-      if (a.key === UNKNOWN_KEY || b.key === UNKNOWN_KEY) {
-        return Number(a.key === UNKNOWN_KEY) - Number(b.key === UNKNOWN_KEY);
-      }
-      return a.value - b.value || a.label.localeCompare(b.label);
-    })
-    .map(({ key, label, count }) => ({ key, label, count }));
+  const counts = new Map<string, number>();
+  rows.forEach((row) => increment(counts, mainLevelKey(row.level_name)));
+  return [...MAIN_LEVELS, unknownItem()]
+    .map(({ key, label }) => ({ key, label, count: counts.get(key) ?? 0 }))
+    .filter((item) => item.count > 0);
 }
 
 function tempoItems(rows: readonly RepertoireRow[]): StatisticsItem[] {

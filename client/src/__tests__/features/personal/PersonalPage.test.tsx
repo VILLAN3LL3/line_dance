@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import {
   deleteChoreographyLearningStatus,
@@ -77,6 +78,16 @@ function mockLists(wishlist: Choreography[], learned: Choreography[]) {
   );
 }
 
+function renderSection(section: string) {
+  return render(
+    <MemoryRouter initialEntries={[`/personal/${section}`]}>
+      <Routes>
+        <Route path="/personal/:section" element={<PersonalPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
 describe("PersonalPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -92,32 +103,29 @@ describe("PersonalPage", () => {
     vi.mocked(deletePracticeEntry).mockResolvedValue({ message: "ok" });
   });
 
-  it("shows the wishlist first and requests each list by its status", async () => {
+  it("shows the wishlist with its count and requests each list by its status", async () => {
     mockLists([makeChoreography(1, "Wished Dance", "wishlist")], []);
-    render(<PersonalPage />);
+    renderSection("wishlist");
 
     expect(await screen.findByText("Wished Dance")).toBeInTheDocument();
     expect(searchChoreographies).toHaveBeenCalledWith({ learning_status: "wishlist" });
     expect(searchChoreographies).toHaveBeenCalledWith({ learning_status: "learned" });
-    expect(screen.getByRole("tab", { name: "🤍 Wishlist (1)" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    expect(screen.getByRole("tab", { name: "✅ Learned (0)" })).toHaveAttribute(
-      "aria-selected",
-      "false",
-    );
+    expect(await screen.findByRole("heading", { name: "Wishlist (1)" })).toBeInTheDocument();
   });
 
-  it("switches to the learned dances", async () => {
+  it("redirects an unknown section to the dashboard", async () => {
+    mockLists([], []);
+    renderSection("unknown");
+
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+  });
+
+  it("shows the learned dances in their own section", async () => {
     mockLists(
       [makeChoreography(1, "Wished Dance", "wishlist")],
       [makeChoreography(2, "Known Dance", "learned", "2026-11-24")],
     );
-    render(<PersonalPage />);
-    await screen.findByText("Wished Dance");
-
-    fireEvent.click(screen.getByRole("tab", { name: /Learned/ }));
+    renderSection("learned");
 
     expect(await screen.findByText("Known Dance")).toBeInTheDocument();
     expect(screen.queryByText("Wished Dance")).toBeNull();
@@ -126,14 +134,15 @@ describe("PersonalPage", () => {
 
   it("explains an empty list", async () => {
     mockLists([], []);
-    render(<PersonalPage />);
-
+    const { unmount } = renderSection("wishlist");
     expect(await screen.findByText(/Your wishlist is empty/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: /Learned/ }));
-    expect(screen.getByText(/No learned dances yet/)).toBeInTheDocument();
+    unmount();
+
+    renderSection("learned");
+    expect(await screen.findByText(/No learned dances yet/)).toBeInTheDocument();
   });
 
-  it("moves a dance to the other list after its status changed", async () => {
+  it("moves a dance out of the wishlist after its status changed", async () => {
     let wishlist = [makeChoreography(1, "Wished Dance", "wishlist")];
     let learned: Choreography[] = [];
     vi.mocked(searchChoreographies).mockImplementation(async (filters) =>
@@ -144,7 +153,7 @@ describe("PersonalPage", () => {
       learned = [makeChoreography(id, "Wished Dance", status, "2026-11-24")];
       return { choreography_id: id, status, status_date: "2026-11-24" };
     });
-    render(<PersonalPage />);
+    renderSection("wishlist");
     await screen.findByText("Wished Dance");
 
     fireEvent.click(screen.getByRole("button", { name: /Learning status: Wishlist/ }));
@@ -154,7 +163,7 @@ describe("PersonalPage", () => {
       expect(screen.getByText(/Your wishlist is empty/)).toBeInTheDocument();
     });
     expect(setChoreographyLearningStatus).toHaveBeenCalledWith(1, "learned");
-    expect(screen.getByRole("tab", { name: "✅ Learned (1)" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Wishlist (0)" })).toBeInTheDocument();
   });
 
   it("refreshes the practice suggestions when a dance is marked as learned", async () => {
@@ -166,7 +175,7 @@ describe("PersonalPage", () => {
       wishlist = [];
       return { choreography_id: id, status, status_date: "2026-11-25" };
     });
-    render(<PersonalPage />);
+    renderSection("wishlist");
     await screen.findByText("Wished Dance");
     await waitFor(() => expect(fetchPracticeSuggestions).toHaveBeenCalledTimes(1));
 
@@ -185,7 +194,7 @@ describe("PersonalPage", () => {
       wishlist = [];
       return { message: "Learning status removed" };
     });
-    render(<PersonalPage />);
+    renderSection("wishlist");
     await screen.findByText("Wished Dance");
 
     fireEvent.click(screen.getByRole("button", { name: /Learning status: Wishlist/ }));
@@ -199,7 +208,7 @@ describe("PersonalPage", () => {
 
   it("shows an error when the list cannot be loaded", async () => {
     vi.mocked(searchChoreographies).mockRejectedValue(new Error("offline"));
-    render(<PersonalPage />);
+    renderSection("wishlist");
 
     expect(await screen.findByText("Failed to load your dances")).toBeInTheDocument();
   });
@@ -238,12 +247,10 @@ describe("PersonalPage", () => {
         summary(2),
         summary(3, { is_due: false, next_due_on: "2999-01-01", practice_count: 2 }),
       ]);
-      render(<PersonalPage />);
-
-      const tab = await screen.findByRole("tab", { name: "🔁 Practice (1)" });
-      fireEvent.click(tab);
+      renderSection("practice");
 
       expect(await screen.findByText("Time to practice (1)")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Practice (1)" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Show back of Known Dance" })).toBeInTheDocument();
       expect(screen.queryByText("Later Dance")).toBeNull();
 
@@ -271,8 +278,7 @@ describe("PersonalPage", () => {
         summary(4, { next_due_on: "2026-11-24", days_overdue: 1, practice_count: 1 }),
         summary(5, { next_due_on: "2999-02-01", is_due: false, practice_count: 1 }),
       ]);
-      render(<PersonalPage />);
-      fireEvent.click(await screen.findByRole("tab", { name: /Practice \(3\)/ }));
+      renderSection("practice");
 
       const headings = (await screen.findAllByRole("heading", { level: 4 })).map(
         (heading) => heading.textContent,
@@ -288,8 +294,7 @@ describe("PersonalPage", () => {
     it("logs a practice from the back of a card", async () => {
       mockLists([], [makeChoreography(2, "Known Dance", "learned")]);
       vi.mocked(fetchPracticeSuggestions).mockResolvedValue([summary(2)]);
-      render(<PersonalPage />);
-      fireEvent.click(await screen.findByRole("tab", { name: /Practice \(1\)/ }));
+      renderSection("practice");
 
       fireEvent.click(await screen.findByRole("button", { name: "Show back of Known Dance" }));
       fireEvent.change(screen.getByLabelText("Practiced on"), { target: { value: "2026-11-20" } });
@@ -314,8 +319,8 @@ describe("PersonalPage", () => {
       );
       vi.mocked(fetchPracticeSuggestions).mockResolvedValue([summary(2), summary(3)]);
       vi.mocked(logPractice).mockResolvedValue({ logged: 2, practiced_on: "2026-11-20" });
-      render(<PersonalPage />);
-      fireEvent.click(await screen.findByRole("tab", { name: /Practice \(2\)/ }));
+      renderSection("practice");
+      await screen.findByText(/Time to practice/);
 
       fireEvent.click(screen.getByRole("button", { name: /Log practice/ }));
       fireEvent.click(screen.getByRole("checkbox", { name: "Known Dance" }));
@@ -347,8 +352,8 @@ describe("PersonalPage", () => {
         ],
       );
       vi.mocked(fetchPracticeSuggestions).mockResolvedValue([summary(2), summary(3)]);
-      render(<PersonalPage />);
-      fireEvent.click(await screen.findByRole("tab", { name: /Practice \(2\)/ }));
+      renderSection("practice");
+      await screen.findByText(/Time to practice/);
 
       fireEvent.click(screen.getByRole("button", { name: /Log practice/ }));
       fireEvent.click(screen.getByRole("radio", { name: /Set an interval step/ }));
@@ -373,8 +378,7 @@ describe("PersonalPage", () => {
 
     it("explains an empty practice box", async () => {
       mockLists([], []);
-      render(<PersonalPage />);
-      fireEvent.click(await screen.findByRole("tab", { name: /^🔁 Practice/ }));
+      renderSection("practice");
 
       expect(await screen.findByText(/No learned dances yet/)).toBeInTheDocument();
     });
@@ -397,8 +401,7 @@ describe("PersonalPage", () => {
           },
         ],
       });
-      render(<PersonalPage />);
-      fireEvent.click(await screen.findByRole("tab", { name: /Practice log/ }));
+      renderSection("log");
 
       expect(await screen.findByText("2026-11-20")).toBeInTheDocument();
       expect(screen.getByText("Known Dance")).toBeInTheDocument();
@@ -418,14 +421,14 @@ describe("PersonalPage", () => {
         ],
         [],
       );
-      render(<PersonalPage />);
+      renderSection("wishlist");
       await screen.findByText("Cowboy Boogie");
 
       const search = screen.getByRole("searchbox", { name: "Search dances by name" });
       fireEvent.change(search, { target: { value: "BOOGIE" } });
       expect(screen.getByText("Cowboy Boogie")).toBeInTheDocument();
       expect(screen.queryByText("Waltz")).toBeNull();
-      expect(screen.getByRole("tab", { name: "🤍 Wishlist (2)" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Wishlist (2)" })).toBeInTheDocument();
 
       fireEvent.change(search, { target: { value: "xyz" } });
       expect(screen.getByText("No dance matches your search.")).toBeInTheDocument();
@@ -448,8 +451,7 @@ describe("PersonalPage", () => {
         { ...summaryOf(3), is_due: false, next_due_on: "2999-01-01", practice_count: 1 },
         { ...summaryOf(4) },
       ]);
-      render(<PersonalPage />);
-      fireEvent.click(await screen.findByRole("tab", { name: /^🔁 Practice/ }));
+      renderSection("practice");
       await screen.findByText("Time to practice (2)");
 
       fireEvent.change(screen.getByRole("searchbox"), { target: { value: "cow" } });
@@ -486,8 +488,7 @@ describe("PersonalPage", () => {
         const data = all.filter((e) => e.choreography_name.toLowerCase().includes(q ?? ""));
         return { data, total: data.length };
       });
-      render(<PersonalPage />);
-      fireEvent.click(await screen.findByRole("tab", { name: /Practice log/ }));
+      renderSection("log");
       await screen.findByText("Waltz");
 
       fireEvent.change(screen.getByRole("searchbox"), { target: { value: "waltz" } });
@@ -515,8 +516,7 @@ describe("PersonalPage", () => {
       vi.mocked(fetchPracticeLog)
         .mockResolvedValueOnce({ data: [entry(1)], total: 2 })
         .mockResolvedValueOnce({ data: [entry(2)], total: 2 });
-      render(<PersonalPage />);
-      fireEvent.click(await screen.findByRole("tab", { name: /Practice log/ }));
+      renderSection("log");
       await screen.findByText("Dance 1");
 
       fireEvent.click(screen.getByRole("button", { name: "Load more" }));
@@ -530,20 +530,22 @@ describe("PersonalPage", () => {
   describe("dashboard", () => {
     it("shows the repertoire statistics and hides the dance search", async () => {
       mockLists([], []);
-      render(<PersonalPage />);
-      expect(
-        await screen.findByRole("searchbox", { name: "Search dances by name" }),
-      ).toBeInTheDocument();
-
-      fireEvent.click(screen.getByRole("tab", { name: /Dashboard/ }));
+      renderSection("dashboard");
 
       expect(await screen.findByRole("region", { name: "By level" })).toBeInTheDocument();
       expect(screen.getByRole("region", { name: "Over time" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
       expect(screen.queryByRole("searchbox")).toBeNull();
       expect(fetchRepertoireStatistics).toHaveBeenCalled();
+    });
 
-      fireEvent.click(screen.getByRole("tab", { name: /Wishlist/ }));
-      expect(screen.getByRole("searchbox", { name: "Search dances by name" })).toBeInTheDocument();
+    it("offers the dance search in the other sections", async () => {
+      mockLists([], []);
+      renderSection("wishlist");
+
+      expect(
+        await screen.findByRole("searchbox", { name: "Search dances by name" }),
+      ).toBeInTheDocument();
     });
 
     it("refreshes the statistics when a dance is marked as learned", async () => {
@@ -555,7 +557,7 @@ describe("PersonalPage", () => {
         wishlist = [];
         return { choreography_id: id, status, status_date: "2026-11-26" };
       });
-      render(<PersonalPage />);
+      renderSection("wishlist");
       await screen.findByText("Wished Dance");
       await waitFor(() => expect(fetchRepertoireStatistics).toHaveBeenCalledTimes(1));
 

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { personalMenuLink } from "../helpers/personal";
 import {
   API_BASE,
   createChoreographyViaApi,
@@ -14,8 +15,7 @@ test.describe("Practice flash cards", () => {
     const name = `Practice Dance ${Date.now()}`;
     await createLearnedChoreographyWithoutPractice(request, name);
 
-    await page.goto("/personal");
-    await page.getByRole("tab", { name: /^🔁 Practice/ }).click();
+    await page.goto("/personal/practice");
 
     const flipCard = page.locator(".flip-card", { hasText: name });
     await expect(flipCard.locator(".choreography-card").first()).toBeVisible();
@@ -33,8 +33,8 @@ test.describe("Practice flash cards", () => {
     await page.getByRole("button", { name: /Show dances not due yet/ }).click();
     await expect(page.locator(".flip-card", { hasText: name })).toHaveCount(1);
 
-    await page.getByRole("tab", { name: /Practice log/ }).click();
-    await expect(page.getByText(name)).toBeVisible();
+    await personalMenuLink(page, "Practice log").click();
+    await expect(page.locator(".practice-log-entry", { hasText: name })).toBeVisible();
   });
 });
 
@@ -54,8 +54,7 @@ test.describe("Practice log paging", () => {
     });
     await Promise.all(entries);
 
-    await page.goto("/personal");
-    await page.getByRole("tab", { name: /Practice log/ }).click();
+    await page.goto("/personal/log");
     await page.getByRole("searchbox", { name: "Search dances by name" }).fill(name);
 
     const rows = page.locator(".practice-log-entry");
@@ -79,12 +78,11 @@ test.describe("First practice", () => {
     });
     expect(status.ok()).toBeTruthy();
 
-    await page.goto("/personal");
-    await page.getByRole("tab", { name: /Practice log/ }).click();
+    await page.goto("/personal/log");
     await page.getByRole("searchbox", { name: "Search dances by name" }).fill(name);
     await expect(page.locator(".practice-log-entry", { hasText: name })).toHaveCount(1);
 
-    await page.getByRole("tab", { name: /^🔁 Practice/ }).click();
+    await personalMenuLink(page, /^Practice(\s*\d+)?$/).click();
     await expect(page.getByText("Not due yet (1)")).toBeVisible();
   });
 });

@@ -1,41 +1,37 @@
 import { useState } from "react";
+import { useParams } from "react-router-dom";
 
+import { matchesName } from "../../../shared/utils/search";
 import {
-  LEARNING_STATUS_OPTIONS,
   useChoreographyCardViewModel,
   useLearningStatusChoreographiesQuery,
 } from "../../choreographies";
-import { matchesName } from "../../../shared/utils/search";
 import { usePracticeViewModel } from "../../practice";
 import { useRepertoireStatisticsViewModel } from "../../statistics";
-import { buildPersonalTabs, isStatusTab } from "../model/personal-tabs";
-import type { PersonalTabId } from "../model/personal-tabs";
+import { isStatusSection, parsePersonalSection } from "../model/personal-sections";
+import { usePersonalSections } from "./usePersonalSections";
 
-/** ViewModel for the personal area: the wishlist, the learned dances and the practice tabs. */
+/** ViewModel for one section of the personal area, chosen by the route `/personal/:section`. */
 export const usePersonalViewModel = () => {
-  const [activeId, setActiveId] = useState<PersonalTabId>("wishlist");
+  const { section: sectionName } = useParams();
+  const activeId = parsePersonalSection(sectionName);
+  const [query, setQuery] = useState("");
   const wishlist = useLearningStatusChoreographiesQuery("wishlist");
   const learned = useLearningStatusChoreographiesQuery("learned");
   const cardViewModel = useChoreographyCardViewModel();
-  const [query, setQuery] = useState("");
   const practice = usePracticeViewModel(query);
   const statistics = useRepertoireStatisticsViewModel();
+  const sections = usePersonalSections();
 
   const queries = { wishlist, learned };
-  const active = isStatusTab(activeId) ? queries[activeId] : null;
-  const { deck } = practice.deck.state;
-  const isDeckReady = !practice.deck.state.isLoading && !practice.deck.state.error;
-  const tabs = buildPersonalTabs(LEARNING_STATUS_OPTIONS, {
-    wishlist: wishlist.data?.length ?? null,
-    learned: learned.data?.length ?? null,
-    practice: isDeckReady ? deck.due.length : null,
-  });
+  const active = activeId !== null && isStatusSection(activeId) ? queries[activeId] : null;
 
   return {
     state: {
+      /** Null for a name that is no section; the page then redirects to the default one. */
       activeId,
-      tabs,
-      activeTab: tabs.find((tab) => tab.id === activeId) ?? tabs[0],
+      sections,
+      activeSection: sections.find((section) => section.id === activeId) ?? sections[0],
       query,
       choreographies: (active?.data ?? []).filter((dance) => matchesName(dance.name, query)),
       isLoading: active?.isPending ?? false,
@@ -44,7 +40,7 @@ export const usePersonalViewModel = () => {
       practice,
       statistics,
     },
-    actions: { selectTab: setActiveId, setQuery },
+    actions: { setQuery },
   };
 };
 

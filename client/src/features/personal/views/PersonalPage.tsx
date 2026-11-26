@@ -1,36 +1,47 @@
 import "../../../styles/App.css";
 
 import React from "react";
+import { Navigate } from "react-router-dom";
 
 import { EmptyState, ErrorMessage, LoadingState } from "../../../shared/ui";
 import { ChoreographyCard } from "../../choreographies";
 import { PracticeDeck, PracticeLogList, QuickLogPanel } from "../../practice";
 import { RepertoireDashboard } from "../../statistics";
-import { isSearchableTab, isStatusTab } from "../model/personal-tabs";
+import {
+  DEFAULT_PERSONAL_SECTION,
+  PERSONAL_PATH,
+  describeSection,
+  isSearchableSection,
+  isStatusSection,
+} from "../model/personal-sections";
 import { usePersonalViewModel } from "../viewmodels/usePersonalViewModel";
 
 const PersonalPage: React.FC = () => {
   const { state, actions } = usePersonalViewModel();
-  const { activeTab, choreographies, isLoading, error } = state;
+  const { activeId, activeSection, choreographies, isLoading, error } = state;
+
+  if (activeId === null) {
+    return <Navigate to={`${PERSONAL_PATH}/${DEFAULT_PERSONAL_SECTION}`} replace />;
+  }
 
   let content: React.ReactNode;
-  if (state.activeId === "practice") {
+  if (activeId === "practice") {
     content = (
       <>
         <QuickLogPanel viewModel={state.practice.quickLog} />
         <PracticeDeck viewModel={state.practice.deck} cardViewModel={state.cardViewModel} />
       </>
     );
-  } else if (state.activeId === "dashboard") {
+  } else if (activeId === "dashboard") {
     content = <RepertoireDashboard viewModel={state.statistics} />;
-  } else if (state.activeId === "log") {
+  } else if (activeId === "log") {
     content = <PracticeLogList viewModel={state.practice.log} />;
   } else if (isLoading) {
     content = <LoadingState message="Loading your dances..." />;
   } else if (choreographies.length === 0 && state.query.trim() !== "") {
     content = <EmptyState>No dance matches your search.</EmptyState>;
   } else if (choreographies.length === 0) {
-    content = <EmptyState>{activeTab.emptyMessage}</EmptyState>;
+    content = <EmptyState>{activeSection.emptyMessage}</EmptyState>;
   } else {
     content = (
       <div className="choreographies-grid">
@@ -51,10 +62,14 @@ const PersonalPage: React.FC = () => {
         <h2>Personal</h2>
       </header>
 
-      {error && isStatusTab(state.activeId) && <ErrorMessage message={error} />}
+      {error && isStatusSection(activeId) && <ErrorMessage message={error} />}
 
       <div className="list-view">
-        {isSearchableTab(state.activeId) && (
+        <h3 id="personal-section-title" className="personal-section-title">
+          <span aria-hidden="true">{activeSection.emoji}</span> {describeSection(activeSection)}
+        </h3>
+
+        {isSearchableSection(activeId) && (
           <input
             type="search"
             className="personal-search"
@@ -65,27 +80,7 @@ const PersonalPage: React.FC = () => {
           />
         )}
 
-        <div className="view-toggle" role="tablist" aria-label="Personal dance lists">
-          {state.tabs.map((tab) => (
-            <button
-              key={tab.id}
-              id={`personal-tab-${tab.id}`}
-              type="button"
-              role="tab"
-              aria-selected={tab.id === state.activeId}
-              aria-controls="personal-panel"
-              className={`view-toggle-btn${tab.id === state.activeId ? " active" : ""}`}
-              onClick={() => actions.selectTab(tab.id)}
-            >
-              {tab.emoji} {tab.label}
-              {tab.count !== null && ` (${tab.count})`}
-            </button>
-          ))}
-        </div>
-
-        <div id="personal-panel" role="tabpanel" aria-labelledby={`personal-tab-${state.activeId}`}>
-          {content}
-        </div>
+        <section aria-labelledby="personal-section-title">{content}</section>
       </div>
     </div>
   );

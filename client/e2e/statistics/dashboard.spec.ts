@@ -23,8 +23,9 @@ test.describe("Repertoire dashboard", () => {
     });
     await create("Dashboard B", { creation_year: 1999, authors: [`Dashboard Author ${suffix}`] });
 
+    // The dashboard is what the personal area opens with.
     await page.goto("/personal");
-    await page.getByRole("tab", { name: /Dashboard/ }).click();
+    await expect(page).toHaveURL(/\/personal\/dashboard$/);
 
     await expect(page.getByRole("searchbox", { name: "Search dances by name" })).toHaveCount(0);
     await expect(page.getByRole("region", { name: "By level" })).toBeVisible();

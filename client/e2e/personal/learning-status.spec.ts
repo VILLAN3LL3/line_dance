@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { personalMenuLink } from "../helpers/personal";
 import { createChoreographyViaApi } from "../helpers/api";
 
 test.describe("Personal learning status", () => {
@@ -24,7 +25,7 @@ test.describe("Personal learning status", () => {
     await card.getByRole("button", { name: "Wishlist" }).click();
     await expect(card.getByRole("button", { name: /Learning status: Wishlist/ })).toHaveText("🤍");
 
-    await page.goto("/personal");
+    await page.goto("/personal/wishlist");
     await expect(page.getByRole("heading", { name: "Personal" })).toBeVisible();
     const wishlistCard = page.locator(".choreography-card", { hasText: name });
     await expect(wishlistCard).toBeVisible();
@@ -33,7 +34,7 @@ test.describe("Personal learning status", () => {
     await wishlistCard.getByRole("button", { name: "Learned" }).click();
     await expect(wishlistCard).toHaveCount(0);
 
-    await page.getByRole("tab", { name: /Learned/ }).click();
+    await personalMenuLink(page, /^Learned/).click();
     const learnedCard = page.locator(".choreography-card", { hasText: name });
     await expect(learnedCard.getByRole("button", { name: /Learning status: Learned/ })).toHaveText(
       "✅",

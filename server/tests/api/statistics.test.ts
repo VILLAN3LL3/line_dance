@@ -66,13 +66,13 @@ describe('GET /api/statistics/repertoire', () => {
     expect(labels(body.years)).toEqual(['2020:1']);
   });
 
-  it('groups by level, using the personal level when one is set', async () => {
-    const official = await createChoreo({ level: 'BEGINNER' });
-    const personal = await createChoreo({ level: 'BEGINNER', personal_level: 'ADVANCED' });
-    await learn(official);
-    await learn(personal);
+  it('groups by main level, using the personal level when one is set', async () => {
+    const official = await createChoreo({ level: 'HIGH BEGINNER' });
+    const easy = await createChoreo({ level: 'EASY BEGINNER' });
+    const personal = await createChoreo({ level: 'BEGINNER', personal_level: 'LOW ADVANCED' });
+    await Promise.all([official, easy, personal].map((id) => learn(id)));
     const body = await stats();
-    expect(labels(body.levels)).toEqual(['BEGINNER:1', 'ADVANCED:1']);
+    expect(labels(body.levels)).toEqual(['Beginner:2', 'Advanced:1']);
   });
 
   it('uses tempo and genre of the default song: the favorite, else the first', async () => {

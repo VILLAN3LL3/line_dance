@@ -424,7 +424,7 @@ export const openApiSpec = {
         tags: ['Statistics'],
         summary: 'Statistics over the learned dances (repertoire dashboard)',
         description:
-          'Counts the dances with learning status "learned" by effective level (personal level when set), tempo class and genre of the default song (favorite, else first), choreographer (a dance counts for each of them, the ten most frequent are listed), and creation year. The timeline has one entry per month without gaps: dances learned (by the date of the status), the running total (dances without a date count as learned before the first month) and practices; interval steps are no practice.',
+          'Counts the dances with learning status "learned" by main level (Beginner, Improver, Intermediate, Advanced; prefixes such as easy, low and high are left out; effective level, personal level when set), tempo class and genre of the default song (favorite, else first), choreographer (a dance counts for each of them, the ten most frequent are listed), and creation year. The timeline has one entry per month without gaps: dances learned (by the date of the status), the running total (dances without a date count as learned before the first month) and practices; interval steps are no practice.',
         responses: {
           200: {
             description: 'Repertoire statistics',

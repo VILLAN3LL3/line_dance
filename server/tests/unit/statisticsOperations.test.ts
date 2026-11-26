@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   TOP_CHOREOGRAPHERS,
   buildRepertoireStatistics,
+  mainLevelKey,
   tempoClass,
 } from '../../features/statistics/operations.ts';
 import type { RepertoireStatistics } from '../../contracts/api.ts';
@@ -28,6 +29,36 @@ const build = (
 
 const labels = (items: { label: string; count: number }[]): string[] =>
   items.map((item) => `${item.label}:${item.count}`);
+
+describe('mainLevelKey', () => {
+  it('names the main level of every canonical level', () => {
+    const names = [
+      'ABSOLUTE BEGINNER',
+      'EASY BEGINNER',
+      'BEGINNER',
+      'HIGH BEGINNER',
+      'LOW IMPROVER',
+      'EASY IMPROVER',
+      'IMPROVER',
+      'HIGH IMPROVER',
+      'LOW INTERMEDIATE',
+      'EASY INTERMEDIATE',
+      'INTERMEDIATE',
+      'HIGH INTERMEDIATE',
+      'LOW ADVANCED',
+      'EASY ADVANCED',
+      'ADVANCED',
+      'HIGH ADVANCED',
+    ];
+    expect(names.map(mainLevelKey)).toEqual([
+      ...Array(4).fill('beginner'),
+      ...Array(4).fill('improver'),
+      ...Array(4).fill('intermediate'),
+      ...Array(4).fill('advanced'),
+    ]);
+    expect(['UNKNOWN', '', null].map(mainLevelKey)).toEqual(['unknown', 'unknown', 'unknown']);
+  });
+});
 
 describe('tempoClass', () => {
   it('uses the lower bound of a class and puts missing values to unknown', () => {
@@ -61,14 +92,28 @@ describe('buildRepertoireStatistics', () => {
     expect(stats.tempo).toHaveLength(5);
   });
 
-  it('orders the levels by their value and puts unknown last', () => {
+  it('groups the levels to the main levels, in order, with unknown last', () => {
     const stats = build([
-      row(1, { level_name: 'IMPROVER', level_value: 70 }),
-      row(2, { level_name: 'ABSOLUTE BEGINNER', level_value: 10 }),
-      row(3, { level_name: null, level_value: null }),
-      row(4, { level_name: 'IMPROVER', level_value: 70 }),
+      row(1, { level_name: 'HIGH IMPROVER' }),
+      row(2, { level_name: 'ABSOLUTE BEGINNER' }),
+      row(3, { level_name: null }),
+      row(4, { level_name: 'EASY IMPROVER' }),
+      row(5, { level_name: 'LOW INTERMEDIATE' }),
+      row(6, { level_name: 'BEGINNER' }),
+      row(7, { level_name: 'HIGH ADVANCED' }),
+      row(8, { level_name: 'UNKNOWN' }),
     ]);
-    expect(labels(stats.levels)).toEqual(['ABSOLUTE BEGINNER:1', 'IMPROVER:2', 'Unknown:1']);
+    expect(labels(stats.levels)).toEqual([
+      'Beginner:2',
+      'Improver:2',
+      'Intermediate:1',
+      'Advanced:1',
+      'Unknown:2',
+    ]);
+  });
+
+  it('leaves out main levels without dances', () => {
+    expect(labels(build([row(1, { level_name: 'ADVANCED' })]).levels)).toEqual(['Advanced:1']);
   });
 
   it('counts the tempo classes, with unknown only when needed', () => {
