@@ -22,14 +22,21 @@ const unpracticed = (choreography: Choreography): PracticeSummary => ({
   days_overdue: null,
 });
 
+/** Dances rated with a single star are not worth practicing and stay out of the box. */
+export const EXCLUDED_PRACTICE_RATING = 1;
+
 /**
  * Pairs the learned dances with their practice state. The server order (most urgent first) is
- * kept; dances without a server summary come first because they were never practiced.
+ * kept; dances without a server summary come first because they were never practiced. Dances
+ * rated with one star are left out.
  */
 export function buildPracticeDeck(
-  learned: readonly Choreography[],
+  allLearned: readonly Choreography[],
   suggestions: readonly PracticeSummary[],
 ): PracticeDeck {
+  const learned = allLearned.filter(
+    (choreography) => choreography.rating !== EXCLUDED_PRACTICE_RATING,
+  );
   const summaries = new Map(suggestions.map((summary) => [summary.choreography_id, summary]));
   const dances = new Map(learned.map((choreography) => [choreography.id, choreography]));
   const unknown = learned

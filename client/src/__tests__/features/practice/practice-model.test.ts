@@ -51,6 +51,19 @@ describe("buildPracticeDeck", () => {
     expect(deck.due[0].summary).toMatchObject({ practice_count: 0, is_due: true });
   });
 
+  it("leaves out dances rated with one star, practiced or not", () => {
+    const deck = buildPracticeDeck(
+      [
+        makeDance(1, "Disliked", { rating: 1 }),
+        makeDance(2, "Disliked practiced", { rating: 1 }),
+        makeDance(3, "Okay", { rating: 2 }),
+        makeDance(4, "Unrated"),
+      ],
+      [makeSummary(2, { practice_count: 1 })],
+    );
+    expect([...deck.due, ...deck.later].map((card) => card.choreography.id)).toEqual([3, 4]);
+  });
+
   it("ignores summaries of dances that are no longer learned", () => {
     const deck = buildPracticeDeck([makeDance(1, "A")], [makeSummary(1), makeSummary(9)]);
     expect([...deck.due, ...deck.later]).toHaveLength(1);
