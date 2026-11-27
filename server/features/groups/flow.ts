@@ -11,7 +11,7 @@ import * as groups from './repository.ts';
 import type { Group } from './repository.ts';
 import type { Figure } from '../step-figures/operations.ts';
 
-const defaultBaseFigureNames = ['Hip Bump', 'Hip Sway', 'Kick', 'Run'];
+const defaultBaseFigureNames = ['Hip Sway/Hip Bump', 'Kick', 'Run'];
 type GroupResult =
   { error: 'name_required' | 'duplicate_name' | 'group_not_found' } | { value: Group | undefined };
 type MaxLevel = { max_group_level_value: number | null };

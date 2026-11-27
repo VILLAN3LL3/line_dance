@@ -28,13 +28,22 @@ afterAll(async () => {
 it('creates and updates group figures across separate database files', async () => {
   const kick = await request(app).post('/api/step_figures').send({ name: 'Kick' });
   const mambo = await request(app).post('/api/step_figures').send({ name: 'Mambo' });
+  const combinedHip = await request(app)
+    .post('/api/step_figures')
+    .send({ name: 'Hip Sway/Hip Bump' });
+  await request(app).post('/api/step_figures').send({ name: 'Hip Sway' });
+  await request(app).post('/api/step_figures').send({ name: 'Hip Bump' });
   expect(kick.status).toBe(201);
   expect(mambo.status).toBe(201);
+  expect(combinedHip.status).toBe(201);
 
   const group = await request(app).post('/api/dance-groups').send({ name: 'Separate DB' });
   expect(group.status).toBe(201);
   const defaults = await request(app).get(`/api/dance-groups/${group.body.id}/base-step-figures`);
-  expect(defaults.body).toEqual([{ id: kick.body.id, name: 'Kick' }]);
+  expect(defaults.body).toEqual([
+    { id: combinedHip.body.id, name: 'Hip Sway/Hip Bump' },
+    { id: kick.body.id, name: 'Kick' },
+  ]);
 
   const updated = await request(app)
     .put(`/api/dance-groups/${group.body.id}/base-step-figures`)

@@ -1011,6 +1011,87 @@ const migrations: Migration[] = [
       );
     },
   },
+  {
+    id: '022_merge_hip_sway_and_hip_bump',
+    up: async () => {
+      const figures = await allQuery<IdRow & NamedRow>(
+        `SELECT id, name FROM step_figures
+         WHERE LOWER(TRIM(name)) IN (?, ?, ?)
+         ORDER BY CASE WHEN LOWER(TRIM(name)) = ? THEN 0 ELSE 1 END, id`,
+        ['hip sway', 'hip bump', 'hip sway/hip bump', 'hip sway/hip bump'],
+        dbName,
+      );
+      if (figures.length === 0) return;
+
+      const keeperId = figures[0].id;
+      const figureIds = figures.map((figure) => figure.id);
+      const duplicateIds = figureIds.filter((id) => id !== keeperId);
+      const figurePlaceholders = figureIds.map(() => '?').join(', ');
+
+      await runQuery(
+        `INSERT OR IGNORE INTO choreography_step_figures (choreography_id, step_figure_id)
+         SELECT choreography_id, ?
+         FROM choreography_step_figures
+         WHERE step_figure_id IN (${figurePlaceholders})`,
+        [keeperId, ...figureIds],
+        dbName,
+      );
+      await runQuery(
+        `INSERT OR IGNORE INTO step_figure_components
+           (parent_step_figure_id, child_step_figure_id, sort_order)
+         SELECT
+           CASE WHEN parent_step_figure_id IN (${figurePlaceholders}) THEN ? ELSE parent_step_figure_id END,
+           CASE WHEN child_step_figure_id IN (${figurePlaceholders}) THEN ? ELSE child_step_figure_id END,
+           sort_order
+         FROM step_figure_components
+         WHERE (parent_step_figure_id IN (${figurePlaceholders})
+             OR child_step_figure_id IN (${figurePlaceholders}))
+           AND CASE WHEN parent_step_figure_id IN (${figurePlaceholders}) THEN ? ELSE parent_step_figure_id END
+             != CASE WHEN child_step_figure_id IN (${figurePlaceholders}) THEN ? ELSE child_step_figure_id END`,
+        [
+          ...figureIds,
+          keeperId,
+          ...figureIds,
+          keeperId,
+          ...figureIds,
+          ...figureIds,
+          ...figureIds,
+          keeperId,
+          ...figureIds,
+          keeperId,
+        ],
+        dbName,
+      );
+
+      if (duplicateIds.length > 0) {
+        const duplicatePlaceholders = duplicateIds.map(() => '?').join(', ');
+        await runQuery(
+          `DELETE FROM choreography_step_figures
+           WHERE step_figure_id IN (${duplicatePlaceholders})`,
+          duplicateIds,
+          dbName,
+        );
+        await runQuery(
+          `DELETE FROM step_figure_components
+           WHERE parent_step_figure_id IN (${duplicatePlaceholders})
+              OR child_step_figure_id IN (${duplicatePlaceholders})`,
+          [...duplicateIds, ...duplicateIds],
+          dbName,
+        );
+        await runQuery(
+          `DELETE FROM step_figures WHERE id IN (${duplicatePlaceholders})`,
+          duplicateIds,
+          dbName,
+        );
+      }
+
+      await runQuery(
+        'UPDATE step_figures SET name = ? WHERE id = ?',
+        ['Hip Sway/Hip Bump', keeperId],
+        dbName,
+      );
+    },
+  },
 ];
 
 export async function runChoreographyMigrations(): Promise<void> {
