@@ -678,6 +678,22 @@ describe("ChoreographyCreatePage", () => {
       });
     });
 
+    it("validates BPM and length as numbers, like they are saved", async () => {
+      await openSongsTab();
+      fireEvent.change(screen.getByLabelText("Title 1"), { target: { value: "Song" } });
+      fireEvent.change(screen.getByLabelText("BPM 1 (optional)"), { target: { value: "124" } });
+      fireEvent.change(screen.getByLabelText("Length 1 (optional)"), { target: { value: "3:14" } });
+      fireEvent.click(screen.getByRole("tab", { name: "Basic Information" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save Choreography" }));
+
+      await waitFor(() => {
+        expect(validateChoreography).toHaveBeenCalledOnce();
+      });
+      expect(
+        vi.mocked(validateChoreography).mock.calls[0][0].choreography_songs?.[0],
+      ).toMatchObject({ bpm: 124, length_seconds: 194 });
+    });
+
     it("sends text that is not a length unchanged and shows the backend issue", async () => {
       vi.mocked(validateChoreography).mockRejectedValueOnce(
         validationFailure([

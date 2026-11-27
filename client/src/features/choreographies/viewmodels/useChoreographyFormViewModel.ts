@@ -222,7 +222,8 @@ export const useChoreographyFormViewModel = ({
     setIsValidating(true);
     setValidationError(null);
     try {
-      await validateChoreography(formData);
+      // Validate the same payload that is saved, so BPM and length are numbers, not form text.
+      await validateChoreography(toSubmittedFormData(formData));
       if (editVersion.current !== submittedVersion) {
         setValidationError(FORM_CHANGED_MESSAGE);
         return;
