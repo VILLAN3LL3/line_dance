@@ -72,7 +72,9 @@ it('creates and updates group figures across separate database files', async () 
     `/api/dance-groups/${group.body.id}/step-figure-suggestions`,
   );
   expect(suggestions.status).toBe(200);
-  expect(suggestions.body).toEqual([{ step_figure: 'Mambo', additional_choreographies: 1 }]);
+  expect(suggestions.body).toEqual([
+    { step_figure: 'Mambo', step_figures: ['Mambo'], additional_choreographies: 1 },
+  ]);
 });
 
 it('applies each migration once when migration runners overlap', async () => {

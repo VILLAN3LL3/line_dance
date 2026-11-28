@@ -21,7 +21,7 @@ import {
   updateGroupMaxLevel,
 } from "../../../features/dance-groups/api";
 import DanceGroupDetail from "../../../features/dance-groups/views/DanceGroupDetail";
-import { getLevels } from "../../../features/metadata/api";
+import { getGenres, getLevels } from "../../../features/metadata/api";
 import { getStepFiguresWithIds } from "../../../features/step-figures/api";
 import { renderWithQueryClient as render } from "../../helpers/renderWithQueryClient";
 
@@ -52,7 +52,10 @@ vi.mock("../../../features/dance-groups/api", () => ({
   updateGroupBaseStepFigures: vi.fn(),
   updateGroupMaxLevel: vi.fn(),
 }));
-vi.mock("../../../features/metadata/api", () => ({ getLevels: vi.fn() }));
+vi.mock("../../../features/metadata/api", () => ({
+  getGenres: vi.fn(),
+  getLevels: vi.fn(),
+}));
 vi.mock("../../../features/step-figures/api", () => ({ getStepFiguresWithIds: vi.fn() }));
 
 describe("DanceGroupDetail", () => {
@@ -90,6 +93,7 @@ describe("DanceGroupDetail", () => {
       { id: 1, name: "BEGINNER", value: 30 },
       { id: 2, name: "ADVANCED", value: 150 },
     ]);
+    vi.mocked(getGenres).mockResolvedValue([]);
     vi.mocked(getGroupMaxLevel).mockResolvedValue({ max_group_level_value: 30 });
     vi.mocked(updateGroupMaxLevel).mockResolvedValue({ max_group_level_value: 150 });
     vi.mocked(fetchChoreographies).mockResolvedValue({

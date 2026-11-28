@@ -44,9 +44,15 @@ export async function getLearnedChoreographies(
 export async function getStepFigureSuggestions(
   groupId: number,
   maxLevelValue?: number | null,
+  music?: { minBpm: number | null; maxBpm: number | null; genres: string[] },
 ): Promise<StepFigureSuggestion[]> {
   const response = await api.get(`/dance-groups/${groupId}/step-figure-suggestions`, {
-    params: maxLevelValue == null ? {} : { max_level_value: maxLevelValue },
+    params: {
+      ...(maxLevelValue == null ? {} : { max_level_value: maxLevelValue }),
+      ...(music?.minBpm == null ? {} : { min_bpm: music.minBpm }),
+      ...(music?.maxBpm == null ? {} : { max_bpm: music.maxBpm }),
+      ...(music?.genres.length ? { genres: music.genres } : {}),
+    },
   });
   return response.data;
 }

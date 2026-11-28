@@ -1169,6 +1169,24 @@ export const openApiSpec = {
             required: false,
             schema: { type: 'integer', minimum: 0 },
           },
+          {
+            name: 'min_bpm',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 0 },
+          },
+          {
+            name: 'max_bpm',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 0 },
+          },
+          {
+            name: 'genres',
+            in: 'query',
+            required: false,
+            schema: { type: 'array', items: { type: 'string' } },
+          },
         ],
         responses: {
           200: {
@@ -1815,6 +1833,24 @@ export const openApiSpec = {
             in: 'path',
             required: true,
             schema: { type: 'integer' },
+          },
+          {
+            name: 'min_bpm',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 0 },
+          },
+          {
+            name: 'max_bpm',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 0 },
+          },
+          {
+            name: 'genres',
+            in: 'query',
+            required: false,
+            schema: { type: 'array', items: { type: 'string' } },
           },
           {
             name: 'targetSessionId',
@@ -2527,9 +2563,10 @@ export const openApiSpec = {
         type: 'object',
         properties: {
           step_figure: { type: 'string' },
+          step_figures: { type: 'array', items: { type: 'string' } },
           additional_choreographies: { type: 'integer' },
         },
-        required: ['step_figure', 'additional_choreographies'],
+        required: ['step_figure', 'step_figures', 'additional_choreographies'],
       },
       AuthorStats: {
         type: 'object',

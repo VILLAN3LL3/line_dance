@@ -34,12 +34,12 @@ export const buildLearnedSearchFilters = (
 /** Search for choreographies that teach exactly one new figure on top of the learned ones. */
 export const buildSuggestionSearchFilters = (
   learnedStepFigures: string[],
-  suggestedFigure: string,
+  suggestedFigures: string[],
   maxGroupLevelValue: number | null,
 ): SearchFilters => ({
-  step_figures: [...learnedStepFigures, suggestedFigure],
+  step_figures: [...learnedStepFigures, ...suggestedFigures],
   step_figures_match_mode: "exact",
-  required_step_figures: [suggestedFigure],
+  required_step_figures: suggestedFigures,
   ...levelFilter(maxGroupLevelValue),
 });
 

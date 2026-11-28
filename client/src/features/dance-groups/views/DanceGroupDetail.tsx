@@ -54,7 +54,10 @@ const DanceGroupDetail: React.FC = () => {
           isLoading={state.isLoading}
           baseStepFigures={state.baseStepFigures}
           allStepFigures={state.allStepFigures}
+          suggestionMusic={state.suggestionMusic}
+          genreOptions={state.genreOptions}
           onBaseStepFiguresChange={actions.changeBaseStepFigures}
+          onSuggestionMusicChange={actions.changeSuggestionMusic}
         />
       </div>
     </div>

@@ -10,6 +10,7 @@ import {
   LoadingState,
   Section,
   StatusBadge,
+  SuggestionMusicFilter,
 } from "../../../shared/ui";
 import CourseDetailChoreographiesSection from "./CourseDetailChoreographiesSection";
 import { SessionContentsDragItem, SessionContentsDragList } from "./SessionContentsDrag";
@@ -55,7 +56,14 @@ type CourseDetailSessionsSectionProps = {
   sessionKnownFigures: Record<number, string[]>;
   sessionMaxLevelValue: number | null;
   suggestingForSessionId: number | null;
+  suggestionMusic: { minBpm: number | null; maxBpm: number | null; genres: string[] };
+  suggestionGenreOptions: string[];
   onToggleSuggestions: (sessionId: number) => void;
+  onSuggestionMusicChange: (music: {
+    minBpm: number | null;
+    maxBpm: number | null;
+    genres: string[];
+  }) => void;
   // Choreography management (rendered inside selected session card)
   selectedChoreographyId: string;
   selectedChoreographyQuery: string;
@@ -116,7 +124,10 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
   sessionKnownFigures,
   sessionMaxLevelValue,
   suggestingForSessionId,
+  suggestionMusic,
+  suggestionGenreOptions,
   onToggleSuggestions,
+  onSuggestionMusicChange,
   selectedChoreographyId,
   selectedChoreographyQuery,
   selectableChoreographies,
@@ -138,224 +149,245 @@ const CourseDetailSessionsSection: React.FC<CourseDetailSessionsSectionProps> = 
     sessionsContent = <EmptyState>No planned sessions</EmptyState>;
   } else {
     sessionsContent = (
-      <SessionContentsDragList sessions={visibleSessions} onReorder={onReorderContents}>
-        {visibleSessions.map((session) => {
-          const sessionBadgeStatus = getSessionBadgeStatus(session.session_date, berlinTodayIso);
+      <>
+        <SuggestionMusicFilter
+          {...suggestionMusic}
+          genreOptions={suggestionGenreOptions}
+          disabled={isLoading}
+          onMinBpmChange={(minBpm) => onSuggestionMusicChange({ ...suggestionMusic, minBpm })}
+          onMaxBpmChange={(maxBpm) => onSuggestionMusicChange({ ...suggestionMusic, maxBpm })}
+          onGenresChange={(genres) => onSuggestionMusicChange({ ...suggestionMusic, genres })}
+        />
+        <SessionContentsDragList sessions={visibleSessions} onReorder={onReorderContents}>
+          {visibleSessions.map((session) => {
+            const sessionBadgeStatus = getSessionBadgeStatus(session.session_date, berlinTodayIso);
 
-          const isEditing = editingSessionId === session.id;
+            const isEditing = editingSessionId === session.id;
 
-          return (
-            <SessionContentsDragItem
-              key={session.id}
-              session={session}
-              disabled={
-                isLoading ||
-                visibleSessions.length < 2 ||
-                editingSessionId !== null ||
-                swappingSessionId !== null ||
-                suggestingForSessionId !== null
-              }
-              className={`session-item ${selectedSessionId === session.id ? "active" : ""}`}
-            >
-              {isEditing ? (
-                <div className="session-edit-form">
-                  <input
-                    type="date"
-                    value={editSessionDate}
-                    onChange={(e) => onEditSessionDateChange(e.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
-                  <input
-                    type="text"
-                    value={editSessionComment}
-                    onChange={(e) => onEditSessionCommentChange(e.target.value)}
-                    placeholder="Comment (optional)"
-                    disabled={isLoading}
-                    className="session-comment-input"
-                  />
-                  <ActionGroup className="session-actions">
-                    <ActionButton
-                      variant="primary"
-                      onClick={() => onSaveEditSession(session.id)}
+            return (
+              <SessionContentsDragItem
+                key={session.id}
+                session={session}
+                disabled={
+                  isLoading ||
+                  visibleSessions.length < 2 ||
+                  editingSessionId !== null ||
+                  swappingSessionId !== null ||
+                  suggestingForSessionId !== null
+                }
+                className={`session-item ${selectedSessionId === session.id ? "active" : ""}`}
+              >
+                {isEditing ? (
+                  <div className="session-edit-form">
+                    <input
+                      type="date"
+                      value={editSessionDate}
+                      onChange={(e) => onEditSessionDateChange(e.target.value)}
                       disabled={isLoading}
-                    >
-                      Save
-                    </ActionButton>
-                    <ActionButton
-                      variant="secondary"
-                      onClick={onCancelEditSession}
+                      required
+                    />
+                    <input
+                      type="text"
+                      value={editSessionComment}
+                      onChange={(e) => onEditSessionCommentChange(e.target.value)}
+                      placeholder="Comment (optional)"
                       disabled={isLoading}
-                    >
-                      Cancel
-                    </ActionButton>
-                  </ActionGroup>
-                </div>
-              ) : (
-                <>
-                  <div className="session-info">
-                    <h4>
-                      {new Date(session.session_date).toLocaleDateString()}
-                      {sessionBadgeStatus && (
-                        <StatusBadge
-                          status={sessionBadgeStatus}
-                          className="session-status-badge"
-                          statusPrefix="session-status-"
-                        >
-                          {getSessionBadgeLabel(sessionBadgeStatus)}
-                        </StatusBadge>
-                      )}
-                    </h4>
-                    <p>
-                      {new Date(session.session_date).toLocaleDateString("de-DE", {
-                        weekday: "long",
-                      })}
-                    </p>
-                    {session.comment && <p className="session-comment">{session.comment}</p>}
-                  </div>
-                  <ActionGroup className="session-actions">
-                    <ActionButton
-                      onClick={() => onSelectSession(session)}
-                      variant="secondary"
-                      className={selectedSessionId === session.id ? "active" : undefined}
-                      disabled={isLoading}
-                    >
-                      {selectedSessionId === session.id ? "Close" : "Manage"}
-                    </ActionButton>
-                    <ActionButton
-                      onClick={() => onStartEditSession(session)}
-                      variant="secondary"
-                      disabled={isLoading}
-                    >
-                      Edit
-                    </ActionButton>
-                    <ActionButton
-                      onClick={() => onStartSwap(session.id)}
-                      variant="secondary"
-                      disabled={isLoading}
-                    >
-                      Swap
-                    </ActionButton>
-                    <ActionButton
-                      onClick={() => onToggleSuggestions(session.id)}
-                      variant="secondary"
-                      disabled={isLoading}
-                    >
-                      {getSuggestLabel(suggestingForSessionId, sessionSuggestions, session.id)}
-                    </ActionButton>
-                    <ActionButton
-                      onClick={() => onDeleteSession(session.id)}
-                      variant="delete"
-                      disabled={isLoading}
-                    >
-                      Delete
-                    </ActionButton>
-                  </ActionGroup>
-                  {swappingSessionId === session.id && (
-                    <div className="session-swap-row">
-                      <select
-                        value={swapTargetSessionId}
-                        onChange={(e) => onSwapTargetChange(e.target.value)}
-                        disabled={isLoading}
-                        className="session-swap-select"
-                      >
-                        <option value="">Select session to swap with…</option>
-                        {sessions
-                          .filter((s) => s.id !== session.id)
-                          .map((s) => (
-                            <option key={s.id} value={String(s.id)}>
-                              {new Date(s.session_date).toLocaleDateString("de-DE", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                                weekday: "short",
-                              })}
-                              {s.comment ? ` — ${s.comment}` : ""}
-                            </option>
-                          ))}
-                      </select>
+                      className="session-comment-input"
+                    />
+                    <ActionGroup className="session-actions">
                       <ActionButton
                         variant="primary"
-                        onClick={() => onConfirmSwap(session.id)}
-                        disabled={isLoading || !swapTargetSessionId}
+                        onClick={() => onSaveEditSession(session.id)}
+                        disabled={isLoading}
                       >
-                        Confirm Swap
+                        Save
                       </ActionButton>
-                      <ActionButton variant="secondary" onClick={onCancelSwap} disabled={isLoading}>
+                      <ActionButton
+                        variant="secondary"
+                        onClick={onCancelEditSession}
+                        disabled={isLoading}
+                      >
                         Cancel
                       </ActionButton>
+                    </ActionGroup>
+                  </div>
+                ) : (
+                  <>
+                    <div className="session-info">
+                      <h4>
+                        {new Date(session.session_date).toLocaleDateString()}
+                        {sessionBadgeStatus && (
+                          <StatusBadge
+                            status={sessionBadgeStatus}
+                            className="session-status-badge"
+                            statusPrefix="session-status-"
+                          >
+                            {getSessionBadgeLabel(sessionBadgeStatus)}
+                          </StatusBadge>
+                        )}
+                      </h4>
+                      <p>
+                        {new Date(session.session_date).toLocaleDateString("de-DE", {
+                          weekday: "long",
+                        })}
+                      </p>
+                      {session.comment && <p className="session-comment">{session.comment}</p>}
                     </div>
-                  )}
-                  {selectedSessionId === session.id && (
-                    <CourseDetailChoreographiesSection
-                      selectedSession={session}
-                      isLoading={isLoading}
-                      selectedChoreographyId={selectedChoreographyId}
-                      selectedChoreographyQuery={selectedChoreographyQuery}
-                      selectableChoreographies={selectableChoreographies}
-                      sessionChoreographies={sessionChoreographies}
-                      availableChoreographies={availableChoreographies}
-                      cardViewModel={cardViewModel}
-                      getChoreographyOptionLabel={getChoreographyOptionLabel}
-                      onChoreographyInputChange={onChoreographyInputChange}
-                      onAddChoreography={onAddChoreography}
-                      onRemoveChoreography={onRemoveChoreography}
-                      onEditChoreography={onEditChoreography}
-                      onChooseSong={onChooseSong}
-                      onDeleteChoreography={onDeleteChoreography}
-                    />
-                  )}
-                  {Object.hasOwn(sessionSuggestions, session.id) && (
-                    <div className="session-suggestions-row">
-                      {sessionSuggestions[session.id].length === 0 ? (
-                        <span className="session-suggestions-empty">
-                          No suggestions — all matching choreographies already covered
-                        </span>
-                      ) : (
-                        <>
-                          <span className="session-suggestions-label">Next step figure:</span>
-                          <div className="session-suggestions-list">
-                            {sessionSuggestions[session.id].map((s) => (
-                              <button
-                                key={s.step_figure}
-                                type="button"
-                                className="suggestion-figure-btn"
-                                onClick={() => {
-                                  const knownFigures = sessionKnownFigures[session.id] ?? [];
-                                  const initialFilters = {
-                                    step_figures: [...knownFigures, s.step_figure],
-                                    step_figures_match_mode: "exact" as const,
-                                    required_step_figures: [s.step_figure],
-                                    ...(sessionMaxLevelValue == null
-                                      ? {}
-                                      : { max_level_value: sessionMaxLevelValue }),
-                                  };
-                                  globalThis.open(
-                                    "/?filters=" +
-                                      encodeURIComponent(JSON.stringify(initialFilters)),
-                                    "_blank",
-                                    "noopener,noreferrer",
-                                  );
-                                }}
-                                title={`Show choreographies with ${s.step_figure}`}
-                              >
-                                {s.step_figure}
-                                <span className="suggestion-count">
-                                  +{s.additional_choreographies}
-                                </span>
-                              </button>
+                    <ActionGroup className="session-actions">
+                      <ActionButton
+                        onClick={() => onSelectSession(session)}
+                        variant="secondary"
+                        className={selectedSessionId === session.id ? "active" : undefined}
+                        disabled={isLoading}
+                      >
+                        {selectedSessionId === session.id ? "Close" : "Manage"}
+                      </ActionButton>
+                      <ActionButton
+                        onClick={() => onStartEditSession(session)}
+                        variant="secondary"
+                        disabled={isLoading}
+                      >
+                        Edit
+                      </ActionButton>
+                      <ActionButton
+                        onClick={() => onStartSwap(session.id)}
+                        variant="secondary"
+                        disabled={isLoading}
+                      >
+                        Swap
+                      </ActionButton>
+                      <ActionButton
+                        onClick={() => onToggleSuggestions(session.id)}
+                        variant="secondary"
+                        disabled={isLoading}
+                      >
+                        {getSuggestLabel(suggestingForSessionId, sessionSuggestions, session.id)}
+                      </ActionButton>
+                      <ActionButton
+                        onClick={() => onDeleteSession(session.id)}
+                        variant="delete"
+                        disabled={isLoading}
+                      >
+                        Delete
+                      </ActionButton>
+                    </ActionGroup>
+                    {swappingSessionId === session.id && (
+                      <div className="session-swap-row">
+                        <select
+                          value={swapTargetSessionId}
+                          onChange={(e) => onSwapTargetChange(e.target.value)}
+                          disabled={isLoading}
+                          className="session-swap-select"
+                        >
+                          <option value="">Select session to swap with…</option>
+                          {sessions
+                            .filter((s) => s.id !== session.id)
+                            .map((s) => (
+                              <option key={s.id} value={String(s.id)}>
+                                {new Date(s.session_date).toLocaleDateString("de-DE", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                  weekday: "short",
+                                })}
+                                {s.comment ? ` — ${s.comment}` : ""}
+                              </option>
                             ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </SessionContentsDragItem>
-          );
-        })}
-      </SessionContentsDragList>
+                        </select>
+                        <ActionButton
+                          variant="primary"
+                          onClick={() => onConfirmSwap(session.id)}
+                          disabled={isLoading || !swapTargetSessionId}
+                        >
+                          Confirm Swap
+                        </ActionButton>
+                        <ActionButton
+                          variant="secondary"
+                          onClick={onCancelSwap}
+                          disabled={isLoading}
+                        >
+                          Cancel
+                        </ActionButton>
+                      </div>
+                    )}
+                    {selectedSessionId === session.id && (
+                      <CourseDetailChoreographiesSection
+                        selectedSession={session}
+                        isLoading={isLoading}
+                        selectedChoreographyId={selectedChoreographyId}
+                        selectedChoreographyQuery={selectedChoreographyQuery}
+                        selectableChoreographies={selectableChoreographies}
+                        sessionChoreographies={sessionChoreographies}
+                        availableChoreographies={availableChoreographies}
+                        cardViewModel={cardViewModel}
+                        getChoreographyOptionLabel={getChoreographyOptionLabel}
+                        onChoreographyInputChange={onChoreographyInputChange}
+                        onAddChoreography={onAddChoreography}
+                        onRemoveChoreography={onRemoveChoreography}
+                        onEditChoreography={onEditChoreography}
+                        onChooseSong={onChooseSong}
+                        onDeleteChoreography={onDeleteChoreography}
+                      />
+                    )}
+                    {Object.hasOwn(sessionSuggestions, session.id) && (
+                      <div className="session-suggestions-row">
+                        {sessionSuggestions[session.id].length === 0 ? (
+                          <span className="session-suggestions-empty">
+                            No suggestions — all matching choreographies already covered
+                          </span>
+                        ) : (
+                          <>
+                            <span className="session-suggestions-label">Next step figure:</span>
+                            <div className="session-suggestions-list">
+                              {sessionSuggestions[session.id].map((s) => (
+                                <button
+                                  key={s.step_figure}
+                                  type="button"
+                                  className="suggestion-figure-btn"
+                                  onClick={() => {
+                                    const knownFigures = sessionKnownFigures[session.id] ?? [];
+                                    const initialFilters = {
+                                      step_figures: [
+                                        ...knownFigures,
+                                        ...(s.step_figures?.length
+                                          ? s.step_figures
+                                          : [s.step_figure]),
+                                      ],
+                                      step_figures_match_mode: "exact" as const,
+                                      required_step_figures: s.step_figures?.length
+                                        ? s.step_figures
+                                        : [s.step_figure],
+                                      ...(sessionMaxLevelValue == null
+                                        ? {}
+                                        : { max_level_value: sessionMaxLevelValue }),
+                                    };
+                                    globalThis.open(
+                                      "/?filters=" +
+                                        encodeURIComponent(JSON.stringify(initialFilters)),
+                                      "_blank",
+                                      "noopener,noreferrer",
+                                    );
+                                  }}
+                                  title={`Show choreographies with ${s.step_figure}`}
+                                >
+                                  {s.step_figure}
+                                  <span className="suggestion-count">
+                                    +{s.additional_choreographies}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </SessionContentsDragItem>
+            );
+          })}
+        </SessionContentsDragList>
+      </>
     );
   }
 

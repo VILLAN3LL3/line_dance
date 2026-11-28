@@ -16,7 +16,13 @@ import {
   buildSuggestionSearchFilters,
   getLearnedStepFigures,
 } from "../model/learned-step-figures";
-import { ActionButton, EmptyState, Section, TagGroup } from "../../../shared/ui";
+import {
+  ActionButton,
+  EmptyState,
+  Section,
+  SuggestionMusicFilter,
+  TagGroup,
+} from "../../../shared/ui";
 
 interface DanceGroupLearnedSectionProps {
   learnedChoreographies: LearnedChoreography[];
@@ -27,7 +33,14 @@ interface DanceGroupLearnedSectionProps {
   isLoading: boolean;
   baseStepFigures: StepFigureOption[];
   allStepFigures: StepFigureOption[];
+  suggestionMusic: { minBpm: number | null; maxBpm: number | null; genres: string[] };
+  genreOptions: string[];
   onBaseStepFiguresChange: (stepFigureIds: number[]) => Promise<void>;
+  onSuggestionMusicChange: (music: {
+    minBpm: number | null;
+    maxBpm: number | null;
+    genres: string[];
+  }) => void;
 }
 
 export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> = ({
@@ -39,7 +52,10 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
   isLoading,
   baseStepFigures,
   allStepFigures,
+  suggestionMusic,
+  genreOptions,
   onBaseStepFiguresChange,
+  onSuggestionMusicChange,
 }) => {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
@@ -54,15 +70,15 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
   );
 
   const handleSearchChoreographies = () => {
-    navigate("/", {
+    void navigate("/", {
       state: { initialFilters: buildLearnedSearchFilters(learnedStepFigures, maxGroupLevelValue) },
     });
   };
 
-  const handleSearchWithSuggestion = (suggestedFigure: string) => {
+  const handleSearchWithSuggestion = (suggestedFigures: string[]) => {
     openInNewTab(
       buildSearchPageUrl(
-        buildSuggestionSearchFilters(learnedStepFigures, suggestedFigure, maxGroupLevelValue),
+        buildSuggestionSearchFilters(learnedStepFigures, suggestedFigures, maxGroupLevelValue),
       ),
     );
   };
@@ -146,8 +162,16 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
 
       {stepFigureSuggestions.length > 0 && (
         <Section title="Next Step Figure to Learn">
+          <SuggestionMusicFilter
+            {...suggestionMusic}
+            genreOptions={genreOptions}
+            disabled={isLoading}
+            onMinBpmChange={(minBpm) => onSuggestionMusicChange({ ...suggestionMusic, minBpm })}
+            onMaxBpmChange={(maxBpm) => onSuggestionMusicChange({ ...suggestionMusic, maxBpm })}
+            onGenresChange={(genres) => onSuggestionMusicChange({ ...suggestionMusic, genres })}
+          />
           <p className="suggestion-description">
-            Adding one of these step figures to the learned set would unlock the most new
+            Adding one of these step figure sets to the learned set would unlock the most new
             choreographies:
           </p>
           <div className="suggestion-list">
@@ -155,7 +179,11 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
               <div key={s.step_figure} className="suggestion-item">
                 <button
                   className="suggestion-figure-btn"
-                  onClick={() => handleSearchWithSuggestion(s.step_figure)}
+                  onClick={() =>
+                    handleSearchWithSuggestion(
+                      s.step_figures?.length ? s.step_figures : [s.step_figure],
+                    )
+                  }
                   disabled={isLoading}
                   title={`Preview choreographies matching with ${s.step_figure} added`}
                 >

@@ -62,7 +62,7 @@ describe('step figure suggestion flows', () => {
         prepareGroupSuggestion({ groupId: String(group.value.id) }),
       ),
     ).toEqual({
-      value: [{ step_figure: 'Missing', additional_choreographies: 1 }],
+      value: [{ step_figure: 'Missing', step_figures: ['Missing'], additional_choreographies: 1 }],
     });
     expect(
       await suggestions.getSessionSuggestions(
@@ -70,7 +70,9 @@ describe('step figure suggestion flows', () => {
       ),
     ).toEqual({
       value: {
-        suggestions: [{ step_figure: 'Missing', additional_choreographies: 1 }],
+        suggestions: [
+          { step_figure: 'Missing', step_figures: ['Missing'], additional_choreographies: 1 },
+        ],
         known_step_figures: ['Child', 'Parent'],
         max_level_value: null,
       },
@@ -104,7 +106,7 @@ describe('step figure suggestion flows', () => {
       [advanced.id],
     );
     expect(await suggestions.getGroupSuggestions(request)).toEqual({
-      value: [{ step_figure: 'Missing', additional_choreographies: 1 }],
+      value: [{ step_figure: 'Missing', step_figures: ['Missing'], additional_choreographies: 1 }],
     });
 
     await runQuery('DELETE FROM personal_data.choreography_personal_levels');

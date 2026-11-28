@@ -10,7 +10,8 @@ A full-stack line dance management app. The frontend is React + TypeScript; the 
 
 - Search and manage choreographies, choreographers, and step figures.
 - Manage dance groups, courses, and sessions, including automatic repetitions.
-- Track learned dances and step figures, get suggestions, and export course PDFs.
+- Track learned dances and step figures, get 1-2-figure learning-path suggestions with BPM/genre
+  filters, and export course PDFs.
 
 See the [user guide](docs/user-guide.md) for the available features and their behavior.
 

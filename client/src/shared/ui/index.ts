@@ -15,6 +15,7 @@ export { LevelBatch } from "./LevelBatch";
 export { LoadingState } from "./LoadingState";
 export { Section } from "./Section";
 export { StatusBadge } from "./StatusBadge";
+export { SuggestionMusicFilter } from "./SuggestionMusicFilter";
 export { Tag } from "./Tag";
 export { TagGroup } from "./TagGroup";
 export { YouTubeVideo } from "./YouTubeVideo";

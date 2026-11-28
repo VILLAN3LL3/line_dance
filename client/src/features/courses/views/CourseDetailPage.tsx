@@ -75,6 +75,9 @@ const CourseDetailPage: React.FC = () => {
           sessionSuggestions={suggestions.suggestions}
           sessionKnownFigures={suggestions.knownFigures}
           sessionMaxLevelValue={suggestions.maxLevelValue}
+          suggestionMusic={suggestions.music}
+          suggestionGenreOptions={suggestions.genreOptions}
+          onSuggestionMusicChange={actions.suggestions.setMusic}
           suggestingForSessionId={suggestions.loadingSessionId}
           onToggleSuggestions={(sessionId) => void actions.toggleSuggestions(sessionId)}
           selectedChoreographyId={picker.selectedId}

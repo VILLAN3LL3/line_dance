@@ -6,14 +6,37 @@ const queryValue: z.ZodType<QueryValue> = z.lazy(() =>
   z.union([z.string(), z.record(z.string(), queryValue), z.array(queryValue)]),
 );
 const idSchema = z.number().refine((value) => Number.isInteger(value) && value > 0);
-const suggestionRequest = z.object({ groupId: z.string(), maxLevel: z.unknown().optional() });
-const sessionRequest = z.object({ sessionId: z.string() });
+const suggestionRequest = z.object({
+  groupId: z.string(),
+  maxLevel: z.unknown().optional(),
+  minBpm: z.unknown().optional(),
+  maxBpm: z.unknown().optional(),
+  genres: z.unknown().optional(),
+});
+const sessionRequest = z.object({
+  sessionId: z.string(),
+  minBpm: z.unknown().optional(),
+  maxBpm: z.unknown().optional(),
+  genres: z.unknown().optional(),
+});
 
-export type Suggestion = { step_figure: string; additional_choreographies: number };
+export type Suggestion = {
+  step_figure: string;
+  step_figures: string[];
+  additional_choreographies: number;
+};
+export type SuggestionMusicFilter = {
+  minBpm: number | null;
+  maxBpm: number | null;
+  genres: string[];
+};
 export type SuggestionIdError = 'invalid_group_id' | 'invalid_session_id';
 export type IdResult<E extends SuggestionIdError> = { error: E } | { value: number };
 export type GroupRequest =
-  { error: 'invalid_group_id' } | { value: { id: number; maxLevel: number | null } };
+  | { error: 'invalid_group_id' }
+  | { value: { id: number; maxLevel: number | null; music: SuggestionMusicFilter } };
+export type SessionRequest =
+  { error: 'invalid_session_id' } | { value: { id: number; music: SuggestionMusicFilter } };
 
 export function validatePositiveId<E extends SuggestionIdError>(
   value: string,
@@ -27,15 +50,44 @@ export function parseMaxLevel(value: unknown): number | null {
   return normalizeNonNegativeInteger(value);
 }
 
-export function prepareGroupSuggestion(input: unknown): GroupRequest {
-  const { groupId: rawId, maxLevel } = suggestionRequest.parse(input);
-  const id = validatePositiveId(rawId, 'invalid_group_id');
-  if ('error' in id) return id;
-  return { value: { id: id.value, maxLevel: parseMaxLevel(maxLevel) } };
+export function parseSuggestionMusicFilter(input: {
+  minBpm?: unknown;
+  maxBpm?: unknown;
+  genres?: unknown;
+}): SuggestionMusicFilter {
+  const genresValue = input.genres;
+  const genres = Array.isArray(genresValue)
+    ? genresValue.map((value) => String(value)).filter((value) => value.length > 0)
+    : typeof genresValue === 'string'
+      ? genresValue.split(',').filter((value) => value.length > 0)
+      : [];
+  return {
+    minBpm: normalizeNonNegativeInteger(input.minBpm),
+    maxBpm: normalizeNonNegativeInteger(input.maxBpm),
+    genres: [...new Set(genres.map((value) => value.trim()).filter(Boolean))],
+  };
 }
 
-export function prepareSessionSuggestion(input: unknown): IdResult<'invalid_session_id'> {
-  return validatePositiveId(sessionRequest.parse(input).sessionId, 'invalid_session_id');
+export function prepareGroupSuggestion(input: unknown): GroupRequest {
+  const { groupId: rawId, maxLevel, minBpm, maxBpm, genres } = suggestionRequest.parse(input);
+  const id = validatePositiveId(rawId, 'invalid_group_id');
+  if ('error' in id) return id;
+  return {
+    value: {
+      id: id.value,
+      maxLevel: parseMaxLevel(maxLevel),
+      music: parseSuggestionMusicFilter({ minBpm, maxBpm, genres }),
+    },
+  };
+}
+
+export function prepareSessionSuggestion(input: unknown): SessionRequest {
+  const { sessionId, minBpm, maxBpm, genres } = sessionRequest.parse(input);
+  const id = validatePositiveId(sessionId, 'invalid_session_id');
+  if ('error' in id) return id;
+  return {
+    value: { id: id.value, music: parseSuggestionMusicFilter({ minBpm, maxBpm, genres }) },
+  };
 }
 
 export function prepareLearnedGroupId(input: unknown): { value: QueryValue | undefined } {
@@ -58,4 +110,45 @@ export function knownFigureNames(rows: { name: string }[]): {
     names: [...new Set(rows.map((row) => row.name))],
     namesLower: [...new Set(rows.map((row) => row.name.toLowerCase()))],
   };
+}
+
+export function aggregateSuggestions(
+  rows: { choreography_id: number; missing_figure: string }[],
+): Suggestion[] {
+  const missingByChoreography = new Map<number, string[]>();
+  for (const row of rows) {
+    const figures = missingByChoreography.get(row.choreography_id) ?? [];
+    if (!figures.some((figure) => figure.toLowerCase() === row.missing_figure.toLowerCase())) {
+      figures.push(row.missing_figure);
+      missingByChoreography.set(row.choreography_id, figures);
+    }
+  }
+
+  const counts = new Map<string, { figures: string[]; count: number }>();
+  for (const figures of missingByChoreography.values()) {
+    const sorted = [...figures].sort((a, b) => a.localeCompare(b));
+    if (sorted.length === 1) {
+      const key = sorted[0].toLowerCase();
+      const existing = counts.get(key);
+      counts.set(key, { figures: sorted, count: (existing?.count ?? 0) + 1 });
+    } else if (sorted.length === 2) {
+      const key = sorted.map((figure) => figure.toLowerCase()).join('|');
+      const existing = counts.get(key);
+      counts.set(key, { figures: sorted, count: (existing?.count ?? 0) + 1 });
+    }
+  }
+
+  return [...counts.values()]
+    .sort(
+      (a, b) =>
+        b.count - a.count ||
+        a.figures.length - b.figures.length ||
+        a.figures.join(' + ').localeCompare(b.figures.join(' + ')),
+    )
+    .slice(0, 5)
+    .map(({ figures, count }) => ({
+      step_figure: figures.join(' + '),
+      step_figures: figures,
+      additional_choreographies: count,
+    }));
 }

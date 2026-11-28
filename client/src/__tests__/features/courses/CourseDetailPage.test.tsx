@@ -460,7 +460,9 @@ describe("CourseDetail", () => {
 
   it("loads and displays step figure suggestions when Suggest button is clicked", async () => {
     vi.mocked(getSessionStepFigureSuggestions).mockResolvedValue({
-      suggestions: [{ step_figure: "Grapevine", additional_choreographies: 3 }],
+      suggestions: [
+        { step_figure: "Grapevine", step_figures: ["Grapevine"], additional_choreographies: 3 },
+      ],
       known_step_figures: ["Vine"],
       max_level_value: 30,
     });
@@ -482,7 +484,7 @@ describe("CourseDetail", () => {
 
   it("hides suggestions when Hide Suggestions is clicked", async () => {
     vi.mocked(getSessionStepFigureSuggestions).mockResolvedValue({
-      suggestions: [{ step_figure: "Kick", additional_choreographies: 1 }],
+      suggestions: [{ step_figure: "Kick", step_figures: ["Kick"], additional_choreographies: 1 }],
       known_step_figures: [],
       max_level_value: null,
     });

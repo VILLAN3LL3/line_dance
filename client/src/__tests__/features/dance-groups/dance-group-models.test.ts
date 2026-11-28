@@ -76,10 +76,10 @@ describe("learned-step-figures model", () => {
       step_figures: ["A"],
       step_figures_match_mode: "exact",
     });
-    expect(buildSuggestionSearchFilters(["A"], "B", 30)).toEqual({
-      step_figures: ["A", "B"],
+    expect(buildSuggestionSearchFilters(["A"], ["B", "C"], 30)).toEqual({
+      step_figures: ["A", "B", "C"],
       step_figures_match_mode: "exact",
-      required_step_figures: ["B"],
+      required_step_figures: ["B", "C"],
       max_level_value: 30,
     });
     expect(buildSearchPageUrl({ search: "a b" })).toBe(

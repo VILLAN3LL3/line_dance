@@ -247,6 +247,7 @@ export interface DuplicateChoreography {
 
 export interface StepFigureSuggestion {
   step_figure: string;
+  step_figures: string[];
   additional_choreographies: number;
 }
 
