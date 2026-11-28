@@ -40,15 +40,10 @@ export function useStepFigureSuggestionsQuery(
   groupId: number,
   maxLevelValue: number | null,
   enabled: boolean,
-  music: { minBpm: number | null; maxBpm: number | null; genres: string[] } = {
-    minBpm: null,
-    maxBpm: null,
-    genres: [],
-  },
 ) {
   return useQuery({
-    queryKey: danceGroupKeys.suggestions(groupId, music),
-    queryFn: () => getStepFigureSuggestions(groupId, maxLevelValue, music),
+    queryKey: danceGroupKeys.suggestions(groupId),
+    queryFn: () => getStepFigureSuggestions(groupId, maxLevelValue),
     enabled,
   });
 }

@@ -3,7 +3,6 @@ import { useState } from "react";
 import type { StepFigureSuggestion } from "../../../types";
 import { getSessionStepFigureSuggestions } from "../api";
 import { hasKey, omitKey } from "../model/course-detail";
-import { useGenresQuery } from "../../metadata";
 
 /** Step figure suggestions per session; toggling an open session hides its suggestions again. */
 export const useSessionSuggestions = (onError: (message: string) => void) => {
@@ -11,12 +10,6 @@ export const useSessionSuggestions = (onError: (message: string) => void) => {
   const [knownFigures, setKnownFigures] = useState<Record<number, string[]>>({});
   const [maxLevelValue, setMaxLevelValue] = useState<number | null>(null);
   const [loadingSessionId, setLoadingSessionId] = useState<number | null>(null);
-  const genresQuery = useGenresQuery();
-  const [music, setMusic] = useState<{
-    minBpm: number | null;
-    maxBpm: number | null;
-    genres: string[];
-  }>({ minBpm: null, maxBpm: null, genres: [] });
 
   const toggle = async (sessionId: number) => {
     if (hasKey(suggestions, sessionId)) {
@@ -27,7 +20,7 @@ export const useSessionSuggestions = (onError: (message: string) => void) => {
 
     setLoadingSessionId(sessionId);
     try {
-      const result = await getSessionStepFigureSuggestions(sessionId, music);
+      const result = await getSessionStepFigureSuggestions(sessionId);
       setSuggestions((previous) => ({ ...previous, [sessionId]: result.suggestions }));
       setKnownFigures((previous) => ({ ...previous, [sessionId]: result.known_step_figures }));
       setMaxLevelValue(result.max_level_value);
@@ -44,14 +37,7 @@ export const useSessionSuggestions = (onError: (message: string) => void) => {
   };
 
   return {
-    state: {
-      suggestions,
-      knownFigures,
-      maxLevelValue,
-      loadingSessionId,
-      music,
-      genreOptions: genresQuery.data ?? [],
-    },
-    actions: { toggle, clear, setMusic },
+    state: { suggestions, knownFigures, maxLevelValue, loadingSessionId },
+    actions: { toggle, clear },
   };
 };

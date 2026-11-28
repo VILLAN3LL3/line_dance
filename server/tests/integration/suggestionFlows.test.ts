@@ -22,6 +22,63 @@ beforeEach(async () => {
 });
 
 describe('step figure suggestion flows', () => {
+  it('suggests dances with two unknown figures without requiring music metadata', async () => {
+    const first = await runQuery("INSERT INTO step_figures (name) VALUES ('Kick')");
+    const second = await runQuery("INSERT INTO step_figures (name) VALUES ('Vine')");
+    const third = await runQuery("INSERT INTO step_figures (name) VALUES ('Turn')");
+    const dance = await runQuery(
+      "INSERT INTO choreographies (name, level_id) SELECT 'Two figures', id FROM levels LIMIT 1",
+    );
+    const tooMany = await runQuery(
+      "INSERT INTO choreographies (name, level_id) SELECT 'Three figures', id FROM levels LIMIT 1",
+    );
+    await runQuery(
+      `INSERT INTO choreography_step_figures (choreography_id, step_figure_id)
+       VALUES (?, ?), (?, ?), (?, ?), (?, ?), (?, ?)`,
+      [
+        dance.id,
+        first.id,
+        dance.id,
+        second.id,
+        tooMany.id,
+        first.id,
+        tooMany.id,
+        second.id,
+        tooMany.id,
+        third.id,
+      ],
+    );
+    const group = await groups.createGroup(validateGroupName({ name: 'Group' }));
+    if ('error' in group || !group.value) throw new Error('Group creation failed');
+    await groups.updateBaseFigures(
+      prepareBaseFiguresUpdate({ groupId: String(group.value.id), body: { step_figure_ids: [] } }),
+    );
+    const course = await courses.createCourse(
+      prepareNewCourse({ dance_group_id: group.value.id, name: 'Course' }),
+    );
+    if ('error' in course || !course.value) throw new Error('Course creation failed');
+    const session = await sessions.createSession(
+      validateNewSession({ dance_course_id: course.value.id, session_date: '2099-01-01' }),
+    );
+    if ('error' in session || !session.value) throw new Error('Session creation failed');
+
+    const expected = [
+      { step_figure: 'Kick + Vine', step_figures: ['Kick', 'Vine'], additional_choreographies: 1 },
+    ];
+    expect(
+      await suggestions.getGroupSuggestions(
+        prepareGroupSuggestion({ groupId: String(group.value.id) }),
+      ),
+    ).toEqual({ value: expected });
+    expect(
+      await suggestions.getSessionSuggestions(
+        prepareSessionSuggestion({ sessionId: String(session.value.id) }),
+      ),
+    ).toEqual({
+      value: { suggestions: expected, known_step_figures: [], max_level_value: null },
+    });
+  });
+
   it('expands base figure hierarchy and returns matching group and session suggestions', async () => {
     const parent = await runQuery("INSERT INTO step_figures (name) VALUES ('Parent')");
     const child = await runQuery("INSERT INTO step_figures (name) VALUES ('Child')");

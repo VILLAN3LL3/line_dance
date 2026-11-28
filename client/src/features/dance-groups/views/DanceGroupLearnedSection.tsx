@@ -16,13 +16,7 @@ import {
   buildSuggestionSearchFilters,
   getLearnedStepFigures,
 } from "../model/learned-step-figures";
-import {
-  ActionButton,
-  EmptyState,
-  Section,
-  SuggestionMusicFilter,
-  TagGroup,
-} from "../../../shared/ui";
+import { ActionButton, EmptyState, Section, TagGroup } from "../../../shared/ui";
 
 interface DanceGroupLearnedSectionProps {
   learnedChoreographies: LearnedChoreography[];
@@ -33,14 +27,7 @@ interface DanceGroupLearnedSectionProps {
   isLoading: boolean;
   baseStepFigures: StepFigureOption[];
   allStepFigures: StepFigureOption[];
-  suggestionMusic: { minBpm: number | null; maxBpm: number | null; genres: string[] };
-  genreOptions: string[];
   onBaseStepFiguresChange: (stepFigureIds: number[]) => Promise<void>;
-  onSuggestionMusicChange: (music: {
-    minBpm: number | null;
-    maxBpm: number | null;
-    genres: string[];
-  }) => void;
 }
 
 export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> = ({
@@ -52,10 +39,7 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
   isLoading,
   baseStepFigures,
   allStepFigures,
-  suggestionMusic,
-  genreOptions,
   onBaseStepFiguresChange,
-  onSuggestionMusicChange,
 }) => {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
@@ -160,44 +144,40 @@ export const DanceGroupLearnedSection: React.FC<DanceGroupLearnedSectionProps> =
         )}
       </Section>
 
-      {stepFigureSuggestions.length > 0 && (
-        <Section title="Next Step Figure to Learn">
-          <SuggestionMusicFilter
-            {...suggestionMusic}
-            genreOptions={genreOptions}
-            disabled={isLoading}
-            onMinBpmChange={(minBpm) => onSuggestionMusicChange({ ...suggestionMusic, minBpm })}
-            onMaxBpmChange={(maxBpm) => onSuggestionMusicChange({ ...suggestionMusic, maxBpm })}
-            onGenresChange={(genres) => onSuggestionMusicChange({ ...suggestionMusic, genres })}
-          />
-          <p className="suggestion-description">
-            Adding one of these step figure sets to the learned set would unlock the most new
-            choreographies:
-          </p>
-          <div className="suggestion-list">
-            {stepFigureSuggestions.map((s) => (
-              <div key={s.step_figure} className="suggestion-item">
-                <button
-                  className="suggestion-figure-btn"
-                  onClick={() =>
-                    handleSearchWithSuggestion(
-                      s.step_figures?.length ? s.step_figures : [s.step_figure],
-                    )
-                  }
-                  disabled={isLoading}
-                  title={`Preview choreographies matching with ${s.step_figure} added`}
-                >
-                  {s.step_figure}
-                </button>
-                <span className="suggestion-count">
-                  +{s.additional_choreographies} choreograph
-                  {s.additional_choreographies === 1 ? "y" : "ies"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
+      <Section title="Next Step Figure to Learn">
+        {stepFigureSuggestions.length > 0 ? (
+          <>
+            <p className="suggestion-description">
+              Adding one of these step figure sets to the learned set would unlock the most new
+              choreographies:
+            </p>
+            <div className="suggestion-list">
+              {stepFigureSuggestions.map((s) => (
+                <div key={s.step_figure} className="suggestion-item">
+                  <button
+                    className="suggestion-figure-btn"
+                    onClick={() =>
+                      handleSearchWithSuggestion(
+                        s.step_figures?.length ? s.step_figures : [s.step_figure],
+                      )
+                    }
+                    disabled={isLoading}
+                    title={`Preview choreographies matching with ${s.step_figure} added`}
+                  >
+                    {s.step_figure}
+                  </button>
+                  <span className="suggestion-count">
+                    +{s.additional_choreographies} choreograph
+                    {s.additional_choreographies === 1 ? "y" : "ies"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <EmptyState>No suggestions available</EmptyState>
+        )}
+      </Section>
 
       <Section title={`Learned Choreographies for ${groupName}`}>
         {learnedChoreographies.length === 0 ? (

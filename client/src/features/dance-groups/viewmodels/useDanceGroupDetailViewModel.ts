@@ -11,7 +11,7 @@ import {
   useExportCoursePdfMutation,
   useExportParticipantPdfMutation,
 } from "../../courses";
-import { useGenresQuery, useLevelsQuery } from "../../metadata";
+import { useLevelsQuery } from "../../metadata";
 import { useStepFiguresWithIdsQuery } from "../../step-figures";
 import { updateGroupBaseStepFigures, updateGroupMaxLevel } from "../api";
 import { groupSessionsByCourseId } from "../model/learned-step-figures";
@@ -43,19 +43,12 @@ export const useDanceGroupDetailViewModel = () => {
   const choreographiesQuery = useAllChoreographiesQuery(enabled);
   const maxLevelQuery = useMaxLevelQuery(parsedGroupId, enabled);
   const levelsQuery = useLevelsQuery();
-  const genresQuery = useGenresQuery();
   const baseFiguresQuery = useBaseStepFiguresQuery(parsedGroupId, enabled);
   const allFiguresQuery = useStepFiguresWithIdsQuery();
-  const [suggestionMusic, setSuggestionMusic] = useState<{
-    minBpm: number | null;
-    maxBpm: number | null;
-    genres: string[];
-  }>({ minBpm: null, maxBpm: null, genres: [] });
   const suggestionsQuery = useStepFigureSuggestionsQuery(
     parsedGroupId,
     maxLevelQuery.data?.max_group_level_value ?? null,
     enabled && maxLevelQuery.isSuccess,
-    suggestionMusic,
   );
 
   const deleteCourse = useDeleteCourseMutation();
@@ -85,7 +78,6 @@ export const useDanceGroupDetailViewModel = () => {
     levelsQuery,
     baseFiguresQuery,
     allFiguresQuery,
-    genresQuery,
     suggestionsQuery,
   ];
   const loadFailure = queries.find((query) => query.isError)?.error;
@@ -123,8 +115,6 @@ export const useDanceGroupDetailViewModel = () => {
       stepFigureSuggestions: suggestionsQuery.data ?? [],
       maxGroupLevelValue: maxLevelQuery.data?.max_group_level_value ?? null,
       levelOptions: levelsQuery.data ?? [],
-      genreOptions: genresQuery.data ?? [],
-      suggestionMusic,
       baseStepFigures: baseFiguresQuery.data ?? [],
       allStepFigures: allFiguresQuery.data ?? [],
     },
@@ -143,11 +133,6 @@ export const useDanceGroupDetailViewModel = () => {
           () => baseFiguresMutation.mutateAsync(stepFigureIds),
           "Failed to update base step figures",
         ),
-      changeSuggestionMusic: (music: {
-        minBpm: number | null;
-        maxBpm: number | null;
-        genres: string[];
-      }) => setSuggestionMusic(music),
     },
   };
 };

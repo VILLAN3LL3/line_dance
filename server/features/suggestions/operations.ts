@@ -6,37 +6,19 @@ const queryValue: z.ZodType<QueryValue> = z.lazy(() =>
   z.union([z.string(), z.record(z.string(), queryValue), z.array(queryValue)]),
 );
 const idSchema = z.number().refine((value) => Number.isInteger(value) && value > 0);
-const suggestionRequest = z.object({
-  groupId: z.string(),
-  maxLevel: z.unknown().optional(),
-  minBpm: z.unknown().optional(),
-  maxBpm: z.unknown().optional(),
-  genres: z.unknown().optional(),
-});
-const sessionRequest = z.object({
-  sessionId: z.string(),
-  minBpm: z.unknown().optional(),
-  maxBpm: z.unknown().optional(),
-  genres: z.unknown().optional(),
-});
+const suggestionRequest = z.object({ groupId: z.string(), maxLevel: z.unknown().optional() });
+const sessionRequest = z.object({ sessionId: z.string() });
 
 export type Suggestion = {
   step_figure: string;
   step_figures: string[];
   additional_choreographies: number;
 };
-export type SuggestionMusicFilter = {
-  minBpm: number | null;
-  maxBpm: number | null;
-  genres: string[];
-};
 export type SuggestionIdError = 'invalid_group_id' | 'invalid_session_id';
 export type IdResult<E extends SuggestionIdError> = { error: E } | { value: number };
 export type GroupRequest =
-  | { error: 'invalid_group_id' }
-  | { value: { id: number; maxLevel: number | null; music: SuggestionMusicFilter } };
-export type SessionRequest =
-  { error: 'invalid_session_id' } | { value: { id: number; music: SuggestionMusicFilter } };
+  { error: 'invalid_group_id' } | { value: { id: number; maxLevel: number | null } };
+export type SessionRequest = IdResult<'invalid_session_id'>;
 
 export function validatePositiveId<E extends SuggestionIdError>(
   value: string,
@@ -50,44 +32,15 @@ export function parseMaxLevel(value: unknown): number | null {
   return normalizeNonNegativeInteger(value);
 }
 
-export function parseSuggestionMusicFilter(input: {
-  minBpm?: unknown;
-  maxBpm?: unknown;
-  genres?: unknown;
-}): SuggestionMusicFilter {
-  const genresValue = input.genres;
-  const genres = Array.isArray(genresValue)
-    ? genresValue.map((value) => String(value)).filter((value) => value.length > 0)
-    : typeof genresValue === 'string'
-      ? genresValue.split(',').filter((value) => value.length > 0)
-      : [];
-  return {
-    minBpm: normalizeNonNegativeInteger(input.minBpm),
-    maxBpm: normalizeNonNegativeInteger(input.maxBpm),
-    genres: [...new Set(genres.map((value) => value.trim()).filter(Boolean))],
-  };
-}
-
 export function prepareGroupSuggestion(input: unknown): GroupRequest {
-  const { groupId: rawId, maxLevel, minBpm, maxBpm, genres } = suggestionRequest.parse(input);
+  const { groupId: rawId, maxLevel } = suggestionRequest.parse(input);
   const id = validatePositiveId(rawId, 'invalid_group_id');
   if ('error' in id) return id;
-  return {
-    value: {
-      id: id.value,
-      maxLevel: parseMaxLevel(maxLevel),
-      music: parseSuggestionMusicFilter({ minBpm, maxBpm, genres }),
-    },
-  };
+  return { value: { id: id.value, maxLevel: parseMaxLevel(maxLevel) } };
 }
 
 export function prepareSessionSuggestion(input: unknown): SessionRequest {
-  const { sessionId, minBpm, maxBpm, genres } = sessionRequest.parse(input);
-  const id = validatePositiveId(sessionId, 'invalid_session_id');
-  if ('error' in id) return id;
-  return {
-    value: { id: id.value, music: parseSuggestionMusicFilter({ minBpm, maxBpm, genres }) },
-  };
+  return validatePositiveId(sessionRequest.parse(input).sessionId, 'invalid_session_id');
 }
 
 export function prepareLearnedGroupId(input: unknown): { value: QueryValue | undefined } {

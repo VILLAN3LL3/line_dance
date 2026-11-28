@@ -56,24 +56,10 @@ export const prepareLearned = prepareInput(
   prepareLearnedGroupId,
 );
 export const prepareGroup = prepareInput(
-  (req) => ({
-    ...req.params,
-    maxLevel: req.query.max_level_value,
-    minBpm: req.query.min_bpm,
-    maxBpm: req.query.max_bpm,
-    genres: req.query.genres,
-  }),
+  (req) => ({ ...req.params, maxLevel: req.query.max_level_value }),
   prepareGroupSuggestion,
 );
-export const prepareSession = prepareInput(
-  (req) => ({
-    ...req.params,
-    minBpm: req.query.min_bpm,
-    maxBpm: req.query.max_bpm,
-    genres: req.query.genres,
-  }),
-  prepareSessionSuggestion,
-);
+export const prepareSession = prepareInput((req) => req.params, prepareSessionSuggestion);
 
 export async function getLearnedChoreographies(
   _req: Request,

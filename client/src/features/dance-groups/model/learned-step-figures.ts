@@ -31,17 +31,20 @@ export const buildLearnedSearchFilters = (
   ...levelFilter(maxGroupLevelValue),
 });
 
-/** Search for choreographies that teach exactly one new figure on top of the learned ones. */
+/** Search for choreographies that teach the suggested figures on top of the learned ones. */
 export const buildSuggestionSearchFilters = (
   learnedStepFigures: string[],
   suggestedFigures: string[],
   maxGroupLevelValue: number | null,
-): SearchFilters => ({
-  step_figures: [...learnedStepFigures, ...suggestedFigures],
-  step_figures_match_mode: "exact",
-  required_step_figures: suggestedFigures,
-  ...levelFilter(maxGroupLevelValue),
-});
+): SearchFilters => {
+  const filters: SearchFilters = {
+    step_figures: [...learnedStepFigures, ...suggestedFigures],
+    step_figures_match_mode: "exact",
+    required_step_figures: suggestedFigures,
+    ...levelFilter(maxGroupLevelValue),
+  };
+  return filters;
+};
 
 export const buildSearchPageUrl = (filters: SearchFilters): string =>
   "/?filters=" + encodeURIComponent(JSON.stringify(filters));

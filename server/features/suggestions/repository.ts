@@ -1,5 +1,5 @@
 import { getQuery, allQuery } from '../../scripts/db.ts';
-import type { SuggestionMusicFilter, prepareLearnedGroupId } from './operations.ts';
+import type { prepareLearnedGroupId } from './operations.ts';
 import { effectiveLevelValue, personalLevelJoins } from '../choreographies/level-sql.ts';
 
 type LearnedChoreography = {
@@ -120,7 +120,6 @@ export async function findExpandedFigures(ids: number[]): Promise<{ name: string
 export async function findSuggestions(
   namesLower: string[],
   maxLevelValue: number | null,
-  music: SuggestionMusicFilter,
 ): Promise<{ choreography_id: number; missing_figure: string }[]> {
   const knownFiguresCte =
     namesLower.length === 0
@@ -130,31 +129,7 @@ export async function findSuggestions(
     maxLevelValue === null
       ? ''
       : `AND (${effectiveLevelValue} IS NOT NULL AND ${effectiveLevelValue} <= ?)`;
-  const musicParts: string[] = [];
-  const musicParams: (string | number)[] = [];
-  if (music.minBpm !== null) {
-    musicParts.push('music.bpm >= ?');
-    musicParams.push(music.minBpm);
-  }
-  if (music.maxBpm !== null) {
-    musicParts.push('music.bpm <= ?');
-    musicParams.push(music.maxBpm);
-  }
-  if (music.genres.length > 0) {
-    musicParts.push(
-      `music.genre_id IN (SELECT id FROM genres WHERE LOWER(name) IN (${music.genres.map(() => 'LOWER(?)').join(',')}))`,
-    );
-    musicParams.push(...music.genres);
-  }
-  const musicCondition =
-    musicParts.length === 0
-      ? ''
-      : `AND EXISTS (
-           SELECT 1 FROM choreography_songs music
-           WHERE music.choreography_id = c.id AND ${musicParts.join(' AND ')}
-         )`;
   const levelParams = maxLevelValue === null ? [] : [maxLevelValue];
-  const innerParams = [...levelParams, ...musicParams];
   return allQuery<{ choreography_id: number; missing_figure: string }>(
     `WITH known_figures AS (
        ${knownFiguresCte}
@@ -166,7 +141,7 @@ export async function findSuggestions(
        INNER JOIN step_figures sf ON csf.step_figure_id = sf.id
        LEFT JOIN levels l ON c.level_id = l.id
        ${personalLevelJoins}
-       WHERE 1=1 ${levelCondition} ${musicCondition}
+       WHERE 1=1 ${levelCondition}
        GROUP BY c.id
        HAVING COUNT(DISTINCT CASE WHEN LOWER(sf.name) NOT IN (SELECT name_lower FROM known_figures)
                   THEN LOWER(sf.name) END) BETWEEN 1 AND 2
@@ -178,9 +153,9 @@ export async function findSuggestions(
      LEFT JOIN levels l ON c.level_id = l.id
      ${personalLevelJoins}
      INNER JOIN eligible_choreographies ec ON ec.id = c.id
-     WHERE 1=1 ${levelCondition} ${musicCondition}
+     WHERE 1=1 ${levelCondition}
        AND LOWER(sf.name) NOT IN (SELECT name_lower FROM known_figures)
      ORDER BY c.id, LOWER(sf.name)`,
-    [...namesLower, ...innerParams, ...levelParams, ...musicParams],
+    [...namesLower, ...levelParams, ...levelParams],
   );
 }

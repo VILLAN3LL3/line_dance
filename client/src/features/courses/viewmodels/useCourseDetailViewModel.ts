@@ -257,7 +257,6 @@ export const useCourseDetailViewModel = () => {
       reorderContents,
       selectSession,
       toggleSuggestions: suggestions.actions.toggle,
-      suggestions: suggestions.actions,
       changeChoreographyQuery: picker.actions.changeQuery,
       addChoreography,
       removeChoreography,

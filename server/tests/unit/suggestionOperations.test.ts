@@ -33,11 +33,7 @@ describe('suggestion operations', () => {
 
   it('prepares query input without changing coercion or ID error precedence', () => {
     expect(prepareGroupSuggestion({ groupId: '4x', maxLevel: ['2'] })).toEqual({
-      value: {
-        id: 4,
-        maxLevel: 2,
-        music: { minBpm: null, maxBpm: null, genres: [] },
-      },
+      value: { id: 4, maxLevel: 2 },
     });
     const invalidLevel = { toString: null };
     expect(prepareGroupSuggestion({ groupId: '0', maxLevel: invalidLevel })).toEqual({
@@ -46,9 +42,7 @@ describe('suggestion operations', () => {
     expect(() => prepareGroupSuggestion({ groupId: '4', maxLevel: invalidLevel })).toThrow(
       TypeError,
     );
-    expect(prepareSessionSuggestion({ sessionId: '3suffix' })).toEqual({
-      value: { id: 3, music: { minBpm: null, maxBpm: null, genres: [] } },
-    });
+    expect(prepareSessionSuggestion({ sessionId: '3suffix' })).toEqual({ value: 3 });
     expect(prepareLearnedGroupId(['1', '2'])).toEqual({ value: ['1', '2'] });
     expect(prepareLearnedGroupId({ nested: '1' })).toEqual({ value: { nested: '1' } });
   });

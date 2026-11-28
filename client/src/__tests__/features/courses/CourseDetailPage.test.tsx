@@ -459,9 +459,14 @@ describe("CourseDetail", () => {
   });
 
   it("loads and displays step figure suggestions when Suggest button is clicked", async () => {
+    const open = vi.spyOn(globalThis, "open").mockImplementation(() => null);
     vi.mocked(getSessionStepFigureSuggestions).mockResolvedValue({
       suggestions: [
-        { step_figure: "Grapevine", step_figures: ["Grapevine"], additional_choreographies: 3 },
+        {
+          step_figure: "Kick + Turn",
+          step_figures: ["Kick", "Turn"],
+          additional_choreographies: 3,
+        },
       ],
       known_step_figures: ["Vine"],
       max_level_value: 30,
@@ -476,10 +481,23 @@ describe("CourseDetail", () => {
     expect(await screen.findByRole("button", { name: /hide suggestions/i })).toBeInTheDocument();
 
     // The suggestion pill is rendered
-    expect(await screen.findByText(/Grapevine/)).toBeInTheDocument();
+    const suggestion = await screen.findByRole("button", { name: /Kick \+ Turn/ });
     expect(screen.getByText(/\+3/)).toBeInTheDocument();
-
-    expect(getSessionStepFigureSuggestions).toHaveBeenCalledOnce();
+    expect(screen.queryByLabelText("Min BPM")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Max BPM")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Genres")).not.toBeInTheDocument();
+    expect(getSessionStepFigureSuggestions).toHaveBeenCalledWith(12);
+    fireEvent.click(suggestion);
+    const url = open.mock.calls[0][0];
+    expect(typeof url).toBe("string");
+    const filters = new URL(String(url), "http://localhost").searchParams.get("filters");
+    expect(JSON.parse(filters ?? "{}")).toEqual({
+      step_figures: ["Vine", "Kick", "Turn"],
+      step_figures_match_mode: "exact",
+      required_step_figures: ["Kick", "Turn"],
+      max_level_value: 30,
+    });
+    open.mockRestore();
   });
 
   it("hides suggestions when Hide Suggestions is clicked", async () => {

@@ -169,14 +169,7 @@ export async function swapSessions(
 
 export async function getSessionStepFigureSuggestions(
   sessionId: number,
-  music?: { minBpm: number | null; maxBpm: number | null; genres: string[] },
 ): Promise<SessionStepFigureSuggestionsResult> {
-  const response = await api.get(`/sessions/${sessionId}/step-figure-suggestions`, {
-    params: {
-      ...(music?.minBpm == null ? {} : { min_bpm: music.minBpm }),
-      ...(music?.maxBpm == null ? {} : { max_bpm: music.maxBpm }),
-      ...(music?.genres.length ? { genres: music.genres } : {}),
-    },
-  });
+  const response = await api.get(`/sessions/${sessionId}/step-figure-suggestions`);
   return response.data;
 }

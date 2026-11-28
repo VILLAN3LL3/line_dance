@@ -21,7 +21,7 @@ import {
   updateGroupMaxLevel,
 } from "../../../features/dance-groups/api";
 import DanceGroupDetail from "../../../features/dance-groups/views/DanceGroupDetail";
-import { getGenres, getLevels } from "../../../features/metadata/api";
+import { getLevels } from "../../../features/metadata/api";
 import { getStepFiguresWithIds } from "../../../features/step-figures/api";
 import { renderWithQueryClient as render } from "../../helpers/renderWithQueryClient";
 
@@ -53,7 +53,6 @@ vi.mock("../../../features/dance-groups/api", () => ({
   updateGroupMaxLevel: vi.fn(),
 }));
 vi.mock("../../../features/metadata/api", () => ({
-  getGenres: vi.fn(),
   getLevels: vi.fn(),
 }));
 vi.mock("../../../features/step-figures/api", () => ({ getStepFiguresWithIds: vi.fn() }));
@@ -93,7 +92,6 @@ describe("DanceGroupDetail", () => {
       { id: 1, name: "BEGINNER", value: 30 },
       { id: 2, name: "ADVANCED", value: 150 },
     ]);
-    vi.mocked(getGenres).mockResolvedValue([]);
     vi.mocked(getGroupMaxLevel).mockResolvedValue({ max_group_level_value: 30 });
     vi.mocked(updateGroupMaxLevel).mockResolvedValue({ max_group_level_value: 150 });
     vi.mocked(fetchChoreographies).mockResolvedValue({
@@ -139,6 +137,17 @@ describe("DanceGroupDetail", () => {
       </MemoryRouter>,
     );
   }
+
+  it("shows two-figure suggestions without music filters", async () => {
+    vi.mocked(getStepFigureSuggestions).mockResolvedValue([
+      { step_figure: "Kick + Turn", step_figures: ["Kick", "Turn"], additional_choreographies: 2 },
+    ]);
+    renderWithRoute();
+    expect(await screen.findByRole("button", { name: "Kick + Turn" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Min BPM")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Max BPM")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Genres")).not.toBeInTheDocument();
+  });
 
   it("shows running courses by default and can include planned courses", async () => {
     renderWithRoute();

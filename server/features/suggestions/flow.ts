@@ -45,7 +45,7 @@ export async function getGroupSuggestions(
   input: GroupRequest,
 ): Promise<{ error: 'invalid_group_id' | 'group_not_found' } | { value: Suggestion[] }> {
   if ('error' in input) return input;
-  const { id, maxLevel, music } = input.value;
+  const { id, maxLevel } = input.value;
   if (!(await suggestions.findGroup(id))) return { error: 'group_not_found' };
 
   const learned = await suggestions.findLearnedChoreographies(
@@ -56,14 +56,13 @@ export async function getGroupSuggestions(
     id,
     learned.map((row) => row.choreography_id),
   );
-  const rows = await suggestions.findSuggestions(known.namesLower, maxLevel, music);
+  const rows = await suggestions.findSuggestions(known.namesLower, maxLevel);
   return { value: aggregateSuggestions(rows) };
 }
 
 export async function getSessionSuggestions(input: SessionRequest): Promise<SessionResult> {
   if ('error' in input) return input;
-  const { id, music } = input.value;
-  const session = await suggestions.findSession(id);
+  const session = await suggestions.findSession(input.value);
   if (!session) return { error: 'session_not_found' };
   const course = await suggestions.findCourse(session.dance_course_id);
   if (!course) return { error: 'course_not_found' };
@@ -81,7 +80,7 @@ export async function getSessionSuggestions(input: SessionRequest): Promise<Sess
     getKnownFigures(course.dance_group_id, choreographyIds),
   ]);
   const max_level_value = group?.max_group_level_value ?? null;
-  const rows = await suggestions.findSuggestions(known.namesLower, max_level_value, music);
+  const rows = await suggestions.findSuggestions(known.namesLower, max_level_value);
   return {
     value: {
       suggestions: aggregateSuggestions(rows),
